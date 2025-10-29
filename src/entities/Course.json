@@ -1,0 +1,37 @@
+{
+  "name": "Course",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome do curso/treinamento"
+    },
+    "standard_value": {
+      "type": "number",
+      "description": "Valor padr\u00e3o Agropalma"
+    },
+    "duration_hours": {
+      "type": "number",
+      "description": "Dura\u00e7\u00e3o em horas"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do curso"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Seguran\u00e7a",
+        "Operacional",
+        "T\u00e9cnico",
+        "Gest\u00e3o",
+        "Compliance",
+        "Outro"
+      ],
+      "description": "Categoria do treinamento"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

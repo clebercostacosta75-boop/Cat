@@ -1,0 +1,68 @@
+{
+  "name": "TrainingSchedule",
+  "type": "object",
+  "properties": {
+    "training_name": {
+      "type": "string",
+      "description": "Nome do treinamento"
+    },
+    "instructor_name": {
+      "type": "string",
+      "description": "Nome do instrutor"
+    },
+    "company": {
+      "type": "string",
+      "description": "Empresa"
+    },
+    "month": {
+      "type": "string",
+      "description": "M\u00eas do treinamento"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do treinamento"
+    },
+    "hours": {
+      "type": "number",
+      "description": "Quantidade de horas"
+    },
+    "instructor_cost": {
+      "type": "number",
+      "description": "Custo do instrutor (HP)"
+    },
+    "standard_value": {
+      "type": "number",
+      "description": "Valor padr\u00e3o do curso"
+    },
+    "cost_difference": {
+      "type": "number",
+      "description": "Diferen\u00e7a de valor (Custo HP - Valor Padr\u00e3o)"
+    },
+    "participants": {
+      "type": "number",
+      "description": "N\u00famero de participantes"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Planejado",
+        "Confirmado",
+        "Realizado",
+        "Cancelado"
+      ],
+      "default": "Planejado",
+      "description": "Status do treinamento"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "training_name",
+    "instructor_name",
+    "company",
+    "month"
+  ]
+}
