@@ -19,6 +19,16 @@ export default function ImportPage() {
     const file = e.target.files[0];
     if (!file) return;
 
+    // Validar tipo de arquivo
+    const validExtensions = ['.xlsx', '.xls'];
+    const fileName = file.name.toLowerCase();
+    const isValid = validExtensions.some(ext => fileName.endsWith(ext));
+    
+    if (!isValid) {
+      setError("Por favor, selecione um arquivo Excel (.xlsx ou .xls)");
+      return;
+    }
+
     setUploading(true);
     setProgress(5);
     setError(null);
@@ -207,7 +217,7 @@ export default function ImportPage() {
             <div className="border-2 border-dashed border-stone-300 rounded-xl p-12 text-center hover:border-emerald-400 transition-colors">
               <input
                 type="file"
-                accept=".xlsx,.xls"
+                accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                 onChange={handleFileUpload}
                 disabled={uploading}
                 className="hidden"
@@ -223,7 +233,7 @@ export default function ImportPage() {
                       Clique para fazer upload
                     </p>
                     <p className="text-sm text-stone-600">
-                      A planilha será processada automaticamente
+                      Arquivos Excel (.xlsx ou .xls)
                     </p>
                   </div>
                   {!uploading && (
