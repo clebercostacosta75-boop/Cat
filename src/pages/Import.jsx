@@ -19,15 +19,8 @@ export default function ImportPage() {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validar tipo de arquivo
-    const validExtensions = ['.xlsx', '.xls'];
-    const fileName = file.name.toLowerCase();
-    const isValid = validExtensions.some(ext => fileName.endsWith(ext));
-    
-    if (!isValid) {
-      setError("Por favor, selecione um arquivo Excel (.xlsx ou .xls)");
-      return;
-    }
+    // Resetar o input para permitir selecionar o mesmo arquivo novamente
+    e.target.value = null;
 
     setUploading(true);
     setProgress(5);
@@ -210,14 +203,14 @@ export default function ImportPage() {
           <CardHeader>
             <CardTitle className="text-xl font-bold text-stone-900 flex items-center gap-2">
               <FileSpreadsheet className="w-6 h-6 text-emerald-600" />
-              Upload Automático de Planilha
+              Upload Automático de Planilha Excel
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="border-2 border-dashed border-stone-300 rounded-xl p-12 text-center hover:border-emerald-400 transition-colors">
               <input
                 type="file"
-                accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                accept=".xlsx,.xls"
                 onChange={handleFileUpload}
                 disabled={uploading}
                 className="hidden"
@@ -230,15 +223,16 @@ export default function ImportPage() {
                   </div>
                   <div>
                     <p className="text-lg font-semibold text-stone-900 mb-1">
-                      Clique para fazer upload
+                      Clique para fazer upload da planilha
                     </p>
                     <p className="text-sm text-stone-600">
-                      Arquivos Excel (.xlsx ou .xls)
+                      Formatos aceitos: .xlsx e .xls
                     </p>
                   </div>
                   {!uploading && (
                     <Button type="button" className="mt-2 bg-emerald-600 hover:bg-emerald-700">
-                      Selecionar Arquivo Excel
+                      <FileSpreadsheet className="w-4 h-4 mr-2" />
+                      Selecionar Arquivo XLSX
                     </Button>
                   )}
                 </div>
@@ -289,11 +283,11 @@ export default function ImportPage() {
               </div>
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <h4 className="font-semibold text-amber-900 mb-2 text-sm">💡 Dica:</h4>
-              <p className="text-sm text-amber-800">
-                A planilha pode ter múltiplas abas com diferentes informações. O sistema detecta automaticamente 
-                os dados de instrutores, cursos e cronograma, reconhecendo as colunas relevantes em cada aba.
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-semibold text-blue-900 mb-2 text-sm">✅ Formato Compatível</h4>
+              <p className="text-sm text-blue-800">
+                O sistema aceita planilhas Excel nos formatos <strong>.xlsx</strong> (Excel 2007+) e <strong>.xls</strong> (Excel 97-2003). 
+                Basta selecionar seu arquivo e o processamento será automático!
               </p>
             </div>
           </CardContent>
