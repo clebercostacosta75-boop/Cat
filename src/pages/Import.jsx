@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, Users, BookOpen, Calendar, Brain, Zap, TrendingUp } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, Users, Brain, Zap, TrendingUp, Download } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 export default function ImportPage() {
   const [uploading, setUploading] = useState(false);
@@ -56,9 +58,9 @@ export default function ImportPage() {
       setProgress(95);
       
       // Invalidar queries para atualizar os dados
-      queryClient.invalidateQueries({ queryKey: ['instructors'] });
-      queryClient.invalidateQueries({ queryKey: ['courses'] });
-      queryClient.invalidateQueries({ queryKey: ['schedules'] });
+      await queryClient.invalidateQueries({ queryKey: ['instructors'] });
+      await queryClient.invalidateQueries({ queryKey: ['courses'] });
+      await queryClient.invalidateQueries({ queryKey: ['schedules'] });
 
       setProgress(100);
       setCurrentStep("Concluído!");
@@ -73,10 +75,26 @@ export default function ImportPage() {
 
     } catch (err) {
       console.error("Erro na importação:", err);
-      setError(err.message || "Erro ao processar arquivo. Tente novamente.");
+      setError(err.message || "Erro ao processar arquivo. Verifique o formato e tente novamente.");
     } finally {
       setUploading(false);
     }
+  };
+
+  const downloadTemplate = () => {
+    // Criar template de exemplo
+    const csvContent = `Nome do Treinamento,Instrutor,Empresa,Mês,Data,Horas,Custo Instrutor,Valor Padrão,Participantes,Status
+Segurança do Trabalho,João Silva,Empresa A,Janeiro/2025,2025-01-15,8,800,600,20,Planejado
+Excel Avançado,Maria Santos,Empresa B,Janeiro/2025,2025-01-20,4,400,350,15,Confirmado`;
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'template_cronograma.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -105,11 +123,23 @@ export default function ImportPage() {
           <Alert className="border-none shadow-lg bg-green-50 text-green-800">
             <CheckCircle2 className="h-4 w-4 text-green-600" />
             <AlertDescription>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <p className="font-semibold mb-2">✅ Importação concluída com sucesso!</p>
                 {result.instrutores > 0 && <p>👤 {result.instrutores} instrutor(es) importado(s)</p>}
                 {result.cursos > 0 && <p>📚 {result.cursos} curso(s) importado(s)</p>}
                 {result.cronogramas > 0 && <p>📅 {result.cronogramas} treinamento(s) agendado(s)</p>}
+                <div className="flex gap-2 mt-4">
+                  <Link to={createPageUrl("Dashboard")}>
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                      Ver Dashboard
+                    </Button>
+                  </Link>
+                  <Link to={createPageUrl("Schedule")}>
+                    <Button size="sm" variant="outline">
+                      Ver Cronograma
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </AlertDescription>
           </Alert>
@@ -126,7 +156,7 @@ export default function ImportPage() {
             <div className="border-2 border-dashed border-purple-300 rounded-xl p-12 text-center hover:border-purple-500 transition-colors bg-white">
               <input
                 type="file"
-                accept=".xlsx,.xls"
+                accept=".xlsx,.xls,.csv"
                 onChange={handleFileUpload}
                 disabled={uploading}
                 className="hidden"
@@ -142,17 +172,28 @@ export default function ImportPage() {
                       Clique para fazer upload da planilha
                     </p>
                     <p className="text-sm text-stone-600">
-                      A IA processará automaticamente
+                      Suporta: Excel (.xlsx, .xls) e CSV
                     </p>
                   </div>
                   {!uploading && (
                     <Button type="button" className="mt-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
                       <FileSpreadsheet className="w-4 h-4 mr-2" />
-                      Selecionar Arquivo Excel
+                      Selecionar Arquivo
                     </Button>
                   )}
                 </div>
               </label>
+            </div>
+
+            <div className="flex justify-center">
+              <Button 
+                variant="outline" 
+                onClick={downloadTemplate}
+                className="gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Baixar Template de Exemplo
+              </Button>
             </div>
 
             {uploading && (

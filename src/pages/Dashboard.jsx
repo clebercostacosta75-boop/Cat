@@ -58,8 +58,6 @@ export default function Dashboard() {
 
   const monthChartData = Object.values(monthData);
 
-  const isLoading = loadingSchedules || loadingInstructors || loadingCourses;
-
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -204,18 +202,24 @@ export default function Dashboard() {
               <CardTitle className="text-lg font-bold text-stone-900">Custos por Mês</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={monthChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                  <XAxis dataKey="month" stroke="#78716c" />
-                  <YAxis stroke="#78716c" />
-                  <Tooltip 
-                    formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
-                  />
-                  <Bar dataKey="cost" fill="#10b981" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {monthChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={monthChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                    <XAxis dataKey="month" stroke="#78716c" />
+                    <YAxis stroke="#78716c" />
+                    <Tooltip 
+                      formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+                    />
+                    <Bar dataKey="cost" fill="#10b981" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[300px] flex items-center justify-center text-stone-500">
+                  Nenhum dado disponível
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -224,27 +228,33 @@ export default function Dashboard() {
               <CardTitle className="text-lg font-bold text-stone-900">Distribuição por Empresa</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={companyChartData}
-                    dataKey="total"
-                    nameKey="company"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label={(entry) => entry.company}
-                  >
-                    {companyChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              {companyChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={companyChartData}
+                      dataKey="total"
+                      nameKey="company"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      label={(entry) => entry.company}
+                    >
+                      {companyChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[300px] flex items-center justify-center text-stone-500">
+                  Nenhum dado disponível
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -290,16 +300,23 @@ export default function Dashboard() {
                   .filter(s => s.status !== 'Cancelado')
                   .slice(0, 5)
                   .map((schedule) => (
-                    <div key={schedule.id} className="flex items-start gap-3 p-3 rounded-lg bg-stone-50">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500 mt-2" />
+                    <div key={schedule.id} className="flex items-start gap-3 p-3 rounded-lg bg-stone-50 hover:bg-stone-100 transition-colors">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 mt-2 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-stone-900 truncate">{schedule.training_name}</p>
                         <p className="text-sm text-stone-600">{schedule.company} • {schedule.month}</p>
                       </div>
                     </div>
                   ))}
-                {schedules.length === 0 && (
-                  <p className="text-center text-stone-500 py-8">Nenhum treinamento agendado</p>
+                {schedules.filter(s => s.status !== 'Cancelado').length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-stone-500 mb-4">Nenhum treinamento agendado</p>
+                    <Link to={createPageUrl("Schedule")}>
+                      <Button className="bg-emerald-600 hover:bg-emerald-700">
+                        Criar Primeiro Treinamento
+                      </Button>
+                    </Link>
+                  </div>
                 )}
               </div>
             </CardContent>
