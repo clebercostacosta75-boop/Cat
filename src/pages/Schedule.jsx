@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -32,8 +31,7 @@ export default function SchedulePage() {
             schedule_id: newSchedule.id 
           });
         } catch (error) {
-          console.error('Erro ao enviar notificações automaticamente após criação:', error);
-          // Optionally, show a toast or alert to the user that notifications failed
+          console.error('Erro ao enviar notificações:', error);
         }
       }
       
@@ -48,15 +46,13 @@ export default function SchedulePage() {
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
       
       // Se mudou para "Confirmado" e ainda não enviou notificações, enviar agora
-      // updatedSchedule contains the latest data from the server, including notifications_sent
-      if (updatedSchedule.status === 'Confirmado' && !updatedSchedule.notifications_sent) {
+      if (variables.data.status === 'Confirmado' && !editingSchedule.notifications_sent) {
         try {
           await base44.functions.invoke('enviarNotificacoesTreinamento', { 
-            schedule_id: updatedSchedule.id 
+            schedule_id: variables.id 
           });
         } catch (error) {
-          console.error('Erro ao enviar notificações automaticamente após atualização:', error);
-          // Optionally, show a toast or alert to the user that notifications failed
+          console.error('Erro ao enviar notificações:', error);
         }
       }
       
