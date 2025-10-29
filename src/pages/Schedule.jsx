@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -21,8 +22,21 @@ export default function SchedulePage() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.TrainingSchedule.create(data),
-    onSuccess: () => {
+    onSuccess: async (newSchedule) => {
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
+      
+      // Se o status for "Confirmado", enviar notificações automaticamente
+      if (newSchedule.status === 'Confirmado') {
+        try {
+          await base44.functions.invoke('enviarNotificacoesTreinamento', { 
+            schedule_id: newSchedule.id 
+          });
+        } catch (error) {
+          console.error('Erro ao enviar notificações automaticamente após criação:', error);
+          // Optionally, show a toast or alert to the user that notifications failed
+        }
+      }
+      
       setShowForm(false);
       setEditingSchedule(null);
     },
@@ -30,8 +44,22 @@ export default function SchedulePage() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.TrainingSchedule.update(id, data),
-    onSuccess: () => {
+    onSuccess: async (updatedSchedule, variables) => {
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
+      
+      // Se mudou para "Confirmado" e ainda não enviou notificações, enviar agora
+      // updatedSchedule contains the latest data from the server, including notifications_sent
+      if (updatedSchedule.status === 'Confirmado' && !updatedSchedule.notifications_sent) {
+        try {
+          await base44.functions.invoke('enviarNotificacoesTreinamento', { 
+            schedule_id: updatedSchedule.id 
+          });
+        } catch (error) {
+          console.error('Erro ao enviar notificações automaticamente após atualização:', error);
+          // Optionally, show a toast or alert to the user that notifications failed
+        }
+      }
+      
       setShowForm(false);
       setEditingSchedule(null);
     },
@@ -60,6 +88,19 @@ export default function SchedulePage() {
   const handleEdit = (schedule) => {
     setEditingSchedule(schedule);
     setShowForm(true);
+  };
+
+  const handleSendNotifications = async (schedule) => {
+    try {
+      await base44.functions.invoke('enviarNotificacoesTreinamento', { 
+        schedule_id: schedule.id 
+      });
+      alert('Notificações enviadas com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['schedules'] });
+    } catch (error) {
+      console.error('Erro ao enviar notificações:', error);
+      alert('Erro ao enviar notificações. Tente novamente.');
+    }
   };
 
   const statusColors = {
@@ -121,9 +162,16 @@ export default function SchedulePage() {
                   <div className="flex-1 space-y-3">
                     <div className="flex items-start justify-between gap-4">
                       <h3 className="text-xl font-bold text-stone-900">{schedule.training_name}</h3>
-                      <Badge className={`${statusColors[schedule.status]} border`}>
-                        {schedule.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className={`${statusColors[schedule.status]} border`}>
+                          {schedule.status}
+                        </Badge>
+                        {schedule.notifications_sent && (
+                          <Badge className="bg-green-100 text-green-800 border-green-200 border">
+                            ✓ Notificado
+                          </Badge>
+                        )}
+                      </div>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-3">
@@ -141,8 +189,17 @@ export default function SchedulePage() {
                       </div>
                       <div className="flex items-center gap-2 text-stone-600">
                         <Clock className="w-4 h-4" />
-                        <span className="text-sm">{schedule.hours}h</span>
+                        <span className="text-sm">
+                          {schedule.start_time && schedule.end_time 
+                            ? `${schedule.start_time} - ${schedule.end_time}` 
+                            : `${schedule.hours}h`}
+                        </span>
                       </div>
+                      {schedule.location && (
+                        <div className="flex items-center gap-2 text-stone-600 md:col-span-2">
+                          <span className="text-sm">📍 {schedule.location}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -163,7 +220,16 @@ export default function SchedulePage() {
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      {schedule.status === 'Confirmado' && !schedule.notifications_sent && (
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleSendNotifications(schedule)}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          📧 Enviar Notificações
+                        </Button>
+                      )}
                       <Button variant="outline" size="sm" onClick={() => handleEdit(schedule)}>
                         Editar
                       </Button>

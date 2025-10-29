@@ -23,6 +23,14 @@
       "format": "date",
       "description": "Data do treinamento"
     },
+    "start_time": {
+      "type": "string",
+      "description": "Hor\u00e1rio de in\u00edcio (ex: 08:00)"
+    },
+    "end_time": {
+      "type": "string",
+      "description": "Hor\u00e1rio de t\u00e9rmino (ex: 17:00)"
+    },
     "hours": {
       "type": "number",
       "description": "Quantidade de horas"
@@ -53,6 +61,51 @@
       ],
       "default": "Planejado",
       "description": "Status do treinamento"
+    },
+    "location": {
+      "type": "string",
+      "description": "Local onde ser\u00e1 realizado o treinamento (endere\u00e7o completo)"
+    },
+    "room": {
+      "type": "string",
+      "description": "Sala/Audit\u00f3rio"
+    },
+    "logistics": {
+      "type": "string",
+      "description": "Informa\u00e7\u00f5es de log\u00edstica (materiais, equipamentos, coffee break, etc)"
+    },
+    "pedagogical_content": {
+      "type": "string",
+      "description": "Conte\u00fado program\u00e1tico e objetivos do treinamento"
+    },
+    "payment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data prevista de pagamento ao instrutor"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Agendado",
+        "Pago"
+      ],
+      "default": "Pendente",
+      "description": "Status do pagamento"
+    },
+    "company_contact_email": {
+      "type": "string",
+      "format": "email",
+      "description": "E-mail de contato da empresa"
+    },
+    "company_contact_phone": {
+      "type": "string",
+      "description": "WhatsApp/Telefone da empresa"
+    },
+    "notifications_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indica se as notifica\u00e7\u00f5es j\u00e1 foram enviadas"
     },
     "notes": {
       "type": "string",
