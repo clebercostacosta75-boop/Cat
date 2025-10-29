@@ -15,6 +15,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import IAFloatingButton from "./components/IAFloatingButton";
 
 const navigationItems = [
   {
@@ -107,6 +108,9 @@ export default function Layout({ children }) {
           <div className="flex-1 overflow-auto">
             {children}
           </div>
+          
+          {/* Botão Flutuante da IA */}
+          <IAFloatingButton />
         </main>
       </div>
     </SidebarProvider>
