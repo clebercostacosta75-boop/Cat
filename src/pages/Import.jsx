@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,29 +34,34 @@ export default function ImportPage() {
     try {
       // Upload do arquivo
       setCurrentStep("Fazendo upload do arquivo...");
-      setProgress(10);
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-
-      // Chamar a IA de processamento
-      setCurrentStep("🤖 IA analisando e processando dados...");
       setProgress(20);
+      
+      const uploadResult = await base44.integrations.Core.UploadFile({ file });
+      const file_url = uploadResult.file_url;
 
-      const aiResult = await base44.functions.invoke('processarCronograma', { file_url });
-
-      // Simular progresso enquanto processa
-      const etapas = aiResult.etapas || [];
-      const progressoStep = 60 / (etapas.length || 1);
-      let currentProgress = 20;
-
-      for (const etapa of etapas) {
-        setCurrentStep(`${etapa.nome}...`);
-        currentProgress += progressoStep;
-        setProgress(Math.min(currentProgress, 80));
-        await new Promise(resolve => setTimeout(resolve, 300));
+      if (!file_url) {
+        throw new Error('Erro ao fazer upload do arquivo');
       }
 
-      setCurrentStep("Finalizando importação...");
-      setProgress(95);
+      // Chamar a IA de processamento
+      setCurrentStep("🤖 IA processando planilha...");
+      setProgress(40);
+
+      const response = await base44.functions.invoke('processarCronograma', { file_url });
+      const aiResult = response.data;
+
+      if (aiResult.error) {
+        throw new Error(aiResult.error);
+      }
+
+      // Simular progresso
+      setProgress(70);
+      setCurrentStep("Inserindo dados no sistema...");
+      
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      setProgress(90);
+      setCurrentStep("Finalizando...");
       
       // Invalidar queries para atualizar os dados
       await queryClient.invalidateQueries({ queryKey: ['instructors'] });
@@ -82,7 +88,6 @@ export default function ImportPage() {
   };
 
   const downloadTemplate = () => {
-    // Criar template de exemplo
     const csvContent = `Nome do Treinamento,Instrutor,Empresa,Mês,Data,Horas,Custo Instrutor,Valor Padrão,Participantes,Status
 Segurança do Trabalho,João Silva,Empresa A,Janeiro/2025,2025-01-15,8,800,600,20,Planejado
 Excel Avançado,Maria Santos,Empresa B,Janeiro/2025,2025-01-20,4,400,350,15,Confirmado`;
