@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, BookOpen, Clock, Download, DollarSign, X } from "lucide-react";
+import { Plus, BookOpen, Clock, Download, DollarSign, X, Copy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -96,6 +96,27 @@ export default function CoursesPage() {
       company_prices: course.company_prices || []
     });
     setShowForm(true);
+  };
+
+  const handleDuplicate = (course) => {
+    const duplicatedCourse = {
+      ...course,
+      name: `${course.name} (Cópia)`,
+      schedules: course.schedules || {
+        morning: { start: "", end: "" },
+        afternoon: { start: "", end: "" },
+        night: { start: "", end: "" }
+      },
+      company_prices: course.company_prices || []
+    };
+    
+    // Remove o ID para criar um novo registro
+    delete duplicatedCourse.id;
+    delete duplicatedCourse.created_date;
+    delete duplicatedCourse.updated_date;
+    delete duplicatedCourse.created_by;
+    
+    createMutation.mutate(duplicatedCourse);
   };
 
   const resetForm = () => {
@@ -227,7 +248,7 @@ export default function CoursesPage() {
             <h1 className="text-3xl md:text-4xl font-bold text-stone-900">Cursos</h1>
             <p className="text-stone-600 mt-1">Catálogo de treinamentos disponíveis</p>
           </div>
-          <div className="flex gap-2 mt-4 md:mt-0"> {/* Added mt-4 md:mt-0 for spacing on small screens */}
+          <div className="flex gap-2">
             <Button
               onClick={exportCourses}
               variant="outline"
@@ -536,21 +557,30 @@ export default function CoursesPage() {
                   )}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => exportCoursePrices(course)}
-                    className="flex-1"
+                    className="w-full"
                   >
                     <Download className="w-4 h-4 mr-1" />
-                    Exportar Preços
+                    Exportar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDuplicate(course)}
+                    className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  >
+                    <Copy className="w-4 h-4 mr-1" />
+                    Duplicar
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleEdit(course)}
-                    className="flex-1"
+                    className="w-full"
                   >
                     Editar
                   </Button>
@@ -558,7 +588,7 @@ export default function CoursesPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => deleteMutation.mutate(course.id)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     Excluir
                   </Button>
