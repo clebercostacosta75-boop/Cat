@@ -1,18 +1,66 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Building2, Calendar, DollarSign, Mail, MessageCircle, Send, CheckCircle, Loader2 } from "lucide-react";
+import { Download, Building2, Calendar, DollarSign, Mail, MessageCircle, Send, CheckCircle, Loader2, BookOpen, Clock, MapPin } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 export default function Dashboard() {
+  const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  const [instructorData, setInstructorData] = useState(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+        
+        // Verificar se é instrutor
+        if (currentUser.email) {
+          const instructors = await base44.entities.Instructor.filter({ email: currentUser.email });
+          if (instructors.length > 0) {
+            setUserRole('Instrutor');
+            setInstructorData(instructors[0]);
+            return;
+          }
+        }
+        
+        setUserRole(currentUser.custom_role || currentUser.role || 'user');
+      } catch (error) {
+        console.error('Erro ao carregar usuário:', error);
+      }
+    };
+    loadUser();
+  }, []);
+
+  // Renderizar dashboard específico baseado no role
+  if (userRole === 'Instrutor') {
+    return <DashboardInstrutor instructor={instructorData} />;
+  }
+
+  if (userRole === 'Financeiro') {
+    return <DashboardFinanceiro />;
+  }
+
+  if (userRole === 'Coordenador de Operações') {
+    return <DashboardCoordenador />;
+  }
+
+  // Admin Master ou admin
+  return <DashboardAdminMaster />;
+}
+
+// ===== DASHBOARD ADMIN MASTER =====
+function DashboardAdminMaster() {
   const [sendingNotifications, setSendingNotifications] = useState({});
   const [notificationResults, setNotificationResults] = useState({});
 
-  // Buscar turmas concluídas
   const { data: completedClasses = [], isLoading: loadingClasses } = useQuery({
     queryKey: ['completedClasses'],
     queryFn: async () => {
@@ -22,14 +70,12 @@ export default function Dashboard() {
     initialData: [],
   });
 
-  // Buscar todos os registros diários
   const { data: allDailyRecords = [], isLoading: loadingRecords } = useQuery({
     queryKey: ['allDailyRecords'],
     queryFn: () => base44.entities.ClassDailyRecord.list(),
     initialData: [],
   });
 
-  // Processar dados para a tabela
   const tableData = React.useMemo(() => {
     const groupedData = {};
 
@@ -48,7 +94,6 @@ export default function Dashboard() {
         };
       }
 
-      // Somar custos diários desta turma
       const classDailyRecords = allDailyRecords.filter(
         record => record.class_schedule_id === classItem.id
       );
@@ -69,12 +114,10 @@ export default function Dashboard() {
     });
   }, [completedClasses, allDailyRecords]);
 
-  // Calcular totais
   const totalGeral = tableData.reduce((sum, row) => sum + row.totalCost, 0);
   const totalTreinamentos = tableData.reduce((sum, row) => sum + row.classCount, 0);
   const empresasAtendidas = new Set(tableData.map(row => row.company)).size;
 
-  // Exportar CSV
   const exportToCSV = () => {
     const headers = ['Mês', 'Empresa', 'Custo Total (HP)', 'Quantidade'];
     const csvContent = [
@@ -97,7 +140,6 @@ export default function Dashboard() {
     document.body.removeChild(link);
   };
 
-  // Enviar notificações
   const handleSendNotifications = async (classIds, type) => {
     const key = classIds.join(',');
     setSendingNotifications(prev => ({ ...prev, [key]: type }));
@@ -140,7 +182,6 @@ export default function Dashboard() {
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Logo e Título */}
         <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
           <div className="flex-shrink-0">
             <img 
@@ -163,7 +204,6 @@ export default function Dashboard() {
           </Button>
         </div>
 
-        {/* Resumo Total - Cards */}
         <div className="grid md:grid-cols-3 gap-6">
           <Card className="border-none shadow-xl bg-gradient-to-br from-emerald-50 to-teal-50">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -201,7 +241,6 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Tabela Principal */}
         <Card className="border-none shadow-xl">
           <CardHeader>
             <CardTitle className="text-xl font-bold text-stone-900 flex items-center gap-2">
@@ -288,7 +327,7 @@ export default function Dashboard() {
                                     variant="outline"
                                     onClick={() => handleSendNotifications(row.classIds, 'all')}
                                     disabled={!!sending}
-                                    title="Enviar Tudo (E-mail + WhatsApp + SMS)"
+                                    title="Enviar Tudo"
                                   >
                                     {sending === 'all' ? (
                                       <Loader2 className="w-3 h-3 animate-spin" />
@@ -307,36 +346,9 @@ export default function Dashboard() {
                 </TableBody>
               </Table>
             </div>
-
-            {tableData.length > 0 && (
-              <div className="mt-6 p-4 bg-stone-50 rounded-lg">
-                <div className="flex items-center gap-2 text-sm text-stone-600 mb-2">
-                  <Send className="w-4 h-4" />
-                  <strong>Sistema de Notificações Automáticas</strong>
-                </div>
-                <p className="text-xs text-stone-600">
-                  Use os botões acima para enviar notificações aos instrutores e empresas sobre os treinamentos concluídos.
-                </p>
-                <div className="flex gap-4 mt-2 text-xs">
-                  <div className="flex items-center gap-1">
-                    <Mail className="w-3 h-3" />
-                    <span>E-mail</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <MessageCircle className="w-3 h-3" />
-                    <span>WhatsApp</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Send className="w-3 h-3" />
-                    <span>Todos (E-mail + WhatsApp + SMS)</span>
-                  </div>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
 
-        {/* Informações sobre Custos */}
         <Alert className="bg-blue-50 border-blue-200">
           <AlertDescription>
             <div className="flex items-start gap-3">
@@ -346,14 +358,355 @@ export default function Dashboard() {
               <div>
                 <p className="font-semibold text-blue-900 mb-1">Sobre os Custos (HP)</p>
                 <p className="text-sm text-blue-800">
-                  Os valores exibidos representam a soma de todos os custos diários registrados para cada turma concluída, 
-                  incluindo: Almoço, Transporte, Coffee Break, Taxi e Custo HP. Os dados são agrupados por empresa e mês 
-                  de conclusão do treinamento.
+                  Os valores exibidos representam a soma de todos os custos diários registrados para cada turma concluída.
                 </p>
               </div>
             </div>
           </AlertDescription>
         </Alert>
+      </div>
+    </div>
+  );
+}
+
+// ===== DASHBOARD COORDENADOR =====
+function DashboardCoordenador() {
+  return <DashboardAdminMaster />;
+}
+
+// ===== DASHBOARD FINANCEIRO =====
+function DashboardFinanceiro() {
+  const { data: completedClasses = [] } = useQuery({
+    queryKey: ['completedClassesFinanceiro'],
+    queryFn: async () => {
+      const allClasses = await base44.entities.ClassSchedule.list();
+      return allClasses.filter(c => c.status === 'Concluído');
+    },
+    initialData: [],
+  });
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ['companies'],
+    queryFn: () => base44.entities.Company.list(),
+    initialData: [],
+  });
+
+  const tableData = React.useMemo(() => {
+    const groupedData = {};
+
+    completedClasses.forEach(classItem => {
+      const month = classItem.month || 'Sem mês';
+      const company = classItem.company_name || 'Sem empresa';
+      const key = `${month}|${company}`;
+
+      if (!groupedData[key]) {
+        groupedData[key] = {
+          month,
+          company,
+          classCount: 0,
+          studentsCount: 0
+        };
+      }
+
+      groupedData[key].classCount += 1;
+      groupedData[key].studentsCount += classItem.students_count || 0;
+    });
+
+    return Object.values(groupedData).sort((a, b) => {
+      if (a.month !== b.month) return a.month.localeCompare(b.month);
+      return a.company.localeCompare(b.company);
+    });
+  }, [completedClasses]);
+
+  const totalTreinamentos = tableData.reduce((sum, row) => sum + row.classCount, 0);
+  const totalAlunos = tableData.reduce((sum, row) => sum + row.studentsCount, 0);
+  const empresasAtendidas = new Set(tableData.map(row => row.company)).size;
+
+  return (
+    <div className="p-4 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
+          <div className="flex-shrink-0">
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
+              alt="CAT Logo" 
+              className="h-24 w-auto"
+            />
+          </div>
+          <div className="flex-1 text-center md:text-left">
+            <h1 className="text-3xl md:text-4xl font-bold text-stone-900">Dashboard Financeiro</h1>
+            <p className="text-stone-600">Treinamentos concluídos por mês e empresa</p>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          <Card className="border-none shadow-xl bg-gradient-to-br from-blue-50 to-cyan-50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-stone-600">Total de Treinamentos</CardTitle>
+              <Calendar className="w-5 h-5 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-600">{totalTreinamentos}</div>
+              <p className="text-xs text-stone-600 mt-1">Turmas concluídas</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl bg-gradient-to-br from-purple-50 to-violet-50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-stone-600">Total de Alunos</CardTitle>
+              <BookOpen className="w-5 h-5 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-600">{totalAlunos}</div>
+              <p className="text-xs text-stone-600 mt-1">Participantes treinados</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl bg-gradient-to-br from-emerald-50 to-teal-50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-stone-600">Empresas Atendidas</CardTitle>
+              <Building2 className="w-5 h-5 text-emerald-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-emerald-600">{empresasAtendidas}</div>
+              <p className="text-xs text-stone-600 mt-1">Clientes únicos</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="border-none shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold text-stone-900">
+              Treinamentos por Mês e Empresa
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-stone-50">
+                    <TableHead className="font-bold">Mês</TableHead>
+                    <TableHead className="font-bold">Empresa</TableHead>
+                    <TableHead className="font-bold text-right">Quantidade</TableHead>
+                    <TableHead className="font-bold text-right">Alunos</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tableData.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-12 text-stone-500">
+                        Nenhum treinamento concluído encontrado
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    tableData.map((row, index) => (
+                      <TableRow key={index} className="hover:bg-stone-50">
+                        <TableCell className="font-medium">{row.month}</TableCell>
+                        <TableCell>{row.company}</TableCell>
+                        <TableCell className="text-right font-semibold text-blue-600">
+                          {row.classCount}
+                        </TableCell>
+                        <TableCell className="text-right">{row.studentsCount}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// ===== DASHBOARD INSTRUTOR =====
+function DashboardInstrutor({ instructor }) {
+  const { data: myClasses = [], isLoading } = useQuery({
+    queryKey: ['instructorClasses', instructor?.name],
+    queryFn: async () => {
+      if (!instructor?.name) return [];
+      const allClasses = await base44.entities.ClassSchedule.filter({ 
+        instructor_name: instructor.name 
+      });
+      return allClasses.sort((a, b) => {
+        if (a.start_date > b.start_date) return 1;
+        if (a.start_date < b.start_date) return -1;
+        return 0;
+      });
+    },
+    enabled: !!instructor?.name,
+    initialData: [],
+  });
+
+  const upcomingClasses = myClasses.filter(c => 
+    c.status === 'Agendado' || c.status === 'Em Andamento'
+  );
+  const completedClasses = myClasses.filter(c => c.status === 'Concluído');
+
+  const statusColors = {
+    'Agendado': 'bg-blue-100 text-blue-800',
+    'Em Andamento': 'bg-yellow-100 text-yellow-800',
+    'Concluído': 'bg-green-100 text-green-800',
+    'Cancelado': 'bg-red-100 text-red-800',
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-8 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
+          <div className="flex-shrink-0">
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
+              alt="CAT Logo" 
+              className="h-24 w-auto"
+            />
+          </div>
+          <div className="flex-1 text-center md:text-left">
+            <h1 className="text-3xl md:text-4xl font-bold text-stone-900">
+              Meus Treinamentos
+            </h1>
+            <p className="text-stone-600">Olá, {instructor?.name || 'Instrutor'}!</p>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          <Card className="border-none shadow-xl bg-gradient-to-br from-blue-50 to-cyan-50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-stone-600">Próximos</CardTitle>
+              <Calendar className="w-5 h-5 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-600">{upcomingClasses.length}</div>
+              <p className="text-xs text-stone-600 mt-1">Treinamentos agendados</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl bg-gradient-to-br from-green-50 to-emerald-50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-stone-600">Concluídos</CardTitle>
+              <CheckCircle className="w-5 h-5 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-600">{completedClasses.length}</div>
+              <p className="text-xs text-stone-600 mt-1">Treinamentos finalizados</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl bg-gradient-to-br from-purple-50 to-violet-50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-stone-600">Total</CardTitle>
+              <BookOpen className="w-5 h-5 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-600">{myClasses.length}</div>
+              <p className="text-xs text-stone-600 mt-1">Todos os treinamentos</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {upcomingClasses.length > 0 && (
+          <Card className="border-none shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-stone-900">
+                Próximos Treinamentos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {upcomingClasses.map((classItem) => (
+                  <Card key={classItem.id} className="border-stone-200">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-xl font-bold text-stone-900">
+                              {classItem.training_name}
+                            </h3>
+                            <Badge className={statusColors[classItem.status]}>
+                              {classItem.status}
+                            </Badge>
+                          </div>
+                          <p className="text-stone-600 mb-3">{classItem.company_name}</p>
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-3">
+                        <div className="flex items-center gap-2 text-sm text-stone-600">
+                          <Calendar className="w-4 h-4" />
+                          <span>{classItem.start_date} a {classItem.end_date}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-stone-600">
+                          <Clock className="w-4 h-4" />
+                          <span>{classItem.training_schedule || 'Não definido'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-stone-600">
+                          <MapPin className="w-4 h-4" />
+                          <span>{classItem.location || 'Não definido'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-stone-600">
+                          👥 <span>{classItem.students_count || 0} alunos</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-4 border-t border-stone-200">
+                        <Link to={createPageUrl(`ClassDetails?id=${classItem.id}`)}>
+                          <Button variant="outline" size="sm">
+                            Ver Detalhes
+                          </Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {completedClasses.length > 0 && (
+          <Card className="border-none shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-stone-900">
+                Treinamentos Concluídos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {completedClasses.slice(0, 5).map((classItem) => (
+                  <div key={classItem.id} className="flex items-center justify-between p-4 bg-stone-50 rounded-lg">
+                    <div>
+                      <p className="font-semibold text-stone-900">{classItem.training_name}</p>
+                      <p className="text-sm text-stone-600">
+                        {classItem.company_name} • {classItem.start_date}
+                      </p>
+                    </div>
+                    <Badge className="bg-green-100 text-green-800">
+                      Concluído
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {myClasses.length === 0 && (
+          <Card className="border-none shadow-lg">
+            <CardContent className="p-12 text-center">
+              <Calendar className="w-16 h-16 mx-auto mb-4 text-stone-300" />
+              <p className="text-stone-600">Nenhum treinamento agendado</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

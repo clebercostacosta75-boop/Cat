@@ -1,6 +1,7 @@
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { base44 } from "@/api/base44Client";
 import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText, Building2 } from "lucide-react";
 import {
   Sidebar,
@@ -17,51 +18,98 @@ import {
 } from "@/components/ui/sidebar";
 import IAFloatingButton from "./components/IAFloatingButton";
 
-const navigationItems = [
-  {
-    title: "Dashboard",
-    url: createPageUrl("Dashboard"),
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Cronograma",
-    url: createPageUrl("Schedule"),
-    icon: Calendar,
-  },
-  {
-    title: "Instrutores",
-    url: createPageUrl("Instructors"),
-    icon: Users,
-  },
-  {
-    title: "Empresas",
-    url: createPageUrl("Companies"),
-    icon: Building2,
-  },
-  {
-    title: "Cursos",
-    url: createPageUrl("Courses"),
-    icon: BookOpen,
-  },
-  {
-    title: "Gerar BMM",
-    url: createPageUrl("GenerateBMM"),
-    icon: FileText,
-  },
-  {
-    title: "Importar Excel",
-    url: createPageUrl("Import"),
-    icon: Upload,
-  },
-  {
-    title: "Relatórios",
-    url: createPageUrl("Reports"),
-    icon: BarChart3,
-  },
-];
-
 export default function Layout({ children }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+        
+        // Buscar role customizada do instrutor
+        if (currentUser.email) {
+          const instructors = await base44.entities.Instructor.filter({ email: currentUser.email });
+          if (instructors.length > 0) {
+            setUserRole('Instrutor');
+            return;
+          }
+        }
+        
+        // Usar role do sistema ou custom_role
+        setUserRole(currentUser.custom_role || currentUser.role || 'user');
+      } catch (error) {
+        console.error('Erro ao carregar usuário:', error);
+      }
+    };
+    loadUser();
+  }, []);
+
+  // Definir items de navegação baseado no role
+  const getNavigationItems = () => {
+    const allItems = [
+      {
+        title: "Dashboard",
+        url: createPageUrl("Dashboard"),
+        icon: LayoutDashboard,
+        roles: ['admin', 'Administrador Master', 'Coordenador de Operações', 'Financeiro', 'Instrutor']
+      },
+      {
+        title: "Cronograma",
+        url: createPageUrl("Schedule"),
+        icon: Calendar,
+        roles: ['admin', 'Administrador Master', 'Coordenador de Operações', 'Instrutor']
+      },
+      {
+        title: "Instrutores",
+        url: createPageUrl("Instructors"),
+        icon: Users,
+        roles: ['admin', 'Administrador Master', 'Coordenador de Operações']
+      },
+      {
+        title: "Empresas",
+        url: createPageUrl("Companies"),
+        icon: Building2,
+        roles: ['admin', 'Administrador Master', 'Coordenador de Operações', 'Financeiro']
+      },
+      {
+        title: "Cursos",
+        url: createPageUrl("Courses"),
+        icon: BookOpen,
+        roles: ['admin', 'Administrador Master', 'Coordenador de Operações']
+      },
+      {
+        title: "Gerar BMM",
+        url: createPageUrl("GenerateBMM"),
+        icon: FileText,
+        roles: ['admin', 'Administrador Master', 'Financeiro']
+      },
+      {
+        title: "Importar Excel",
+        url: createPageUrl("Import"),
+        icon: Upload,
+        roles: ['admin', 'Administrador Master', 'Coordenador de Operações']
+      },
+      {
+        title: "Relatórios",
+        url: createPageUrl("Reports"),
+        icon: BarChart3,
+        roles: ['admin', 'Administrador Master', 'Coordenador de Operações', 'Financeiro']
+      },
+    ];
+
+    // Filtrar items baseado no role do usuário
+    if (!userRole) return [];
+    
+    return allItems.filter(item => 
+      item.roles.includes(userRole) || item.roles.includes('admin')
+    );
+  };
+
+  const navigationItems = getNavigationItems();
 
   return (
     <SidebarProvider>
@@ -78,7 +126,12 @@ export default function Layout({ children }) {
               </div>
               <div>
                 <h2 className="font-bold text-stone-900">Sistema de Treinamento</h2>
-                <p className="text-xs text-stone-500">Gestão de Cronogramas</p>
+                <p className="text-xs text-stone-500">
+                  {userRole === 'Instrutor' && '👨‍🏫 Instrutor'}
+                  {userRole === 'Coordenador de Operações' && '⚙️ Coordenador'}
+                  {userRole === 'Financeiro' && '💰 Financeiro'}
+                  {(userRole === 'admin' || userRole === 'Administrador Master') && '👑 Administrador'}
+                </p>
               </div>
             </div>
           </SidebarHeader>
