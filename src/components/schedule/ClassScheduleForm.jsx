@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -75,9 +76,25 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     }
   }, [formData.start_date]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    // Submeter o formulário
+    await onSubmit(formData);
+    
+    // Notificar admins sobre a alteração
+    try {
+      const action = classSchedule ? 'updated' : 'created';
+      await base44.functions.invoke('notificarAdmins', {
+        action,
+        entity_type: 'ClassSchedule',
+        entity_id: classSchedule?.id,
+        entity_name: formData.training_name,
+        details: `Empresa: ${formData.company_name}\nData: ${formData.start_date}\nInstrutor: ${formData.instructor_name}`
+      });
+    } catch (error) {
+      console.error('Erro ao notificar admins:', error);
+    }
   };
 
   // Função para adicionar emoji baseado no valor
