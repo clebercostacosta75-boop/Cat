@@ -4,7 +4,6 @@ import Schedule from './pages/Schedule';
 import Instructors from './pages/Instructors';
 import Courses from './pages/Courses';
 import Reports from './pages/Reports';
-import InstructorDetails from './pages/InstructorDetails';
 import Layout from './Layout.jsx';
 
 
@@ -15,7 +14,6 @@ export const PAGES = {
     "Instructors": Instructors,
     "Courses": Courses,
     "Reports": Reports,
-    "InstructorDetails": InstructorDetails,
 }
 
 export const pagesConfig = {
