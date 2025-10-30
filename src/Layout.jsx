@@ -1,8 +1,7 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, Tag, FileText } from "lucide-react";
+import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -38,11 +37,6 @@ const navigationItems = [
     title: "Cursos",
     url: createPageUrl("Courses"),
     icon: BookOpen,
-  },
-  {
-    title: "Categorias",
-    url: createPageUrl("CourseCategories"),
-    icon: Tag,
   },
   {
     title: "Gerar BMM",
