@@ -139,12 +139,22 @@ Excel,Maria Santos,XPTO SA,Jan/2025,2025-01-20,4,400,350,15,Confirmado`;
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-            <Brain className="w-7 h-7 text-white" />
+        {/* Logo e Título */}
+        <div className="flex flex-col md:flex-row items-center gap-6 mb-6">
+          <div className="flex-shrink-0">
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
+              alt="CAT Logo" 
+              className="h-24 w-auto"
+            />
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-stone-900">Importação Inteligente</h1>
+          <div className="flex-1 text-center md:text-left">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Brain className="w-7 h-7 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold text-stone-900">Importação Inteligente</h1>
+            </div>
             <p className="text-stone-600">Envie planilha ou digite os dados</p>
           </div>
         </div>
