@@ -3,12 +3,14 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, Users, Brain, Zap, TrendingUp, Download } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, Brain, Zap, Download, MessageSquare, Users, TrendingUp } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ImportPage() {
   const [uploading, setUploading] = useState(false);
@@ -17,6 +19,7 @@ export default function ImportPage() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [textInput, setTextInput] = useState("");
   const queryClient = useQueryClient();
 
   const handleFileUpload = async (e) => {
@@ -32,7 +35,6 @@ export default function ImportPage() {
     setAiAnalysis(null);
 
     try {
-      // Upload do arquivo
       setCurrentStep("Fazendo upload do arquivo...");
       setProgress(20);
       
@@ -43,7 +45,6 @@ export default function ImportPage() {
         throw new Error('Erro ao fazer upload do arquivo');
       }
 
-      // Chamar a IA de processamento
       setCurrentStep("🤖 IA processando planilha...");
       setProgress(40);
 
@@ -54,7 +55,6 @@ export default function ImportPage() {
         throw new Error(aiResult.error);
       }
 
-      // Simular progresso
       setProgress(70);
       setCurrentStep("Inserindo dados no sistema...");
       
@@ -63,7 +63,6 @@ export default function ImportPage() {
       setProgress(90);
       setCurrentStep("Finalizando...");
       
-      // Invalidar queries para atualizar os dados
       await queryClient.invalidateQueries({ queryKey: ['instructors'] });
       await queryClient.invalidateQueries({ queryKey: ['courses'] });
       await queryClient.invalidateQueries({ queryKey: ['schedules'] });
@@ -87,6 +86,61 @@ export default function ImportPage() {
     }
   };
 
+  const handleTextSubmit = async () => {
+    if (!textInput.trim()) {
+      setError("Por favor, digite ou cole as informações dos treinamentos");
+      return;
+    }
+
+    setUploading(true);
+    setProgress(5);
+    setError(null);
+    setResult(null);
+    setAiAnalysis(null);
+
+    try {
+      setCurrentStep("🤖 IA analisando texto...");
+      setProgress(30);
+
+      const response = await base44.functions.invoke('processarTexto', { texto: textInput });
+      const aiResult = response.data;
+
+      if (aiResult.error) {
+        throw new Error(aiResult.error);
+      }
+
+      setProgress(70);
+      setCurrentStep("Inserindo dados no sistema...");
+      
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      setProgress(90);
+      setCurrentStep("Finalizando...");
+      
+      await queryClient.invalidateQueries({ queryKey: ['instructors'] });
+      await queryClient.invalidateQueries({ queryKey: ['courses'] });
+      await queryClient.invalidateQueries({ queryKey: ['schedules'] });
+
+      setProgress(100);
+      setCurrentStep("Concluído!");
+      
+      setResult({
+        instrutores: aiResult.inseridos?.instrutores || 0,
+        cursos: aiResult.inseridos?.cursos || 0,
+        cronogramas: aiResult.inseridos?.cronogramas || 0
+      });
+
+      setAiAnalysis(aiResult);
+      setTextInput("");
+
+    } catch (err) {
+      console.error("Erro no processamento:", err);
+      setError(err.message || "Erro ao processar texto. Tente novamente.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const downloadTemplate = () => {
     const csvContent = `Nome do Treinamento,Instrutor,Empresa,Mês,Data,Horas,Custo Instrutor,Valor Padrão,Participantes,Status
 Segurança do Trabalho,João Silva,Empresa A,Janeiro/2025,2025-01-15,8,800,600,20,Planejado
@@ -101,6 +155,30 @@ Excel Avançado,Maria Santos,Empresa B,Janeiro/2025,2025-01-20,4,400,350,15,Conf
     link.click();
     document.body.removeChild(link);
   };
+
+  const exemplosTexto = `Exemplos de texto que você pode colar:
+
+📧 E-MAIL:
+"Preciso agendar treinamento de NR-35 com o instrutor João Silva para a empresa ABC Ltda no dia 15/01/2025, das 8h às 17h, com 20 participantes. Custo de R$ 1.200,00"
+
+💬 WHATSAPP:
+"Confirmar curso de Excel Avançado
+Instrutor: Maria Santos  
+Cliente: XPTO SA
+Data: 20/01/2025
+Horário: 14h-18h
+Turma: 15 pessoas
+Valor: R$ 600"
+
+📝 LISTA SIMPLES:
+"NR-10 - Carlos Silva - Indústria X - 25/01/2025 - 8h - R$ 800
+Primeiros Socorros - Ana Costa - Hospital Y - 28/01/2025 - 4h - R$ 400"
+
+🗒️ ANOTAÇÕES:
+"Próximos treinamentos:
+- Segurança do Trabalho (NR-35) com João na empresa ABC em janeiro
+- Excel para a XPTO com Maria em fevereiro
+- Gestão de Projetos com Pedro na Indústria Z"`;
 
   return (
     <div className="p-4 md:p-8">
@@ -154,52 +232,113 @@ Excel Avançado,Maria Santos,Empresa B,Janeiro/2025,2025-01-20,4,400,350,15,Conf
           <CardHeader>
             <CardTitle className="text-xl font-bold text-stone-900 flex items-center gap-2">
               <Zap className="w-6 h-6 text-purple-600" />
-              Upload Inteligente com IA
+              Importação Inteligente com IA
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="border-2 border-dashed border-purple-300 rounded-xl p-12 text-center hover:border-purple-500 transition-colors bg-white">
-              <input
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                onChange={handleFileUpload}
-                disabled={uploading}
-                className="hidden"
-                id="file-upload"
-              />
-              <label htmlFor="file-upload" className="cursor-pointer">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
-                    <Upload className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-lg font-semibold text-stone-900 mb-1">
-                      Clique para fazer upload da planilha
-                    </p>
-                    <p className="text-sm text-stone-600">
-                      Suporta: Excel (.xlsx, .xls) e CSV
-                    </p>
-                  </div>
-                  {!uploading && (
-                    <Button type="button" className="mt-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
-                      <FileSpreadsheet className="w-4 h-4 mr-2" />
-                      Selecionar Arquivo
-                    </Button>
-                  )}
-                </div>
-              </label>
-            </div>
+            <Tabs defaultValue="file" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="file" className="flex items-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  Fazer Upload
+                </TabsTrigger>
+                <TabsTrigger value="text" className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  Digitar/Colar Texto
+                </TabsTrigger>
+              </TabsList>
 
-            <div className="flex justify-center">
-              <Button 
-                variant="outline" 
-                onClick={downloadTemplate}
-                className="gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Baixar Template de Exemplo
-              </Button>
-            </div>
+              {/* ABA UPLOAD DE ARQUIVO */}
+              <TabsContent value="file" className="space-y-4">
+                <div className="border-2 border-dashed border-purple-300 rounded-xl p-12 text-center hover:border-purple-500 transition-colors bg-white">
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
+                        <Upload className="w-8 h-8 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold text-stone-900 mb-1">
+                          Clique para fazer upload da planilha
+                        </p>
+                        <p className="text-sm text-stone-600">
+                          Suporta: Excel (.xlsx, .xls) e CSV
+                        </p>
+                      </div>
+                      {!uploading && (
+                        <Button type="button" className="mt-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
+                          <FileSpreadsheet className="w-4 h-4 mr-2" />
+                          Selecionar Arquivo
+                        </Button>
+                      )}
+                    </div>
+                  </label>
+                </div>
+
+                <div className="flex justify-center">
+                  <Button 
+                    variant="outline" 
+                    onClick={downloadTemplate}
+                    className="gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Baixar Template de Exemplo
+                  </Button>
+                </div>
+              </TabsContent>
+
+              {/* ABA ENTRADA DE TEXTO */}
+              <TabsContent value="text" className="space-y-4">
+                <div className="bg-white rounded-xl p-6 border-2 border-purple-200">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-stone-900 mb-2">
+                        💬 Digite ou Cole as Informações dos Treinamentos
+                      </label>
+                      <Textarea
+                        value={textInput}
+                        onChange={(e) => setTextInput(e.target.value)}
+                        placeholder="Cole aqui dados de e-mail, WhatsApp, mensagens, listas, anotações... A IA vai entender qualquer formato!"
+                        rows={12}
+                        className="w-full resize-none font-mono text-sm"
+                        disabled={uploading}
+                      />
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-stone-500">
+                        {textInput.length} caracteres
+                      </span>
+                      <Button
+                        onClick={handleTextSubmit}
+                        disabled={uploading || !textInput.trim()}
+                        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                      >
+                        <Brain className="w-4 h-4 mr-2" />
+                        Processar com IA
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* EXEMPLOS */}
+                <details className="bg-white rounded-xl p-4 border border-purple-200">
+                  <summary className="cursor-pointer font-semibold text-stone-900 mb-2">
+                    💡 Ver Exemplos de Texto
+                  </summary>
+                  <pre className="text-xs text-stone-600 whitespace-pre-wrap mt-3 p-3 bg-stone-50 rounded">
+                    {exemplosTexto}
+                  </pre>
+                </details>
+              </TabsContent>
+            </Tabs>
 
             {uploading && (
               <div className="space-y-4">
