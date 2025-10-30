@@ -10,9 +10,30 @@
       "type": "string",
       "description": "URL da foto de perfil"
     },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ativo",
+        "Inativo"
+      ],
+      "default": "Ativo",
+      "description": "Status do instrutor"
+    },
+    "internal_code": {
+      "type": "string",
+      "description": "C\u00f3digo interno do instrutor (Ex: 7083, 7772)"
+    },
+    "cpf": {
+      "type": "string",
+      "description": "CPF do instrutor"
+    },
+    "rg": {
+      "type": "string",
+      "description": "RG do instrutor"
+    },
     "hourly_rate": {
       "type": "number",
-      "description": "Valor por hora (Custo HP)"
+      "description": "Valor por hora (Custo HP / HR Aula)"
     },
     "specialty": {
       "type": "string",

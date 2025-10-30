@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, X, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function InstructorForm({ instructor, onChange, section }) {
   const [uploading, setUploading] = useState(false);
@@ -39,6 +40,21 @@ export default function InstructorForm({ instructor, onChange, section }) {
     const pix_keys = [...instructor.pix_keys];
     pix_keys[index] = { ...pix_keys[index], [field]: value };
     onChange({ pix_keys });
+  };
+
+  // Máscara para CPF
+  const formatCPF = (value) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+      .replace(/(-\d{2})\d+?$/, '$1');
+  };
+
+  const handleCPFChange = (e) => {
+    const formatted = formatCPF(e.target.value);
+    onChange({ cpf: formatted });
   };
 
   if (section === 'basic') {
@@ -94,6 +110,63 @@ export default function InstructorForm({ instructor, onChange, section }) {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select 
+              value={instructor.status || 'Ativo'} 
+              onValueChange={(value) => onChange({ status: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Ativo">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500" />
+                    Ativo
+                  </div>
+                </SelectItem>
+                <SelectItem value="Inativo">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-red-500" />
+                    Inativo
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="internal_code">Código Interno</Label>
+            <Input
+              id="internal_code"
+              value={instructor.internal_code || ''}
+              onChange={(e) => onChange({ internal_code: e.target.value })}
+              placeholder="Ex: 7083, 7772"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cpf">CPF</Label>
+            <Input
+              id="cpf"
+              value={instructor.cpf || ''}
+              onChange={handleCPFChange}
+              placeholder="000.000.000-00"
+              maxLength={14}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="rg">RG</Label>
+            <Input
+              id="rg"
+              value={instructor.rg || ''}
+              onChange={(e) => onChange({ rg: e.target.value })}
+              placeholder="00.000.000-0"
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="specialty">Especialidade</Label>
             <Input
               id="specialty"
@@ -125,7 +198,7 @@ export default function InstructorForm({ instructor, onChange, section }) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="hourly_rate">Valor por Hora (R$)</Label>
+            <Label htmlFor="hourly_rate">Valor HR Aula (R$)</Label>
             <Input
               id="hourly_rate"
               type="number"
@@ -301,7 +374,7 @@ export default function InstructorForm({ instructor, onChange, section }) {
                   id="bank_name"
                   value={bank_data.bank_name || ''}
                   onChange={(e) => handleBankDataChange('bank_name', e.target.value)}
-                  placeholder="Ex: Banco do Brasil"
+                  placeholder="Ex: Banco do Brasil, CEF"
                 />
               </div>
 

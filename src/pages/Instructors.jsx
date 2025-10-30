@@ -48,6 +48,10 @@ export default function InstructorsPage() {
 
   const [formData, setFormData] = useState({
     name: "",
+    status: "Ativo",
+    internal_code: "",
+    cpf: "",
+    rg: "",
     hourly_rate: "",
     specialty: "",
     email: "",
@@ -70,9 +74,34 @@ export default function InstructorsPage() {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", hourly_rate: "", specialty: "", email: "", phone: "" });
+    setFormData({ 
+      name: "", 
+      status: "Ativo",
+      internal_code: "",
+      cpf: "",
+      rg: "",
+      hourly_rate: "", 
+      specialty: "", 
+      email: "", 
+      phone: "" 
+    });
     setEditingInstructor(null);
     setShowForm(false);
+  };
+
+  // Máscara para CPF
+  const formatCPF = (value) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+      .replace(/(-\d{2})\d+?$/, '$1');
+  };
+
+  const handleCPFChange = (e) => {
+    const formatted = formatCPF(e.target.value);
+    setFormData({...formData, cpf: formatted});
   };
 
   return (
@@ -104,7 +133,7 @@ export default function InstructorsPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Nome *</Label>
+                    <Label htmlFor="name">Nome Completo *</Label>
                     <Input
                       id="name"
                       value={formData.name}
@@ -114,7 +143,35 @@ export default function InstructorsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="hourly_rate">Valor por Hora (R$)</Label>
+                    <Label htmlFor="internal_code">Código Interno</Label>
+                    <Input
+                      id="internal_code"
+                      value={formData.internal_code}
+                      onChange={(e) => setFormData({...formData, internal_code: e.target.value})}
+                      placeholder="Ex: 7083, 7772"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cpf">CPF</Label>
+                    <Input
+                      id="cpf"
+                      value={formData.cpf}
+                      onChange={handleCPFChange}
+                      placeholder="000.000.000-00"
+                      maxLength={14}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="rg">RG</Label>
+                    <Input
+                      id="rg"
+                      value={formData.rg}
+                      onChange={(e) => setFormData({...formData, rg: e.target.value})}
+                      placeholder="00.000.000-0"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="hourly_rate">Valor HR Aula (R$)</Label>
                     <Input
                       id="hourly_rate"
                       type="number"
@@ -183,12 +240,25 @@ export default function InstructorsPage() {
                         <User className="w-6 h-6 text-emerald-600" />
                       </div>
                     )}
-                    {instructor.specialty && (
-                      <Badge variant="outline" className="bg-stone-50">
-                        {instructor.specialty}
-                      </Badge>
-                    )}
+                    <div className="flex flex-col gap-1">
+                      {instructor.specialty && (
+                        <Badge variant="outline" className="bg-stone-50 w-fit">
+                          {instructor.specialty}
+                        </Badge>
+                      )}
+                      {instructor.internal_code && (
+                        <Badge variant="outline" className="bg-blue-50 w-fit text-xs">
+                          Cód: {instructor.internal_code}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
+                  <Badge className={instructor.status === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                    <div className="flex items-center gap-1">
+                      <div className={`w-2 h-2 rounded-full ${instructor.status === 'Ativo' ? 'bg-green-500' : 'bg-red-500'}`} />
+                      {instructor.status || 'Ativo'}
+                    </div>
+                  </Badge>
                 </div>
 
                 <h3 className="text-xl font-bold text-stone-900 mb-4">{instructor.name}</h3>
@@ -200,6 +270,13 @@ export default function InstructorsPage() {
                       R$ {(instructor.hourly_rate || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
+
+                  {instructor.cpf && (
+                    <div className="flex items-center gap-2 text-sm text-stone-600">
+                      <span>📄 CPF:</span>
+                      <span className="font-medium">{instructor.cpf}</span>
+                    </div>
+                  )}
 
                   {instructor.email && (
                     <div className="flex items-center gap-2 text-sm text-stone-600">
