@@ -74,7 +74,6 @@ export default function FormationsList({ formations, onChange }) {
           )}
         </div>
 
-        {/* FORMULÁRIO ADICIONAR */}
         {adding && (
           <Card className="mb-4 bg-stone-50">
             <CardContent className="p-4 space-y-4">
@@ -146,7 +145,6 @@ export default function FormationsList({ formations, onChange }) {
           </Card>
         )}
 
-        {/* LISTA DE FORMAÇÕES */}
         <div className="space-y-3">
           {formations.map((formation, index) => (
             <Card key={index} className="hover:shadow-md transition-shadow">
