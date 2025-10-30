@@ -55,7 +55,6 @@ export default function ProfessionalProfile({ instructor, onUpdate }) {
 
   return (
     <div className="space-y-6">
-      {/* HEADER */}
       <Card className="border-none bg-gradient-to-br from-purple-50 to-indigo-50">
         <CardContent className="p-6">
           <div className="flex items-start justify-between">
@@ -77,14 +76,12 @@ export default function ProfessionalProfile({ instructor, onUpdate }) {
         </CardContent>
       </Card>
 
-      {/* ERRO */}
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      {/* BOTÃO GERAR */}
       {!profile && (
         <Card>
           <CardContent className="p-12 text-center">
@@ -118,7 +115,6 @@ export default function ProfessionalProfile({ instructor, onUpdate }) {
         </Card>
       )}
 
-      {/* EDITOR DE PERFIL */}
       {profile && (
         <Card>
           <CardContent className="p-6 space-y-4">
@@ -192,7 +188,6 @@ export default function ProfessionalProfile({ instructor, onUpdate }) {
         </Card>
       )}
 
-      {/* INFORMAÇÕES */}
       <Card className="border-dashed">
         <CardContent className="p-4">
           <h4 className="font-semibold text-stone-900 mb-2">ℹ️ Como funciona:</h4>
