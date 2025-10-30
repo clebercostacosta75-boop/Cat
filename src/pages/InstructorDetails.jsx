@@ -13,7 +13,8 @@ import DocumentsManager from "@/components/instructor/DocumentsManager";
 import ProfessionalProfile from "@/components/instructor/ProfessionalProfile";
 
 export default function InstructorDetails() {
-  const { id } = useParams();
+  const urlParams = new URLSearchParams(window.location.search);
+  const id = urlParams.get('id');
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState(null);
 
@@ -32,6 +33,7 @@ export default function InstructorDetails() {
       queryClient.invalidateQueries({ queryKey: ['instructor', id] });
       queryClient.invalidateQueries({ queryKey: ['instructors'] });
       alert('Instrutor atualizado com sucesso!');
+      setFormData(null);
     },
   });
 

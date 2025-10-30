@@ -3,6 +3,8 @@ import Import from './pages/Import';
 import Schedule from './pages/Schedule';
 import Courses from './pages/Courses';
 import Reports from './pages/Reports';
+import Instructors from './pages/Instructors';
+import InstructorDetails from './pages/InstructorDetails';
 import Layout from './Layout.jsx';
 
 
@@ -12,6 +14,8 @@ export const PAGES = {
     "Schedule": Schedule,
     "Courses": Courses,
     "Reports": Reports,
+    "Instructors": Instructors,
+    "InstructorDetails": InstructorDetails,
 }
 
 export const pagesConfig = {

@@ -104,7 +104,7 @@ export default function InstructorsPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Nome</Label>
+                    <Label htmlFor="name">Nome *</Label>
                     <Input
                       id="name"
                       value={formData.name}
