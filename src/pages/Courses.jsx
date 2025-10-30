@@ -155,7 +155,7 @@ export default function CoursesPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="modality">📚 Modalidade</Label>
+                    <Label htmlFor="modality">Modalidade</Label>
                     <Select 
                       value={formData.modality} 
                       onValueChange={(value) => setFormData({...formData, modality: value})}
@@ -170,7 +170,7 @@ export default function CoursesPage() {
                     </Select>
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="category">🎓 Categoria</Label>
+                    <Label htmlFor="category">Categoria</Label>
                     <Select 
                       value={formData.category} 
                       onValueChange={(value) => setFormData({...formData, category: value})}

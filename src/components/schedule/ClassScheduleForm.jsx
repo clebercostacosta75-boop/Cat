@@ -80,6 +80,20 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     onSubmit(formData);
   };
 
+  // Função para adicionar emoji baseado no valor
+  const getModalityDisplay = (value) => {
+    if (value === 'Formação') return '📚 Formação';
+    if (value === 'Periódico') return '🔄 Periódico';
+    return value;
+  };
+
+  const getCategoryDisplay = (value) => {
+    if (value === 'Curso Presencial') return '🏢 Curso Presencial';
+    if (value === 'Curso Híbrido') return '🔀 Curso Híbrido';
+    if (value === 'Curso On-line') return '💻 Curso On-line';
+    return value;
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid md:grid-cols-2 gap-4">
@@ -218,19 +232,29 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
         <h3 className="font-semibold text-stone-900 mb-3">Informações Automáticas do Curso</h3>
         <div className="grid md:grid-cols-4 gap-4">
           <div className="space-y-2">
-            <Label>📚 Modalidade</Label>
-            <Input value={formData.modality} readOnly className="bg-stone-50" placeholder="Formação/Periódico" />
+            <Label>Modalidade</Label>
+            <Input 
+              value={formData.modality ? getModalityDisplay(formData.modality) : ''} 
+              readOnly 
+              className="bg-stone-50" 
+              placeholder="Formação/Periódico" 
+            />
           </div>
           <div className="space-y-2">
-            <Label>🎓 Categoria</Label>
-            <Input value={formData.category} readOnly className="bg-stone-50" placeholder="Presencial/Híbrido/Online" />
+            <Label>Categoria</Label>
+            <Input 
+              value={formData.category ? getCategoryDisplay(formData.category) : ''} 
+              readOnly 
+              className="bg-stone-50" 
+              placeholder="Presencial/Híbrido/Online" 
+            />
           </div>
           <div className="space-y-2">
-            <Label>⏱️ HR (Carga Horária)</Label>
+            <Label>HR (Carga Horária)</Label>
             <Input value={formData.duration_hours} readOnly className="bg-stone-50" />
           </div>
           <div className="space-y-2">
-            <Label>📅 Mês</Label>
+            <Label>Mês</Label>
             <Input value={formData.month} readOnly className="bg-stone-50" />
           </div>
         </div>
