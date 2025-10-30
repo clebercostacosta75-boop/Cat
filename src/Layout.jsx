@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -56,37 +55,37 @@ export default function Layout({ children }) {
         title: "Dashboard",
         url: createPageUrl("Dashboard"),
         icon: LayoutDashboard,
-        roles: ['admin', 'Administrador Master', 'Coordenador de Operações', 'Financeiro', 'Instrutor']
+        roles: ['admin', 'Administrador Master', 'Financeiro', 'Instrutor']
       },
       {
         title: "Cronograma",
         url: createPageUrl("Schedule"),
         icon: Calendar,
-        roles: ['admin', 'Administrador Master', 'Coordenador de Operações', 'Instrutor']
+        roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações', 'Instrutor']
       },
       {
         title: "Instrutores",
         url: createPageUrl("Instructors"),
         icon: Users,
-        roles: ['admin', 'Administrador Master', 'Coordenador de Operações']
+        roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
       },
       {
         title: "Empresas",
         url: createPageUrl("Companies"),
         icon: Building2,
-        roles: ['admin', 'Administrador Master', 'Coordenador de Operações', 'Financeiro']
+        roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
       },
       {
         title: "Contratadas",
         url: createPageUrl("Contractors"),
         icon: Building2,
-        roles: ['admin', 'Administrador Master', 'Coordenador de Operações', 'Financeiro']
+        roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
       },
       {
         title: "Cursos",
         url: createPageUrl("Courses"),
         icon: BookOpen,
-        roles: ['admin', 'Administrador Master', 'Coordenador de Operações']
+        roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
       },
       {
         title: "Gerar BMM",
@@ -98,13 +97,13 @@ export default function Layout({ children }) {
         title: "Importar Excel",
         url: createPageUrl("Import"),
         icon: Upload,
-        roles: ['admin', 'Administrador Master', 'Coordenador de Operações']
+        roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
       },
       {
         title: "Relatórios",
         url: createPageUrl("Reports"),
         icon: BarChart3,
-        roles: ['admin', 'Administrador Master', 'Coordenador de Operações', 'Financeiro']
+        roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
       },
     ];
 

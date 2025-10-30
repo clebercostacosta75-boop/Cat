@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -7,13 +8,14 @@ import { Download, Building2, Calendar, DollarSign, Mail, MessageCircle, Send, C
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [instructorData, setInstructorData] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadUser = async () => {
@@ -44,19 +46,24 @@ export default function Dashboard() {
     return <DashboardInstrutor instructor={instructorData} />;
   }
 
-  if (userRole === 'Financeiro') {
-    return <DashboardFinanceiro />;
-  }
-
   if (userRole === 'Coordenador de Operações') {
-    return <DashboardCoordenador />;
+    // Coordenador não tem Dashboard, redirecionar para Cronograma
+    useEffect(() => {
+      navigate(createPageUrl('Schedule'));
+    }, [navigate]);
+    return (
+      <div className="p-8 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+        <p className="ml-3 text-stone-600">Redirecionando...</p>
+      </div>
+    );
   }
 
-  // Admin Master ou admin
+  // Admin Master e Financeiro
   return <DashboardAdminMaster />;
 }
 
-// ===== DASHBOARD ADMIN MASTER =====
+// ===== DASHBOARD ADMIN MASTER E FINANCEIRO =====
 function DashboardAdminMaster() {
   const [sendingNotifications, setSendingNotifications] = useState({});
   const [notificationResults, setNotificationResults] = useState({});
@@ -364,157 +371,6 @@ function DashboardAdminMaster() {
             </div>
           </AlertDescription>
         </Alert>
-      </div>
-    </div>
-  );
-}
-
-// ===== DASHBOARD COORDENADOR =====
-function DashboardCoordenador() {
-  return <DashboardAdminMaster />;
-}
-
-// ===== DASHBOARD FINANCEIRO =====
-function DashboardFinanceiro() {
-  const { data: completedClasses = [] } = useQuery({
-    queryKey: ['completedClassesFinanceiro'],
-    queryFn: async () => {
-      const allClasses = await base44.entities.ClassSchedule.list();
-      return allClasses.filter(c => c.status === 'Concluído');
-    },
-    initialData: [],
-  });
-
-  const { data: companies = [] } = useQuery({
-    queryKey: ['companies'],
-    queryFn: () => base44.entities.Company.list(),
-    initialData: [],
-  });
-
-  const tableData = React.useMemo(() => {
-    const groupedData = {};
-
-    completedClasses.forEach(classItem => {
-      const month = classItem.month || 'Sem mês';
-      const company = classItem.company_name || 'Sem empresa';
-      const key = `${month}|${company}`;
-
-      if (!groupedData[key]) {
-        groupedData[key] = {
-          month,
-          company,
-          classCount: 0,
-          studentsCount: 0
-        };
-      }
-
-      groupedData[key].classCount += 1;
-      groupedData[key].studentsCount += classItem.students_count || 0;
-    });
-
-    return Object.values(groupedData).sort((a, b) => {
-      if (a.month !== b.month) return a.month.localeCompare(b.month);
-      return a.company.localeCompare(b.company);
-    });
-  }, [completedClasses]);
-
-  const totalTreinamentos = tableData.reduce((sum, row) => sum + row.classCount, 0);
-  const totalAlunos = tableData.reduce((sum, row) => sum + row.studentsCount, 0);
-  const empresasAtendidas = new Set(tableData.map(row => row.company)).size;
-
-  return (
-    <div className="p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
-          <div className="flex-shrink-0">
-            <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
-              alt="CAT Logo" 
-              className="h-24 w-auto"
-            />
-          </div>
-          <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl md:text-4xl font-bold text-stone-900">Dashboard Financeiro</h1>
-            <p className="text-stone-600">Treinamentos concluídos por mês e empresa</p>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card className="border-none shadow-xl bg-gradient-to-br from-blue-50 to-cyan-50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-stone-600">Total de Treinamentos</CardTitle>
-              <Calendar className="w-5 h-5 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">{totalTreinamentos}</div>
-              <p className="text-xs text-stone-600 mt-1">Turmas concluídas</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-xl bg-gradient-to-br from-purple-50 to-violet-50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-stone-600">Total de Alunos</CardTitle>
-              <BookOpen className="w-5 h-5 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-purple-600">{totalAlunos}</div>
-              <p className="text-xs text-stone-600 mt-1">Participantes treinados</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-xl bg-gradient-to-br from-emerald-50 to-teal-50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-stone-600">Empresas Atendidas</CardTitle>
-              <Building2 className="w-5 h-5 text-emerald-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-emerald-600">{empresasAtendidas}</div>
-              <p className="text-xs text-stone-600 mt-1">Clientes únicos</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card className="border-none shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold text-stone-900">
-              Treinamentos por Mês e Empresa
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-stone-50">
-                    <TableHead className="font-bold">Mês</TableHead>
-                    <TableHead className="font-bold">Empresa</TableHead>
-                    <TableHead className="font-bold text-right">Quantidade</TableHead>
-                    <TableHead className="font-bold text-right">Alunos</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tableData.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-12 text-stone-500">
-                        Nenhum treinamento concluído encontrado
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    tableData.map((row, index) => (
-                      <TableRow key={index} className="hover:bg-stone-50">
-                        <TableCell className="font-medium">{row.month}</TableCell>
-                        <TableCell>{row.company}</TableCell>
-                        <TableCell className="text-right font-semibold text-blue-600">
-                          {row.classCount}
-                        </TableCell>
-                        <TableCell className="text-right">{row.studentsCount}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
