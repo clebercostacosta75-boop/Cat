@@ -1,20 +1,19 @@
 import React, { useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Save, User, MapPin, CreditCard, GraduationCap, FileText, Sparkles } from "lucide-react";
+import { ArrowLeft, Save, User, MapPin, CreditCard, GraduationCap, Sparkles } from "lucide-react";
 import { createPageUrl } from "@/utils";
-import InstructorForm from "../components/instructor/InstructorForm";
-import FormationsList from "../components/instructor/FormationsList";
-import DocumentsManager from "../components/instructor/DocumentsManager";
-import ProfessionalProfile from "../components/instructor/ProfessionalProfile";
+import InstructorForm from "@/components/instructor/InstructorForm";
+import FormationsList from "@/components/instructor/FormationsList";
+import DocumentsManager from "@/components/instructor/DocumentsManager";
+import ProfessionalProfile from "@/components/instructor/ProfessionalProfile";
 
 export default function InstructorDetails() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState(null);
 
@@ -73,7 +72,6 @@ export default function InstructorDetails() {
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link to={createPageUrl("Instructors")}>
@@ -96,7 +94,6 @@ export default function InstructorDetails() {
           </Button>
         </div>
 
-        {/* Tabs */}
         <Card className="border-none shadow-xl">
           <CardContent className="p-6">
             <Tabs defaultValue="basic" className="w-full">
@@ -123,7 +120,6 @@ export default function InstructorDetails() {
                 </TabsTrigger>
               </TabsList>
 
-              {/* ABA: DADOS BÁSICOS */}
               <TabsContent value="basic">
                 <InstructorForm 
                   instructor={currentData}
@@ -132,7 +128,6 @@ export default function InstructorDetails() {
                 />
               </TabsContent>
 
-              {/* ABA: ENDEREÇO */}
               <TabsContent value="address">
                 <InstructorForm 
                   instructor={currentData}
@@ -141,7 +136,6 @@ export default function InstructorDetails() {
                 />
               </TabsContent>
 
-              {/* ABA: FINANCEIRO */}
               <TabsContent value="financial">
                 <InstructorForm 
                   instructor={currentData}
@@ -150,7 +144,6 @@ export default function InstructorDetails() {
                 />
               </TabsContent>
 
-              {/* ABA: QUALIFICAÇÕES */}
               <TabsContent value="qualifications" className="space-y-6">
                 <FormationsList 
                   formations={currentData.formations || []}
@@ -164,7 +157,6 @@ export default function InstructorDetails() {
                 />
               </TabsContent>
 
-              {/* ABA: PERFIL PROFISSIONAL COM IA */}
               <TabsContent value="profile">
                 <ProfessionalProfile 
                   instructor={currentData}
