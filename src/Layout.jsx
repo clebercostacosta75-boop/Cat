@@ -63,8 +63,8 @@ export default function Layout({ children }) {
                 <Calendar className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="font-bold text-stone-900">Sistema de Treinamento</h2>
-                <p className="text-xs text-stone-500">Gestão de Cronogramas</p>
+                <h2 className="font-bold text-stone-900">TreinaUp</h2>
+                <p className="text-xs text-stone-500">Gestão de Treinamentos</p>
               </div>
             </div>
           </SidebarHeader>
@@ -101,7 +101,7 @@ export default function Layout({ children }) {
           <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200 px-6 py-4 md:hidden sticky top-0 z-10">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="hover:bg-stone-100 p-2 rounded-lg transition-colors duration-200" />
-              <h1 className="text-xl font-semibold text-stone-900">Sistema de Treinamento</h1>
+              <h1 className="text-xl font-semibold text-stone-900">TreinaUp</h1>
             </div>
           </header>
 
@@ -109,7 +109,6 @@ export default function Layout({ children }) {
             {children}
           </div>
           
-          {/* Botão Flutuante da IA */}
           <IAFloatingButton />
         </main>
       </div>
