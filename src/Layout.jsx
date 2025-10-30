@@ -69,8 +69,12 @@ export default function Layout({ children }) {
         <Sidebar className="border-r border-stone-200">
           <SidebarHeader className="border-b border-stone-200 p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Calendar className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+                <img 
+                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
+                  alt="CAT Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
                 <h2 className="font-bold text-stone-900">Sistema de Treinamento</h2>
@@ -111,6 +115,11 @@ export default function Layout({ children }) {
           <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200 px-6 py-4 md:hidden sticky top-0 z-10">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="hover:bg-stone-100 p-2 rounded-lg transition-colors duration-200" />
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
+                alt="CAT Logo" 
+                className="h-8 w-auto"
+              />
               <h1 className="text-xl font-semibold text-stone-900">Sistema de Treinamento</h1>
             </div>
           </header>
