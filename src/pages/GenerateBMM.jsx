@@ -59,11 +59,13 @@ export default function GenerateBMM() {
         classItem.status === "Concluído"
       );
 
-      // CRUZAMENTO 2: Buscar preços dos cursos
+      // CRUZAMENTO 2: Buscar preços dos cursos e informações dos instrutores
       const courses = await base44.entities.Course.list();
+      const instructors = await base44.entities.Instructor.list();
       
       const bmmItems = await Promise.all(completedClasses.map(async (classItem) => {
         const course = courses.find(c => c.name === classItem.training_name);
+        const instructor = instructors.find(i => i.name === classItem.instructor_name);
         
         // Buscar preço específico para a empresa
         let unitPrice = course?.standard_value || 0;
@@ -97,6 +99,7 @@ export default function GenerateBMM() {
           start_date: classItem.start_date,
           end_date: classItem.end_date,
           instructor_name: classItem.instructor_name,
+          instructor_cpf: instructor?.cpf || '-',
           training_schedule: classItem.training_schedule,
           location: classItem.location,
           total_daily_cost: totalDailyCost
@@ -209,9 +212,10 @@ export default function GenerateBMM() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="model3">📋 Modelo Allbras (Novo)</SelectItem>
-                    <SelectItem value="model1">📄 Demonstrativo Físico-Financeiro</SelectItem>
-                    <SelectItem value="model2">📋 Lista de Treinamentos Normativos</SelectItem>
+                    <SelectItem value="model3">📋 BMM 01 - Modelo Allbras</SelectItem>
+                    <SelectItem value="model4">🌿 BMM 02 - Agropalma Treinamentos</SelectItem>
+                    <SelectItem value="model1">📄 Demonstrativo Físico-Financeiro (Legado)</SelectItem>
+                    <SelectItem value="model2">📋 Lista Treinamentos Normativos (Legado)</SelectItem>
                     {templates.map(template => (
                       <SelectItem key={template.id} value={template.id}>
                         {template.name}
@@ -264,6 +268,10 @@ export default function GenerateBMM() {
               <BMMModel3 data={bmmData} />
             )}
 
+            {selectedTemplate === "model4" && (
+              <BMMModel4 data={bmmData} />
+            )}
+
             {selectedTemplate === "model1" && bmmData && (
               <BMMModel1 data={bmmData} />
             )}
@@ -274,7 +282,7 @@ export default function GenerateBMM() {
           </CardContent>
         </Card>
 
-        {!bmmData && selectedTemplate !== "model3" && (
+        {!bmmData && !['model3', 'model4'].includes(selectedTemplate) && (
           <Card className="border-none shadow-lg">
             <CardContent className="p-12 text-center">
               <FileText className="w-16 h-16 mx-auto mb-4 text-stone-300" />
@@ -290,7 +298,7 @@ export default function GenerateBMM() {
   );
 }
 
-// Modelo 3: Modelo Allbras (Novo)
+// Modelo 3: BMM 01 - Modelo Allbras
 function BMMModel3({ data }) {
   const items = data?.items || [];
   const emptyRows = Math.max(0, 9 - items.length);
@@ -507,7 +515,143 @@ function BMMModel3({ data }) {
   );
 }
 
-// Modelo 1: Demonstrativo Físico-Financeiro
+// Modelo 4: BMM 02 - Agropalma Treinamentos Normativos
+function BMMModel4({ data }) {
+  const items = data?.items || [];
+  // Adjusted for default items in case data is empty
+  const defaultItemsCount = 3; 
+  const emptyRows = Math.max(0, 10 - items.length - (items.length === 0 ? defaultItemsCount : 0));
+
+  return (
+    <div className="bg-white p-8 print:p-4" style={{ fontFamily: 'Arial, sans-serif' }}>
+      {/* Cabeçalho Verde Agropalma */}
+      <div className="bg-gradient-to-r from-green-700 to-green-800 text-white p-4 mb-1 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="text-4xl">🌿</div>
+          <div>
+            <h2 className="text-2xl font-bold">agropalma</h2>
+          </div>
+        </div>
+        <div className="text-center flex-1">
+          <h1 className="text-xl font-bold">
+            Treinamentos Normativos - Mês de {data?.month || 'Janeiro'} de {data?.year || '2025'} - {data?.company?.name || 'Agropalma'} {data?.location || 'Tailândia'}
+          </h1>
+        </div>
+        <div className="flex gap-3">
+          <div className="w-16 h-16 bg-white rounded"></div>
+          <div className="w-16 h-16 bg-white rounded-full"></div>
+        </div>
+      </div>
+
+      {/* Tabela de Treinamentos */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[10px]">
+          <thead>
+            <tr className="bg-gray-700 text-white">
+              <th className="border border-gray-400 p-2 font-bold">NOME DO TREINAMENTO</th>
+              <th className="border border-gray-400 p-2 font-bold">MODALIDADE</th>
+              <th className="border border-gray-400 p-2 font-bold">H - PRÁTICA</th>
+              <th className="border border-gray-400 p-2 font-bold">PERÍODO</th>
+              <th className="border border-gray-400 p-2 font-bold">HORÁRIO</th>
+              <th className="border border-gray-400 p-2 font-bold">NOME DO INSTRUTOR</th>
+              <th className="border border-gray-400 p-2 font-bold">CPF</th>
+              <th className="border border-gray-400 p-2 font-bold">MÊS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.length > 0 ? (
+              items.map((item, index) => (
+                <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                  <td className="border border-gray-400 p-2">{item.training_name}</td>
+                  <td className="border border-gray-400 p-2 text-center">{item.modality || 'FORMAÇÃO'}</td>
+                  <td className="border border-gray-400 p-2 text-center">{item.duration_hours || 0}</td>
+                  <td className="border border-gray-400 p-2 text-center">{item.start_date || '08/10/2025'}</td>
+                  <td className="border border-gray-400 p-2 text-center">{item.training_schedule || '07:00 às 15:00'}</td>
+                  <td className="border border-gray-400 p-2">{item.instructor_name || '-'}</td>
+                  <td className="border border-gray-400 p-2 text-center">{item.instructor_cpf || '845.321.812-91'}</td>
+                  <td className="border border-gray-400 p-2 text-center">{data?.month || 'OUTUBRO'}</td>
+                </tr>
+              ))
+            ) : (
+              <>
+                <tr>
+                  <td className="border border-gray-400 p-2">NR13 Pv Caldeireiro</td>
+                  <td className="border border-gray-400 p-2 text-center">FORMAÇÃO</td>
+                  <td className="border border-gray-400 p-2 text-center">20</td>
+                  <td className="border border-gray-400 p-2 text-center">08/10/2025</td>
+                  <td className="border border-gray-400 p-2 text-center">07:00 às 15:00</td>
+                  <td className="border border-gray-400 p-2">RAIMUNDO PAES DE OLIVEIRA</td>
+                  <td className="border border-gray-400 p-2 text-center">845.321.812-91</td>
+                  <td className="border border-gray-400 p-2 text-center">OUTUBRO</td>
+                </tr>
+                <tr className="bg-gray-50">
+                  <td className="border border-gray-400 p-2">NR11 Retroescavadeira</td>
+                  <td className="border border-gray-400 p-2 text-center">FORMAÇÃO</td>
+                  <td className="border border-gray-400 p-2 text-center">20</td>
+                  <td className="border border-gray-400 p-2 text-center">08/10/2025</td>
+                  <td className="border border-gray-400 p-2 text-center">07:00 às 15:00</td>
+                  <td className="border border-gray-400 p-2">RAIMUNDO PAES DE OLIVEIRA</td>
+                  <td className="border border-gray-400 p-2 text-center">845.321.812-91</td>
+                  <td className="border border-gray-400 p-2 text-center">OUTUBRO</td>
+                </tr>
+                <tr>
+                  <td className="border border-gray-400 p-2">NR12 Segurança em Máquinas (agropalma)</td>
+                  <td className="border border-gray-400 p-2 text-center">PERIÓDICO</td>
+                  <td className="border border-gray-400 p-2 text-center">5</td>
+                  <td className="border border-gray-400 p-2 text-center">14/10/2025</td>
+                  <td className="border border-gray-400 p-2 text-center">07:00 às 12:00</td>
+                  <td className="border border-gray-400 p-2">RAIMUNDO PAES DE OLIVEIRA</td>
+                  <td className="border border-gray-400 p-2 text-center">845.321.812-91</td>
+                  <td className="border border-gray-400 p-2 text-center">OUTUBRO</td>
+                </tr>
+              </>
+            )}
+
+            {/* Linhas vazias para completar */}
+            {Array.from({ length: emptyRows }).map((_, i) => (
+              <tr key={`empty-${i}`} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                <td className="border border-gray-400 p-2">&nbsp;</td>
+                <td className="border border-gray-400 p-2">&nbsp;</td>
+                <td className="border border-gray-400 p-2">&nbsp;</td>
+                <td className="border border-gray-400 p-2">&nbsp;</td>
+                <td className="border border-gray-400 p-2">&nbsp;</td>
+                <td className="border border-gray-400 p-2">&nbsp;</td>
+                <td className="border border-gray-400 p-2">&nbsp;</td>
+                <td className="border border-gray-400 p-2">&nbsp;</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Rodapé com totalizadores */}
+      {data && (
+        <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-300">
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div>
+              <p className="text-stone-600">Total de Treinamentos:</p>
+              <p className="text-xl font-bold text-green-700">{items.length}</p>
+            </div>
+            <div>
+              <p className="text-stone-600">Carga Horária Total:</p>
+              <p className="text-xl font-bold text-green-700">
+                {items.reduce((sum, item) => sum + (item.duration_hours || 0), 0)}h
+              </p>
+            </div>
+            <div>
+              <p className="text-stone-600">Alunos Treinados:</p>
+              <p className="text-xl font-bold text-green-700">
+                {items.reduce((sum, item) => sum + (item.students_count || 0), 0)}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Modelo 1: Demonstrativo Físico-Financeiro (Legado)
 function BMMModel1({ data }) {
   return (
     <div className="bg-white p-8 print:p-4" style={{ fontFamily: 'Arial, sans-serif' }}>
@@ -647,7 +791,7 @@ function BMMModel1({ data }) {
   );
 }
 
-// Modelo 2: Lista de Treinamentos Normativos
+// Modelo 2: Lista de Treinamentos Normativos (Legado)
 function BMMModel2({ data }) {
   return (
     <div className="bg-white p-8 print:p-4" style={{ fontFamily: 'Arial, sans-serif' }}>
