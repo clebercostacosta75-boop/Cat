@@ -1,0 +1,21 @@
+{
+  "name": "CourseCategory",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome da categoria"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o da categoria"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Emoji ou \u00edcone da categoria"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

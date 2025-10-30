@@ -4,7 +4,7 @@
   "properties": {
     "name": {
       "type": "string",
-      "description": "Nome do curso/treinamento"
+      "description": "Nome oficial do curso"
     },
     "modality": {
       "type": "string",
@@ -16,20 +16,85 @@
     },
     "category": {
       "type": "string",
-      "enum": [
-        "Presencial",
-        "H\u00edbrido",
-        "Online"
-      ],
-      "description": "Categoria do treinamento"
+      "description": "Categoria do treinamento (refer\u00eancia \u00e0 CourseCategory)"
     },
     "duration_hours": {
       "type": "number",
-      "description": "Dura\u00e7\u00e3o em horas (HR)"
+      "description": "Carga hor\u00e1ria em horas"
+    },
+    "validity": {
+      "type": "string",
+      "description": "Validade do treinamento (Ex: 12 meses, 24 meses)"
+    },
+    "schedules": {
+      "type": "object",
+      "properties": {
+        "morning": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "string",
+              "description": "Hor\u00e1rio de entrada manh\u00e3 (Ex: 07:00)"
+            },
+            "end": {
+              "type": "string",
+              "description": "Hor\u00e1rio de sa\u00edda manh\u00e3 (Ex: 11:00)"
+            }
+          }
+        },
+        "afternoon": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "string",
+              "description": "Hor\u00e1rio de entrada tarde (Ex: 13:00)"
+            },
+            "end": {
+              "type": "string",
+              "description": "Hor\u00e1rio de sa\u00edda tarde (Ex: 17:00)"
+            }
+          }
+        },
+        "night": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "string",
+              "description": "Hor\u00e1rio de entrada noturno (Ex: 19:00)"
+            },
+            "end": {
+              "type": "string",
+              "description": "Hor\u00e1rio de sa\u00edda noturno (Ex: 23:00)"
+            }
+          }
+        }
+      },
+      "description": "Hor\u00e1rios padr\u00e3o estruturados por turno"
     },
     "standard_value": {
       "type": "number",
-      "description": "Valor padr\u00e3o Agropalma"
+      "description": "Valor padr\u00e3o (pre\u00e7o de tabela)"
+    },
+    "company_prices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "company_name": {
+            "type": "string",
+            "description": "Nome da empresa"
+          },
+          "company_id": {
+            "type": "string",
+            "description": "ID da empresa"
+          },
+          "negotiated_value": {
+            "type": "number",
+            "description": "Valor negociado para esta empresa"
+          }
+        }
+      },
+      "description": "Valores espec\u00edficos por empresa"
     },
     "description": {
       "type": "string",
