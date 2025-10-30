@@ -59,7 +59,6 @@ export default function DocumentsManager({ documents, onChange, instructorId }) 
           </h3>
         </div>
 
-        {/* FORMULÁRIO DE UPLOAD */}
         <Card className="mb-4 bg-stone-50">
           <CardContent className="p-4 space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
@@ -123,7 +122,6 @@ export default function DocumentsManager({ documents, onChange, instructorId }) 
           </CardContent>
         </Card>
 
-        {/* LISTA DE DOCUMENTOS */}
         <div className="space-y-2">
           {documents.map((doc, index) => (
             <Card key={index} className="hover:shadow-md transition-shadow">
