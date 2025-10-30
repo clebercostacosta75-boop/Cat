@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -5,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Mail, Phone, User } from "lucide-react";
+import { Plus, Mail, Phone, User, Eye } from "lucide-react"; // Added Eye icon
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom"; // Added Link import
+import { createPageUrl } from "@/utils"; // Added createPageUrl import
 
 export default function InstructorsPage() {
   const [showForm, setShowForm] = useState(false);
@@ -169,14 +172,24 @@ export default function InstructorsPage() {
             <Card key={instructor.id} className="border-none shadow-lg hover:shadow-xl transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-emerald-600" />
+                  <div className="flex items-center gap-3"> {/* Group photo and badge */}
+                    {instructor.photo_url ? (
+                      <img 
+                        src={instructor.photo_url} 
+                        alt={instructor.name}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                        <User className="w-6 h-6 text-emerald-600" />
+                      </div>
+                    )}
+                    {instructor.specialty && ( // Badge now inside the flex container
+                      <Badge variant="outline" className="bg-stone-50">
+                        {instructor.specialty}
+                      </Badge>
+                    )}
                   </div>
-                  {instructor.specialty && (
-                    <Badge variant="outline" className="bg-stone-50">
-                      {instructor.specialty}
-                    </Badge>
-                  )}
                 </div>
 
                 <h3 className="text-xl font-bold text-stone-900 mb-4">{instructor.name}</h3>
@@ -205,19 +218,17 @@ export default function InstructorsPage() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleEdit(instructor)}
-                    className="flex-1"
-                  >
-                    Editar
-                  </Button>
+                  <Link to={createPageUrl(`InstructorDetails?id=${instructor.id}`)} className="flex-1"> {/* Link to details page */}
+                    <Button variant="default" size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700">
+                      <Eye className="w-4 h-4 mr-1" />
+                      Ver Detalhes
+                    </Button>
+                  </Link>
                   <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={() => deleteMutation.mutate(instructor.id)}
-                    className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50" // Removed flex-1
                   >
                     Excluir
                   </Button>
