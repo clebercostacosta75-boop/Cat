@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar, Eye } from "lucide-react";
+import { Plus, Calendar, Eye, Clock, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -65,6 +65,12 @@ export default function SchedulePage() {
     'Cancelado': 'bg-red-100 text-red-800 border-red-200',
   };
 
+  const scheduleColors = {
+    'Manhã': 'bg-amber-100 text-amber-800',
+    'Tarde': 'bg-orange-100 text-orange-800',
+    'Noite': 'bg-indigo-100 text-indigo-800',
+  };
+
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -116,7 +122,7 @@ export default function SchedulePage() {
                       </Badge>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-3">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
                       <div className="flex items-center gap-2 text-sm text-stone-600">
                         <Calendar className="w-4 h-4" />
                         <span>{classItem.start_date} a {classItem.end_date}</span>
@@ -127,6 +133,26 @@ export default function SchedulePage() {
                       <div className="text-sm text-stone-600">
                         👥 Alunos: {classItem.students_count || 0}
                       </div>
+                      {classItem.specific_days && (
+                        <div className="flex items-center gap-2 text-sm text-stone-600">
+                          <Calendar className="w-4 h-4" />
+                          <span>{classItem.specific_days}</span>
+                        </div>
+                      )}
+                      {classItem.training_schedule && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Clock className="w-4 h-4 text-stone-600" />
+                          <Badge className={scheduleColors[classItem.training_schedule]}>
+                            {classItem.training_schedule}
+                          </Badge>
+                        </div>
+                      )}
+                      {classItem.instructor_name && (
+                        <div className="flex items-center gap-2 text-sm text-stone-600">
+                          <User className="w-4 h-4" />
+                          <span>{classItem.instructor_name}</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap gap-2">

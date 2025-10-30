@@ -16,6 +16,9 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     status: "Agendado",
     start_date: "",
     end_date: "",
+    specific_days: "",
+    training_schedule: "",
+    instructor_name: "",
     modality: "",
     category: "",
     duration_hours: "",
@@ -33,6 +36,12 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
     queryFn: () => base44.entities.Company.list(),
+    initialData: [],
+  });
+
+  const { data: instructors = [] } = useQuery({
+    queryKey: ['instructors'],
+    queryFn: () => base44.entities.Instructor.list(),
     initialData: [],
   });
 
@@ -162,6 +171,46 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
             onChange={(e) => handleChange('end_date', e.target.value)}
           />
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="specific_days">Dias em Específico</Label>
+          <Input
+            id="specific_days"
+            value={formData.specific_days}
+            onChange={(e) => handleChange('specific_days', e.target.value)}
+            placeholder="Ex: Segunda, Quarta, Sexta"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="training_schedule">Horário do Treinamento</Label>
+          <Select value={formData.training_schedule} onValueChange={(value) => handleChange('training_schedule', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o horário" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Manhã">Manhã</SelectItem>
+              <SelectItem value="Tarde">Tarde</SelectItem>
+              <SelectItem value="Noite">Noite</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="instructor_name">Instrutor</Label>
+          <Select value={formData.instructor_name} onValueChange={(value) => handleChange('instructor_name', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o instrutor" />
+            </SelectTrigger>
+            <SelectContent>
+              {instructors.map(instructor => (
+                <SelectItem key={instructor.id} value={instructor.name}>
+                  {instructor.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Campos Automáticos (Somente Leitura) */}
@@ -170,11 +219,11 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
         <div className="grid md:grid-cols-4 gap-4">
           <div className="space-y-2">
             <Label>Modalidade</Label>
-            <Input value={formData.modality} readOnly className="bg-stone-50" />
+            <Input value={formData.modality} readOnly className="bg-stone-50" placeholder="Formação/Periódico" />
           </div>
           <div className="space-y-2">
             <Label>Categoria</Label>
-            <Input value={formData.category} readOnly className="bg-stone-50" />
+            <Input value={formData.category} readOnly className="bg-stone-50" placeholder="Presencial/Híbrido/Online" />
           </div>
           <div className="space-y-2">
             <Label>HR (Carga Horária)</Label>

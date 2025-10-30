@@ -51,7 +51,8 @@ export default function CoursesPage() {
     standard_value: "",
     duration_hours: "",
     description: "",
-    category: "Outro"
+    modality: "Formação",
+    category: "Curso Presencial"
   });
 
   const handleSubmit = (e) => {
@@ -70,18 +71,27 @@ export default function CoursesPage() {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", standard_value: "", duration_hours: "", description: "", category: "Outro" });
+    setFormData({ 
+      name: "", 
+      standard_value: "", 
+      duration_hours: "", 
+      description: "", 
+      modality: "Formação",
+      category: "Curso Presencial" 
+    });
     setEditingCourse(null);
     setShowForm(false);
   };
 
+  const modalityColors = {
+    'Formação': 'bg-blue-100 text-blue-800 border-blue-200',
+    'Periódico': 'bg-purple-100 text-purple-800 border-purple-200',
+  };
+
   const categoryColors = {
-    'Segurança': 'bg-red-100 text-red-800 border-red-200',
-    'Operacional': 'bg-blue-100 text-blue-800 border-blue-200',
-    'Técnico': 'bg-purple-100 text-purple-800 border-purple-200',
-    'Gestão': 'bg-green-100 text-green-800 border-green-200',
-    'Compliance': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    'Outro': 'bg-stone-100 text-stone-800 border-stone-200',
+    'Curso Presencial': 'bg-green-100 text-green-800 border-green-200',
+    'Curso Híbrido': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    'Curso On-line': 'bg-cyan-100 text-cyan-800 border-cyan-200',
   };
 
   return (
@@ -145,6 +155,21 @@ export default function CoursesPage() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="modality">Modalidade</Label>
+                    <Select 
+                      value={formData.modality} 
+                      onValueChange={(value) => setFormData({...formData, modality: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Formação">Formação</SelectItem>
+                        <SelectItem value="Periódico">Periódico</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="category">Categoria</Label>
                     <Select 
                       value={formData.category} 
@@ -154,12 +179,9 @@ export default function CoursesPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Segurança">Segurança</SelectItem>
-                        <SelectItem value="Operacional">Operacional</SelectItem>
-                        <SelectItem value="Técnico">Técnico</SelectItem>
-                        <SelectItem value="Gestão">Gestão</SelectItem>
-                        <SelectItem value="Compliance">Compliance</SelectItem>
-                        <SelectItem value="Outro">Outro</SelectItem>
+                        <SelectItem value="Curso Presencial">Curso Presencial</SelectItem>
+                        <SelectItem value="Curso Híbrido">Curso Híbrido</SelectItem>
+                        <SelectItem value="Curso On-line">Curso On-line</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -195,12 +217,22 @@ export default function CoursesPage() {
                   <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
                     <BookOpen className="w-6 h-6 text-emerald-600" />
                   </div>
-                  <Badge className={`${categoryColors[course.category]} border`}>
-                    {course.category}
-                  </Badge>
+                  <div className="flex gap-2">
+                    {course.modality && (
+                      <Badge className={`${modalityColors[course.modality]} border`}>
+                        {course.modality}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
                 <h3 className="text-xl font-bold text-stone-900 mb-2">{course.name}</h3>
+
+                {course.category && (
+                  <Badge className={`${categoryColors[course.category]} border mb-3`}>
+                    {course.category}
+                  </Badge>
+                )}
 
                 {course.description && (
                   <p className="text-sm text-stone-600 mb-4 line-clamp-2">{course.description}</p>
