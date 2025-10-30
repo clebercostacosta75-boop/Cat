@@ -1,0 +1,61 @@
+{
+  "name": "ClassDailyRecord",
+  "type": "object",
+  "properties": {
+    "class_schedule_id": {
+      "type": "string",
+      "description": "ID da turma (ClassSchedule) \u00e0 qual este lan\u00e7amento pertence"
+    },
+    "specific_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Dia espec\u00edfico da atividade"
+    },
+    "schedule_time": {
+      "type": "string",
+      "description": "Hor\u00e1rio (Ex: 07:00 \u00e0s 15:00)"
+    },
+    "instructor_name": {
+      "type": "string",
+      "description": "Nome do instrutor"
+    },
+    "lunch_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Custo de Almo\u00e7o (R$)"
+    },
+    "transport_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Custo de Transporte (R$)"
+    },
+    "coffee_break_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Custo de Coffee Break (R$)"
+    },
+    "taxi_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Custo de Taxi (R$)"
+    },
+    "hp_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Custo HP (R$)"
+    },
+    "total_daily_cost": {
+      "type": "number",
+      "description": "Custo total do dia (soma de todos os custos)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es do dia"
+    }
+  },
+  "required": [
+    "class_schedule_id",
+    "specific_date",
+    "instructor_name"
+  ]
+}

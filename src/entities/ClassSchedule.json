@@ -1,0 +1,68 @@
+{
+  "name": "ClassSchedule",
+  "type": "object",
+  "properties": {
+    "training_name": {
+      "type": "string",
+      "description": "Nome do treinamento (curso)"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Nome da empresa"
+    },
+    "location": {
+      "type": "string",
+      "description": "Local (Ex: Tail\u00e2ndia, Bel\u00e9m)"
+    },
+    "students_count": {
+      "type": "number",
+      "description": "N\u00famero de alunos"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Agendado",
+        "Em Andamento",
+        "Conclu\u00eddo",
+        "Cancelado"
+      ],
+      "default": "Agendado",
+      "description": "Status da turma"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de in\u00edcio"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de finaliza\u00e7\u00e3o"
+    },
+    "modality": {
+      "type": "string",
+      "description": "Modalidade (preenchido automaticamente do curso)"
+    },
+    "category": {
+      "type": "string",
+      "description": "Categoria (preenchido automaticamente do curso)"
+    },
+    "duration_hours": {
+      "type": "number",
+      "description": "HR - Carga hor\u00e1ria (preenchido automaticamente do curso)"
+    },
+    "month": {
+      "type": "string",
+      "description": "M\u00eas (calculado automaticamente da data de in\u00edcio)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es gerais"
+    }
+  },
+  "required": [
+    "training_name",
+    "company_name",
+    "start_date"
+  ]
+}
