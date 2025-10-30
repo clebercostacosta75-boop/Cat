@@ -10,6 +10,7 @@ import CourseCategories from './pages/CourseCategories';
 import GenerateBMM from './pages/GenerateBMM';
 import BMMTemplates from './pages/BMMTemplates';
 import Companies from './pages/Companies';
+import Contractors from './pages/Contractors';
 import Layout from './Layout.jsx';
 
 
@@ -26,6 +27,7 @@ export const PAGES = {
     "GenerateBMM": GenerateBMM,
     "BMMTemplates": BMMTemplates,
     "Companies": Companies,
+    "Contractors": Contractors,
 }
 
 export const pagesConfig = {

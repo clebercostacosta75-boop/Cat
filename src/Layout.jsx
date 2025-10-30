@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -72,6 +73,12 @@ export default function Layout({ children }) {
       {
         title: "Empresas",
         url: createPageUrl("Companies"),
+        icon: Building2,
+        roles: ['admin', 'Administrador Master', 'Coordenador de Operações', 'Financeiro']
+      },
+      {
+        title: "Contratadas",
+        url: createPageUrl("Contractors"),
         icon: Building2,
         roles: ['admin', 'Administrador Master', 'Coordenador de Operações', 'Financeiro']
       },
