@@ -1,0 +1,83 @@
+{
+  "name": "BMMTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome do modelo de BMM"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do modelo"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "Demonstrativo F\u00edsico-Financeiro",
+        "Lista de Treinamentos Normativos",
+        "Personalizado"
+      ],
+      "description": "Tipo do modelo"
+    },
+    "header_config": {
+      "type": "object",
+      "properties": {
+        "logo_url": {
+          "type": "string",
+          "description": "URL do logo"
+        },
+        "title": {
+          "type": "string",
+          "description": "T\u00edtulo do BMM"
+        },
+        "show_contract_info": {
+          "type": "boolean",
+          "description": "Mostrar informa\u00e7\u00f5es de contrato"
+        },
+        "show_period": {
+          "type": "boolean",
+          "description": "Mostrar per\u00edodo"
+        }
+      }
+    },
+    "columns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nome da coluna"
+          },
+          "field": {
+            "type": "string",
+            "description": "Campo da fonte de dados"
+          },
+          "width": {
+            "type": "string",
+            "description": "Largura da coluna"
+          }
+        }
+      },
+      "description": "Configura\u00e7\u00e3o das colunas"
+    },
+    "show_signatures": {
+      "type": "boolean",
+      "default": true,
+      "description": "Mostrar se\u00e7\u00e3o de assinaturas"
+    },
+    "custom_css": {
+      "type": "string",
+      "description": "CSS customizado para o template"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Modelo padr\u00e3o"
+    }
+  },
+  "required": [
+    "name",
+    "type"
+  ]
+}

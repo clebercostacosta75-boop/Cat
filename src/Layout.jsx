@@ -1,7 +1,8 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, Tag } from "lucide-react";
+import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, Tag, FileText } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -42,6 +43,11 @@ const navigationItems = [
     title: "Categorias",
     url: createPageUrl("CourseCategories"),
     icon: Tag,
+  },
+  {
+    title: "Gerar BMM",
+    url: createPageUrl("GenerateBMM"),
+    icon: FileText,
   },
   {
     title: "Importar Excel",
