@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +14,7 @@ export default function GenerateBMM() {
   const [selectedCompany, setSelectedCompany] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
-  const [selectedTemplate, setSelectedTemplate] = useState("model1");
+  const [selectedTemplate, setSelectedTemplate] = useState("model3");
   const [generating, setGenerating] = useState(false);
   const [bmmData, setBmmData] = useState(null);
 
@@ -208,6 +209,7 @@ export default function GenerateBMM() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="model3">📋 Modelo Allbras (Novo)</SelectItem>
                     <SelectItem value="model1">📄 Demonstrativo Físico-Financeiro</SelectItem>
                     <SelectItem value="model2">📋 Lista de Treinamentos Normativos</SelectItem>
                     {templates.map(template => (
@@ -242,10 +244,10 @@ export default function GenerateBMM() {
           </CardContent>
         </Card>
 
-        {/* Visualização do BMM */}
-        {bmmData && (
-          <Card className="border-none shadow-xl print:shadow-none">
-            <CardContent className="p-0">
+        {/* Visualização do BMM ou Preview em Branco */}
+        <Card className="border-none shadow-xl print:shadow-none">
+          <CardContent className="p-0">
+            {bmmData && (
               <div className="flex justify-end gap-2 p-4 print:hidden">
                 <Button variant="outline" onClick={handlePrint}>
                   <Printer className="w-4 h-4 mr-2" />
@@ -256,19 +258,23 @@ export default function GenerateBMM() {
                   Baixar PDF
                 </Button>
               </div>
+            )}
 
-              {selectedTemplate === "model1" && (
-                <BMMModel1 data={bmmData} />
-              )}
+            {selectedTemplate === "model3" && (
+              <BMMModel3 data={bmmData} />
+            )}
 
-              {selectedTemplate === "model2" && (
-                <BMMModel2 data={bmmData} />
-              )}
-            </CardContent>
-          </Card>
-        )}
+            {selectedTemplate === "model1" && bmmData && (
+              <BMMModel1 data={bmmData} />
+            )}
 
-        {!bmmData && (
+            {selectedTemplate === "model2" && bmmData && (
+              <BMMModel2 data={bmmData} />
+            )}
+          </CardContent>
+        </Card>
+
+        {!bmmData && selectedTemplate !== "model3" && (
           <Card className="border-none shadow-lg">
             <CardContent className="p-12 text-center">
               <FileText className="w-16 h-16 mx-auto mb-4 text-stone-300" />
@@ -279,6 +285,223 @@ export default function GenerateBMM() {
             </CardContent>
           </Card>
         )}
+      </div>
+    </div>
+  );
+}
+
+// Modelo 3: Modelo Allbras (Novo)
+function BMMModel3({ data }) {
+  const items = data?.items || [];
+  const emptyRows = Math.max(0, 9 - items.length);
+
+  return (
+    <div className="bg-white p-8 print:p-4" style={{ fontFamily: 'Arial, sans-serif' }}>
+      <div className="border-2 border-black">
+        {/* Cabeçalho Principal */}
+        <div className="grid grid-cols-[180px_1fr_250px] border-b-2 border-black">
+          <div className="border-r-2 border-black p-4 flex items-center justify-center bg-gray-50">
+            <div>
+              <div className="text-2xl font-bold text-blue-900 text-center">▲</div>
+              <div className="text-xs font-bold text-center text-blue-900">ALLBRAS</div>
+            </div>
+          </div>
+          <div className="p-4 flex items-center justify-center">
+            <h1 className="text-xl font-bold text-center">BOLETIM MENSAL DE MEDIÇÃO (BMM)</h1>
+          </div>
+          <div className="border-l-2 border-black p-2 text-xs">
+            <div className="border-b border-black p-1"><strong>Código:</strong> RG-ADM-UNI-025</div>
+            <div className="border-b border-black p-1"><strong>Rev.:</strong> 03</div>
+            <div className="p-1"><strong>Última revisão:</strong> {data?.generatedDate || '09/05/2022'}</div>
+          </div>
+        </div>
+
+        {/* Subtítulo */}
+        <div className="bg-gray-200 border-b border-black p-2 text-center font-bold text-sm">
+          Demonstrativo Físico-Financeiro
+        </div>
+
+        {/* Seção de Informações Contratuais */}
+        <div className="grid grid-cols-2 text-xs">
+          {/* Coluna Esquerda */}
+          <div className="border-r border-black">
+            <div className="bg-gray-200 border-b border-black p-2 font-bold">REF. CONTRATO E ADITIVO</div>
+            <div className="border-b border-black p-2">
+              <div><strong>CONTRATADA:</strong></div>
+              <div className="ml-4">{data?.company?.name || 'V.S. NUNES CURSOS E TREINAMENTO'}</div>
+            </div>
+            <div className="border-b border-black p-2">
+              <div><strong>CNPJ:</strong></div>
+              <div className="ml-4">{data?.company?.cnpj || '07.238.084/0001-45'}</div>
+            </div>
+            <div className="border-b border-black p-2">
+              <div><strong>OBJETO:</strong></div>
+              <div className="ml-4 text-xs">Prestação de Serviços de treinamentos de capacitação e segurança pela parte CONTRATADA, em entendimento às Normas Regulamentadoras (NR's)</div>
+            </div>
+            <div className="border-b border-black p-2">
+              <div><strong>VALOR DO BMM</strong></div>
+              <div className="ml-4">R$ {data?.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '11.016,00'}</div>
+            </div>
+            <div className="border-b border-black p-2">
+              <div><strong>BMM nº:</strong></div>
+              <div className="ml-4">{data?.period || '01/2025'}</div>
+            </div>
+            <div className="border-b border-black p-2">
+              <div><strong>MÊS DE EXECUÇÃO:</strong></div>
+              <div className="ml-4">{data?.month || 'Outubro'}</div>
+            </div>
+            <div className="border-b border-black p-2">
+              <div><strong>PERÍODO DE MEDIÇÃO:</strong></div>
+              <div className="ml-4">{data?.period ? `15/${data.period} a 20/${data.period}` : '15/10/2025 a 20/10/2025'}</div>
+            </div>
+            <div className="border-b border-black p-2">
+              <div><strong>INÍCIO DO CONTRATO:</strong></div>
+            </div>
+            <div className="p-2">
+              <div><strong>TÉRMINO DO CONTRATO:</strong></div>
+            </div>
+          </div>
+
+          {/* Coluna Direita */}
+          <div>
+            <div className="bg-gray-200 border-b border-black p-2 font-bold">ACOMPANHAMENTO GESTOR CONTRATO</div>
+            <div className="border-b border-black p-2 grid grid-cols-2">
+              <div>Valor total do contrato original</div>
+              <div className="text-right">R$</div>
+            </div>
+            <div className="border-b border-black p-2 grid grid-cols-2">
+              <div>(+) Aditivo Valor Adicionado</div>
+              <div className="text-right">R$</div>
+            </div>
+            <div className="border-b border-black p-2 grid grid-cols-2">
+              <div>(-) Aditivo Valor Reduzido</div>
+              <div className="text-right">R$</div>
+            </div>
+            <div className="border-b border-black p-2 grid grid-cols-2">
+              <div className="font-bold">(=) Valor do Contrato Atual</div>
+              <div className="text-right font-bold">R$</div>
+            </div>
+            <div className="border-b border-black p-2">
+              <div><strong>BMM's Anteriores:</strong></div>
+            </div>
+            <div className="border-b border-black p-2 grid grid-cols-2">
+              <div>Este BMM:</div>
+              <div className="text-right">R$ {data?.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '11.016,00'}</div>
+            </div>
+            <div className="border-b border-black p-2 grid grid-cols-2">
+              <div>Total Realizado:</div>
+              <div className="text-right">R$ {data?.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '11.016,00'}</div>
+            </div>
+            <div className="border-b border-black p-2 grid grid-cols-2">
+              <div>Saldo a Realizar:</div>
+              <div className="text-right">Por demanda</div>
+            </div>
+            <div className="p-2">
+              <div className="grid grid-cols-[100px_80px_80px_1fr] gap-1 text-center font-bold mb-1">
+                <div>AGÊNCIA</div>
+                <div>C/C</div>
+                <div>BANCO</div>
+                <div></div>
+              </div>
+              <div className="border border-black p-1 mb-1">
+                <div className="grid grid-cols-[100px_80px_80px_1fr] gap-1 text-center">
+                  <div>0327-1</div>
+                  <div>164696-6</div>
+                  <div>Bradesco</div>
+                  <div></div>
+                </div>
+              </div>
+              <div className="text-xs">Dados Bancários</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabela de Itens */}
+        <table className="w-full border-collapse text-xs">
+          <thead>
+            <tr className="bg-gray-300">
+              <th className="border border-black p-2 w-12">ITEM</th>
+              <th className="border border-black p-2">DESCRIÇÃO</th>
+              <th className="border border-black p-2 w-24">Unidade de medida</th>
+              <th className="border border-black p-2 w-24">Quantidade medida</th>
+              <th className="border border-black p-2 w-28">Unitário</th>
+              <th className="border border-black p-2 w-28">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.length > 0 ? (
+              items.map((item, index) => (
+                <tr key={index}>
+                  <td className="border border-black p-2 text-center">{index + 1}</td>
+                  <td className="border border-black p-2">{item.training_name}</td>
+                  <td className="border border-black p-2 text-center">QTD.</td>
+                  <td className="border border-black p-2 text-center">{item.students_count}</td>
+                  <td className="border border-black p-2 text-right">R$ {item.unit_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                  <td className="border border-black p-2 text-right">R$ {item.total_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td className="border border-black p-2 text-center">1</td>
+                <td className="border border-black p-2">Treinamento de RESGATE INDUSTRIAL</td>
+                <td className="border border-black p-2 text-center">QTD.</td>
+                <td className="border border-black p-2 text-center">4</td>
+                <td className="border border-black p-2 text-right">R$ 2.754,00</td>
+                <td className="border border-black p-2 text-right">R$ 11.016,00</td>
+              </tr>
+            )}
+            
+            {/* Linhas vazias */}
+            {Array.from({ length: items.length > 0 ? emptyRows : 8 }).map((_, i) => (
+              <tr key={`empty-${i}`}>
+                <td className="border border-black p-2 text-center">{items.length > 0 ? items.length + i + 1 : i + 2}</td>
+                <td className="border border-black p-2">&nbsp;</td>
+                <td className="border border-black p-2">&nbsp;</td>
+                <td className="border border-black p-2">&nbsp;</td>
+                <td className="border border-black p-2">&nbsp;</td>
+                <td className="border border-black p-2">&nbsp;</td>
+              </tr>
+            ))}
+            
+            <tr className="font-bold bg-gray-100">
+              <td colSpan="4" className="border border-black p-2">VALOR POR EXTENSO:</td>
+              <td className="border border-black p-2 text-center">Onze mil, e dezesseis reais</td>
+              <td className="border border-black p-2 text-right">R$ {data?.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '11.016,00'}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Seção OBS */}
+        <div className="border-t border-black p-2">
+          <div className="font-bold mb-2">OBS:</div>
+          <div className="border border-black p-4 min-h-[60px]">&nbsp;</div>
+        </div>
+
+        {/* Seção de Assinaturas */}
+        <div className="border-t-2 border-black">
+          <div className="bg-gray-200 text-center p-2 font-bold border-b border-black">ASSINATURAS</div>
+          <div className="text-[10px] text-red-600 p-2 border-b border-black italic">
+            *Obrigatoriamente as assinaturas têm que ser Eletrônicas ou Manuscritas validadas com Carimbo, para assinatura digital enviar o comprovante de certificação. As datas não podem ser digitadas.
+          </div>
+          
+          <div className="grid grid-cols-3 text-center text-xs">
+            <div className="border-r border-black p-4">
+              <div className="font-bold mb-16">CONTRATADA</div>
+              <div className="border-t border-black pt-2 mx-8 mb-2">&nbsp;</div>
+              <div>DATA: ___/___/______</div>
+            </div>
+            <div className="border-r border-black p-4">
+              <div className="font-bold mb-16">FISCALIZAÇÃO</div>
+              <div className="border-t border-black pt-2 mx-8 mb-2">&nbsp;</div>
+              <div>DATA: ___/___/______</div>
+            </div>
+            <div className="p-4">
+              <div className="font-bold mb-16">GESTOR DO CONTRATO</div>
+              <div className="border-t border-black pt-2 mx-8 mb-2">&nbsp;</div>
+              <div>DATA: ___/___/______</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
