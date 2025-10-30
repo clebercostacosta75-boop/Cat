@@ -155,7 +155,7 @@ export default function CoursesPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="modality">Modalidade</Label>
+                    <Label htmlFor="modality">📚 Modalidade</Label>
                     <Select 
                       value={formData.modality} 
                       onValueChange={(value) => setFormData({...formData, modality: value})}
@@ -164,13 +164,13 @@ export default function CoursesPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Formação">Formação</SelectItem>
-                        <SelectItem value="Periódico">Periódico</SelectItem>
+                        <SelectItem value="Formação">📚 Formação</SelectItem>
+                        <SelectItem value="Periódico">🔄 Periódico</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="category">Categoria</Label>
+                    <Label htmlFor="category">🎓 Categoria</Label>
                     <Select 
                       value={formData.category} 
                       onValueChange={(value) => setFormData({...formData, category: value})}
@@ -179,9 +179,9 @@ export default function CoursesPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Curso Presencial">Curso Presencial</SelectItem>
-                        <SelectItem value="Curso Híbrido">Curso Híbrido</SelectItem>
-                        <SelectItem value="Curso On-line">Curso On-line</SelectItem>
+                        <SelectItem value="Curso Presencial">🏢 Curso Presencial</SelectItem>
+                        <SelectItem value="Curso Híbrido">🔀 Curso Híbrido</SelectItem>
+                        <SelectItem value="Curso On-line">💻 Curso On-line</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -220,7 +220,7 @@ export default function CoursesPage() {
                   <div className="flex gap-2">
                     {course.modality && (
                       <Badge className={`${modalityColors[course.modality]} border`}>
-                        {course.modality}
+                        {course.modality === 'Formação' ? '📚' : '🔄'} {course.modality}
                       </Badge>
                     )}
                   </div>
@@ -230,7 +230,10 @@ export default function CoursesPage() {
 
                 {course.category && (
                   <Badge className={`${categoryColors[course.category]} border mb-3`}>
-                    {course.category}
+                    {course.category === 'Curso Presencial' && '🏢'}
+                    {course.category === 'Curso Híbrido' && '🔀'}
+                    {course.category === 'Curso On-line' && '💻'}
+                    {' '}{course.category}
                   </Badge>
                 )}
 

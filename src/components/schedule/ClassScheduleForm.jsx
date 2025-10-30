@@ -189,9 +189,9 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
               <SelectValue placeholder="Selecione o horário" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Manhã">Manhã</SelectItem>
-              <SelectItem value="Tarde">Tarde</SelectItem>
-              <SelectItem value="Noite">Noite</SelectItem>
+              <SelectItem value="Manhã">☀️ Manhã</SelectItem>
+              <SelectItem value="Tarde">🌤️ Tarde</SelectItem>
+              <SelectItem value="Noite">🌙 Noite</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -205,7 +205,7 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
             <SelectContent>
               {instructors.map(instructor => (
                 <SelectItem key={instructor.id} value={instructor.name}>
-                  {instructor.name}
+                  👨‍🏫 {instructor.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -218,19 +218,19 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
         <h3 className="font-semibold text-stone-900 mb-3">Informações Automáticas do Curso</h3>
         <div className="grid md:grid-cols-4 gap-4">
           <div className="space-y-2">
-            <Label>Modalidade</Label>
+            <Label>📚 Modalidade</Label>
             <Input value={formData.modality} readOnly className="bg-stone-50" placeholder="Formação/Periódico" />
           </div>
           <div className="space-y-2">
-            <Label>Categoria</Label>
+            <Label>🎓 Categoria</Label>
             <Input value={formData.category} readOnly className="bg-stone-50" placeholder="Presencial/Híbrido/Online" />
           </div>
           <div className="space-y-2">
-            <Label>HR (Carga Horária)</Label>
+            <Label>⏱️ HR (Carga Horária)</Label>
             <Input value={formData.duration_hours} readOnly className="bg-stone-50" />
           </div>
           <div className="space-y-2">
-            <Label>Mês</Label>
+            <Label>📅 Mês</Label>
             <Input value={formData.month} readOnly className="bg-stone-50" />
           </div>
         </div>
