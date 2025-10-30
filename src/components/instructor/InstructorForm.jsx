@@ -41,7 +41,6 @@ export default function InstructorForm({ instructor, onChange, section }) {
     onChange({ pix_keys });
   };
 
-  // ===== DADOS BÁSICOS =====
   if (section === 'basic') {
     return (
       <div className="space-y-6">
@@ -141,7 +140,6 @@ export default function InstructorForm({ instructor, onChange, section }) {
     );
   }
 
-  // ===== ENDEREÇO =====
   if (section === 'address') {
     const address = instructor.address || {};
     
@@ -229,7 +227,6 @@ export default function InstructorForm({ instructor, onChange, section }) {
     );
   }
 
-  // ===== FINANCEIRO =====
   if (section === 'financial') {
     const bank_data = instructor.bank_data || {};
     
@@ -241,7 +238,6 @@ export default function InstructorForm({ instructor, onChange, section }) {
 
     return (
       <div className="space-y-6">
-        {/* CHAVES PIX */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-4">
@@ -294,7 +290,6 @@ export default function InstructorForm({ instructor, onChange, section }) {
           </CardContent>
         </Card>
 
-        {/* DADOS BANCÁRIOS */}
         <Card>
           <CardContent className="p-4">
             <h3 className="font-semibold text-stone-900 mb-4">Dados Bancários</h3>
