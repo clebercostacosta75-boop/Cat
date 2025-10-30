@@ -40,6 +40,7 @@ export default function CoursesPage() {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       setShowForm(false);
       setEditingCourse(null);
+      alert('Curso duplicado com sucesso!');
     },
   });
 
@@ -98,25 +99,29 @@ export default function CoursesPage() {
     setShowForm(true);
   };
 
-  const handleDuplicate = (course) => {
-    const duplicatedCourse = {
-      ...course,
-      name: `${course.name} (Cópia)`,
-      schedules: course.schedules || {
-        morning: { start: "", end: "" },
-        afternoon: { start: "", end: "" },
-        night: { start: "", end: "" }
-      },
-      company_prices: course.company_prices || []
-    };
-    
-    // Remove o ID para criar um novo registro
-    delete duplicatedCourse.id;
-    delete duplicatedCourse.created_date;
-    delete duplicatedCourse.updated_date;
-    delete duplicatedCourse.created_by;
-    
-    createMutation.mutate(duplicatedCourse);
+  const handleDuplicate = async (course) => {
+    try {
+      const duplicatedCourse = {
+        name: `${course.name} (Cópia)`,
+        standard_value: course.standard_value || 0,
+        duration_hours: course.duration_hours || 0,
+        description: course.description || "",
+        modality: course.modality || "Formação",
+        category: course.category || "",
+        validity: course.validity || "",
+        schedules: course.schedules || {
+          morning: { start: "", end: "" },
+          afternoon: { start: "", end: "" },
+          night: { start: "", end: "" }
+        },
+        company_prices: course.company_prices || []
+      };
+      
+      await createMutation.mutateAsync(duplicatedCourse);
+    } catch (error) {
+      console.error('Erro ao duplicar curso:', error);
+      alert('Erro ao duplicar curso. Tente novamente.');
+    }
   };
 
   const resetForm = () => {
@@ -563,6 +568,7 @@ export default function CoursesPage() {
                     size="sm"
                     onClick={() => exportCoursePrices(course)}
                     className="w-full"
+                    title="Exportar preços deste curso"
                   >
                     <Download className="w-4 h-4 mr-1" />
                     Exportar
@@ -572,23 +578,31 @@ export default function CoursesPage() {
                     size="sm"
                     onClick={() => handleDuplicate(course)}
                     className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    disabled={createMutation.isPending}
+                    title="Criar uma cópia deste curso"
                   >
                     <Copy className="w-4 h-4 mr-1" />
-                    Duplicar
+                    {createMutation.isPending ? 'Duplicando...' : 'Duplicar'}
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleEdit(course)}
                     className="w-full"
+                    title="Editar este curso"
                   >
                     Editar
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => deleteMutation.mutate(course.id)}
+                    onClick={() => {
+                      if (confirm('Tem certeza que deseja excluir este curso?')) {
+                        deleteMutation.mutate(course.id);
+                      }
+                    }}
                     className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                    title="Excluir este curso"
                   >
                     Excluir
                   </Button>
