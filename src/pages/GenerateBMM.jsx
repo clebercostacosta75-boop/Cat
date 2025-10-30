@@ -98,7 +98,7 @@ export default function GenerateBMM() {
           total_price: unitPrice * (classItem.students_count || 1),
           start_date: classItem.start_date,
           end_date: classItem.end_date,
-          instructor_name: classItem.instructor_name,
+          instructor_name: instructor?.name, // Use instructor name from the `instructors` list
           instructor_cpf: instructor?.cpf || '-',
           training_schedule: classItem.training_schedule,
           location: classItem.location,
@@ -137,8 +137,16 @@ export default function GenerateBMM() {
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
+        {/* Logo e Título */}
+        <div className="flex flex-col md:flex-row items-center gap-6 mb-6">
+          <div className="flex-shrink-0">
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
+              alt="CAT Logo" 
+              className="h-24 w-auto"
+            />
+          </div>
+          <div className="flex-1 text-center md:text-left">
             <h1 className="text-3xl md:text-4xl font-bold text-stone-900">Gerar BMM</h1>
             <p className="text-stone-600 mt-1">Boletim Mensal de Medição - Cruzamento Automático</p>
           </div>

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -98,11 +99,11 @@ export default function CoursesPage() {
   };
 
   const resetForm = () => {
-    setFormData({ 
-      name: "", 
-      standard_value: "", 
-      duration_hours: "", 
-      description: "", 
+    setFormData({
+      name: "",
+      standard_value: "",
+      duration_hours: "",
+      description: "",
       modality: "Formação",
       category: "",
       validity: "",
@@ -149,7 +150,7 @@ export default function CoursesPage() {
 
   const handleCompanyPriceChange = (index, field, value) => {
     const updated = [...formData.company_prices];
-    
+
     if (field === 'company_id') {
       const company = companies.find(c => c.id === value);
       updated[index] = {
@@ -160,7 +161,7 @@ export default function CoursesPage() {
     } else {
       updated[index] = { ...updated[index], [field]: value };
     }
-    
+
     setFormData({ ...formData, company_prices: updated });
   };
 
@@ -213,13 +214,21 @@ export default function CoursesPage() {
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
+        {/* Logo e Título */}
+        <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
+          <div className="flex-shrink-0">
+            <img
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png"
+              alt="CAT Logo"
+              className="h-24 w-auto"
+            />
+          </div>
+          <div className="flex-1 text-center md:text-left">
             <h1 className="text-3xl md:text-4xl font-bold text-stone-900">Cursos</h1>
             <p className="text-stone-600 mt-1">Catálogo de treinamentos disponíveis</p>
           </div>
-          <div className="flex gap-2">
-            <Button 
+          <div className="flex gap-2 mt-4 md:mt-0"> {/* Added mt-4 md:mt-0 for spacing on small screens */}
+            <Button
               onClick={exportCourses}
               variant="outline"
               disabled={courses.length === 0}
@@ -227,7 +236,7 @@ export default function CoursesPage() {
               <Download className="w-4 h-4 mr-2" />
               Exportar Lista
             </Button>
-            <Button 
+            <Button
               onClick={() => {
                 resetForm();
                 setShowForm(!showForm);
@@ -275,8 +284,8 @@ export default function CoursesPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="modality">Tipo de Treinamento</Label>
-                      <Select 
-                        value={formData.modality} 
+                      <Select
+                        value={formData.modality}
                         onValueChange={(value) => setFormData({...formData, modality: value})}
                       >
                         <SelectTrigger>
@@ -290,8 +299,8 @@ export default function CoursesPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="category">Categoria</Label>
-                      <Select 
-                        value={formData.category} 
+                      <Select
+                        value={formData.category}
                         onValueChange={(value) => setFormData({...formData, category: value})}
                       >
                         <SelectTrigger>
@@ -528,26 +537,26 @@ export default function CoursesPage() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => exportCoursePrices(course)}
                     className="flex-1"
                   >
                     <Download className="w-4 h-4 mr-1" />
                     Exportar Preços
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => handleEdit(course)}
                     className="flex-1"
                   >
                     Editar
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => deleteMutation.mutate(course.id)}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
