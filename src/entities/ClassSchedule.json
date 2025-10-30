@@ -45,12 +45,7 @@
     },
     "training_schedule": {
       "type": "string",
-      "enum": [
-        "Manh\u00e3",
-        "Tarde",
-        "Noite"
-      ],
-      "description": "Hor\u00e1rio do treinamento"
+      "description": "Hor\u00e1rio do treinamento (Ex: 07:00 \u00e0s 12:00)"
     },
     "instructor_name": {
       "type": "string",
@@ -58,11 +53,20 @@
     },
     "modality": {
       "type": "string",
-      "description": "Modalidade (Forma\u00e7\u00e3o ou Peri\u00f3dico - preenchido automaticamente do curso)"
+      "enum": [
+        "Forma\u00e7\u00e3o",
+        "Peri\u00f3dico"
+      ],
+      "description": "Modalidade (Forma\u00e7\u00e3o ou Peri\u00f3dico)"
     },
     "category": {
       "type": "string",
-      "description": "Categoria (Curso Presencial, H\u00edbrido ou On-line - preenchido automaticamente do curso)"
+      "enum": [
+        "Presencial",
+        "H\u00edbrido",
+        "Online"
+      ],
+      "description": "Categoria (Presencial, H\u00edbrido ou Online)"
     },
     "duration_hours": {
       "type": "number",

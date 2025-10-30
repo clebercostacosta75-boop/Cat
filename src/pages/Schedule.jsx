@@ -65,12 +65,6 @@ export default function SchedulePage() {
     'Cancelado': 'bg-red-100 text-red-800 border-red-200',
   };
 
-  const scheduleColors = {
-    'Manhã': 'bg-amber-100 text-amber-800',
-    'Tarde': 'bg-orange-100 text-orange-800',
-    'Noite': 'bg-indigo-100 text-indigo-800',
-  };
-
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -140,11 +134,9 @@ export default function SchedulePage() {
                         </div>
                       )}
                       {classItem.training_schedule && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Clock className="w-4 h-4 text-stone-600" />
-                          <Badge className={scheduleColors[classItem.training_schedule]}>
-                            {classItem.training_schedule}
-                          </Badge>
+                        <div className="flex items-center gap-2 text-sm text-stone-600">
+                          <Clock className="w-4 h-4" />
+                          <span>{classItem.training_schedule}</span>
                         </div>
                       )}
                       {classItem.instructor_name && (
@@ -158,12 +150,15 @@ export default function SchedulePage() {
                     <div className="flex flex-wrap gap-2">
                       {classItem.modality && (
                         <Badge variant="outline" className="bg-blue-50">
-                          {classItem.modality}
+                          {classItem.modality === 'Formação' ? '📚' : '🔄'} {classItem.modality}
                         </Badge>
                       )}
                       {classItem.category && (
                         <Badge variant="outline" className="bg-purple-50">
-                          {classItem.category}
+                          {classItem.category === 'Presencial' && '🏢'}
+                          {classItem.category === 'Híbrido' && '🔀'}
+                          {classItem.category === 'Online' && '💻'}
+                          {' '}{classItem.category}
                         </Badge>
                       )}
                       {classItem.duration_hours && (

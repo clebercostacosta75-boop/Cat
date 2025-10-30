@@ -52,7 +52,7 @@ export default function CoursesPage() {
     duration_hours: "",
     description: "",
     modality: "Formação",
-    category: "Curso Presencial"
+    category: "Presencial"
   });
 
   const handleSubmit = (e) => {
@@ -77,7 +77,7 @@ export default function CoursesPage() {
       duration_hours: "", 
       description: "", 
       modality: "Formação",
-      category: "Curso Presencial" 
+      category: "Presencial" 
     });
     setEditingCourse(null);
     setShowForm(false);
@@ -89,9 +89,9 @@ export default function CoursesPage() {
   };
 
   const categoryColors = {
-    'Curso Presencial': 'bg-green-100 text-green-800 border-green-200',
-    'Curso Híbrido': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    'Curso On-line': 'bg-cyan-100 text-cyan-800 border-cyan-200',
+    'Presencial': 'bg-green-100 text-green-800 border-green-200',
+    'Híbrido': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    'Online': 'bg-cyan-100 text-cyan-800 border-cyan-200',
   };
 
   return (
@@ -179,9 +179,9 @@ export default function CoursesPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Curso Presencial">🏢 Curso Presencial</SelectItem>
-                        <SelectItem value="Curso Híbrido">🔀 Curso Híbrido</SelectItem>
-                        <SelectItem value="Curso On-line">💻 Curso On-line</SelectItem>
+                        <SelectItem value="Presencial">🏢 Presencial</SelectItem>
+                        <SelectItem value="Híbrido">🔀 Híbrido</SelectItem>
+                        <SelectItem value="Online">💻 Online</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -230,9 +230,9 @@ export default function CoursesPage() {
 
                 {course.category && (
                   <Badge className={`${categoryColors[course.category]} border mb-3`}>
-                    {course.category === 'Curso Presencial' && '🏢'}
-                    {course.category === 'Curso Híbrido' && '🔀'}
-                    {course.category === 'Curso On-line' && '💻'}
+                    {course.category === 'Presencial' && '🏢'}
+                    {course.category === 'Híbrido' && '🔀'}
+                    {course.category === 'Online' && '💻'}
                     {' '}{course.category}
                   </Badge>
                 )}

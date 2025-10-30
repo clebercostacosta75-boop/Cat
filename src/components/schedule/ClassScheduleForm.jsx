@@ -88,9 +88,9 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
   };
 
   const getCategoryDisplay = (value) => {
-    if (value === 'Curso Presencial') return '🏢 Curso Presencial';
-    if (value === 'Curso Híbrido') return '🔀 Curso Híbrido';
-    if (value === 'Curso On-line') return '💻 Curso On-line';
+    if (value === 'Presencial') return '🏢 Presencial';
+    if (value === 'Híbrido') return '🔀 Híbrido';
+    if (value === 'Online') return '💻 Online';
     return value;
   };
 
@@ -198,16 +198,12 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
 
         <div className="space-y-2">
           <Label htmlFor="training_schedule">Horário do Treinamento</Label>
-          <Select value={formData.training_schedule} onValueChange={(value) => handleChange('training_schedule', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o horário" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Manhã">☀️ Manhã</SelectItem>
-              <SelectItem value="Tarde">🌤️ Tarde</SelectItem>
-              <SelectItem value="Noite">🌙 Noite</SelectItem>
-            </SelectContent>
-          </Select>
+          <Input
+            id="training_schedule"
+            value={formData.training_schedule}
+            onChange={(e) => handleChange('training_schedule', e.target.value)}
+            placeholder="Ex: 07:00 às 12:00"
+          />
         </div>
 
         <div className="space-y-2">

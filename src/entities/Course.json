@@ -17,9 +17,9 @@
     "category": {
       "type": "string",
       "enum": [
-        "Curso Presencial",
-        "Curso H\u00edbrido",
-        "Curso On-line"
+        "Presencial",
+        "H\u00edbrido",
+        "Online"
       ],
       "description": "Categoria do treinamento"
     },
