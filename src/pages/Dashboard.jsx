@@ -1,62 +1,141 @@
-import React from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Users, BookOpen, TrendingUp, TrendingDown, DollarSign, Brain, Zap, Upload, ArrowRight } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-
-const COLORS = ['#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899'];
+import { Download, Building2, Calendar, DollarSign, Mail, MessageCircle, Send, CheckCircle, Loader2 } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function Dashboard() {
-  const { data: schedules = [], isLoading: loadingSchedules } = useQuery({
-    queryKey: ['schedules'],
-    queryFn: () => base44.entities.TrainingSchedule.list(),
+  const [sendingNotifications, setSendingNotifications] = useState({});
+  const [notificationResults, setNotificationResults] = useState({});
+
+  // Buscar turmas concluídas
+  const { data: completedClasses = [], isLoading: loadingClasses } = useQuery({
+    queryKey: ['completedClasses'],
+    queryFn: async () => {
+      const allClasses = await base44.entities.ClassSchedule.list();
+      return allClasses.filter(c => c.status === 'Concluído');
+    },
     initialData: [],
   });
 
-  const { data: instructors = [], isLoading: loadingInstructors } = useQuery({
-    queryKey: ['instructors'],
-    queryFn: () => base44.entities.Instructor.list(),
+  // Buscar todos os registros diários
+  const { data: allDailyRecords = [], isLoading: loadingRecords } = useQuery({
+    queryKey: ['allDailyRecords'],
+    queryFn: () => base44.entities.ClassDailyRecord.list(),
     initialData: [],
   });
 
-  const { data: courses = [], isLoading: loadingCourses } = useQuery({
-    queryKey: ['courses'],
-    queryFn: () => base44.entities.Course.list(),
-    initialData: [],
-  });
+  // Processar dados para a tabela
+  const tableData = React.useMemo(() => {
+    const groupedData = {};
 
-  const totalCostDifference = schedules.reduce((sum, s) => sum + (s.cost_difference || 0), 0);
-  const totalInstructorCost = schedules.reduce((sum, s) => sum + (s.instructor_cost || 0), 0);
-  const totalStandardValue = schedules.reduce((sum, s) => sum + (s.standard_value || 0), 0);
+    completedClasses.forEach(classItem => {
+      const month = classItem.month || 'Sem mês';
+      const company = classItem.company_name || 'Sem empresa';
+      const key = `${month}|${company}`;
 
-  // Dados por empresa
-  const companyData = schedules.reduce((acc, schedule) => {
-    const company = schedule.company || 'Sem empresa';
-    if (!acc[company]) {
-      acc[company] = { company, total: 0, count: 0 };
+      if (!groupedData[key]) {
+        groupedData[key] = {
+          month,
+          company,
+          totalCost: 0,
+          classCount: 0,
+          classIds: []
+        };
+      }
+
+      // Somar custos diários desta turma
+      const classDailyRecords = allDailyRecords.filter(
+        record => record.class_schedule_id === classItem.id
+      );
+
+      const classTotalCost = classDailyRecords.reduce(
+        (sum, record) => sum + (record.total_daily_cost || 0), 
+        0
+      );
+
+      groupedData[key].totalCost += classTotalCost;
+      groupedData[key].classCount += 1;
+      groupedData[key].classIds.push(classItem.id);
+    });
+
+    return Object.values(groupedData).sort((a, b) => {
+      if (a.month !== b.month) return a.month.localeCompare(b.month);
+      return a.company.localeCompare(b.company);
+    });
+  }, [completedClasses, allDailyRecords]);
+
+  // Calcular totais
+  const totalGeral = tableData.reduce((sum, row) => sum + row.totalCost, 0);
+  const totalTreinamentos = tableData.reduce((sum, row) => sum + row.classCount, 0);
+  const empresasAtendidas = new Set(tableData.map(row => row.company)).size;
+
+  // Exportar CSV
+  const exportToCSV = () => {
+    const headers = ['Mês', 'Empresa', 'Custo Total (HP)', 'Quantidade'];
+    const csvContent = [
+      headers.join(','),
+      ...tableData.map(row => [
+        row.month,
+        row.company,
+        row.totalCost.toFixed(2),
+        row.classCount
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'dashboard_custos.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Enviar notificações
+  const handleSendNotifications = async (classIds, type) => {
+    const key = classIds.join(',');
+    setSendingNotifications(prev => ({ ...prev, [key]: type }));
+    setNotificationResults(prev => ({ ...prev, [key]: null }));
+
+    try {
+      const results = await Promise.all(
+        classIds.map(classId => 
+          base44.functions.invoke('enviarNotificacoesTreinamento', { schedule_id: classId })
+        )
+      );
+
+      const allSuccess = results.every(r => r.data?.success);
+      
+      setNotificationResults(prev => ({ 
+        ...prev, 
+        [key]: { 
+          success: allSuccess, 
+          message: allSuccess ? 'Notificações enviadas com sucesso!' : 'Algumas notificações falharam'
+        } 
+      }));
+    } catch (error) {
+      setNotificationResults(prev => ({ 
+        ...prev, 
+        [key]: { success: false, message: 'Erro ao enviar notificações' } 
+      }));
+    } finally {
+      setSendingNotifications(prev => ({ ...prev, [key]: null }));
     }
-    acc[company].total += schedule.instructor_cost || 0;
-    acc[company].count += 1;
-    return acc;
-  }, {});
+  };
 
-  const companyChartData = Object.values(companyData);
-
-  // Dados por mês
-  const monthData = schedules.reduce((acc, schedule) => {
-    const month = schedule.month || 'Sem mês';
-    if (!acc[month]) {
-      acc[month] = { month, cost: 0 };
-    }
-    acc[month].cost += schedule.instructor_cost || 0;
-    return acc;
-  }, {});
-
-  const monthChartData = Object.values(monthData);
+  if (loadingClasses || loadingRecords) {
+    return (
+      <div className="p-8 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-8">
@@ -72,266 +151,209 @@ export default function Dashboard() {
           </div>
           <div className="flex-1 text-center md:text-left">
             <h1 className="text-3xl md:text-4xl font-bold text-stone-900">Dashboard</h1>
-            <p className="text-stone-600">Visão geral do sistema de treinamentos</p>
+            <p className="text-stone-600">Análise de custos por mês e empresa</p>
           </div>
+          <Button 
+            onClick={exportToCSV}
+            disabled={tableData.length === 0}
+            className="bg-emerald-600 hover:bg-emerald-700 shadow-lg"
+          >
+            <Download className="w-5 h-5 mr-2" />
+            Exportar CSV
+          </Button>
         </div>
 
-        {/* ===== SEÇÃO IA - DESTAQUE ===== */}
-        <Card className="border-none shadow-2xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24" />
-          
-          <CardContent className="p-8 relative z-10">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              <div className="flex items-start gap-6">
-                <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-2xl">
-                  <Brain className="w-12 h-12 text-white" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-3xl font-bold">CAT Assistant IA</h2>
-                    <span className="px-3 py-1 bg-green-400 text-green-900 rounded-full text-xs font-bold">
-                      ATIVO
-                    </span>
-                  </div>
-                  <p className="text-white/90 text-lg">
-                    Sistema de Inteligência Artificial para processamento automático
-                  </p>
-                  <div className="flex flex-wrap gap-4 mt-4">
-                    <div className="flex items-center gap-2">
-                      <Zap className="w-5 h-5 text-yellow-300" />
-                      <span className="text-sm">Validação Inteligente</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-green-300" />
-                      <span className="text-sm">Propostas de Melhoria</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Upload className="w-5 h-5 text-blue-300" />
-                      <span className="text-sm">Importação Automática</span>
-                    </div>
-                  </div>
-                </div>
+        {/* Resumo Total - Cards */}
+        <div className="grid md:grid-cols-3 gap-6">
+          <Card className="border-none shadow-xl bg-gradient-to-br from-emerald-50 to-teal-50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-stone-600">Total Geral</CardTitle>
+              <DollarSign className="w-5 h-5 text-emerald-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-emerald-600">
+                R$ {totalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </div>
-              
-              <Link to={createPageUrl("Import")}>
-                <Button 
-                  size="lg" 
-                  className="bg-white text-purple-600 hover:bg-white/90 shadow-xl font-bold"
-                >
-                  <Upload className="w-5 h-5 mr-2" />
-                  Usar IA Agora
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
+              <p className="text-xs text-stone-600 mt-1">Soma de todos os custos</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl bg-gradient-to-br from-blue-50 to-cyan-50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-stone-600">Total de Treinamentos</CardTitle>
+              <Calendar className="w-5 h-5 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-600">{totalTreinamentos}</div>
+              <p className="text-xs text-stone-600 mt-1">Turmas concluídas</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl bg-gradient-to-br from-purple-50 to-violet-50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-stone-600">Empresas Atendidas</CardTitle>
+              <Building2 className="w-5 h-5 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-600">{empresasAtendidas}</div>
+              <p className="text-xs text-stone-600 mt-1">Clientes únicos</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabela Principal */}
+        <Card className="border-none shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold text-stone-900 flex items-center gap-2">
+              <DollarSign className="w-6 h-6 text-emerald-600" />
+              Custos por Mês e Empresa
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-stone-50">
+                    <TableHead className="font-bold">Mês</TableHead>
+                    <TableHead className="font-bold">Empresa</TableHead>
+                    <TableHead className="font-bold text-right">Custo Total (HP)</TableHead>
+                    <TableHead className="font-bold text-right">Quantidade</TableHead>
+                    <TableHead className="font-bold text-center">Notificações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tableData.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-12 text-stone-500">
+                        Nenhum treinamento concluído encontrado
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    tableData.map((row, index) => {
+                      const key = row.classIds.join(',');
+                      const sending = sendingNotifications[key];
+                      const result = notificationResults[key];
+
+                      return (
+                        <TableRow key={index} className="hover:bg-stone-50">
+                          <TableCell className="font-medium">{row.month}</TableCell>
+                          <TableCell>{row.company}</TableCell>
+                          <TableCell className="text-right font-semibold text-emerald-600">
+                            R$ {row.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          <TableCell className="text-right">{row.classCount}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-center gap-2">
+                              {result ? (
+                                <div className="flex items-center gap-2">
+                                  {result.success ? (
+                                    <>
+                                      <CheckCircle className="w-4 h-4 text-green-600" />
+                                      <span className="text-xs text-green-600">Enviado</span>
+                                    </>
+                                  ) : (
+                                    <span className="text-xs text-red-600">Erro</span>
+                                  )}
+                                </div>
+                              ) : (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleSendNotifications(row.classIds, 'email')}
+                                    disabled={!!sending}
+                                    title="Enviar E-mail"
+                                  >
+                                    {sending === 'email' ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      <Mail className="w-3 h-3" />
+                                    )}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleSendNotifications(row.classIds, 'whatsapp')}
+                                    disabled={!!sending}
+                                    title="Enviar WhatsApp"
+                                  >
+                                    {sending === 'whatsapp' ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      <MessageCircle className="w-3 h-3" />
+                                    )}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleSendNotifications(row.classIds, 'all')}
+                                    disabled={!!sending}
+                                    title="Enviar Tudo (E-mail + WhatsApp + SMS)"
+                                  >
+                                    {sending === 'all' ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      <Send className="w-3 h-3" />
+                                    )}
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
             </div>
 
-            {/* Estatísticas da IA */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/20">
-              <div className="text-center">
-                <p className="text-3xl font-bold">{schedules.length}</p>
-                <p className="text-white/70 text-sm mt-1">Processados</p>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl font-bold">95%</p>
-                <p className="text-white/70 text-sm mt-1">Precisão</p>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl font-bold">87%</p>
-                <p className="text-white/70 text-sm mt-1">Economia Tempo</p>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl font-bold">
-                  {schedules.filter(s => s.status !== 'Cancelado').length}
+            {tableData.length > 0 && (
+              <div className="mt-6 p-4 bg-stone-50 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-stone-600 mb-2">
+                  <Send className="w-4 h-4" />
+                  <strong>Sistema de Notificações Automáticas</strong>
+                </div>
+                <p className="text-xs text-stone-600">
+                  Use os botões acima para enviar notificações aos instrutores e empresas sobre os treinamentos concluídos.
                 </p>
-                <p className="text-white/70 text-sm mt-1">Ativos</p>
+                <div className="flex gap-4 mt-2 text-xs">
+                  <div className="flex items-center gap-1">
+                    <Mail className="w-3 h-3" />
+                    <span>E-mail</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <MessageCircle className="w-3 h-3" />
+                    <span>WhatsApp</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Send className="w-3 h-3" />
+                    <span>Todos (E-mail + WhatsApp + SMS)</span>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="border-none shadow-lg bg-gradient-to-br from-emerald-50 to-teal-50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-stone-600">Total Treinamentos</CardTitle>
-              <Calendar className="w-4 h-4 text-emerald-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-stone-900">{schedules.length}</div>
-              <p className="text-xs text-stone-600 mt-1">Agendados no sistema</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-lg bg-gradient-to-br from-blue-50 to-cyan-50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-stone-600">Instrutores</CardTitle>
-              <Users className="w-4 h-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-stone-900">{instructors.length}</div>
-              <p className="text-xs text-stone-600 mt-1">Cadastrados</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-lg bg-gradient-to-br from-purple-50 to-violet-50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-stone-600">Cursos</CardTitle>
-              <BookOpen className="w-4 h-4 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-stone-900">{courses.length}</div>
-              <p className="text-xs text-stone-600 mt-1">Catálogo disponível</p>
-            </CardContent>
-          </Card>
-
-          <Card className={`border-none shadow-lg ${totalCostDifference >= 0 ? 'bg-gradient-to-br from-red-50 to-orange-50' : 'bg-gradient-to-br from-green-50 to-emerald-50'}`}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-stone-600">Diferença de Custos</CardTitle>
-              {totalCostDifference >= 0 ? (
-                <TrendingUp className="w-4 h-4 text-red-600" />
-              ) : (
-                <TrendingDown className="w-4 h-4 text-green-600" />
-              )}
-            </CardHeader>
-            <CardContent>
-              <div className={`text-3xl font-bold ${totalCostDifference >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                R$ {Math.abs(totalCostDifference).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+        {/* Informações sobre Custos */}
+        <Alert className="bg-blue-50 border-blue-200">
+          <AlertDescription>
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <DollarSign className="w-5 h-5 text-blue-600" />
               </div>
-              <p className="text-xs text-stone-600 mt-1">
-                {totalCostDifference >= 0 ? 'Acima do padrão' : 'Economia'}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Charts */}
-        <div className="grid lg:grid-cols-2 gap-6">
-          <Card className="border-none shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold text-stone-900">Custos por Mês</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {monthChartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={monthChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                    <XAxis dataKey="month" stroke="#78716c" />
-                    <YAxis stroke="#78716c" />
-                    <Tooltip 
-                      formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
-                    />
-                    <Bar dataKey="cost" fill="#10b981" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-[300px] flex items-center justify-center text-stone-500">
-                  Nenhum dado disponível
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold text-stone-900">Distribuição por Empresa</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {companyChartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={companyChartData}
-                      dataKey="total"
-                      nameKey="company"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      label={(entry) => entry.company}
-                    >
-                      {companyChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-[300px] flex items-center justify-center text-stone-500">
-                  Nenhum dado disponível
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Summary Cards */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card className="border-none shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold text-stone-900 flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-emerald-600" />
-                Resumo Financeiro
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center pb-3 border-b border-stone-200">
-                <span className="text-stone-600">Custo Total (Instrutores)</span>
-                <span className="font-bold text-stone-900">
-                  R$ {totalInstructorCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </span>
+              <div>
+                <p className="font-semibold text-blue-900 mb-1">Sobre os Custos (HP)</p>
+                <p className="text-sm text-blue-800">
+                  Os valores exibidos representam a soma de todos os custos diários registrados para cada turma concluída, 
+                  incluindo: Almoço, Transporte, Coffee Break, Taxi e Custo HP. Os dados são agrupados por empresa e mês 
+                  de conclusão do treinamento.
+                </p>
               </div>
-              <div className="flex justify-between items-center pb-3 border-b border-stone-200">
-                <span className="text-stone-600">Valor Padrão Total</span>
-                <span className="font-bold text-stone-900">
-                  R$ {totalStandardValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-stone-600 font-medium">Diferença</span>
-                <span className={`font-bold text-lg ${totalCostDifference >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                  {totalCostDifference >= 0 ? '+' : ''}R$ {totalCostDifference.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold text-stone-900">Próximos Treinamentos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {schedules
-                  .filter(s => s.status !== 'Cancelado')
-                  .slice(0, 5)
-                  .map((schedule) => (
-                    <div key={schedule.id} className="flex items-start gap-3 p-3 rounded-lg bg-stone-50 hover:bg-stone-100 transition-colors">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500 mt-2 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-stone-900 truncate">{schedule.training_name}</p>
-                        <p className="text-sm text-stone-600">{schedule.company} • {schedule.month}</p>
-                      </div>
-                    </div>
-                  ))}
-                {schedules.filter(s => s.status !== 'Cancelado').length === 0 && (
-                  <div className="text-center py-8">
-                    <p className="text-stone-500 mb-4">Nenhum treinamento agendado</p>
-                    <Link to={createPageUrl("Schedule")}>
-                      <Button className="bg-emerald-600 hover:bg-emerald-700">
-                        Criar Primeiro Treinamento
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </AlertDescription>
+        </Alert>
       </div>
     </div>
   );
