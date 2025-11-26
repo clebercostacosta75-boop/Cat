@@ -65,6 +65,21 @@ export default function InstructorForm({ instructor, onChange, section }) {
     onChange({ cpf: formatted });
   };
 
+  const handleToggleCourse = (course) => {
+    const linked_courses = instructor.linked_courses || [];
+    const exists = linked_courses.some(lc => lc.course_id === course.id);
+    
+    if (exists) {
+      onChange({ 
+        linked_courses: linked_courses.filter(lc => lc.course_id !== course.id) 
+      });
+    } else {
+      onChange({ 
+        linked_courses: [...linked_courses, { course_id: course.id, course_name: course.name }] 
+      });
+    }
+  };
+
   if (section === 'basic') {
     return (
       <div className="space-y-6">
@@ -217,6 +232,59 @@ export default function InstructorForm({ instructor, onChange, section }) {
             />
           </div>
         </div>
+
+        {/* Cursos Vinculados */}
+        <Card className="border-emerald-200 bg-emerald-50/30">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <BookOpen className="w-5 h-5 text-emerald-600" />
+              <h3 className="font-semibold text-stone-900">Cursos Habilitados</h3>
+              <Badge variant="outline" className="ml-auto">
+                {(instructor.linked_courses || []).length} curso(s)
+              </Badge>
+            </div>
+            
+            {courses.length === 0 ? (
+              <p className="text-sm text-stone-500 text-center py-4">
+                Nenhum curso cadastrado no sistema
+              </p>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                {courses.map((course) => {
+                  const isLinked = (instructor.linked_courses || []).some(
+                    lc => lc.course_id === course.id
+                  );
+                  return (
+                    <div 
+                      key={course.id}
+                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                        isLinked 
+                          ? 'bg-emerald-100 border-emerald-300' 
+                          : 'bg-white border-stone-200 hover:bg-stone-50'
+                      }`}
+                      onClick={() => handleToggleCourse(course)}
+                    >
+                      <Checkbox 
+                        checked={isLinked}
+                        onCheckedChange={() => handleToggleCourse(course)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-stone-900 truncate">
+                          {course.name}
+                        </p>
+                        {course.modality && (
+                          <p className="text-xs text-stone-500">
+                            {course.modality} • {course.duration_hours || 0}h
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   }
