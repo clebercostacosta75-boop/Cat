@@ -39,8 +39,12 @@ export default function CoursesPage() {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       setShowForm(false);
       setEditingCourse(null);
-      alert('Curso duplicado com sucesso!');
+      alert('Curso criado com sucesso!');
     },
+    onError: (error) => {
+      console.error('Erro ao criar:', error);
+      alert('Erro ao criar curso: ' + (error.message || 'Tente novamente'));
+    }
   });
 
   const updateMutation = useMutation({
@@ -49,14 +53,24 @@ export default function CoursesPage() {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       setShowForm(false);
       setEditingCourse(null);
+      alert('Curso atualizado com sucesso!');
     },
+    onError: (error) => {
+      console.error('Erro ao atualizar:', error);
+      alert('Erro ao atualizar curso: ' + (error.message || 'Tente novamente'));
+    }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Course.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
+      alert('Curso excluído com sucesso!');
     },
+    onError: (error) => {
+      console.error('Erro ao excluir:', error);
+      alert('Erro ao excluir curso: ' + (error.message || 'Tente novamente'));
+    }
   });
 
   const [formData, setFormData] = useState({
@@ -591,7 +605,7 @@ export default function CoursesPage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -599,8 +613,7 @@ export default function CoursesPage() {
                     className="w-full"
                     title="Exportar preços deste curso"
                   >
-                    <Download className="w-4 h-4 mr-1" />
-                    Exportar
+                    <Download className="w-4 h-4" />
                   </Button>
                   <Button
                     variant="outline"
@@ -608,32 +621,32 @@ export default function CoursesPage() {
                     onClick={() => handleDuplicate(course)}
                     className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                     disabled={createMutation.isPending}
-                    title="Criar uma cópia deste curso"
+                    title="Duplicar este curso"
                   >
-                    <Copy className="w-4 h-4 mr-1" />
-                    {createMutation.isPending ? 'Duplicando...' : 'Duplicar'}
+                    <Copy className="w-4 h-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleEdit(course)}
-                    className="w-full"
+                    className="w-full text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                     title="Editar este curso"
                   >
-                    Editar
+                    ✏️
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      if (confirm('Tem certeza que deseja excluir este curso?')) {
+                      if (confirm(`Tem certeza que deseja excluir "${course.name}"?`)) {
                         deleteMutation.mutate(course.id);
                       }
                     }}
+                    disabled={deleteMutation.isPending}
                     className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
                     title="Excluir este curso"
                   >
-                    Excluir
+                    🗑️
                   </Button>
                 </div>
               </CardContent>
