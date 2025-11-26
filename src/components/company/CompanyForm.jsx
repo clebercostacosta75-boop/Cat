@@ -18,6 +18,12 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
     initialData: [],
   });
 
+  const { data: instructors = [] } = useQuery({
+    queryKey: ['instructors'],
+    queryFn: () => base44.entities.Instructor.list(),
+    initialData: [],
+  });
+
   const [formData, setFormData] = useState({
     razao_social: company?.razao_social || "",
     nome_fantasia: company?.nome_fantasia || "",
@@ -121,7 +127,7 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
       ...formData,
       linked_courses: [
         ...formData.linked_courses,
-        { course_id: "", course_name: "", negotiated_value: 0 }
+        { course_id: "", course_name: "", negotiated_value: 0, instructor_id: "", instructor_name: "" }
       ]
     });
   };
@@ -142,6 +148,13 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
         course_id: value,
         course_name: course?.name || '',
         negotiated_value: updated[index].negotiated_value || course?.standard_value || 0
+      };
+    } else if (field === 'instructor_id') {
+      const instructor = instructors.find(i => i.id === value);
+      updated[index] = {
+        ...updated[index],
+        instructor_id: value,
+        instructor_name: instructor?.name || ''
       };
     } else {
       updated[index] = { ...updated[index], [field]: value };
@@ -489,7 +502,7 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
                       <X className="w-4 h-4" />
                     </Button>
                   </div>
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Selecione o Curso *</Label>
                       <Select
@@ -505,6 +518,26 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
                               {course.name} - R$ {(course.standard_value || 0).toFixed(2)}
                             </SelectItem>
                           ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Instrutor Vinculado</Label>
+                      <Select
+                        value={linkedCourse.instructor_id || ""}
+                        onValueChange={(value) => handleCourseChange(index, 'instructor_id', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o instrutor" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {instructors
+                            .filter(inst => inst.status === 'Ativo')
+                            .map((instructor) => (
+                              <SelectItem key={instructor.id} value={instructor.id}>
+                                👨‍🏫 {instructor.name}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </div>
