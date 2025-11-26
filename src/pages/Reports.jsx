@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -36,22 +35,81 @@ export default function ReportsPage() {
   });
 
   const exportToCSV = () => {
-    const headers = ['Mês', 'Empresa', 'Custo Total (HP)', 'Quantidade'];
+    // Função para escapar e formatar células CSV
+    const formatCell = (value, width = 20) => {
+      const str = String(value || '').replace(/"/g, '""');
+      return `"${str.padEnd(width)}"`;
+    };
+
+    const formatNumber = (value, width = 15) => {
+      const formatted = Number(value || 0).toLocaleString('pt-BR', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+      });
+      return `"${formatted.padStart(width)}"`;
+    };
+
+    const formatInt = (value, width = 10) => {
+      return `"${String(value || 0).padStart(width)}"`;
+    };
+
+    // Cabeçalhos alinhados
+    const headers = [
+      formatCell('Mês', 15),
+      formatCell('Empresa', 40),
+      formatCell('Custo Total (HP)', 18),
+      formatCell('Quantidade', 12)
+    ].join(';');
+
+    // Separador
+    const separator = [
+      formatCell('-'.repeat(15), 15),
+      formatCell('-'.repeat(40), 40),
+      formatCell('-'.repeat(18), 18),
+      formatCell('-'.repeat(12), 12)
+    ].join(';');
+
+    // Dados formatados
+    const dataRows = reportData.map(row => [
+      formatCell(row.month, 15),
+      formatCell(row.company, 40),
+      formatNumber(row.total_cost, 18),
+      formatInt(row.count, 12)
+    ].join(';'));
+
+    // Totais
+    const totalCost = reportData.reduce((sum, row) => sum + row.total_cost, 0);
+    const totalCount = reportData.reduce((sum, row) => sum + row.count, 0);
+    const totalEmpresas = new Set(reportData.map(r => r.company)).size;
+
+    const totalRow = [
+      formatCell('TOTAL', 15),
+      formatCell(`${totalEmpresas} empresa(s)`, 40),
+      formatNumber(totalCost, 18),
+      formatInt(totalCount, 12)
+    ].join(';');
+
+    // Montar CSV completo
     const csvContent = [
-      headers.join(','),
-      ...reportData.map(row => [
-        row.month,
-        row.company,
-        row.total_cost.toFixed(2),
-        row.count
-      ].join(','))
+      '',
+      formatCell('RELATÓRIO DE TREINAMENTOS - CAT', 80),
+      formatCell(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 80),
+      '',
+      headers,
+      separator,
+      ...dataRows,
+      separator,
+      totalRow,
+      ''
     ].join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // BOM para UTF-8 (para Excel abrir corretamente)
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', 'relatorio_treinamentos.csv');
+    link.setAttribute('download', `relatorio_treinamentos_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
