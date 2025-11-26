@@ -13,6 +13,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 export default function InstructorForm({ instructor, onChange, section }) {
   const [uploading, setUploading] = useState(false);
 
+  const { data: courses = [] } = useQuery({
+    queryKey: ['courses'],
+    queryFn: () => base44.entities.Course.list(),
+    initialData: [],
+  });
+
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
