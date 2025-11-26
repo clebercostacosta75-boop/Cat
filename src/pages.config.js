@@ -12,7 +12,7 @@ import BMMTemplates from './pages/BMMTemplates';
 import Companies from './pages/Companies';
 import Contractors from './pages/Contractors';
 import NotificationCenter from './pages/NotificationCenter';
-import Layout from './Layout.jsx';
+import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
@@ -35,5 +35,5 @@ export const PAGES = {
 export const pagesConfig = {
     mainPage: "Dashboard",
     Pages: PAGES,
-    Layout: Layout,
+    Layout: __Layout,
 };

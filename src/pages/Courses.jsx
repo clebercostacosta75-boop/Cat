@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -68,6 +67,8 @@ export default function CoursesPage() {
     modality: "Formação",
     category: "",
     validity: "",
+    start_date: "",
+    end_date: "",
     schedules: {
       morning: { start: "", end: "" },
       afternoon: { start: "", end: "" },
@@ -89,6 +90,8 @@ export default function CoursesPage() {
     setEditingCourse(course);
     setFormData({
       ...course,
+      start_date: course.start_date || "",
+      end_date: course.end_date || "",
       schedules: course.schedules || {
         morning: { start: "", end: "" },
         afternoon: { start: "", end: "" },
@@ -133,6 +136,8 @@ export default function CoursesPage() {
       modality: "Formação",
       category: "",
       validity: "",
+      start_date: "",
+      end_date: "",
       schedules: {
         morning: { start: "", end: "" },
         afternoon: { start: "", end: "" },
@@ -343,15 +348,33 @@ export default function CoursesPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="validity">Validade</Label>
-                      <Input
-                        id="validity"
-                        value={formData.validity}
-                        onChange={(e) => setFormData({...formData, validity: e.target.value})}
-                        placeholder="Ex: 12 meses, 24 meses"
-                      />
-                    </div>
-                  </div>
-                </div>
+                          <Input
+                            id="validity"
+                            value={formData.validity}
+                            onChange={(e) => setFormData({...formData, validity: e.target.value})}
+                            placeholder="Ex: 12 meses, 24 meses"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="start_date">Data de Início</Label>
+                          <Input
+                            id="start_date"
+                            type="date"
+                            value={formData.start_date}
+                            onChange={(e) => setFormData({...formData, start_date: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="end_date">Data de Fim</Label>
+                          <Input
+                            id="end_date"
+                            type="date"
+                            value={formData.end_date}
+                            onChange={(e) => setFormData({...formData, end_date: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                      </div>
 
                 {/* Horários Padrão */}
                 <div className="space-y-4 border-t pt-4">
@@ -549,10 +572,16 @@ export default function CoursesPage() {
                   )}
 
                   {course.validity && (
-                    <div className="text-sm text-stone-600">
-                      ⏱️ Validade: {course.validity}
-                    </div>
-                  )}
+                      <div className="text-sm text-stone-600">
+                        ⏱️ Validade: {course.validity}
+                      </div>
+                    )}
+
+                    {(course.start_date || course.end_date) && (
+                      <div className="text-sm text-stone-600">
+                        📅 Período: {course.start_date || '—'} a {course.end_date || '—'}
+                      </div>
+                    )}
 
                   {course.company_prices && course.company_prices.length > 0 && (
                     <div className="flex items-center gap-2 text-sm text-stone-600">
