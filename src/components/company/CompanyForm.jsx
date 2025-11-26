@@ -1,20 +1,30 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, X, MapPin, Users } from "lucide-react";
+import { Plus, X, MapPin, Users, BookOpen } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 
 export default function CompanyForm({ company, onSubmit, onCancel }) {
+  const { data: courses = [] } = useQuery({
+    queryKey: ['courses'],
+    queryFn: () => base44.entities.Course.list(),
+    initialData: [],
+  });
+
   const [formData, setFormData] = useState({
     razao_social: company?.razao_social || "",
     nome_fantasia: company?.nome_fantasia || "",
     cnpj: company?.cnpj || "",
     status: company?.status || "Ativo",
     email_faturamento: company?.email_faturamento || "",
+    linked_courses: company?.linked_courses || [],
     units: company?.units || [],
     contacts: company?.contacts || [],
     billing_info: company?.billing_info || {
@@ -103,6 +113,40 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
     const updated = [...formData.contacts];
     updated[index] = { ...updated[index], [field]: value };
     setFormData({ ...formData, contacts: updated });
+  };
+
+  // Funções para Cursos Vinculados
+  const handleAddCourse = () => {
+    setFormData({
+      ...formData,
+      linked_courses: [
+        ...formData.linked_courses,
+        { course_id: "", course_name: "", negotiated_value: 0 }
+      ]
+    });
+  };
+
+  const handleRemoveCourse = (index) => {
+    setFormData({
+      ...formData,
+      linked_courses: formData.linked_courses.filter((_, i) => i !== index)
+    });
+  };
+
+  const handleCourseChange = (index, field, value) => {
+    const updated = [...formData.linked_courses];
+    if (field === 'course_id') {
+      const course = courses.find(c => c.id === value);
+      updated[index] = {
+        ...updated[index],
+        course_id: value,
+        course_name: course?.name || '',
+        negotiated_value: updated[index].negotiated_value || course?.standard_value || 0
+      };
+    } else {
+      updated[index] = { ...updated[index], [field]: value };
+    }
+    setFormData({ ...formData, linked_courses: updated });
   };
 
   return (
@@ -401,12 +445,98 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
         </CardContent>
       </Card>
 
-      {/* 4. Informações de Faturamento */}
+      {/* 4. Cursos Vinculados */}
+      <Card className="border-green-200 bg-green-50/30">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-green-600" />
+              4. Cursos Vinculados (Valores Negociados)
+            </CardTitle>
+            <Button type="button" onClick={handleAddCourse} size="sm" variant="outline">
+              <Plus className="w-4 h-4 mr-1" />
+              Vincular Curso
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {formData.linked_courses.length === 0 ? (
+            <div className="text-center py-8 text-stone-500">
+              <BookOpen className="w-12 h-12 mx-auto mb-2 text-stone-300" />
+              <p>Nenhum curso vinculado</p>
+              <p className="text-sm">Clique em "Vincular Curso" para definir valores específicos</p>
+            </div>
+          ) : (
+            formData.linked_courses.map((linkedCourse, index) => (
+              <Card key={index} className="bg-white">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-4">
+                    <h4 className="font-semibold text-stone-900 flex items-center gap-2">
+                      📚 Curso {index + 1}
+                      {linkedCourse.course_name && (
+                        <Badge variant="outline" className="bg-green-50">
+                          {linkedCourse.course_name}
+                        </Badge>
+                      )}
+                    </h4>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveCourse(index)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Selecione o Curso *</Label>
+                      <Select
+                        value={linkedCourse.course_id}
+                        onValueChange={(value) => handleCourseChange(index, 'course_id', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Escolha um curso" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {courses.map((course) => (
+                            <SelectItem key={course.id} value={course.id}>
+                              {course.name} - R$ {(course.standard_value || 0).toFixed(2)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Valor Negociado (R$) *</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={linkedCourse.negotiated_value}
+                        onChange={(e) => handleCourseChange(index, 'negotiated_value', parseFloat(e.target.value) || 0)}
+                        placeholder="0.00"
+                      />
+                      {linkedCourse.course_id && (
+                        <p className="text-xs text-stone-500">
+                          Valor padrão: R$ {(courses.find(c => c.id === linkedCourse.course_id)?.standard_value || 0).toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 5. Informações de Faturamento */}
       <Card className="border-orange-200 bg-orange-50/30">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <span className="text-2xl">📄</span>
-            4. Informações de Faturamento (Vínculo com BMM)
+            5. Informações de Faturamento (Vínculo com BMM)
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
