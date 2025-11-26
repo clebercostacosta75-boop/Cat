@@ -34,82 +34,100 @@ export default function ReportsPage() {
     return a.company.localeCompare(b.company);
   });
 
-  const exportToCSV = () => {
-    // Função para escapar e formatar células CSV
-    const formatCell = (value, width = 20) => {
-      const str = String(value || '').replace(/"/g, '""');
-      return `"${str.padEnd(width)}"`;
-    };
-
-    const formatNumber = (value, width = 15) => {
-      const formatted = Number(value || 0).toLocaleString('pt-BR', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-      });
-      return `"${formatted.padStart(width)}"`;
-    };
-
-    const formatInt = (value, width = 10) => {
-      return `"${String(value || 0).padStart(width)}"`;
-    };
-
-    // Cabeçalhos alinhados
-    const headers = [
-      formatCell('Mês', 15),
-      formatCell('Empresa', 40),
-      formatCell('Custo Total (HP)', 18),
-      formatCell('Quantidade', 12)
-    ].join(';');
-
-    // Separador
-    const separator = [
-      formatCell('-'.repeat(15), 15),
-      formatCell('-'.repeat(40), 40),
-      formatCell('-'.repeat(18), 18),
-      formatCell('-'.repeat(12), 12)
-    ].join(';');
-
-    // Dados formatados
-    const dataRows = reportData.map(row => [
-      formatCell(row.month, 15),
-      formatCell(row.company, 40),
-      formatNumber(row.total_cost, 18),
-      formatInt(row.count, 12)
-    ].join(';'));
-
-    // Totais
+  const exportToExcel = () => {
+    // Criar conteúdo HTML com tabela formatada para Excel
     const totalCost = reportData.reduce((sum, row) => sum + row.total_cost, 0);
     const totalCount = reportData.reduce((sum, row) => sum + row.count, 0);
     const totalEmpresas = new Set(reportData.map(r => r.company)).size;
 
-    const totalRow = [
-      formatCell('TOTAL', 15),
-      formatCell(`${totalEmpresas} empresa(s)`, 40),
-      formatNumber(totalCost, 18),
-      formatInt(totalCount, 12)
-    ].join(';');
+    const htmlContent = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="UTF-8">
+        <!--[if gte mso 9]>
+        <xml>
+          <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>Relatório</x:Name>
+                <x:WorksheetOptions>
+                  <x:DisplayGridlines/>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid #000000; padding: 8px; }
+          th { 
+            background-color: #10B981; 
+            color: #FFFFFF; 
+            font-weight: bold; 
+            text-align: center;
+            font-size: 12pt;
+          }
+          td { text-align: left; font-size: 11pt; }
+          .numero { text-align: right; }
+          .total-row { 
+            background-color: #D1FAE5; 
+            font-weight: bold; 
+          }
+          .titulo { 
+            background-color: #065F46; 
+            color: #FFFFFF; 
+            font-size: 14pt; 
+            font-weight: bold; 
+            text-align: center; 
+          }
+          .subtitulo { 
+            background-color: #ECFDF5; 
+            font-size: 10pt; 
+            text-align: center; 
+            color: #374151;
+          }
+        </style>
+      </head>
+      <body>
+        <table>
+          <tr>
+            <td colspan="4" class="titulo">RELATÓRIO DE TREINAMENTOS - CAT</td>
+          </tr>
+          <tr>
+            <td colspan="4" class="subtitulo">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</td>
+          </tr>
+          <tr><td colspan="4"></td></tr>
+          <tr>
+            <th style="width: 100px;">Mês</th>
+            <th style="width: 300px;">Empresa</th>
+            <th style="width: 150px;">Custo Total (HP)</th>
+            <th style="width: 100px;">Quantidade</th>
+          </tr>
+          ${reportData.map(row => `
+            <tr>
+              <td>${row.month}</td>
+              <td>${row.company}</td>
+              <td class="numero">R$ ${row.total_cost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+              <td class="numero">${row.count}</td>
+            </tr>
+          `).join('')}
+          <tr class="total-row">
+            <td><strong>TOTAL</strong></td>
+            <td><strong>${totalEmpresas} empresa(s)</strong></td>
+            <td class="numero"><strong>R$ ${totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
+            <td class="numero"><strong>${totalCount}</strong></td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
 
-    // Montar CSV completo
-    const csvContent = [
-      '',
-      formatCell('RELATÓRIO DE TREINAMENTOS - CAT', 80),
-      formatCell(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 80),
-      '',
-      headers,
-      separator,
-      ...dataRows,
-      separator,
-      totalRow,
-      ''
-    ].join('\n');
-
-    // BOM para UTF-8 (para Excel abrir corretamente)
-    const BOM = '\uFEFF';
-    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `relatorio_treinamentos_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `relatorio_treinamentos_${new Date().toISOString().split('T')[0]}.xls`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -132,12 +150,12 @@ export default function ReportsPage() {
             <p className="text-stone-600 mt-1">Análise de custos por mês e empresa</p>
           </div>
           <Button 
-            onClick={exportToCSV}
+            onClick={exportToExcel}
             className="bg-emerald-600 hover:bg-emerald-700 shadow-lg"
             disabled={reportData.length === 0}
           >
             <Download className="w-5 h-5 mr-2" />
-            Exportar CSV
+            Exportar Excel
           </Button>
         </div>
 
