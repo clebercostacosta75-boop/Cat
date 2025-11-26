@@ -7,11 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, X, MapPin, Users, BookOpen } from "lucide-react";
+import { Plus, X, MapPin, Users, BookOpen, MessageCircle, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 
 export default function CompanyForm({ company, onSubmit, onCancel }) {
+  const [notifyInstructor, setNotifyInstructor] = useState(false);
+  const [sendingNotification, setSendingNotification] = useState({});
+
   const { data: courses = [] } = useQuery({
     queryKey: ['courses'],
     queryFn: () => base44.entities.Course.list(),
@@ -139,8 +144,10 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
     });
   };
 
-  const handleCourseChange = (index, field, value) => {
+  const handleCourseChange = async (index, field, value) => {
     const updated = [...formData.linked_courses];
+    const previousInstructorId = updated[index]?.instructor_id;
+    
     if (field === 'course_id') {
       const course = courses.find(c => c.id === value);
       updated[index] = {
@@ -156,6 +163,35 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
         instructor_id: value,
         instructor_name: instructor?.name || ''
       };
+      
+      // Enviar notificação se opção estiver ativada
+      if (notifyInstructor && instructor && instructor.phone) {
+        const course = courses.find(c => c.id === updated[index].course_id);
+        const isNewLink = !previousInstructorId;
+        
+        setSendingNotification(prev => ({ ...prev, [index]: true }));
+        
+        try {
+          await base44.functions.invoke('notificarInstrutorCurso', {
+            instructor_id: instructor.id,
+            instructor_name: instructor.name,
+            instructor_phone: instructor.phone,
+            course_name: course?.name || updated[index].course_name,
+            course_modality: course?.modality,
+            course_duration: course?.duration_hours,
+            course_validity: course?.validity,
+            company_name: formData.nome_fantasia || formData.razao_social,
+            negotiated_value: updated[index].negotiated_value,
+            action_type: isNewLink ? 'new' : 'update'
+          });
+          toast.success(`Notificação enviada para ${instructor.name}`);
+        } catch (error) {
+          console.error('Erro ao enviar notificação:', error);
+          toast.error('Erro ao enviar notificação');
+        } finally {
+          setSendingNotification(prev => ({ ...prev, [index]: false }));
+        }
+      }
     } else {
       updated[index] = { ...updated[index], [field]: value };
     }
@@ -461,16 +497,31 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
       {/* 4. Cursos Vinculados */}
       <Card className="border-green-200 bg-green-50/30">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <CardTitle className="text-lg flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-green-600" />
               4. Cursos Vinculados (Valores Negociados)
             </CardTitle>
-            <Button type="button" onClick={handleAddCourse} size="sm" variant="outline">
-              <Plus className="w-4 h-4 mr-1" />
-              Vincular Curso
-            </Button>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border">
+                <MessageCircle className="w-4 h-4 text-green-600" />
+                <span className="text-sm text-stone-600">Notificar instrutor</span>
+                <Switch
+                  checked={notifyInstructor}
+                  onCheckedChange={setNotifyInstructor}
+                />
+              </div>
+              <Button type="button" onClick={handleAddCourse} size="sm" variant="outline">
+                <Plus className="w-4 h-4 mr-1" />
+                Vincular Curso
+              </Button>
+            </div>
           </div>
+          {notifyInstructor && (
+            <p className="text-xs text-green-700 mt-2 bg-green-100 px-3 py-1 rounded">
+              ✅ Ao vincular um instrutor, ele receberá uma mensagem via WhatsApp com as informações do curso
+            </p>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
           {formData.linked_courses.length === 0 ? (
@@ -523,23 +574,29 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
                     </div>
                     <div className="space-y-2">
                       <Label>Instrutor Vinculado</Label>
-                      <Select
-                        value={linkedCourse.instructor_id || ""}
-                        onValueChange={(value) => handleCourseChange(index, 'instructor_id', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o instrutor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {instructors
-                            .filter(inst => inst.status === 'Ativo')
-                            .map((instructor) => (
-                              <SelectItem key={instructor.id} value={instructor.id}>
-                                👨‍🏫 {instructor.name}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex gap-2 items-center">
+                        <Select
+                          value={linkedCourse.instructor_id || ""}
+                          onValueChange={(value) => handleCourseChange(index, 'instructor_id', value)}
+                          disabled={sendingNotification[index]}
+                        >
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Selecione o instrutor" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {instructors
+                              .filter(inst => inst.status === 'Ativo')
+                              .map((instructor) => (
+                                <SelectItem key={instructor.id} value={instructor.id}>
+                                  👨‍🏫 {instructor.name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        {sendingNotification[index] && (
+                          <Loader2 className="w-5 h-5 animate-spin text-green-600" />
+                        )}
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label>Valor Negociado (R$) *</Label>
