@@ -88,28 +88,32 @@ export default function DocumentsManager({ documents, onChange, instructorId }) 
                   type="file"
                   onChange={handleUpload}
                   disabled={uploading || !newDoc.name}
+                  className="hidden"
                   id="doc-upload"
-                  style={{ display: 'none' }}
                 />
-                <Button 
-                  type="button"
-                  variant="outline" 
-                  className="w-full"
-                  disabled={uploading || !newDoc.name}
-                  onClick={() => document.getElementById('doc-upload').click()}
-                >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Selecionar Arquivo
-                    </>
-                  )}
-                </Button>
+                <label htmlFor="doc-upload" className="flex-1">
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    className="w-full"
+                    disabled={uploading || !newDoc.name}
+                    asChild
+                  >
+                    <span className="cursor-pointer">
+                      {uploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4 mr-2" />
+                          Selecionar Arquivo
+                        </>
+                      )}
+                    </span>
+                  </Button>
+                </label>
               </div>
               <p className="text-xs text-stone-500">
                 Formatos aceitos: PDF, DOC, DOCX, JPG, PNG
