@@ -201,7 +201,7 @@ export default function CoursesPage() {
       updated[index] = {
         ...updated[index],
         company_id: value,
-        company_name: company ? (company.nome_fantasia || company.razao_social) : ''
+        company_name: company ? company.name : ''
       };
     } else {
       updated[index] = { ...updated[index], [field]: value };
@@ -552,7 +552,7 @@ export default function CoursesPage() {
                             <SelectContent>
                               {companies.map(company => (
                                 <SelectItem key={company.id} value={company.id}>
-                                  {company.nome_fantasia || company.razao_social}
+                                  {company.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
