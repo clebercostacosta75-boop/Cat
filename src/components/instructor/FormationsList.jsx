@@ -1,22 +1,40 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, X, GraduationCap } from "lucide-react";
+import { Plus, X, GraduationCap, Upload, FileText, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export default function FormationsList({ formations, onChange }) {
   const [adding, setAdding] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [newFormation, setNewFormation] = useState({
     category: 'Curso Profissionalizante',
     title: '',
     institution: '',
     year: '',
-    description: ''
+    description: '',
+    file_url: ''
   });
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const result = await base44.integrations.Core.UploadFile({ file });
+      setNewFormation({ ...newFormation, file_url: result.file_url });
+    } catch (error) {
+      alert('Erro ao fazer upload do arquivo');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const categories = [
     'Curso Profissionalizante',
@@ -49,7 +67,8 @@ export default function FormationsList({ formations, onChange }) {
       title: '',
       institution: '',
       year: '',
-      description: ''
+      description: '',
+      file_url: ''
     });
     setAdding(false);
   };
@@ -131,6 +150,55 @@ export default function FormationsList({ formations, onChange }) {
                     rows={3}
                   />
                 </div>
+
+                <div className="md:col-span-2 space-y-2">
+                  <Label>Arquivo/Certificado</Label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                      onChange={handleFileUpload}
+                      disabled={uploading}
+                      className="hidden"
+                      id="formation-file-upload"
+                    />
+                    <label htmlFor="formation-file-upload">
+                      <Button type="button" variant="outline" disabled={uploading} asChild>
+                        <span className="cursor-pointer">
+                          {uploading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Enviando...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4 mr-2" />
+                              Selecionar Arquivo
+                            </>
+                          )}
+                        </span>
+                      </Button>
+                    </label>
+                    {newFormation.file_url && (
+                      <div className="flex items-center gap-2 text-sm text-emerald-600">
+                        <FileText className="w-4 h-4" />
+                        <a href={newFormation.file_url} target="_blank" rel="noopener noreferrer" className="underline">
+                          Arquivo anexado
+                        </a>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6 text-red-500 hover:text-red-700"
+                          onClick={() => setNewFormation({ ...newFormation, file_url: '' })}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-stone-500">Formatos aceitos: PDF, JPG, PNG, DOC, DOCX</p>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2">
@@ -167,6 +235,17 @@ export default function FormationsList({ formations, onChange }) {
                     )}
                     {formation.description && (
                       <p className="text-sm text-stone-600 mt-2">{formation.description}</p>
+                    )}
+                    {formation.file_url && (
+                      <a 
+                        href={formation.file_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm text-emerald-600 hover:text-emerald-700 mt-2"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Ver certificado/documento
+                      </a>
                     )}
                   </div>
                   <Button
