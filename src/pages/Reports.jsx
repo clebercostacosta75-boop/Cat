@@ -346,15 +346,21 @@ export default function ReportsPage() {
                     <TableHead className="font-bold">Mês</TableHead>
                     <TableHead className="font-bold">Empresa</TableHead>
                     <TableHead className="font-bold">Curso</TableHead>
-                    <TableHead className="font-bold text-right">Valor Unit.</TableHead>
-                    <TableHead className="font-bold text-right">Qtd. Alunos</TableHead>
+                    <TableHead className="font-bold">Local</TableHead>
+                    <TableHead className="font-bold">Período</TableHead>
+                    <TableHead className="font-bold">Horário</TableHead>
+                    <TableHead className="font-bold">Instrutor</TableHead>
+                    <TableHead className="font-bold">Modalidade</TableHead>
+                    <TableHead className="font-bold">Categoria</TableHead>
+                    <TableHead className="font-bold text-right">CH</TableHead>
+                    <TableHead className="font-bold text-right">Alunos</TableHead>
                     <TableHead className="font-bold text-right">Valor Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {reportData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-12 text-stone-500">
+                      <TableCell colSpan={12} className="text-center py-12 text-stone-500">
                         Nenhum dado disponível para relatório
                       </TableCell>
                     </TableRow>
@@ -364,9 +370,13 @@ export default function ReportsPage() {
                         <TableCell className="font-medium">{row.month}</TableCell>
                         <TableCell>{row.company}</TableCell>
                         <TableCell>{row.course_name}</TableCell>
-                        <TableCell className="text-right">
-                          R$ {row.unit_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </TableCell>
+                        <TableCell className="text-sm">{row.location || '-'}</TableCell>
+                        <TableCell className="text-sm">{row.start_date}{row.end_date ? ` a ${row.end_date}` : ''}</TableCell>
+                        <TableCell className="text-sm">{row.training_schedule || '-'}</TableCell>
+                        <TableCell className="text-sm">{row.instructor_name || '-'}</TableCell>
+                        <TableCell className="text-sm">{row.modality || '-'}</TableCell>
+                        <TableCell className="text-sm">{row.category || '-'}</TableCell>
+                        <TableCell className="text-right">{row.duration_hours}h</TableCell>
                         <TableCell className="text-right">{row.students_count}</TableCell>
                         <TableCell className="text-right font-semibold text-emerald-600">
                           R$ {row.total_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
