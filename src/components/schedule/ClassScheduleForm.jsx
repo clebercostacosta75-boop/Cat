@@ -352,16 +352,12 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
           </div>
           <div className="space-y-2">
             <Label>Categoria</Label>
-            <Select value={formData.category} onValueChange={(value) => handleChange('category', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Presencial">🏢 Presencial</SelectItem>
-                <SelectItem value="Híbrido">🔀 Híbrido</SelectItem>
-                <SelectItem value="Online">💻 Online</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input 
+              value={formData.category ? getCategoryDisplay(formData.category) : ''} 
+              readOnly 
+              className="bg-stone-50" 
+              placeholder="Presencial/Híbrido/Online" 
+            />
           </div>
           <div className="space-y-2">
             <Label>HR (Carga Horária)</Label>
