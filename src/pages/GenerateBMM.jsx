@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileText, Download, Printer, Plus, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { toast } from "sonner";
 
 export default function GenerateBMM() {
   const [selectedCompany, setSelectedCompany] = useState("");
@@ -133,12 +134,41 @@ export default function GenerateBMM() {
     }
   };
 
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
   const handlePrint = () => {
     window.print();
   };
 
-  const handleDownloadPDF = () => {
-    window.print();
+  const handleDownloadPDF = async () => {
+    if (!bmmData) {
+      toast.error('Gere o BMM primeiro antes de baixar o PDF');
+      return;
+    }
+
+    setDownloadingPdf(true);
+    try {
+      const response = await base44.functions.invoke('gerarBMMPdf', {
+        bmmData: bmmData,
+        templateType: selectedTemplate
+      });
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `BMM_${bmmData.company?.nome_fantasia || 'empresa'}_${bmmData.period || 'periodo'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      toast.success('PDF baixado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setDownloadingPdf(false);
+    }
   };
 
   return (
@@ -272,9 +302,18 @@ export default function GenerateBMM() {
                   <Printer className="w-4 h-4 mr-2" />
                   Imprimir
                 </Button>
-                <Button variant="outline" onClick={handleDownloadPDF}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Baixar PDF
+                <Button variant="outline" onClick={handleDownloadPDF} disabled={downloadingPdf}>
+                  {downloadingPdf ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Gerando PDF...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 mr-2" />
+                      Baixar PDF
+                    </>
+                  )}
                 </Button>
               </div>
             )}
