@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, BookOpen, Clock, Download, DollarSign, X, Copy } from "lucide-react";
+import { Plus, BookOpen, Clock, Download, DollarSign, X, Copy, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function CoursesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const queryClient = useQueryClient();
 
   const { data: courses = [] } = useQuery({
@@ -338,15 +339,24 @@ export default function CoursesPage() {
             <h1 className="text-3xl md:text-4xl font-bold text-stone-900">Cursos</h1>
             <p className="text-stone-600 mt-1">Catálogo de treinamentos disponíveis</p>
           </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={exportCourses}
-              variant="outline"
-              disabled={courses.length === 0}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Exportar Lista
-            </Button>
+          <div className="flex gap-3 items-center">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-stone-400" />
+                              <Input
+                                placeholder="Pesquisar curso..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-9 w-64"
+                              />
+                            </div>
+                            <Button
+                              onClick={exportCourses}
+                              variant="outline"
+                              disabled={courses.length === 0}
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              Exportar Lista
+                            </Button>
             <Button
               onClick={() => {
                 resetForm();
@@ -607,7 +617,13 @@ export default function CoursesPage() {
         )}
 
         <div className="grid md:grid-cols-2 gap-6">
-          {courses.map((course) => (
+                    {courses
+                      .filter((course) =>
+                        course.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        course.modality?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        course.category?.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map((course) => (
             <Card key={course.id} className="border-none shadow-lg hover:shadow-xl transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
