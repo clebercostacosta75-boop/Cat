@@ -149,43 +149,82 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
         <div className="space-y-2">
           <Label htmlFor="location">Local</Label>
           <div className="flex gap-2">
-            <Select 
-              value={formData.location} 
-              onValueChange={(value) => handleChange('location', value)}
-            >
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Selecione o local" />
-              </SelectTrigger>
-              <SelectContent>
-                {companies
-                  .filter(c => (c.nome_fantasia || c.razao_social) === formData.company_name)
-                  .flatMap(company => (company.units || []).map(unit => {
-                    const addr = unit.address || {};
-                    const fullAddress = [
-                      unit.name,
-                      addr.street && addr.number ? `${addr.street}, ${addr.number}` : addr.street,
-                      addr.neighborhood,
-                      addr.city,
-                      addr.state
-                    ].filter(Boolean).join(' - ');
-                    return { name: unit.name, fullAddress, address: addr };
-                  }))
-                  .map((loc, idx) => (
-                    <SelectItem key={idx} value={loc.fullAddress}>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-3 h-3 text-emerald-600" />
-                        {loc.name || loc.fullAddress}
-                      </div>
-                    </SelectItem>
-                  ))
-                }
-                {/* Opção para digitar local personalizado */}
-                <SelectItem value="__custom__">
-                  ✏️ Digitar local manualmente
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            {formData.location && formData.location !== '__custom__' && (
+            {formData.customLocation ? (
+              <Input
+                className="flex-1"
+                placeholder="Digite o endereço completo"
+                value={formData.location || ''}
+                onChange={(e) => handleChange('location', e.target.value)}
+              />
+            ) : (
+              <Select 
+                value={formData.location} 
+                onValueChange={(value) => {
+                  if (value === '__custom__') {
+                    setFormData(prev => ({ ...prev, customLocation: true, location: '' }));
+                  } else {
+                    handleChange('location', value);
+                  }
+                }}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Selecione o local" />
+                </SelectTrigger>
+                <SelectContent>
+                  {companies
+                    .filter(c => (c.nome_fantasia || c.razao_social) === formData.company_name)
+                    .flatMap(company => (company.units || []).map(unit => {
+                      const addr = unit.address || {};
+                      const fullAddress = [
+                        unit.name,
+                        addr.street && addr.number ? `${addr.street}, ${addr.number}` : addr.street,
+                        addr.neighborhood,
+                        addr.city,
+                        addr.state
+                      ].filter(Boolean).join(' - ');
+                      return { name: unit.name, fullAddress, address: addr };
+                    }))
+                    .map((loc, idx) => (
+                      <SelectItem key={idx} value={loc.fullAddress}>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-3 h-3 text-emerald-600" />
+                          {loc.name || loc.fullAddress}
+                        </div>
+                      </SelectItem>
+                    ))
+                  }
+                  <SelectItem value="__custom__">
+                    ✏️ Digitar local manualmente
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            {formData.customLocation && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setFormData(prev => ({ ...prev, customLocation: false, location: '' }))}
+                title="Voltar para seleção"
+              >
+                ↩️
+              </Button>
+            )}
+            {formData.location && !formData.customLocation && (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  const encoded = encodeURIComponent(formData.location);
+                  window.open(`https://www.google.com/maps/search/?api=1&query=${encoded}`, '_blank');
+                }}
+                title="Abrir no Google Maps"
+              >
+                <ExternalLink className="w-4 h-4 text-blue-600" />
+              </Button>
+            )}
+            {formData.customLocation && formData.location && (
               <Button
                 type="button"
                 variant="outline"
@@ -200,13 +239,6 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
               </Button>
             )}
           </div>
-          {formData.location === '__custom__' && (
-            <Input
-              className="mt-2"
-              placeholder="Digite o endereço completo"
-              onChange={(e) => handleChange('location', e.target.value)}
-            />
-          )}
         </div>
 
         <div className="space-y-2">
