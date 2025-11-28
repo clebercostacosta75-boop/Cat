@@ -79,6 +79,7 @@ export default function CoursesPage() {
     duration_hours: "",
     description: "",
     modality: "Formação",
+    training_type: "Presencial",
     category: "",
     validity: "",
     start_date: "",
