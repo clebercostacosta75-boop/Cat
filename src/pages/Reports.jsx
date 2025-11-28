@@ -230,7 +230,7 @@ export default function ReportsPage() {
             <td><strong>TOTAL</strong></td>
             <td><strong>${totalEmpresas} empresa(s)</strong></td>
             <td><strong>${totalCount} turma(s)</strong></td>
-            <td colspan="8"></td>
+            <td colspan="9"></td>
             <td class="numero"><strong>${totalHours}h</strong></td>
             <td class="numero"><strong>${totalStudents}</strong></td>
             <td></td>
