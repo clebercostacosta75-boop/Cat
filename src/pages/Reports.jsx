@@ -187,15 +187,19 @@ export default function ReportsPage() {
             <tr>
               <td>${row.month}</td>
               <td>${row.company}</td>
-              <td class="numero">R$ ${row.total_cost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-              <td class="numero">${row.count}</td>
+              <td>${row.course_name}</td>
+              <td class="numero">R$ ${row.unit_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+              <td class="numero">${row.students_count}</td>
+              <td class="numero">R$ ${row.total_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
             </tr>
           `).join('')}
           <tr class="total-row">
             <td><strong>TOTAL</strong></td>
             <td><strong>${totalEmpresas} empresa(s)</strong></td>
-            <td class="numero"><strong>R$ ${totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
-            <td class="numero"><strong>${totalCount}</strong></td>
+            <td><strong>${totalCount} curso(s)</strong></td>
+            <td></td>
+            <td class="numero"><strong>${totalStudents}</strong></td>
+            <td class="numero"><strong>R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
           </tr>
         </table>
       </body>
