@@ -356,17 +356,23 @@ export default function ReportsPage() {
               <CardTitle className="text-xl font-bold text-stone-900">Resumo Total</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-4 gap-6">
                 <div className="text-center p-4 bg-emerald-50 rounded-lg">
-                  <p className="text-sm text-stone-600 mb-2">Total Geral</p>
+                  <p className="text-sm text-stone-600 mb-2">Valor Total</p>
                   <p className="text-3xl font-bold text-emerald-600">
-                    R$ {reportData.reduce((sum, row) => sum + row.total_cost, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {reportData.reduce((sum, row) => sum + row.total_value, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-stone-600 mb-2">Total de Treinamentos</p>
+                  <p className="text-sm text-stone-600 mb-2">Total de Alunos</p>
                   <p className="text-3xl font-bold text-blue-600">
-                    {reportData.reduce((sum, row) => sum + row.count, 0)}
+                    {reportData.reduce((sum, row) => sum + row.students_count, 0)}
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-amber-50 rounded-lg">
+                  <p className="text-sm text-stone-600 mb-2">Total de Cursos</p>
+                  <p className="text-3xl font-bold text-amber-600">
+                    {reportData.length}
                   </p>
                 </div>
                 <div className="text-center p-4 bg-purple-50 rounded-lg">
