@@ -137,31 +137,8 @@ export default function GenerateBMM() {
     window.print();
   };
 
-  const handleDownloadPDF = async () => {
-    if (!bmmData) {
-      alert('Gere o BMM primeiro antes de baixar o PDF');
-      return;
-    }
-
-    try {
-      const response = await base44.functions.invoke('gerarBMMPDF', {
-        bmmData: bmmData,
-        templateType: selectedTemplate
-      });
-
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `BMM_${bmmData.company?.nome_fantasia || 'empresa'}_${bmmData.period || 'periodo'}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      a.remove();
-    } catch (error) {
-      console.error('Erro ao baixar PDF:', error);
-      alert('Erro ao gerar PDF. Tente novamente.');
-    }
+  const handleDownloadPDF = () => {
+    window.print();
   };
 
   return (
