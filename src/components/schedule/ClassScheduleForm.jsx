@@ -365,7 +365,41 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
           </div>
           <div className="space-y-2">
             <Label>Mês</Label>
-            <Input value={formData.month} readOnly className="bg-stone-50" />
+            <div className="flex gap-2">
+              <Select 
+                value={formData.month?.split('/')[0] || ''} 
+                onValueChange={(monthName) => {
+                  const year = formData.month?.split('/')[1] || new Date().getFullYear().toString();
+                  handleChange('month', `${monthName}/${year}`);
+                }}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Mês" />
+                </SelectTrigger>
+                <SelectContent>
+                  {['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'].map(m => (
+                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select 
+                value={formData.month?.split('/')[1] || ''} 
+                onValueChange={(year) => {
+                  const monthName = formData.month?.split('/')[0] || 'Janeiro';
+                  handleChange('month', `${monthName}/${year}`);
+                }}
+              >
+                <SelectTrigger className="w-24">
+                  <SelectValue placeholder="Ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[2024, 2025, 2026, 2027, 2028].map(y => (
+                    <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>
