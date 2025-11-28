@@ -69,10 +69,10 @@ export default function ReportsPage() {
     // Buscar dados da empresa
     const companyData = companyMap[classItem.company_name];
     const companyName = companyData?.nome_fantasia || classItem.company_name || 'Sem empresa';
-    
+
     // Buscar dados do curso
     const courseData = courseMap[classItem.training_name];
-    
+
     // Calcular valor do curso (verificar se há preço específico para a empresa)
     let courseValue = courseData?.standard_value || 0;
     if (courseData?.company_prices && companyData) {
@@ -84,11 +84,11 @@ export default function ReportsPage() {
         courseValue = companyPrice.negotiated_value;
       }
     }
-    
+
     const studentsCount = classItem.students_count || 1;
     const totalValue = courseValue * studentsCount;
-    
-    const key = `${classItem.month}|${companyName}|${classItem.training_name}`;
+
+    const key = `${classItem.id}`;
     if (!acc[key]) {
       acc[key] = {
         month: classItem.month || 'Sem mês',
@@ -97,14 +97,23 @@ export default function ReportsPage() {
         course_name: classItem.training_name,
         course_data: courseData,
         unit_value: courseValue,
-        total_value: 0,
-        students_count: 0,
-        count: 0
+        total_value: totalValue,
+        students_count: studentsCount,
+        count: 1,
+        // Campos adicionais da turma
+        location: classItem.location || '',
+        start_date: classItem.start_date || '',
+        end_date: classItem.end_date || '',
+        specific_days: classItem.specific_days || '',
+        training_schedule: classItem.training_schedule || '',
+        instructor_name: classItem.instructor_name || '',
+        modality: classItem.modality || '',
+        category: classItem.category || '',
+        duration_hours: classItem.duration_hours || 0,
+        status: classItem.status || '',
+        notes: classItem.notes || ''
       };
     }
-    acc[key].total_value += totalValue;
-    acc[key].students_count += studentsCount;
-    acc[key].count += 1;
     return acc;
   }, {});
 
