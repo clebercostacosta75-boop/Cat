@@ -50,8 +50,8 @@ export default function ReportsPage() {
     return acc;
   }, {});
 
-  // Extrair meses únicos dos schedules
-  const availableMonths = [...new Set(schedules.map(s => s.month).filter(Boolean))].sort();
+  // Extrair meses únicos das turmas
+  const availableMonths = [...new Set(classSchedules.map(s => s.month).filter(Boolean))].sort();
 
   // Filtrar turmas por empresa e mês selecionados
   const filteredClasses = classSchedules.filter(classItem => {
