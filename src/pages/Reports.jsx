@@ -3,23 +3,58 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, FileText } from "lucide-react";
+import { Download, FileText, Filter } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 export default function ReportsPage() {
+  const [selectedCompany, setSelectedCompany] = useState("all");
+  const [selectedMonth, setSelectedMonth] = useState("all");
+
   const { data: schedules = [] } = useQuery({
     queryKey: ['schedules'],
     queryFn: () => base44.entities.TrainingSchedule.list(),
     initialData: [],
   });
 
-  // Relatório por Mês e Empresa (como no script Python)
-  const monthCompanyReport = schedules.reduce((acc, schedule) => {
-    const key = `${schedule.month}|${schedule.company}`;
+  const { data: companies = [] } = useQuery({
+    queryKey: ['companies'],
+    queryFn: () => base44.entities.Company.list(),
+    initialData: [],
+  });
+
+  // Criar mapa de empresas para lookup rápido
+  const companyMap = companies.reduce((acc, company) => {
+    acc[company.nome_fantasia] = company;
+    acc[company.razao_social] = company;
+    return acc;
+  }, {});
+
+  // Extrair meses únicos dos schedules
+  const availableMonths = [...new Set(schedules.map(s => s.month).filter(Boolean))].sort();
+
+  // Filtrar schedules por empresa e mês selecionados
+  const filteredSchedules = schedules.filter(schedule => {
+    const matchCompany = selectedCompany === "all" || 
+      schedule.company === selectedCompany ||
+      companyMap[schedule.company]?.id === selectedCompany;
+    const matchMonth = selectedMonth === "all" || schedule.month === selectedMonth;
+    return matchCompany && matchMonth;
+  });
+
+  // Relatório por Mês e Empresa
+  const monthCompanyReport = filteredSchedules.reduce((acc, schedule) => {
+    // Buscar nome fantasia da empresa cadastrada
+    const companyData = companyMap[schedule.company];
+    const companyName = companyData?.nome_fantasia || schedule.company || 'Sem empresa';
+    
+    const key = `${schedule.month}|${companyName}`;
     if (!acc[key]) {
       acc[key] = {
         month: schedule.month || 'Sem mês',
-        company: schedule.company || 'Sem empresa',
+        company: companyName,
+        company_data: companyData,
         total_cost: 0,
         count: 0
       };
