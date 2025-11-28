@@ -72,7 +72,9 @@ export default function GenerateBMM() {
         
         if (course?.company_prices) {
           const companyPrice = course.company_prices.find(cp => 
-            cp.company_id === selectedCompany || cp.company_name === company?.name
+            cp.company_id === selectedCompany || 
+            cp.company_name === company?.nome_fantasia ||
+            cp.company_name === company?.razao_social
           );
           if (companyPrice) {
             unitPrice = companyPrice.negotiated_value;
