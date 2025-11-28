@@ -53,32 +53,57 @@ export default function ReportsPage() {
   // Extrair meses únicos dos schedules
   const availableMonths = [...new Set(schedules.map(s => s.month).filter(Boolean))].sort();
 
-  // Filtrar schedules por empresa e mês selecionados
-  const filteredSchedules = schedules.filter(schedule => {
+  // Filtrar turmas por empresa e mês selecionados
+  const filteredClasses = classSchedules.filter(classItem => {
+    const companyData = companyMap[classItem.company_name];
     const matchCompany = selectedCompany === "all" || 
-      schedule.company === selectedCompany ||
-      companyMap[schedule.company]?.id === selectedCompany;
-    const matchMonth = selectedMonth === "all" || schedule.month === selectedMonth;
+      classItem.company_name === selectedCompany ||
+      companyData?.id === selectedCompany ||
+      companyData?.nome_fantasia === companies.find(c => c.id === selectedCompany)?.nome_fantasia;
+    const matchMonth = selectedMonth === "all" || classItem.month === selectedMonth;
     return matchCompany && matchMonth;
   });
 
-  // Relatório por Mês e Empresa
-  const monthCompanyReport = filteredSchedules.reduce((acc, schedule) => {
-    // Buscar nome fantasia da empresa cadastrada
-    const companyData = companyMap[schedule.company];
-    const companyName = companyData?.nome_fantasia || schedule.company || 'Sem empresa';
+  // Relatório por Mês, Empresa e Curso
+  const monthCompanyReport = filteredClasses.reduce((acc, classItem) => {
+    // Buscar dados da empresa
+    const companyData = companyMap[classItem.company_name];
+    const companyName = companyData?.nome_fantasia || classItem.company_name || 'Sem empresa';
     
-    const key = `${schedule.month}|${companyName}`;
+    // Buscar dados do curso
+    const courseData = courseMap[classItem.training_name];
+    
+    // Calcular valor do curso (verificar se há preço específico para a empresa)
+    let courseValue = courseData?.standard_value || 0;
+    if (courseData?.company_prices && companyData) {
+      const companyPrice = courseData.company_prices.find(cp => 
+        cp.company_id === companyData.id || 
+        cp.company_name === companyData.nome_fantasia
+      );
+      if (companyPrice) {
+        courseValue = companyPrice.negotiated_value;
+      }
+    }
+    
+    const studentsCount = classItem.students_count || 1;
+    const totalValue = courseValue * studentsCount;
+    
+    const key = `${classItem.month}|${companyName}|${classItem.training_name}`;
     if (!acc[key]) {
       acc[key] = {
-        month: schedule.month || 'Sem mês',
+        month: classItem.month || 'Sem mês',
         company: companyName,
         company_data: companyData,
-        total_cost: 0,
+        course_name: classItem.training_name,
+        course_data: courseData,
+        unit_value: courseValue,
+        total_value: 0,
+        students_count: 0,
         count: 0
       };
     }
-    acc[key].total_cost += schedule.instructor_cost || 0;
+    acc[key].total_value += totalValue;
+    acc[key].students_count += studentsCount;
     acc[key].count += 1;
     return acc;
   }, {});
