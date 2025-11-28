@@ -182,12 +182,12 @@ export default function ReportsPage() {
       <body>
         <table>
           <tr>
-            <td colspan="15" class="titulo">RELATÓRIO DE TREINAMENTOS - CAT</td>
+            <td colspan="16" class="titulo">RELATÓRIO DE TREINAMENTOS - CAT</td>
           </tr>
           <tr>
-            <td colspan="15" class="subtitulo">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</td>
+            <td colspan="16" class="subtitulo">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</td>
           </tr>
-          <tr><td colspan="15"></td></tr>
+          <tr><td colspan="16"></td></tr>
           <tr>
             <th>Mês</th>
             <th>Empresa</th>
