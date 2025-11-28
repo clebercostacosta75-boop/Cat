@@ -128,6 +128,7 @@ export default function ReportsPage() {
     const totalStudents = reportData.reduce((sum, row) => sum + row.students_count, 0);
     const totalCount = reportData.length;
     const totalEmpresas = new Set(reportData.map(r => r.company)).size;
+    const totalHours = reportData.reduce((sum, row) => sum + (row.duration_hours || 0), 0);
 
     const htmlContent = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
@@ -155,9 +156,9 @@ export default function ReportsPage() {
             color: #FFFFFF; 
             font-weight: bold; 
             text-align: center;
-            font-size: 12pt;
+            font-size: 11pt;
           }
-          td { text-align: left; font-size: 11pt; }
+          td { text-align: left; font-size: 10pt; }
           .numero { text-align: right; }
           .total-row { 
             background-color: #D1FAE5; 
@@ -181,36 +182,56 @@ export default function ReportsPage() {
       <body>
         <table>
           <tr>
-            <td colspan="6" class="titulo">RELATÓRIO DE TREINAMENTOS - CAT</td>
+            <td colspan="15" class="titulo">RELATÓRIO DE TREINAMENTOS - CAT</td>
           </tr>
           <tr>
-            <td colspan="6" class="subtitulo">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</td>
+            <td colspan="15" class="subtitulo">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</td>
           </tr>
-          <tr><td colspan="6"></td></tr>
+          <tr><td colspan="15"></td></tr>
           <tr>
-            <th style="width: 100px;">Mês</th>
-            <th style="width: 200px;">Empresa</th>
-            <th style="width: 200px;">Curso</th>
-            <th style="width: 120px;">Valor Unit.</th>
-            <th style="width: 80px;">Qtd. Alunos</th>
-            <th style="width: 120px;">Valor Total</th>
+            <th>Mês</th>
+            <th>Empresa</th>
+            <th>Curso</th>
+            <th>Local</th>
+            <th>Data Início</th>
+            <th>Data Fim</th>
+            <th>Dias Específicos</th>
+            <th>Horário</th>
+            <th>Instrutor</th>
+            <th>Modalidade</th>
+            <th>Categoria</th>
+            <th>Carga Horária</th>
+            <th>Qtd. Alunos</th>
+            <th>Valor Unit.</th>
+            <th>Valor Total</th>
           </tr>
           ${reportData.map(row => `
             <tr>
               <td>${row.month}</td>
               <td>${row.company}</td>
               <td>${row.course_name}</td>
-              <td class="numero">R$ ${row.unit_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+              <td>${row.location}</td>
+              <td>${row.start_date}</td>
+              <td>${row.end_date}</td>
+              <td>${row.specific_days}</td>
+              <td>${row.training_schedule}</td>
+              <td>${row.instructor_name}</td>
+              <td>${row.modality}</td>
+              <td>${row.category}</td>
+              <td class="numero">${row.duration_hours}h</td>
               <td class="numero">${row.students_count}</td>
+              <td class="numero">R$ ${row.unit_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
               <td class="numero">R$ ${row.total_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
             </tr>
           `).join('')}
           <tr class="total-row">
             <td><strong>TOTAL</strong></td>
             <td><strong>${totalEmpresas} empresa(s)</strong></td>
-            <td><strong>${totalCount} curso(s)</strong></td>
-            <td></td>
+            <td><strong>${totalCount} turma(s)</strong></td>
+            <td colspan="8"></td>
+            <td class="numero"><strong>${totalHours}h</strong></td>
             <td class="numero"><strong>${totalStudents}</strong></td>
+            <td></td>
             <td class="numero"><strong>R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
           </tr>
         </table>
