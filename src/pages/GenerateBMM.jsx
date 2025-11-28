@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -174,7 +173,7 @@ export default function GenerateBMM() {
                   <SelectContent>
                     {companies.map(company => (
                       <SelectItem key={company.id} value={company.id}>
-                        {company.name}
+                        {company.nome_fantasia || company.razao_social}
                       </SelectItem>
                     ))}
                   </SelectContent>
