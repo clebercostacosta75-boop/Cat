@@ -13,6 +13,7 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     training_name: "",
     company_name: "",
     location: "",
+    customLocation: false,
     students_count: "",
     status: "Agendado",
     start_date: "",
