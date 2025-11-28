@@ -6,15 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, ExternalLink, Search } from "lucide-react";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { MapPin, ExternalLink } from "lucide-react";
 
 export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel }) {
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [searchTimeout, setSearchTimeout] = useState(null);
-  const [instructorOpen, setInstructorOpen] = useState(false);
-  const [instructorSearch, setInstructorSearch] = useState("");
 
   const handleLocationSearch = async (query) => {
     if (searchTimeout) clearTimeout(searchTimeout);
@@ -323,54 +319,18 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
 
         <div className="space-y-2">
           <Label htmlFor="instructor_name">Instrutor</Label>
-          <Popover open={instructorOpen} onOpenChange={setInstructorOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={instructorOpen}
-                className="w-full justify-between font-normal"
-              >
-                {formData.instructor_name ? (
-                  <span>👨‍🏫 {formData.instructor_name}</span>
-                ) : (
-                  <span className="text-muted-foreground">Pesquisar instrutor...</span>
-                )}
-                <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[300px] p-0">
-              <Command>
-                <CommandInput 
-                  placeholder="Digite para pesquisar..." 
-                  value={instructorSearch}
-                  onValueChange={setInstructorSearch}
-                />
-                <CommandList>
-                  <CommandEmpty>Nenhum instrutor encontrado.</CommandEmpty>
-                  <CommandGroup>
-                    {instructors
-                      .filter(instructor => 
-                        instructor.name.toLowerCase().includes(instructorSearch.toLowerCase())
-                      )
-                      .map(instructor => (
-                        <CommandItem
-                          key={instructor.id}
-                          value={instructor.name}
-                          onSelect={() => {
-                            handleChange('instructor_name', instructor.name);
-                            setInstructorOpen(false);
-                            setInstructorSearch("");
-                          }}
-                        >
-                          👨‍🏫 {instructor.name}
-                        </CommandItem>
-                      ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <Select value={formData.instructor_name} onValueChange={(value) => handleChange('instructor_name', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o instrutor" />
+            </SelectTrigger>
+            <SelectContent>
+              {instructors.map(instructor => (
+                <SelectItem key={instructor.id} value={instructor.name}>
+                  👨‍🏫 {instructor.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
