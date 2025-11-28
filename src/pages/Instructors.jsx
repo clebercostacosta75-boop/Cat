@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -6,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Mail, Phone, User, Eye } from "lucide-react";
+import { Plus, Mail, Phone, User, Eye, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -14,6 +13,7 @@ import { createPageUrl } from "@/utils";
 export default function InstructorsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingInstructor, setEditingInstructor] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const queryClient = useQueryClient();
 
   const { data: instructors = [] } = useQuery({
@@ -121,16 +121,27 @@ export default function InstructorsPage() {
             <h1 className="text-3xl md:text-4xl font-bold text-stone-900">Instrutores</h1>
             <p className="text-stone-600 mt-1">Gerencie os instrutores e seus valores</p>
           </div>
-          <Button 
-            onClick={() => {
-              resetForm();
-              setShowForm(!showForm);
-            }}
-            className="bg-emerald-600 hover:bg-emerald-700 shadow-lg"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Novo Instrutor
-          </Button>
+          <div className="flex gap-3 items-center">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-stone-400" />
+              <Input
+                placeholder="Pesquisar instrutor..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 w-64"
+              />
+            </div>
+            <Button 
+              onClick={() => {
+                resetForm();
+                setShowForm(!showForm);
+              }}
+              className="bg-emerald-600 hover:bg-emerald-700 shadow-lg"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Novo Instrutor
+            </Button>
+          </div>
         </div>
 
         {showForm && (
@@ -233,7 +244,14 @@ export default function InstructorsPage() {
         )}
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {instructors.map((instructor) => (
+          {instructors
+            .filter((instructor) => 
+              instructor.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              instructor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              instructor.internal_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              instructor.specialty?.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+            .map((instructor) => (
             <Card key={instructor.id} className="border-none shadow-lg hover:shadow-xl transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
