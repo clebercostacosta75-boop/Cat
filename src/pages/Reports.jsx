@@ -199,7 +199,7 @@ export default function ReportsPage() {
             <th>Dias Específicos</th>
             <th>Horário</th>
             <th>Instrutor</th>
-            <th>Pago</th>
+            <th>Pago Log</th>
             <th>Modalidade</th>
             <th>Categoria</th>
             <th>Carga Horária</th>
