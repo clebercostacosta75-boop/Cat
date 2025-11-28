@@ -159,26 +159,27 @@ export default function FormationsList({ formations, onChange }) {
                       accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                       onChange={handleFileUpload}
                       disabled={uploading}
-                      className="hidden"
                       id="formation-file-upload"
+                      style={{ display: 'none' }}
                     />
-                    <label htmlFor="formation-file-upload">
-                      <Button type="button" variant="outline" disabled={uploading} asChild>
-                        <span className="cursor-pointer">
-                          {uploading ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Enviando...
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="w-4 h-4 mr-2" />
-                              Selecionar Arquivo
-                            </>
-                          )}
-                        </span>
-                      </Button>
-                    </label>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      disabled={uploading}
+                      onClick={() => document.getElementById('formation-file-upload').click()}
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4 mr-2" />
+                          Selecionar Arquivo
+                        </>
+                      )}
+                    </Button>
                     {newFormation.file_url && (
                       <div className="flex items-center gap-2 text-sm text-emerald-600">
                         <FileText className="w-4 h-4" />
