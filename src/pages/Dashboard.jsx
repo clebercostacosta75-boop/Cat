@@ -273,12 +273,12 @@ function DashboardAdminMaster() {
             <p className="text-stone-600">Análise de custos por mês e empresa</p>
           </div>
           <Button 
-            onClick={exportToCSV}
+            onClick={exportToExcel}
             disabled={tableData.length === 0}
             className="bg-emerald-600 hover:bg-emerald-700 shadow-lg"
           >
             <Download className="w-5 h-5 mr-2" />
-            Exportar CSV
+            Exportar Excel
           </Button>
         </div>
 
