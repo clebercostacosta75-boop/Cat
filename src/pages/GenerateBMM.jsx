@@ -428,9 +428,9 @@ function BMMModel3({ data }) {
               </div>
               <div className="border border-black p-1 mb-1">
                 <div className="grid grid-cols-[100px_80px_80px_1fr] gap-1 text-center">
-                  <div>0327-1</div>
-                  <div>164696-6</div>
-                  <div>Bradesco</div>
+                  <div>{data?.contractor?.bank_data?.agency || '0327-1'}</div>
+                  <div>{data?.contractor?.bank_data?.account || '164696-6'}</div>
+                  <div>{data?.contractor?.bank_data?.bank_name || 'Bradesco'}</div>
                   <div></div>
                 </div>
               </div>
