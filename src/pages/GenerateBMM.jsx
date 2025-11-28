@@ -53,7 +53,8 @@ export default function GenerateBMM() {
       const period = `${selectedMonth}/${selectedYear}`;
       
       const completedClasses = allClasses.filter(classItem => 
-        classItem.company_name === company?.name &&
+        (classItem.company_name === company?.nome_fantasia || 
+         classItem.company_name === company?.razao_social) &&
         classItem.month === period &&
         classItem.status === "Concluído"
       );
