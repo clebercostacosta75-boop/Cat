@@ -706,15 +706,15 @@ function BMMModel1({ data }) {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 mb-4">
-            <div>CONTRATADA: <strong>{data.company?.name}</strong></div>
+            <div>CONTRATADA: <strong>{data.contractor?.razao_social || data.company?.nome_fantasia}</strong></div>
             <div>Valor total do contrato original: R$ -</div>
           </div>
           <div className="grid grid-cols-2 gap-2 mb-4">
-            <div>CNPJ: {data.company?.cnpj || '-'}</div>
+            <div>CNPJ: {data.contractor?.cnpj || data.company?.cnpj || '-'}</div>
             <div>(+) Aditivo Valor Adicionado: R$ -</div>
           </div>
           <div className="grid grid-cols-2 gap-2 mb-4">
-            <div>OBJETO: Prestação de Serviços de treinamentos de capacitação e segurança</div>
+            <div>OBJETO: {data.company?.billing_info?.contract_object || 'Prestação de Serviços de treinamentos de capacitação e segurança'}</div>
             <div>(-) Aditivo Valor Reduzido: R$ -</div>
           </div>
           <div className="grid grid-cols-3 gap-2">
