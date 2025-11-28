@@ -125,14 +125,105 @@ export default function ImportPage() {
   };
 
   const downloadTemplate = () => {
-    const csv = `Training,Instructor,Company,Month,Date,Hours,Cost,Value,Participants,Status
-NR-35,João Silva,ABC Ltda,Jan/2025,2025-01-15,8,800,600,20,Planejado
-Excel,Maria Santos,XPTO SA,Jan/2025,2025-01-20,4,400,350,15,Confirmado`;
+    const htmlContent = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="UTF-8">
+        <!--[if gte mso 9]>
+        <xml>
+          <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>Template</x:Name>
+                <x:WorksheetOptions>
+                  <x:DisplayGridlines/>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid #000000; padding: 8px; }
+          th { 
+            background-color: #10B981; 
+            color: #FFFFFF; 
+            font-weight: bold; 
+            text-align: center;
+            font-size: 12pt;
+          }
+          td { text-align: left; font-size: 11pt; }
+          .numero { text-align: right; }
+          .titulo { 
+            background-color: #065F46; 
+            color: #FFFFFF; 
+            font-size: 14pt; 
+            font-weight: bold; 
+            text-align: center; 
+          }
+          .subtitulo { 
+            background-color: #ECFDF5; 
+            font-size: 10pt; 
+            text-align: center; 
+            color: #374151;
+          }
+        </style>
+      </head>
+      <body>
+        <table>
+          <tr>
+            <td colspan="10" class="titulo">TEMPLATE DE IMPORTAÇÃO - CAT</td>
+          </tr>
+          <tr>
+            <td colspan="10" class="subtitulo">Preencha os dados abaixo e importe o arquivo</td>
+          </tr>
+          <tr><td colspan="10"></td></tr>
+          <tr>
+            <th>Treinamento</th>
+            <th>Instrutor</th>
+            <th>Empresa</th>
+            <th>Mês</th>
+            <th>Data</th>
+            <th>Horas</th>
+            <th>Custo HP</th>
+            <th>Valor</th>
+            <th>Participantes</th>
+            <th>Status</th>
+          </tr>
+          <tr>
+            <td>NR-35</td>
+            <td>João Silva</td>
+            <td>ABC Ltda</td>
+            <td>Jan/2025</td>
+            <td>2025-01-15</td>
+            <td class="numero">8</td>
+            <td class="numero">800</td>
+            <td class="numero">600</td>
+            <td class="numero">20</td>
+            <td>Planejado</td>
+          </tr>
+          <tr>
+            <td>Excel</td>
+            <td>Maria Santos</td>
+            <td>XPTO SA</td>
+            <td>Jan/2025</td>
+            <td>2025-01-20</td>
+            <td class="numero">4</td>
+            <td class="numero">400</td>
+            <td class="numero">350</td>
+            <td class="numero">15</td>
+            <td>Confirmado</td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
     
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'template.csv';
+    link.download = 'template_importacao.xls';
     link.click();
   };
 
