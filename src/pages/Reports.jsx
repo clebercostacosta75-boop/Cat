@@ -107,6 +107,7 @@ export default function ReportsPage() {
         specific_days: classItem.specific_days || '',
         training_schedule: classItem.training_schedule || '',
         instructor_name: classItem.instructor_name || '',
+        payment_status: classItem.payment_status || 'Pendente',
         modality: classItem.modality || '',
         category: classItem.category || '',
         duration_hours: classItem.duration_hours || 0,
