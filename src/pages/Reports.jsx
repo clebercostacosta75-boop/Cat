@@ -115,8 +115,9 @@ export default function ReportsPage() {
 
   const exportToExcel = () => {
     // Criar conteúdo HTML com tabela formatada para Excel
-    const totalCost = reportData.reduce((sum, row) => sum + row.total_cost, 0);
-    const totalCount = reportData.reduce((sum, row) => sum + row.count, 0);
+    const totalValue = reportData.reduce((sum, row) => sum + row.total_value, 0);
+    const totalStudents = reportData.reduce((sum, row) => sum + row.students_count, 0);
+    const totalCount = reportData.length;
     const totalEmpresas = new Set(reportData.map(r => r.company)).size;
 
     const htmlContent = `
@@ -171,17 +172,19 @@ export default function ReportsPage() {
       <body>
         <table>
           <tr>
-            <td colspan="4" class="titulo">RELATÓRIO DE TREINAMENTOS - CAT</td>
+            <td colspan="6" class="titulo">RELATÓRIO DE TREINAMENTOS - CAT</td>
           </tr>
           <tr>
-            <td colspan="4" class="subtitulo">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</td>
+            <td colspan="6" class="subtitulo">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</td>
           </tr>
-          <tr><td colspan="4"></td></tr>
+          <tr><td colspan="6"></td></tr>
           <tr>
             <th style="width: 100px;">Mês</th>
-            <th style="width: 300px;">Empresa</th>
-            <th style="width: 150px;">Custo Total (HP)</th>
-            <th style="width: 100px;">Quantidade</th>
+            <th style="width: 200px;">Empresa</th>
+            <th style="width: 200px;">Curso</th>
+            <th style="width: 120px;">Valor Unit.</th>
+            <th style="width: 80px;">Qtd. Alunos</th>
+            <th style="width: 120px;">Valor Total</th>
           </tr>
           ${reportData.map(row => `
             <tr>
