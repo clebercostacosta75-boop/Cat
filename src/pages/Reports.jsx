@@ -194,6 +194,62 @@ export default function ReportsPage() {
           </Button>
         </div>
 
+        {/* Filtros */}
+        <Card className="border-none shadow-lg">
+          <CardContent className="p-4">
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="flex items-center gap-2">
+                <Filter className="w-5 h-5 text-stone-500" />
+                <span className="font-medium text-stone-700">Filtros:</span>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-stone-500">Empresa</Label>
+                <Select value={selectedCompany} onValueChange={setSelectedCompany}>
+                  <SelectTrigger className="w-[250px]">
+                    <SelectValue placeholder="Todas as empresas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as empresas</SelectItem>
+                    {companies.map(company => (
+                      <SelectItem key={company.id} value={company.id}>
+                        {company.nome_fantasia || company.razao_social}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-stone-500">Mês</Label>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Todos os meses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os meses</SelectItem>
+                    {availableMonths.map(month => (
+                      <SelectItem key={month} value={month}>
+                        {month}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {(selectedCompany !== "all" || selectedMonth !== "all") && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setSelectedCompany("all");
+                    setSelectedMonth("all");
+                  }}
+                >
+                  Limpar filtros
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="border-none shadow-xl">
           <CardHeader>
             <CardTitle className="text-xl font-bold text-stone-900 flex items-center gap-2">
