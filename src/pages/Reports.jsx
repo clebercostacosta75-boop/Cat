@@ -55,11 +55,13 @@ export default function ReportsPage() {
 
   // Filtrar turmas por empresa e mês selecionados
   const filteredClasses = classSchedules.filter(classItem => {
+    const companyData = companyMap[classItem.company_name];
     const selectedCompanyData = companies.find(c => c.id === selectedCompany);
-    const classCompanyName = (classItem.company_name || '').toLowerCase().trim();
     const matchCompany = selectedCompany === "all" || 
-      classCompanyName === (selectedCompanyData?.nome_fantasia || '').toLowerCase().trim() ||
-      classCompanyName === (selectedCompanyData?.razao_social || '').toLowerCase().trim();
+      classItem.company_name === selectedCompany ||
+      companyData?.id === selectedCompany ||
+      classItem.company_name === selectedCompanyData?.nome_fantasia ||
+      classItem.company_name === selectedCompanyData?.razao_social;
     const matchMonth = selectedMonth === "all" || classItem.month === selectedMonth;
     return matchCompany && matchMonth;
   });
