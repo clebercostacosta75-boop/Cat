@@ -315,14 +315,16 @@ export default function ReportsPage() {
                   <TableRow className="bg-stone-50">
                     <TableHead className="font-bold">Mês</TableHead>
                     <TableHead className="font-bold">Empresa</TableHead>
-                    <TableHead className="font-bold text-right">Custo Total (HP)</TableHead>
-                    <TableHead className="font-bold text-right">Quantidade</TableHead>
+                    <TableHead className="font-bold">Curso</TableHead>
+                    <TableHead className="font-bold text-right">Valor Unit.</TableHead>
+                    <TableHead className="font-bold text-right">Qtd. Alunos</TableHead>
+                    <TableHead className="font-bold text-right">Valor Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {reportData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-12 text-stone-500">
+                      <TableCell colSpan={6} className="text-center py-12 text-stone-500">
                         Nenhum dado disponível para relatório
                       </TableCell>
                     </TableRow>
@@ -331,10 +333,14 @@ export default function ReportsPage() {
                       <TableRow key={index} className="hover:bg-stone-50">
                         <TableCell className="font-medium">{row.month}</TableCell>
                         <TableCell>{row.company}</TableCell>
-                        <TableCell className="text-right font-semibold text-emerald-600">
-                          R$ {row.total_cost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        <TableCell>{row.course_name}</TableCell>
+                        <TableCell className="text-right">
+                          R$ {row.unit_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
-                        <TableCell className="text-right">{row.count}</TableCell>
+                        <TableCell className="text-right">{row.students_count}</TableCell>
+                        <TableCell className="text-right font-semibold text-emerald-600">
+                          R$ {row.total_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
