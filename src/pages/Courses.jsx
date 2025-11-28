@@ -633,11 +633,18 @@ export default function CoursesPage() {
                     <BookOpen className="w-6 h-6 text-emerald-600" />
                   </div>
                   <div className="flex gap-2">
-                    {course.modality && (
-                      <Badge className={`${modalityColors[course.modality]} border`}>
-                        {course.modality === 'Formação' ? '📚' : '🔄'} {course.modality}
-                      </Badge>
-                    )}
+                    <div className="flex gap-2 flex-wrap">
+                      {course.modality && (
+                        <Badge className={`${modalityColors[course.modality]} border`}>
+                          {course.modality === 'Formação' ? '📚' : '🔄'} {course.modality}
+                        </Badge>
+                      )}
+                      {course.training_type && (
+                        <Badge variant="outline" className="border-stone-300">
+                          {course.training_type === 'Presencial' ? '🏢' : course.training_type === 'Híbrido' ? '🔀' : '💻'} {course.training_type}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
 
