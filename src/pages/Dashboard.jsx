@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -125,23 +124,95 @@ function DashboardAdminMaster() {
   const totalTreinamentos = tableData.reduce((sum, row) => sum + row.classCount, 0);
   const empresasAtendidas = new Set(tableData.map(row => row.company)).size;
 
-  const exportToCSV = () => {
-    const headers = ['Mês', 'Empresa', 'Custo Total (HP)', 'Quantidade'];
-    const csvContent = [
-      headers.join(','),
-      ...tableData.map(row => [
-        row.month,
-        row.company,
-        row.totalCost.toFixed(2),
-        row.classCount
-      ].join(','))
-    ].join('\n');
+  const exportToExcel = () => {
+    const htmlContent = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="UTF-8">
+        <!--[if gte mso 9]>
+        <xml>
+          <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>Dashboard</x:Name>
+                <x:WorksheetOptions>
+                  <x:DisplayGridlines/>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid #000000; padding: 8px; }
+          th { 
+            background-color: #10B981; 
+            color: #FFFFFF; 
+            font-weight: bold; 
+            text-align: center;
+            font-size: 12pt;
+          }
+          td { text-align: left; font-size: 11pt; }
+          .numero { text-align: right; }
+          .total-row { 
+            background-color: #D1FAE5; 
+            font-weight: bold; 
+          }
+          .titulo { 
+            background-color: #065F46; 
+            color: #FFFFFF; 
+            font-size: 14pt; 
+            font-weight: bold; 
+            text-align: center; 
+          }
+          .subtitulo { 
+            background-color: #ECFDF5; 
+            font-size: 10pt; 
+            text-align: center; 
+            color: #374151;
+          }
+        </style>
+      </head>
+      <body>
+        <table>
+          <tr>
+            <td colspan="4" class="titulo">DASHBOARD DE CUSTOS - CAT</td>
+          </tr>
+          <tr>
+            <td colspan="4" class="subtitulo">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</td>
+          </tr>
+          <tr><td colspan="4"></td></tr>
+          <tr>
+            <th style="width: 150px;">Mês</th>
+            <th style="width: 250px;">Empresa</th>
+            <th style="width: 150px;">Custo Total (HP)</th>
+            <th style="width: 100px;">Quantidade</th>
+          </tr>
+          ${tableData.map(row => `
+            <tr>
+              <td>${row.month}</td>
+              <td>${row.company}</td>
+              <td class="numero">R$ ${row.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+              <td class="numero">${row.classCount}</td>
+            </tr>
+          `).join('')}
+          <tr class="total-row">
+            <td><strong>TOTAL</strong></td>
+            <td><strong>${empresasAtendidas} empresa(s)</strong></td>
+            <td class="numero"><strong>R$ ${totalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
+            <td class="numero"><strong>${totalTreinamentos}</strong></td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', 'dashboard_custos.csv');
+    link.setAttribute('download', `dashboard_custos_${new Date().toISOString().split('T')[0]}.xls`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
