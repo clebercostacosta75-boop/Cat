@@ -3,13 +3,15 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Building2, MapPin, Users, Mail, Phone } from "lucide-react";
+import { Plus, Building2, MapPin, Users, Mail, Phone, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import CompanyForm from "@/components/company/CompanyForm";
 
 export default function CompaniesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingCompany, setEditingCompany] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const queryClient = useQueryClient();
 
   const { data: companies = [], isLoading } = useQuery({
@@ -82,16 +84,27 @@ export default function CompaniesPage() {
             <h1 className="text-3xl md:text-4xl font-bold text-stone-900">Empresas Clientes</h1>
             <p className="text-stone-600 mt-1">Cadastro central de empresas, unidades e contatos</p>
           </div>
-          <Button 
-            onClick={() => {
-              resetForm();
-              setShowForm(!showForm);
-            }}
-            className="bg-emerald-600 hover:bg-emerald-700 shadow-lg"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Nova Empresa
-          </Button>
+          <div className="flex gap-3 items-center">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-stone-400" />
+              <Input
+                placeholder="Pesquisar empresa..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 w-64"
+              />
+            </div>
+            <Button 
+              onClick={() => {
+                resetForm();
+                setShowForm(!showForm);
+              }}
+              className="bg-emerald-600 hover:bg-emerald-700 shadow-lg"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Nova Empresa
+            </Button>
+          </div>
         </div>
 
         {showForm && (
@@ -107,7 +120,13 @@ export default function CompaniesPage() {
         )}
 
         <div className="grid lg:grid-cols-2 gap-6">
-          {companies.map((company) => (
+          {companies
+            .filter((company) =>
+              company.nome_fantasia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              company.razao_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              company.cnpj?.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+            .map((company) => (
             <Card key={company.id} className="border-none shadow-lg hover:shadow-xl transition-shadow">
               <CardContent className="p-6">
                 {/* Cabeçalho */}
