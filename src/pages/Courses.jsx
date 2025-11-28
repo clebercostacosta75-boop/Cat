@@ -107,6 +107,7 @@ export default function CoursesPage() {
       ...course,
       start_date: course.start_date || "",
       end_date: course.end_date || "",
+      training_type: course.training_type || "Presencial",
       schedules: course.schedules || {
         morning: { start: "", end: "" },
         afternoon: { start: "", end: "" },
@@ -394,7 +395,7 @@ export default function CoursesPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="modality">Tipo de Treinamento</Label>
+                      <Label htmlFor="modality">Modalidade</Label>
                       <Select
                         value={formData.modality}
                         onValueChange={(value) => setFormData({...formData, modality: value})}
@@ -405,6 +406,22 @@ export default function CoursesPage() {
                         <SelectContent>
                           <SelectItem value="Formação">📚 Formação</SelectItem>
                           <SelectItem value="Periódico">🔄 Periódico</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="training_type">Tipo de Treinamento</Label>
+                      <Select
+                        value={formData.training_type}
+                        onValueChange={(value) => setFormData({...formData, training_type: value})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Presencial">🏢 Presencial</SelectItem>
+                          <SelectItem value="Híbrido">🔀 Híbrido</SelectItem>
+                          <SelectItem value="Online">💻 Online</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
