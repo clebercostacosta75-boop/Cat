@@ -541,21 +541,21 @@ function BMMModel4({ data }) {
     <div className="bg-white p-8 print:p-4" style={{ fontFamily: 'Arial, sans-serif' }}>
       {/* Cabeçalho Verde Agropalma */}
       <div className="bg-gradient-to-r from-green-700 to-green-800 text-white p-4 mb-1 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="text-4xl">🌿</div>
-          <div>
-            <h2 className="text-2xl font-bold">agropalma</h2>
-          </div>
+      <div className="flex items-center gap-4">
+        <div className="text-4xl">🌿</div>
+        <div>
+          <h2 className="text-2xl font-bold">{data?.company?.nome_fantasia || 'Empresa'}</h2>
         </div>
-        <div className="text-center flex-1">
-          <h1 className="text-xl font-bold">
-            Treinamentos Normativos - Mês de {data?.month || 'Janeiro'} de {data?.year || '2025'} - {data?.company?.name || 'Agropalma'} {data?.location || 'Tailândia'}
-          </h1>
-        </div>
-        <div className="flex gap-3">
-          <div className="w-16 h-16 bg-white rounded"></div>
-          <div className="w-16 h-16 bg-white rounded-full"></div>
-        </div>
+      </div>
+      <div className="text-center flex-1">
+        <h1 className="text-xl font-bold">
+          Treinamentos Normativos - Mês de {data?.month || 'Janeiro'} de {data?.year || '2025'} - {data?.company?.nome_fantasia || data?.company?.razao_social || 'Empresa'}
+        </h1>
+      </div>
+      <div className="flex gap-3">
+        <div className="w-16 h-16 bg-white rounded"></div>
+        <div className="w-16 h-16 bg-white rounded-full"></div>
+      </div>
       </div>
 
       {/* Tabela de Treinamentos */}
