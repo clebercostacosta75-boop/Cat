@@ -340,12 +340,15 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
         <div className="grid md:grid-cols-4 gap-4">
           <div className="space-y-2">
             <Label>Modalidade</Label>
-            <Input 
-              value={formData.modality ? getModalityDisplay(formData.modality) : ''} 
-              readOnly 
-              className="bg-stone-50" 
-              placeholder="Formação/Periódico" 
-            />
+            <Select value={formData.modality} onValueChange={(value) => handleChange('modality', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a modalidade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Formação">📚 Formação</SelectItem>
+                <SelectItem value="Periódico">🔄 Periódico</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label>Categoria</Label>
