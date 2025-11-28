@@ -110,8 +110,13 @@ export default function GenerateBMM() {
 
       const totalValue = bmmItems.reduce((sum, item) => sum + item.total_price, 0);
 
+      // Buscar dados da contratada (CAT)
+      const contractors = await base44.entities.Contractor.list();
+      const contractor = contractors.length > 0 ? contractors[0] : null;
+
       setBmmData({
         company: company,
+        contractor: contractor,
         period: period,
         month: selectedMonth,
         year: selectedYear,
