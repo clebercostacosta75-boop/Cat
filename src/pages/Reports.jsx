@@ -198,14 +198,15 @@ export default function ReportsPage() {
             <th>Dias Específicos</th>
             <th>Horário</th>
             <th>Instrutor</th>
+            <th>Pago</th>
             <th>Modalidade</th>
             <th>Categoria</th>
             <th>Carga Horária</th>
             <th>Qtd. Alunos</th>
             <th>Valor Unit.</th>
             <th>Valor Total</th>
-          </tr>
-          ${reportData.map(row => `
+            </tr>
+            ${reportData.map(row => `
             <tr>
               <td>${row.month}</td>
               <td>${row.company}</td>
@@ -216,6 +217,7 @@ export default function ReportsPage() {
               <td>${row.specific_days}</td>
               <td>${row.training_schedule}</td>
               <td>${row.instructor_name}</td>
+              <td>${row.payment_status || 'Pendente'}</td>
               <td>${row.modality}</td>
               <td>${row.category}</td>
               <td class="numero">${row.duration_hours}h</td>
@@ -223,7 +225,7 @@ export default function ReportsPage() {
               <td class="numero">R$ ${row.unit_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
               <td class="numero">R$ ${row.total_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
             </tr>
-          `).join('')}
+            `).join('')}
           <tr class="total-row">
             <td><strong>TOTAL</strong></td>
             <td><strong>${totalEmpresas} empresa(s)</strong></td>
