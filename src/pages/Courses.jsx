@@ -211,22 +211,87 @@ export default function CoursesPage() {
   };
 
   const exportCourses = () => {
-    const csv = [
-      ['Nome', 'Modalidade', 'Categoria', 'Carga Horária', 'Validade', 'Valor Padrão'].join(','),
-      ...courses.map(c => [
-        c.name,
-        c.modality || '',
-        c.category || '',
-        c.duration_hours || '',
-        c.validity || '',
-        c.standard_value || ''
-      ].join(','))
-    ].join('\n');
+    const htmlContent = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="UTF-8">
+        <!--[if gte mso 9]>
+        <xml>
+          <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>Cursos</x:Name>
+                <x:WorksheetOptions>
+                  <x:DisplayGridlines/>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid #000000; padding: 8px; }
+          th { 
+            background-color: #10B981; 
+            color: #FFFFFF; 
+            font-weight: bold; 
+            text-align: center;
+            font-size: 12pt;
+          }
+          td { text-align: left; font-size: 11pt; }
+          .numero { text-align: right; }
+          .titulo { 
+            background-color: #065F46; 
+            color: #FFFFFF; 
+            font-size: 14pt; 
+            font-weight: bold; 
+            text-align: center; 
+          }
+          .subtitulo { 
+            background-color: #ECFDF5; 
+            font-size: 10pt; 
+            text-align: center; 
+            color: #374151;
+          }
+        </style>
+      </head>
+      <body>
+        <table>
+          <tr>
+            <td colspan="6" class="titulo">CATÁLOGO DE CURSOS - CAT</td>
+          </tr>
+          <tr>
+            <td colspan="6" class="subtitulo">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</td>
+          </tr>
+          <tr><td colspan="6"></td></tr>
+          <tr>
+            <th style="width: 300px;">Nome</th>
+            <th style="width: 120px;">Modalidade</th>
+            <th style="width: 150px;">Categoria</th>
+            <th style="width: 100px;">Carga Horária</th>
+            <th style="width: 100px;">Validade</th>
+            <th style="width: 120px;">Valor Padrão</th>
+          </tr>
+          ${courses.map(c => `
+            <tr>
+              <td>${c.name || ''}</td>
+              <td>${c.modality || ''}</td>
+              <td>${c.category || ''}</td>
+              <td class="numero">${c.duration_hours ? c.duration_hours + 'h' : ''}</td>
+              <td>${c.validity || ''}</td>
+              <td class="numero">${c.standard_value ? 'R$ ' + c.standard_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : ''}</td>
+            </tr>
+          `).join('')}
+        </table>
+      </body>
+      </html>
+    `;
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'cursos.csv';
+    link.download = `cursos_${new Date().toISOString().split('T')[0]}.xls`;
     link.click();
   };
 
