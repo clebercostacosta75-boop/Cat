@@ -815,13 +815,13 @@ function BMMModel2({ data }) {
         <div className="flex items-center gap-4">
           <div className="text-4xl">🌿</div>
           <div>
-            <h2 className="text-2xl font-bold">agropalma</h2>
-            <p className="text-sm">Sustainable Palm Oil</p>
+            <h2 className="text-2xl font-bold">{data.company?.nome_fantasia || 'Empresa'}</h2>
+            <p className="text-sm">{data.company?.razao_social || ''}</p>
           </div>
         </div>
         <div className="text-right">
           <h1 className="text-xl font-bold">Treinamentos Normativos - {data.month} de {data.year}</h1>
-          <p className="text-sm">{data.company?.name}</p>
+          <p className="text-sm">{data.company?.nome_fantasia || data.company?.razao_social}</p>
         </div>
         <div className="flex flex-col items-center gap-2">
           <div className="bg-yellow-400 text-black px-3 py-1 rounded font-bold">BMM</div>
