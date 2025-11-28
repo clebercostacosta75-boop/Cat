@@ -79,8 +79,7 @@ export default function CoursesPage() {
     duration_hours: "",
     description: "",
     modality: "Formação",
-    training_type: "Presencial",
-    category: "",
+    category: "Presencial",
     validity: "",
     start_date: "",
     end_date: "",
@@ -107,7 +106,7 @@ export default function CoursesPage() {
       ...course,
       start_date: course.start_date || "",
       end_date: course.end_date || "",
-      training_type: course.training_type || "Presencial",
+      category: course.category || "Presencial",
       schedules: course.schedules || {
         morning: { start: "", end: "" },
         afternoon: { start: "", end: "" },
@@ -410,22 +409,6 @@ export default function CoursesPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="training_type">Tipo de Treinamento</Label>
-                      <Select
-                        value={formData.training_type}
-                        onValueChange={(value) => setFormData({...formData, training_type: value})}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Presencial">🏢 Presencial</SelectItem>
-                          <SelectItem value="Híbrido">🔀 Híbrido</SelectItem>
-                          <SelectItem value="Online">💻 Online</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
                       <Label htmlFor="category">Categoria</Label>
                       <Select
                         value={formData.category}
@@ -435,14 +418,13 @@ export default function CoursesPage() {
                           <SelectValue placeholder="Selecione a categoria" />
                         </SelectTrigger>
                         <SelectContent>
-                          {categories.map(cat => (
-                            <SelectItem key={cat.id} value={cat.name}>
-                              {cat.icon && `${cat.icon} `}{cat.name}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="Presencial">🏢 Presencial</SelectItem>
+                          <SelectItem value="Híbrido">🔀 Híbrido</SelectItem>
+                          <SelectItem value="Online">💻 Online</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="validity">Validade</Label>
                           <Input
@@ -639,9 +621,9 @@ export default function CoursesPage() {
                           {course.modality === 'Formação' ? '📚' : '🔄'} {course.modality}
                         </Badge>
                       )}
-                      {course.training_type && (
+                      {course.category && (
                         <Badge variant="outline" className="border-stone-300">
-                          {course.training_type === 'Presencial' ? '🏢' : course.training_type === 'Híbrido' ? '🔀' : '💻'} {course.training_type}
+                          {course.category === 'Presencial' ? '🏢' : course.category === 'Híbrido' ? '🔀' : '💻'} {course.category}
                         </Badge>
                       )}
                     </div>
