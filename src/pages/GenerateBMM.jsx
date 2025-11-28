@@ -351,11 +351,11 @@ function BMMModel3({ data }) {
             <div className="bg-gray-200 border-b border-black p-2 font-bold">REF. CONTRATO E ADITIVO</div>
             <div className="border-b border-black p-2">
               <div><strong>CONTRATADA:</strong></div>
-              <div className="ml-4">{data?.company?.name || 'V.S. NUNES CURSOS E TREINAMENTO'}</div>
+              <div className="ml-4">{data?.contractor?.razao_social || 'V.S. NUNES CURSOS E TREINAMENTO'}</div>
             </div>
             <div className="border-b border-black p-2">
               <div><strong>CNPJ:</strong></div>
-              <div className="ml-4">{data?.company?.cnpj || '07.238.084/0001-45'}</div>
+              <div className="ml-4">{data?.contractor?.cnpj || '07.238.084/0001-45'}</div>
             </div>
             <div className="border-b border-black p-2">
               <div><strong>OBJETO:</strong></div>
