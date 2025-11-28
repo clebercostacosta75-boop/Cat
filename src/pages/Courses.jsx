@@ -552,7 +552,7 @@ export default function CoursesPage() {
                             <SelectContent>
                               {companies.map(company => (
                                 <SelectItem key={company.id} value={company.id}>
-                                  {company.name}
+                                  {company.nome_fantasia || company.razao_social}
                                 </SelectItem>
                               ))}
                             </SelectContent>
