@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileText, Download, Printer, Plus, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { toast } from "sonner";
 
 export default function GenerateBMM() {
   const [selectedCompany, setSelectedCompany] = useState("");
@@ -134,21 +133,18 @@ export default function GenerateBMM() {
     }
   };
 
-  const [downloadingPdf, setDownloadingPdf] = useState(false);
-
   const handlePrint = () => {
     window.print();
   };
 
   const handleDownloadPDF = async () => {
     if (!bmmData) {
-      toast.error('Gere o BMM primeiro antes de baixar o PDF');
+      alert('Gere o BMM primeiro antes de baixar o PDF');
       return;
     }
 
-    setDownloadingPdf(true);
     try {
-      const response = await base44.functions.invoke('gerarBMMPdf', {
+      const response = await base44.functions.invoke('gerarBMMPDF', {
         bmmData: bmmData,
         templateType: selectedTemplate
       });
@@ -162,12 +158,9 @@ export default function GenerateBMM() {
       a.click();
       window.URL.revokeObjectURL(url);
       a.remove();
-      toast.success('PDF baixado com sucesso!');
     } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      toast.error('Erro ao gerar PDF. Tente novamente.');
-    } finally {
-      setDownloadingPdf(false);
+      console.error('Erro ao baixar PDF:', error);
+      alert('Erro ao gerar PDF. Tente novamente.');
     }
   };
 
@@ -302,18 +295,9 @@ export default function GenerateBMM() {
                   <Printer className="w-4 h-4 mr-2" />
                   Imprimir
                 </Button>
-                <Button variant="outline" onClick={handleDownloadPDF} disabled={downloadingPdf}>
-                  {downloadingPdf ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Gerando PDF...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4 mr-2" />
-                      Baixar PDF
-                    </>
-                  )}
+                <Button variant="outline" onClick={handleDownloadPDF}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar PDF
                 </Button>
               </div>
             )}
