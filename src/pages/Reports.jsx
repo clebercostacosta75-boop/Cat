@@ -24,10 +24,29 @@ export default function ReportsPage() {
     initialData: [],
   });
 
+  const { data: classSchedules = [] } = useQuery({
+    queryKey: ['classSchedules'],
+    queryFn: () => base44.entities.ClassSchedule.list(),
+    initialData: [],
+  });
+
+  const { data: courses = [] } = useQuery({
+    queryKey: ['courses'],
+    queryFn: () => base44.entities.Course.list(),
+    initialData: [],
+  });
+
   // Criar mapa de empresas para lookup rápido
   const companyMap = companies.reduce((acc, company) => {
+    acc[company.id] = company;
     acc[company.nome_fantasia] = company;
     acc[company.razao_social] = company;
+    return acc;
+  }, {});
+
+  // Criar mapa de cursos para lookup rápido
+  const courseMap = courses.reduce((acc, course) => {
+    acc[course.name] = course;
     return acc;
   }, {});
 
