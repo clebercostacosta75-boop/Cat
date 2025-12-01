@@ -124,22 +124,22 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     }
   }, [formData.start_date]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     
     // Submeter o formulário
-    await onSubmit(formData);
+    onSubmit(formData);
     
-    // Notificar admins sobre a alteração
+    // Notificar admins sobre a alteração (em background)
     try {
       const action = classSchedule ? 'updated' : 'created';
-      await base44.functions.invoke('notificarAdmins', {
+      base44.functions.invoke('notificarAdmins', {
         action,
         entity_type: 'ClassSchedule',
         entity_id: classSchedule?.id,
         entity_name: formData.training_name,
         details: `Empresa: ${formData.company_name}\nData: ${formData.start_date}\nInstrutor: ${formData.instructor_name}`
-      });
+      }).catch(err => console.error('Erro ao notificar admins:', err));
     } catch (error) {
       console.error('Erro ao notificar admins:', error);
     }
