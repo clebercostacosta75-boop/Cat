@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 export default function FormationsList({ formations, onChange }) {
   const [adding, setAdding] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [newFormation, setNewFormation] = useState({
     category: 'Curso Profissionalizante',
     title: '',
@@ -21,8 +22,7 @@ export default function FormationsList({ formations, onChange }) {
     file_url: ''
   });
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
+  const handleFileUpload = async (file) => {
     if (!file) return;
 
     setUploading(true);
@@ -33,6 +33,30 @@ export default function FormationsList({ formations, onChange }) {
       alert('Erro ao fazer upload do arquivo');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleFileInputChange = (e) => {
+    const file = e.target.files[0];
+    handleFileUpload(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleFileUpload(file);
     }
   };
 
@@ -153,52 +177,68 @@ export default function FormationsList({ formations, onChange }) {
 
                 <div className="md:col-span-2 space-y-2">
                   <Label>Arquivo/Certificado</Label>
-                  <div className="flex items-center gap-3">
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => !uploading && document.getElementById('formation-file-upload').click()}
+                    className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                      isDragging 
+                        ? 'border-emerald-500 bg-emerald-50' 
+                        : 'border-stone-300 hover:border-emerald-400 hover:bg-stone-50'
+                    } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
                     <input
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                      onChange={handleFileUpload}
+                      onChange={handleFileInputChange}
                       disabled={uploading}
                       id="formation-file-upload"
                       style={{ display: 'none' }}
                     />
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      disabled={uploading}
-                      onClick={() => document.getElementById('formation-file-upload').click()}
-                    >
-                      {uploading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Enviando...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-4 h-4 mr-2" />
-                          Selecionar Arquivo
-                        </>
-                      )}
-                    </Button>
-                    {newFormation.file_url && (
-                      <div className="flex items-center gap-2 text-sm text-emerald-600">
-                        <FileText className="w-4 h-4" />
-                        <a href={newFormation.file_url} target="_blank" rel="noopener noreferrer" className="underline">
-                          Arquivo anexado
-                        </a>
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          className="h-6 w-6 text-red-500 hover:text-red-700"
-                          onClick={() => setNewFormation({ ...newFormation, file_url: '' })}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
+                    {uploading ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+                        <p className="text-sm text-stone-600">Enviando arquivo...</p>
+                      </div>
+                    ) : newFormation.file_url ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <FileText className="w-8 h-8 text-emerald-600" />
+                        <div className="flex items-center gap-2">
+                          <a 
+                            href={newFormation.file_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-sm text-emerald-600 underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Arquivo anexado
+                          </a>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 text-red-500 hover:text-red-700"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setNewFormation({ ...newFormation, file_url: '' });
+                            }}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        <p className="text-xs text-stone-500">Clique ou arraste para substituir</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2">
+                        <Upload className="w-8 h-8 text-stone-400" />
+                        <p className="text-sm text-stone-600">
+                          <span className="font-medium text-emerald-600">Clique para selecionar</span> ou arraste o arquivo aqui
+                        </p>
+                        <p className="text-xs text-stone-500">PDF, JPG, PNG, DOC, DOCX</p>
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-stone-500">Formatos aceitos: PDF, JPG, PNG, DOC, DOCX</p>
                 </div>
               </div>
 
