@@ -365,7 +365,13 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
           </div>
           <div className="space-y-2">
             <Label>HR (Carga Horária)</Label>
-            <Input value={formData.duration_hours} readOnly className="bg-stone-50" />
+            <Input 
+              type="number"
+              step="0.5"
+              value={formData.duration_hours} 
+              onChange={(e) => handleChange('duration_hours', parseFloat(e.target.value) || 0)}
+              placeholder="0"
+            />
           </div>
           <div className="space-y-2">
             <Label>Mês</Label>
