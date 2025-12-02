@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText, Building2, Bell } from "lucide-react";
+import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText, Building2, Bell, UserCog } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -111,7 +111,13 @@ export default function Layout({ children }) {
         icon: BarChart3,
         roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
       },
-    ];
+      {
+        title: "Usuários",
+        url: createPageUrl("Users"),
+        icon: UserCog,
+        roles: ['admin', 'Administrador Master']
+      },
+      ];
 
     // Filtrar items baseado no role do usuário
     if (!userRole) return [];
