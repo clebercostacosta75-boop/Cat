@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Users, Shield, Search, Edit2, X, Check, Trash2 } from "lucide-react";
+import { Users, Plus, Edit2, X, Check, Trash2, Crown, Settings, Eye, Lock } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,12 +20,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function UsersPage() {
-  const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState(null);
   const [editRole, setEditRole] = useState("");
   const [editName, setEditName] = useState("");
+  const [showNewUserDialog, setShowNewUserDialog] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: users = [], isLoading } = useQuery({
@@ -78,11 +86,12 @@ export default function UsersPage() {
   };
 
   const roles = [
-    { value: 'Administrador Master', label: '👑 Administrador Master', color: 'bg-purple-100 text-purple-800 border-purple-200' },
-    { value: 'Financeiro', label: '💰 Financeiro', color: 'bg-green-100 text-green-800 border-green-200' },
-    { value: 'Coordenador de Operações', label: '⚙️ Coordenador de Operações', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-    { value: 'Instrutor', label: '👨‍🏫 Instrutor', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-    { value: 'user', label: '👤 Usuário', color: 'bg-stone-100 text-stone-800 border-stone-200' },
+    { value: 'Administrador Master', label: '👑 Administrador Master', shortLabel: 'Gestor Master', color: 'bg-purple-100 text-purple-800 border-purple-200', iconBg: 'bg-purple-100', iconColor: 'text-purple-600' },
+    { value: 'Financeiro', label: '💰 Financeiro', shortLabel: 'Editor/Operador', color: 'bg-blue-100 text-blue-800 border-blue-200', iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
+    { value: 'Coordenador de Operações', label: '⚙️ Coordenador de Operações', shortLabel: 'Coordenador', color: 'bg-green-100 text-green-800 border-green-200', iconBg: 'bg-green-100', iconColor: 'text-green-600' },
+    { value: 'Instrutor', label: '👨‍🏫 Instrutor', shortLabel: 'Cliente/Viewer', color: 'bg-amber-100 text-amber-800 border-amber-200', iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
+    { value: 'Bloqueado', label: '🔒 Bloqueado', shortLabel: 'Bloqueados', color: 'bg-red-100 text-red-800 border-red-200', iconBg: 'bg-red-100', iconColor: 'text-red-600' },
+    { value: 'user', label: '👤 Usuário', shortLabel: 'Usuário', color: 'bg-stone-100 text-stone-800 border-stone-200', iconBg: 'bg-stone-100', iconColor: 'text-stone-600' },
   ];
 
   const getRoleDisplay = (user) => {
@@ -91,77 +100,85 @@ export default function UsersPage() {
     return roleConfig;
   };
 
-  const filteredUsers = users.filter(user => 
-    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Contagem por tipo de role
+  const countByRole = (roleValue) => {
+    return users.filter(u => (u.custom_role || u.role || 'user') === roleValue).length;
+  };
+
+  const statsCards = [
+    { 
+      label: 'Gestor Master', 
+      count: countByRole('Administrador Master') + countByRole('admin'), 
+      icon: Crown, 
+      iconBg: 'bg-purple-100', 
+      iconColor: 'text-purple-600' 
+    },
+    { 
+      label: 'Editor/Operador', 
+      count: countByRole('Financeiro') + countByRole('Coordenador de Operações'), 
+      icon: Settings, 
+      iconBg: 'bg-blue-100', 
+      iconColor: 'text-blue-600' 
+    },
+    { 
+      label: 'Cliente/Viewer', 
+      count: countByRole('Instrutor') + countByRole('user'), 
+      icon: Eye, 
+      iconBg: 'bg-green-100', 
+      iconColor: 'text-green-600' 
+    },
+    { 
+      label: 'Bloqueados', 
+      count: countByRole('Bloqueado'), 
+      icon: Lock, 
+      iconBg: 'bg-red-100', 
+      iconColor: 'text-red-600' 
+    },
+  ];
 
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Logo e Título */}
-        <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
-          <div className="flex-shrink-0">
-            <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
-              alt="CAT Logo" 
-              className="h-24 w-auto"
-            />
+        {/* Header */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+              <Users className="w-6 h-6 text-purple-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-stone-900">Gestão de Usuários</h1>
+              <p className="text-stone-500 text-sm">{users.length} usuários cadastrados</p>
+            </div>
           </div>
-          <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl md:text-4xl font-bold text-stone-900">Gerenciamento de Usuários</h1>
-            <p className="text-stone-600 mt-1">Controle de acessos e permissões do sistema</p>
-          </div>
+          <Button 
+            onClick={() => setShowNewUserDialog(true)}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Usuário
+          </Button>
         </div>
 
-        {/* Informação sobre Roles */}
-        <Card className="border-none shadow-lg bg-gradient-to-r from-purple-50 to-blue-50">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <Shield className="w-8 h-8 text-purple-600 flex-shrink-0" />
-              <div>
-                <h3 className="font-semibold text-stone-900 mb-2">Níveis de Acesso</h3>
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {roles.slice(0, 4).map(role => (
-                    <div key={role.value} className="flex items-center gap-2">
-                      <Badge className={`${role.color} border`}>{role.label}</Badge>
-                    </div>
-                  ))}
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {statsCards.map((stat, index) => (
+            <Card key={index} className="border-none shadow-md">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className={`w-12 h-12 ${stat.iconBg} rounded-full flex items-center justify-center`}>
+                  <stat.icon className={`w-6 h-6 ${stat.iconColor}`} />
                 </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Filtro de Busca */}
-        <Card className="border-none shadow-lg">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-stone-400" />
-                <Input
-                  placeholder="Pesquisar por nome ou email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="text-sm text-stone-500">
-                {filteredUsers.length} usuário(s) encontrado(s)
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                <div>
+                  <p className="text-2xl font-bold text-stone-900">{stat.count}</p>
+                  <p className="text-sm text-stone-500">{stat.label}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
         {/* Lista de Usuários */}
         <Card className="border-none shadow-xl">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-6 h-6 text-emerald-600" />
-              Usuários do Sistema
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -179,14 +196,14 @@ export default function UsersPage() {
                         Carregando usuários...
                       </TableCell>
                     </TableRow>
-                  ) : filteredUsers.length === 0 ? (
+                  ) : users.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-12 text-stone-500">
                         Nenhum usuário encontrado
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredUsers.map((user) => {
+                    users.map((user) => {
                       const roleConfig = getRoleDisplay(user);
                       const isEditing = editingUser === user.id;
                       
@@ -194,8 +211,8 @@ export default function UsersPage() {
                         <TableRow key={user.id} className="hover:bg-stone-50">
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                                <span className="text-emerald-700 font-semibold">
+                              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                <span className="text-purple-700 font-semibold">
                                   {user.full_name?.charAt(0)?.toUpperCase() || '?'}
                                 </span>
                               </div>
@@ -305,32 +322,29 @@ export default function UsersPage() {
           </CardContent>
         </Card>
 
-        {/* Legenda de Permissões */}
-        <Card className="border-none shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-lg">Permissões por Nível de Acesso</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="p-4 bg-purple-50 rounded-lg">
-                <Badge className="bg-purple-100 text-purple-800 border-purple-200 border mb-2">👑 Administrador Master</Badge>
-                <p className="text-sm text-stone-600">Acesso total: Dashboard, Cronograma, Instrutores, Empresas, Contratadas, Cursos, Notificações, BMM, Importar, Relatórios e Usuários</p>
-              </div>
-              <div className="p-4 bg-green-50 rounded-lg">
-                <Badge className="bg-green-100 text-green-800 border-green-200 border mb-2">💰 Financeiro</Badge>
-                <p className="text-sm text-stone-600">Dashboard, Cronograma, Instrutores, Empresas, Contratadas, Cursos, Notificações, BMM, Importar e Relatórios</p>
-              </div>
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <Badge className="bg-blue-100 text-blue-800 border-blue-200 border mb-2">⚙️ Coordenador de Operações</Badge>
-                <p className="text-sm text-stone-600">Cronograma, Instrutores, Empresas, Contratadas, Cursos, Importar e Relatórios</p>
-              </div>
-              <div className="p-4 bg-amber-50 rounded-lg">
-                <Badge className="bg-amber-100 text-amber-800 border-amber-200 border mb-2">👨‍🏫 Instrutor</Badge>
-                <p className="text-sm text-stone-600">Dashboard (visualização pessoal) e Cronograma (apenas seus treinamentos)</p>
-              </div>
+        {/* Dialog Novo Usuário */}
+        <Dialog open={showNewUserDialog} onOpenChange={setShowNewUserDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Adicionar Novo Usuário</DialogTitle>
+              <DialogDescription>
+                Para adicionar um novo usuário, utilize a funcionalidade de convite do sistema. 
+                Acesse as configurações do app e convide o usuário pelo email.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-sm text-stone-600">
+                Os usuários são adicionados através do sistema de convite da plataforma Base44. 
+                Após o convite, você poderá definir o nível de acesso do usuário nesta página.
+              </p>
             </div>
-          </CardContent>
-        </Card>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowNewUserDialog(false)}>
+                Entendi
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
