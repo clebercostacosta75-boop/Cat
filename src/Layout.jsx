@@ -115,7 +115,7 @@ export default function Layout({ children }) {
         title: "Usuários",
         url: createPageUrl("Users"),
         icon: UserCog,
-        roles: ['admin', 'Administrador Master']
+        roles: ['admin', 'Administrador Master', 'Financeiro']
       },
       ];
 
