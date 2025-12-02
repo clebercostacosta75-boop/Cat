@@ -8,12 +8,24 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Users, Shield, Search, Edit2, X, Check } from "lucide-react";
+import { Users, Shield, Search, Edit2, X, Check, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState(null);
   const [editRole, setEditRole] = useState("");
+  const [editName, setEditName] = useState("");
   const queryClient = useQueryClient();
 
   const { data: users = [], isLoading } = useQuery({
@@ -28,24 +40,41 @@ export default function UsersPage() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setEditingUser(null);
       setEditRole("");
+      setEditName("");
     },
   });
 
-  const handleEditRole = (user) => {
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.User.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+
+  const handleEditUser = (user) => {
     setEditingUser(user.id);
     setEditRole(user.custom_role || user.role || 'user');
+    setEditName(user.full_name || '');
   };
 
-  const handleSaveRole = (userId) => {
+  const handleSaveUser = (userId) => {
     updateMutation.mutate({ 
       id: userId, 
-      data: { custom_role: editRole } 
+      data: { 
+        custom_role: editRole,
+        full_name: editName 
+      } 
     });
   };
 
   const handleCancelEdit = () => {
     setEditingUser(null);
     setEditRole("");
+    setEditName("");
+  };
+
+  const handleDeleteUser = (userId) => {
+    deleteMutation.mutate(userId);
   };
 
   const roles = [
@@ -171,7 +200,16 @@ export default function UsersPage() {
                                 </span>
                               </div>
                               <div>
-                                <p className="font-medium text-stone-900">{user.full_name || 'Sem nome'}</p>
+                                {isEditing ? (
+                                  <Input
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    placeholder="Nome do usuário"
+                                    className="w-[200px]"
+                                  />
+                                ) : (
+                                  <p className="font-medium text-stone-900">{user.full_name || 'Sem nome'}</p>
+                                )}
                               </div>
                             </div>
                           </TableCell>
@@ -201,7 +239,7 @@ export default function UsersPage() {
                               <div className="flex items-center justify-center gap-2">
                                 <Button
                                   size="sm"
-                                  onClick={() => handleSaveRole(user.id)}
+                                  onClick={() => handleSaveUser(user.id)}
                                   className="bg-emerald-600 hover:bg-emerald-700"
                                   disabled={updateMutation.isPending}
                                 >
@@ -216,15 +254,45 @@ export default function UsersPage() {
                                 </Button>
                               </div>
                             ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleEditRole(user)}
-                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              >
-                                <Edit2 className="w-4 h-4 mr-1" />
-                                Editar Acesso
-                              </Button>
+                              <div className="flex items-center justify-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEditUser(user)}
+                                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                >
+                                  <Edit2 className="w-4 h-4 mr-1" />
+                                  Editar
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Excluir Usuário</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Tem certeza que deseja excluir o usuário <strong>{user.full_name || user.email}</strong>? Esta ação não pode ser desfeita.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDeleteUser(user.id)}
+                                        className="bg-red-600 hover:bg-red-700"
+                                      >
+                                        Excluir
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
                             )}
                           </TableCell>
                         </TableRow>
