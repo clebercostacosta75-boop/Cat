@@ -11,7 +11,6 @@ import GenerateBMM from './pages/GenerateBMM';
 import BMMTemplates from './pages/BMMTemplates';
 import Companies from './pages/Companies';
 import Contractors from './pages/Contractors';
-import NotificationCenter from './pages/NotificationCenter';
 import Users from './pages/Users';
 import __Layout from './Layout.jsx';
 
@@ -30,7 +29,6 @@ export const PAGES = {
     "BMMTemplates": BMMTemplates,
     "Companies": Companies,
     "Contractors": Contractors,
-    "NotificationCenter": NotificationCenter,
     "Users": Users,
 }
 
