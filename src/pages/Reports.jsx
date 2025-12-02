@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 export default function ReportsPage() {
   const [selectedCompany, setSelectedCompany] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState("all");
+  const [selectedInstructor, setSelectedInstructor] = useState("all");
 
   const { data: schedules = [] } = useQuery({
     queryKey: ['schedules'],
@@ -36,6 +37,12 @@ export default function ReportsPage() {
     initialData: [],
   });
 
+  const { data: instructors = [] } = useQuery({
+    queryKey: ['instructors'],
+    queryFn: () => base44.entities.Instructor.list(),
+    initialData: [],
+  });
+
   // Criar mapa de empresas para lookup rápido
   const companyMap = companies.reduce((acc, company) => {
     acc[company.id] = company;
@@ -53,7 +60,7 @@ export default function ReportsPage() {
   // Extrair meses únicos das turmas
   const availableMonths = [...new Set(classSchedules.map(s => s.month).filter(Boolean))].sort();
 
-  // Filtrar turmas por empresa e mês selecionados
+  // Filtrar turmas por empresa, mês e instrutor selecionados
   const filteredClasses = classSchedules.filter(classItem => {
     const companyData = companyMap[classItem.company_name];
     const matchCompany = selectedCompany === "all" || 
@@ -61,7 +68,8 @@ export default function ReportsPage() {
       companyData?.id === selectedCompany ||
       companyData?.nome_fantasia === companies.find(c => c.id === selectedCompany)?.nome_fantasia;
     const matchMonth = selectedMonth === "all" || classItem.month === selectedMonth;
-    return matchCompany && matchMonth;
+    const matchInstructor = selectedInstructor === "all" || classItem.instructor_name === selectedInstructor;
+    return matchCompany && matchMonth && matchInstructor;
   });
 
   // Relatório por Mês, Empresa e Curso
@@ -318,13 +326,30 @@ export default function ReportsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              {(selectedCompany !== "all" || selectedMonth !== "all") && (
+              <div className="space-y-1">
+                <Label className="text-xs text-stone-500">Instrutor</Label>
+                <Select value={selectedInstructor} onValueChange={setSelectedInstructor}>
+                  <SelectTrigger className="w-[220px]">
+                    <SelectValue placeholder="Todos os instrutores" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os instrutores</SelectItem>
+                    {instructors.map(instructor => (
+                      <SelectItem key={instructor.id} value={instructor.name}>
+                        {instructor.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {(selectedCompany !== "all" || selectedMonth !== "all" || selectedInstructor !== "all") && (
                 <Button 
                   variant="ghost" 
                   size="sm"
                   onClick={() => {
                     setSelectedCompany("all");
                     setSelectedMonth("all");
+                    setSelectedInstructor("all");
                   }}
                 >
                   Limpar filtros
