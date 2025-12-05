@@ -88,8 +88,7 @@ export default function CoursesPage() {
       morning: { start: "", end: "" },
       afternoon: { start: "", end: "" },
       night: { start: "", end: "" }
-    },
-    company_prices: []
+    }
   });
 
   const handleSubmit = (e) => {
@@ -112,8 +111,7 @@ export default function CoursesPage() {
         morning: { start: "", end: "" },
         afternoon: { start: "", end: "" },
         night: { start: "", end: "" }
-      },
-      company_prices: course.company_prices || []
+      }
     });
     setShowForm(true);
   };
@@ -132,8 +130,7 @@ export default function CoursesPage() {
           morning: { start: "", end: "" },
           afternoon: { start: "", end: "" },
           night: { start: "", end: "" }
-        },
-        company_prices: course.company_prices || []
+        }
       };
       
       await createMutation.mutateAsync(duplicatedCourse);
@@ -158,8 +155,7 @@ export default function CoursesPage() {
         morning: { start: "", end: "" },
         afternoon: { start: "", end: "" },
         night: { start: "", end: "" }
-      },
-      company_prices: []
+      }
     });
     setEditingCourse(null);
     setShowForm(false);
@@ -178,39 +174,7 @@ export default function CoursesPage() {
     });
   };
 
-  const handleAddCompanyPrice = () => {
-    setFormData({
-      ...formData,
-      company_prices: [
-        ...formData.company_prices,
-        { company_name: "", company_id: "", negotiated_value: 0 }
-      ]
-    });
-  };
 
-  const handleRemoveCompanyPrice = (index) => {
-    setFormData({
-      ...formData,
-      company_prices: formData.company_prices.filter((_, i) => i !== index)
-    });
-  };
-
-  const handleCompanyPriceChange = (index, field, value) => {
-    const updated = [...formData.company_prices];
-
-    if (field === 'company_id') {
-      const company = companies.find(c => c.id === value);
-      updated[index] = {
-        ...updated[index],
-        company_id: value,
-        company_name: company ? (company.nome_fantasia || company.razao_social) : ''
-      };
-    } else {
-      updated[index] = { ...updated[index], [field]: value };
-    }
-
-    setFormData({ ...formData, company_prices: updated });
-  };
 
   const exportCourses = () => {
     const htmlContent = `
@@ -297,26 +261,7 @@ export default function CoursesPage() {
     link.click();
   };
 
-  const exportCoursePrices = (course) => {
-    const prices = [
-      { company: 'Padrão (Tabela)', value: course.standard_value || 0 },
-      ...(course.company_prices || []).map(cp => ({
-        company: cp.company_name,
-        value: cp.negotiated_value
-      }))
-    ];
 
-    const csv = [
-      ['Empresa', 'Valor'].join(','),
-      ...prices.map(p => [p.company, p.value].join(','))
-    ].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `precos_${course.name.replace(/\s+/g, '_')}.csv`;
-    link.click();
-  };
 
   const modalityColors = {
     'Formação': 'bg-blue-100 text-blue-800 border-blue-200',
@@ -523,11 +468,11 @@ export default function CoursesPage() {
                   </div>
                 </div>
 
-                {/* Precificação */}
+                {/* Valor de Referência */}
                 <div className="space-y-4 border-t pt-4">
-                  <h3 className="font-semibold text-stone-900">Sistema de Precificação</h3>
+                  <h3 className="font-semibold text-stone-900">Valor de Referência</h3>
                   <div className="space-y-2">
-                    <Label htmlFor="standard_value">Valor Padrão (Preço de Tabela) *</Label>
+                    <Label htmlFor="standard_value">Valor Padrão (R$) *</Label>
                     <Input
                       id="standard_value"
                       type="number"
@@ -537,58 +482,9 @@ export default function CoursesPage() {
                       placeholder="0.00"
                       required
                     />
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label>Preços por Empresa</Label>
-                      <Button type="button" onClick={handleAddCompanyPrice} size="sm" variant="outline">
-                        <Plus className="w-4 h-4 mr-1" />
-                        Adicionar Valor Específico
-                      </Button>
-                    </div>
-
-                    {formData.company_prices.map((cp, index) => (
-                      <div key={index} className="flex gap-2 items-end">
-                        <div className="flex-1 space-y-2">
-                          <Label>Empresa</Label>
-                          <Select
-                            value={cp.company_id}
-                            onValueChange={(value) => handleCompanyPriceChange(index, 'company_id', value)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {companies.map(company => (
-                                <SelectItem key={company.id} value={company.id}>
-                                  {company.nome_fantasia || company.razao_social}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex-1 space-y-2">
-                          <Label>Valor Negociado (R$)</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={cp.negotiated_value}
-                            onChange={(e) => handleCompanyPriceChange(index, 'negotiated_value', parseFloat(e.target.value))}
-                            placeholder="0.00"
-                          />
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveCompanyPrice(index)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
+                    <p className="text-xs text-stone-500">
+                      💡 Valores negociados por empresa são gerenciados na aba "Empresas" → "Cursos Vinculados"
+                    </p>
                   </div>
                 </div>
 
@@ -684,25 +580,9 @@ export default function CoursesPage() {
                         📅 Período: {course.start_date || '—'} a {course.end_date || '—'}
                       </div>
                     )}
-
-                  {course.company_prices && course.company_prices.length > 0 && (
-                    <div className="flex items-center gap-2 text-sm text-stone-600">
-                      <DollarSign className="w-4 h-4" />
-                      <span>{course.company_prices.length} preço(s) específico(s)</span>
-                    </div>
-                  )}
                 </div>
 
-                <div className="grid grid-cols-4 gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => exportCoursePrices(course)}
-                    className="w-full"
-                    title="Exportar preços deste curso"
-                  >
-                    <Download className="w-4 h-4" />
-                  </Button>
+                <div className="grid grid-cols-3 gap-2">
                   <Button
                     variant="outline"
                     size="sm"
