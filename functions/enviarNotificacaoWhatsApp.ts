@@ -10,41 +10,45 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    const { recipient_id, recipient_type, message_type, class_schedule_id } = await req.json();
+    const requestData = await req.json();
+    const { 
+      recipient_id, 
+      recipient_type, 
+      recipient_name, 
+      recipient_phone, 
+      message_type, 
+      message_body,
+      class_schedule_id 
+    } = requestData;
 
     // Validar parâmetros
-    if (!recipient_id || !recipient_type || !message_type) {
+    if (!recipient_type || !message_type) {
       return Response.json({ 
-        error: 'Parâmetros obrigatórios: recipient_id, recipient_type, message_type' 
+        error: 'Parâmetros obrigatórios: recipient_type, message_type' 
       }, { status: 400 });
     }
 
     // Buscar dados do destinatário
-    let phoneNumber = '';
-    let recipientName = '';
-    let isWhatsApp = false;
+    let phoneNumber = recipient_phone || '';
+    let recipientName = recipient_name || '';
+    let isWhatsApp = true;
 
-    if (recipient_type === 'user' || recipient_type === 'instructor') {
-      // Buscar usuário ou instrutor
-      const users = await base44.entities.User.filter({ id: recipient_id });
-      if (users.length === 0) {
-        return Response.json({ error: 'Usuário não encontrado' }, { status: 404 });
+    // Se não foi fornecido diretamente, buscar do banco
+    if (!phoneNumber && recipient_id) {
+      if (recipient_type === 'instructor') {
+        const instructors = await base44.asServiceRole.entities.Instructor.filter({ id: recipient_id });
+        if (instructors.length > 0) {
+          phoneNumber = instructors[0].phone;
+          recipientName = instructors[0].name;
+        }
+      } else if (recipient_type === 'company') {
+        const companies = await base44.asServiceRole.entities.Company.filter({ id: recipient_id });
+        if (companies.length > 0 && companies[0].contacts?.[0]) {
+          phoneNumber = companies[0].contacts[0].phone;
+          recipientName = companies[0].contacts[0].name || companies[0].nome_fantasia;
+          isWhatsApp = companies[0].contacts[0].is_whatsapp;
+        }
       }
-      const recipient = users[0];
-      phoneNumber = recipient.phone;
-      recipientName = recipient.full_name;
-      isWhatsApp = recipient.is_whatsapp;
-    } else if (recipient_type === 'company_contact') {
-      // Buscar contato da empresa
-      const { company_id, contact_index } = await req.json();
-      const companies = await base44.entities.Company.filter({ id: company_id });
-      if (companies.length === 0 || !companies[0].contacts || !companies[0].contacts[contact_index]) {
-        return Response.json({ error: 'Contato da empresa não encontrado' }, { status: 404 });
-      }
-      const contact = companies[0].contacts[contact_index];
-      phoneNumber = contact.phone;
-      recipientName = contact.name;
-      isWhatsApp = contact.is_whatsapp;
     }
 
     // Validar número de telefone
@@ -79,51 +83,54 @@ Deno.serve(async (req) => {
     formattedPhone = `whatsapp:+${formattedPhone}`;
 
     // Montar mensagem baseado no tipo
-    let messageBody = '';
+    let finalMessageBody = '';
 
-    if (message_type === 'class_schedule') {
+    if (message_type === 'custom' && message_body) {
+      // Mensagem customizada enviada diretamente
+      finalMessageBody = message_body;
+    } else if (message_type === 'class_schedule') {
       // Buscar dados da turma
-      const classSchedules = await base44.entities.ClassSchedule.filter({ id: class_schedule_id });
+      const classSchedules = await base44.asServiceRole.entities.ClassSchedule.filter({ id: class_schedule_id });
       if (classSchedules.length === 0) {
         return Response.json({ error: 'Turma não encontrada' }, { status: 404 });
       }
       const classSchedule = classSchedules[0];
 
-      messageBody = `🎓 *Cronograma de Treinamento*\n\n`;
-      messageBody += `Olá *${recipientName}*!\n\n`;
-      messageBody += `Segue o cronograma do treinamento:\n\n`;
-      messageBody += `📚 *Treinamento:* ${classSchedule.training_name}\n`;
-      messageBody += `🏢 *Empresa:* ${classSchedule.company_name}\n`;
-      messageBody += `📅 *Data de Início:* ${new Date(classSchedule.start_date).toLocaleDateString('pt-BR')}\n`;
+      finalMessageBody = `🎓 *Cronograma de Treinamento*\n\n`;
+      finalMessageBody += `Olá *${recipientName}*!\n\n`;
+      finalMessageBody += `Segue o cronograma do treinamento:\n\n`;
+      finalMessageBody += `📚 *Treinamento:* ${classSchedule.training_name}\n`;
+      finalMessageBody += `🏢 *Empresa:* ${classSchedule.company_name}\n`;
+      finalMessageBody += `📅 *Data de Início:* ${new Date(classSchedule.start_date).toLocaleDateString('pt-BR')}\n`;
       if (classSchedule.end_date) {
-        messageBody += `📅 *Data de Fim:* ${new Date(classSchedule.end_date).toLocaleDateString('pt-BR')}\n`;
+        finalMessageBody += `📅 *Data de Fim:* ${new Date(classSchedule.end_date).toLocaleDateString('pt-BR')}\n`;
       }
       if (classSchedule.training_schedule) {
-        messageBody += `🕐 *Horário:* ${classSchedule.training_schedule}\n`;
+        finalMessageBody += `🕐 *Horário:* ${classSchedule.training_schedule}\n`;
       }
       if (classSchedule.location) {
-        messageBody += `📍 *Local:* ${classSchedule.location}\n`;
+        finalMessageBody += `📍 *Local:* ${classSchedule.location}\n`;
       }
       if (classSchedule.students_count) {
-        messageBody += `👥 *Alunos:* ${classSchedule.students_count}\n`;
+        finalMessageBody += `👥 *Alunos:* ${classSchedule.students_count}\n`;
       }
       if (classSchedule.specific_days) {
-        messageBody += `📆 *Dias Específicos:* ${classSchedule.specific_days}\n`;
+        finalMessageBody += `📆 *Dias Específicos:* ${classSchedule.specific_days}\n`;
       }
       if (classSchedule.notes) {
-        messageBody += `\n📝 *Observações:*\n${classSchedule.notes}\n`;
+        finalMessageBody += `\n📝 *Observações:*\n${classSchedule.notes}\n`;
       }
-      messageBody += `\n✅ *Status:* ${classSchedule.status}`;
+      finalMessageBody += `\n✅ *Status:* ${classSchedule.status}`;
     } else if (message_type === 'credentials') {
       // Mensagem de credenciais
-      messageBody = `🔐 *Credenciais de Acesso*\n\n`;
-      messageBody += `Olá *${recipientName}*!\n\n`;
-      messageBody += `Suas credenciais de acesso ao Sistema de Treinamento:\n\n`;
-      messageBody += `📧 *E-mail:* ${recipient_id}\n`;
-      messageBody += `🔗 *Link de Acesso:* [URL do sistema]\n\n`;
-      messageBody += `Por favor, faça login e altere sua senha no primeiro acesso.`;
+      finalMessageBody = `🔐 *Credenciais de Acesso*\n\n`;
+      finalMessageBody += `Olá *${recipientName}*!\n\n`;
+      finalMessageBody += `Suas credenciais de acesso ao Sistema de Treinamento:\n\n`;
+      finalMessageBody += `📧 *E-mail:* ${recipient_id}\n`;
+      finalMessageBody += `🔗 *Link de Acesso:* [URL do sistema]\n\n`;
+      finalMessageBody += `Por favor, faça login e altere sua senha no primeiro acesso.`;
     } else {
-      return Response.json({ error: 'Tipo de mensagem inválido' }, { status: 400 });
+      return Response.json({ error: 'Tipo de mensagem inválido ou mensagem não fornecida' }, { status: 400 });
     }
 
     // Enviar mensagem via Twilio
@@ -139,7 +146,7 @@ Deno.serve(async (req) => {
       body: new URLSearchParams({
         From: twilioWhatsAppNumber,
         To: formattedPhone,
-        Body: messageBody,
+        Body: finalMessageBody,
       }),
     });
 
@@ -174,7 +181,7 @@ Deno.serve(async (req) => {
           `Mensagem enviada para: *${recipientName}*\n` +
           `Telefone: ${phoneNumber}\n\n` +
           `-------------------\n\n` +
-          messageBody;
+          finalMessageBody;
 
         const adminTwilioResponse = await fetch(twilioUrl, {
           method: 'POST',
