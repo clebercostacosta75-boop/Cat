@@ -661,11 +661,7 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
                                                     className="pl-10 text-right"
                                                   />
                                                 </div>
-                                                {linkedCourse.course_id && (
-                                                  <p className="text-xs text-stone-500">
-                                                    Valor padrão: R$ {(courses.find(c => c.id === linkedCourse.course_id)?.standard_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                                  </p>
-                                                )}
+
                                               </div>
                   </div>
                 </CardContent>
