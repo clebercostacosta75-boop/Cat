@@ -14,6 +14,7 @@ import Users from './pages/Users';
 import BMMGenerator from './pages/BMMGenerator';
 import EmailTemplates from './pages/EmailTemplates';
 import BMMHistory from './pages/BMMHistory';
+import CommunicationCenter from './pages/CommunicationCenter';
 import __Layout from './Layout.jsx';
 
 
@@ -34,6 +35,7 @@ export const PAGES = {
     "BMMGenerator": BMMGenerator,
     "EmailTemplates": EmailTemplates,
     "BMMHistory": BMMHistory,
+    "CommunicationCenter": CommunicationCenter,
 }
 
 export const pagesConfig = {

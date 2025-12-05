@@ -120,6 +120,12 @@ export default function Layout({ children }) {
         roles: ['admin', 'Administrador Master', 'Financeiro']
       },
       {
+        title: "Central de Comunicação",
+        url: createPageUrl("CommunicationCenter"),
+        icon: Mail,
+        roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
+      },
+      {
         title: "Usuários",
         url: createPageUrl("Users"),
         icon: UserCog,
