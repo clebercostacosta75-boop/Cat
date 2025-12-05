@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Edit2, X, Check, Trash2, Crown, Settings, Eye, Lock } from "lucide-react";
+import { Users, Plus, Edit2, X, Check, Trash2, Crown, Settings, Eye, Lock, MessageCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +33,8 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState(null);
   const [editRole, setEditRole] = useState("");
   const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editIsWhatsApp, setEditIsWhatsApp] = useState(false);
   const [showNewUserDialog, setShowNewUserDialog] = useState(false);
   const queryClient = useQueryClient();
 
@@ -63,6 +65,8 @@ export default function UsersPage() {
     setEditingUser(user.id);
     setEditRole(user.custom_role || user.role || 'user');
     setEditName(user.full_name || '');
+    setEditPhone(user.phone || '');
+    setEditIsWhatsApp(user.is_whatsapp || false);
   };
 
   const handleSaveUser = (userId) => {
@@ -70,7 +74,9 @@ export default function UsersPage() {
       id: userId, 
       data: { 
         custom_role: editRole,
-        full_name: editName 
+        full_name: editName,
+        phone: editPhone,
+        is_whatsapp: editIsWhatsApp
       } 
     });
   };
@@ -79,6 +85,8 @@ export default function UsersPage() {
     setEditingUser(null);
     setEditRole("");
     setEditName("");
+    setEditPhone("");
+    setEditIsWhatsApp(false);
   };
 
   const handleDeleteUser = (userId) => {
@@ -185,6 +193,7 @@ export default function UsersPage() {
                   <TableRow className="bg-stone-50">
                     <TableHead className="font-bold">Nome</TableHead>
                     <TableHead className="font-bold">Email</TableHead>
+                    <TableHead className="font-bold">Telefone/WhatsApp</TableHead>
                     <TableHead className="font-bold">Nível de Acesso</TableHead>
                     <TableHead className="font-bold text-center">Ações</TableHead>
                   </TableRow>
@@ -192,13 +201,13 @@ export default function UsersPage() {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-12 text-stone-500">
+                      <TableCell colSpan={5} className="text-center py-12 text-stone-500">
                         Carregando usuários...
                       </TableCell>
                     </TableRow>
                   ) : users.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-12 text-stone-500">
+                      <TableCell colSpan={5} className="text-center py-12 text-stone-500">
                         Nenhum usuário encontrado
                       </TableCell>
                     </TableRow>
@@ -231,6 +240,43 @@ export default function UsersPage() {
                             </div>
                           </TableCell>
                           <TableCell className="text-stone-600">{user.email}</TableCell>
+                          <TableCell>
+                            {isEditing ? (
+                              <div className="space-y-2">
+                                <Input
+                                  value={editPhone}
+                                  onChange={(e) => setEditPhone(e.target.value)}
+                                  placeholder="(00) 00000-0000"
+                                  className="w-[160px]"
+                                />
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    id={`whatsapp-${user.id}`}
+                                    checked={editIsWhatsApp}
+                                    onChange={(e) => setEditIsWhatsApp(e.target.checked)}
+                                    className="w-4 h-4"
+                                  />
+                                  <label htmlFor={`whatsapp-${user.id}`} className="text-xs text-stone-600">
+                                    É WhatsApp
+                                  </label>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                {user.phone ? (
+                                  <>
+                                    <span className="text-stone-600">{user.phone}</span>
+                                    {user.is_whatsapp && (
+                                      <MessageCircle className="w-4 h-4 text-green-600" />
+                                    )}
+                                  </>
+                                ) : (
+                                  <span className="text-stone-400 text-sm">Não cadastrado</span>
+                                )}
+                              </div>
+                            )}
+                          </TableCell>
                           <TableCell>
                             {isEditing ? (
                               <Select value={editRole} onValueChange={setEditRole}>

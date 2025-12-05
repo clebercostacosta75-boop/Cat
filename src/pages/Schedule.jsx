@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar, Eye, Clock, User } from "lucide-react";
+import { Plus, Calendar, Eye, Clock, User, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -12,6 +12,7 @@ import ClassScheduleForm from "@/components/schedule/ClassScheduleForm";
 export default function SchedulePage() {
   const [showForm, setShowForm] = useState(false);
   const [editingClass, setEditingClass] = useState(null);
+  const [sendingWhatsApp, setSendingWhatsApp] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: classes = [], isLoading } = useQuery({
@@ -63,6 +64,47 @@ export default function SchedulePage() {
     'Em Andamento': 'bg-yellow-100 text-yellow-800 border-yellow-200',
     'Concluído': 'bg-green-100 text-green-800 border-green-200',
     'Cancelado': 'bg-red-100 text-red-800 border-red-200',
+  };
+
+  const handleSendWhatsApp = async (classItem) => {
+    setSendingWhatsApp(classItem.id);
+    try {
+      // Buscar instrutor
+      const instructors = await base44.entities.Instructor.filter({ name: classItem.instructor_name });
+      if (instructors.length === 0) {
+        alert('Instrutor não encontrado');
+        return;
+      }
+      const instructor = instructors[0];
+
+      // Buscar usuário do instrutor pelo email
+      const users = await base44.entities.User.filter({ email: instructor.email });
+      if (users.length === 0) {
+        alert('Usuário do instrutor não encontrado');
+        return;
+      }
+      const user = users[0];
+
+      if (!user.phone || !user.is_whatsapp) {
+        alert('O instrutor não possui WhatsApp cadastrado');
+        return;
+      }
+
+      // Enviar mensagem
+      await base44.functions.invoke('enviarNotificacaoWhatsApp', {
+        recipient_id: user.id,
+        recipient_type: 'instructor',
+        message_type: 'class_schedule',
+        class_schedule_id: classItem.id
+      });
+
+      alert('Cronograma enviado com sucesso via WhatsApp!');
+    } catch (error) {
+      console.error('Erro ao enviar WhatsApp:', error);
+      alert('Erro ao enviar mensagem: ' + (error.message || 'Erro desconhecido'));
+    } finally {
+      setSendingWhatsApp(null);
+    }
   };
 
   return (
@@ -190,6 +232,18 @@ export default function SchedulePage() {
                           Ver Detalhes
                         </Button>
                       </Link>
+                      {classItem.instructor_name && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleSendWhatsApp(classItem)}
+                          disabled={sendingWhatsApp === classItem.id}
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        >
+                          <MessageCircle className="w-4 h-4 mr-1" />
+                          {sendingWhatsApp === classItem.id ? 'Enviando...' : 'Enviar WhatsApp'}
+                        </Button>
+                      )}
                       <Button variant="outline" size="sm" onClick={() => handleEdit(classItem)}>
                         Editar
                       </Button>
