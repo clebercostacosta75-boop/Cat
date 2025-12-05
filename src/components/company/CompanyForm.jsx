@@ -646,20 +646,23 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label>Valor Negociado (R$) *</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={linkedCourse.negotiated_value}
-                        onChange={(e) => handleCourseChange(index, 'negotiated_value', parseFloat(e.target.value) || 0)}
-                        placeholder="0.00"
-                      />
-                      {linkedCourse.course_id && (
-                        <p className="text-xs text-stone-500">
-                          Valor padrão: R$ {(courses.find(c => c.id === linkedCourse.course_id)?.standard_value || 0).toFixed(2)}
-                        </p>
-                      )}
-                    </div>
+                                                <Label>Valor Negociado (R$) *</Label>
+                                                <Input
+                                                  type="text"
+                                                  value={linkedCourse.negotiated_value || ''}
+                                                  onChange={(e) => {
+                                                    const rawValue = e.target.value.replace(/[^\d.,]/g, '').replace(',', '.');
+                                                    handleCourseChange(index, 'negotiated_value', rawValue === '' ? 0 : parseFloat(rawValue) || 0);
+                                                  }}
+                                                  placeholder="0.00"
+                                                  className="text-right"
+                                                />
+                                                {linkedCourse.course_id && (
+                                                  <p className="text-xs text-stone-500">
+                                                    Valor padrão: R$ {(courses.find(c => c.id === linkedCourse.course_id)?.standard_value || 0).toFixed(2)}
+                                                  </p>
+                                                )}
+                                              </div>
                   </div>
                 </CardContent>
               </Card>
