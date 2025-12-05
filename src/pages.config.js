@@ -11,6 +11,9 @@ import BMMTemplates from './pages/BMMTemplates';
 import Companies from './pages/Companies';
 import Contractors from './pages/Contractors';
 import Users from './pages/Users';
+import BMMGenerator from './pages/BMMGenerator';
+import EmailTemplates from './pages/EmailTemplates';
+import BMMHistory from './pages/BMMHistory';
 import __Layout from './Layout.jsx';
 
 
@@ -28,6 +31,9 @@ export const PAGES = {
     "Companies": Companies,
     "Contractors": Contractors,
     "Users": Users,
+    "BMMGenerator": BMMGenerator,
+    "EmailTemplates": EmailTemplates,
+    "BMMHistory": BMMHistory,
 }
 
 export const pagesConfig = {
