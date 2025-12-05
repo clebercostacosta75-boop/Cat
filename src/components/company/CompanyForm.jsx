@@ -686,18 +686,36 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="contact_reference">Referência do Contato (Ref. Contato)</Label>
-            <Input
-              id="contact_reference"
-              value={formData.billing_info.contact_reference}
-              onChange={(e) => setFormData({
-                ...formData,
-                billing_info: {
-                  ...formData.billing_info,
-                  contact_reference: e.target.value
-                }
-              })}
-              placeholder="Para preencher o BMM"
-            />
+            {formData.contacts.length > 0 ? (
+              <Select
+                value={formData.billing_info.contact_reference}
+                onValueChange={(value) => setFormData({
+                  ...formData,
+                  billing_info: {
+                    ...formData.billing_info,
+                    contact_reference: value
+                  }
+                })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o contato de referência para o BMM" />
+                </SelectTrigger>
+                <SelectContent>
+                  {formData.contacts.map((contact, idx) => (
+                    <SelectItem key={idx} value={contact.name}>
+                      👤 {contact.name} {contact.role && `- ${contact.role}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="text-sm text-stone-500 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                ⚠️ Adicione contatos na seção "3. Contatos" para selecionar a referência do BMM
+              </div>
+            )}
+            <p className="text-xs text-stone-500">
+              Este contato aparecerá como "Ref. Contato" no BMM gerado
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="contract_object">Objeto do Contrato (Opcional)</Label>
