@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import LogoUploader from "./LogoUploader";
 
 export default function CompanyForm({ company, onSubmit, onCancel }) {
   const [notifyInstructor, setNotifyInstructor] = useState(false);
@@ -29,11 +30,19 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
     initialData: [],
   });
 
+  const { data: bmmTemplates = [] } = useQuery({
+    queryKey: ['bmmTemplates'],
+    queryFn: () => base44.entities.BMMTemplate.list(),
+    initialData: [],
+  });
+
   const [formData, setFormData] = useState({
     razao_social: company?.razao_social || "",
     nome_fantasia: company?.nome_fantasia || "",
     cnpj: company?.cnpj || "",
     status: company?.status || "Ativo",
+    logo_url: company?.logo_url || "",
+    default_bmm_template_id: company?.default_bmm_template_id || "",
     email_faturamento: company?.email_faturamento || "",
     linked_courses: company?.linked_courses || [],
     units: company?.units || [],
@@ -209,61 +218,88 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="razao_social">Razão Social *</Label>
-              <Input
-                id="razao_social"
-                value={formData.razao_social}
-                onChange={(e) => setFormData({...formData, razao_social: e.target.value})}
-                placeholder="Ex: Agropalma S.A."
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="nome_fantasia">Nome Fantasia *</Label>
-              <Input
-                id="nome_fantasia"
-                value={formData.nome_fantasia}
-                onChange={(e) => setFormData({...formData, nome_fantasia: e.target.value})}
-                placeholder="Ex: Agropalma"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cnpj">CNPJ *</Label>
-              <Input
-                id="cnpj"
-                value={formData.cnpj}
-                onChange={(e) => setFormData({...formData, cnpj: e.target.value})}
-                placeholder="00.000.000/0000-00"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select 
-                value={formData.status} 
-                onValueChange={(value) => setFormData({...formData, status: value})}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Ativo">✅ Ativo</SelectItem>
-                  <SelectItem value="Inativo">❌ Inativo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="email_faturamento">Email de Faturamento (Geral)</Label>
-              <Input
-                id="email_faturamento"
-                type="email"
-                value={formData.email_faturamento}
-                onChange={(e) => setFormData({...formData, email_faturamento: e.target.value})}
-                placeholder="faturamento@empresa.com.br (Para envio de BMM)"
-              />
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Logo Upload */}
+            <LogoUploader 
+              logoUrl={formData.logo_url}
+              onLogoChange={(url) => setFormData({...formData, logo_url: url})}
+            />
+            
+            {/* Dados principais */}
+            <div className="flex-1 grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="razao_social">Razão Social *</Label>
+                <Input
+                  id="razao_social"
+                  value={formData.razao_social}
+                  onChange={(e) => setFormData({...formData, razao_social: e.target.value})}
+                  placeholder="Ex: Agropalma S.A."
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nome_fantasia">Nome Fantasia *</Label>
+                <Input
+                  id="nome_fantasia"
+                  value={formData.nome_fantasia}
+                  onChange={(e) => setFormData({...formData, nome_fantasia: e.target.value})}
+                  placeholder="Ex: Agropalma"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cnpj">CNPJ *</Label>
+                <Input
+                  id="cnpj"
+                  value={formData.cnpj}
+                  onChange={(e) => setFormData({...formData, cnpj: e.target.value})}
+                  placeholder="00.000.000/0000-00"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select 
+                  value={formData.status} 
+                  onValueChange={(value) => setFormData({...formData, status: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ativo">✅ Ativo</SelectItem>
+                    <SelectItem value="Inativo">❌ Inativo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email_faturamento">Email de Faturamento</Label>
+                <Input
+                  id="email_faturamento"
+                  type="email"
+                  value={formData.email_faturamento}
+                  onChange={(e) => setFormData({...formData, email_faturamento: e.target.value})}
+                  placeholder="faturamento@empresa.com.br"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="default_bmm_template">Modelo BMM Padrão</Label>
+                <Select 
+                  value={formData.default_bmm_template_id} 
+                  onValueChange={(value) => setFormData({...formData, default_bmm_template_id: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o modelo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bmmTemplates.map(template => (
+                      <SelectItem key={template.id} value={template.id}>
+                        📄 {template.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         </CardContent>

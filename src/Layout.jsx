@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText, Building2, UserCog } from "lucide-react";
+import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText, Building2, UserCog, Mail, History } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -100,6 +100,24 @@ export default function Layout({ children }) {
         url: createPageUrl("Reports"),
         icon: BarChart3,
         roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
+      },
+      {
+        title: "Gerar BMM",
+        url: createPageUrl("BMMGenerator"),
+        icon: FileText,
+        roles: ['admin', 'Administrador Master', 'Financeiro']
+      },
+      {
+        title: "Histórico BMM",
+        url: createPageUrl("BMMHistory"),
+        icon: History,
+        roles: ['admin', 'Administrador Master', 'Financeiro']
+      },
+      {
+        title: "Modelos E-mail",
+        url: createPageUrl("EmailTemplates"),
+        icon: Mail,
+        roles: ['admin', 'Administrador Master', 'Financeiro']
       },
       {
         title: "Usuários",
