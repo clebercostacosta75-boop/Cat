@@ -77,6 +77,7 @@ export default function CoursesPage() {
   const [formData, setFormData] = useState({
     name: "",
     duration_hours: "",
+    standard_value: 0,
     description: "",
     modality: "Formação",
     category: "Presencial",
@@ -142,6 +143,7 @@ export default function CoursesPage() {
     setFormData({
       name: "",
       duration_hours: "",
+      standard_value: 0,
       description: "",
       modality: "Formação",
       category: "",
@@ -342,6 +344,24 @@ export default function CoursesPage() {
                         placeholder="8"
                         required
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="standard_value">Valor Padrão (R$)</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">R$</span>
+                        <Input
+                          id="standard_value"
+                          type="text"
+                          value={formData.standard_value ? Number(formData.standard_value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
+                          onChange={(e) => {
+                            const rawValue = e.target.value.replace(/[^\d]/g, '');
+                            const numericValue = rawValue === '' ? 0 : parseFloat(rawValue) / 100;
+                            setFormData({...formData, standard_value: numericValue});
+                          }}
+                          placeholder="0,00"
+                          className="pl-10 text-right"
+                        />
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="modality">Modalidade</Label>

@@ -111,7 +111,8 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
         training_name: course.name,
         modality: course.modality || '',
         category: course.category || '',
-        duration_hours: course.duration_hours || 0
+        duration_hours: course.duration_hours || 0,
+        unit_value: course.standard_value || 0
       }));
     }
   };
@@ -129,32 +130,17 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     }
   }, [formData.start_date]);
 
-  // Preencher automaticamente com dados dos cursos vinculados da empresa
+  // Calcular valor total automaticamente
   useEffect(() => {
-    if (!formData.company_id || !formData.training_id) return;
-
-    const selectedCompany = companies.find(c => c.id === formData.company_id);
-    if (!selectedCompany?.linked_courses) return;
-
-    const linkedCourse = selectedCompany.linked_courses.find(
-      lc => lc.course_id === formData.training_id
-    );
-
-    if (linkedCourse) {
-      const instructor = instructors.find(inst => inst.id === linkedCourse.instructor_id);
-      
-      setFormData(prev => ({
-        ...prev,
-        instructor_id: linkedCourse.instructor_id || '',
-        instructor_name: instructor?.name || linkedCourse.instructor_name || '',
-        unit_value: linkedCourse.negotiated_value || 0,
-        start_date: linkedCourse.start_date || prev.start_date,
-        end_date: linkedCourse.end_date || prev.end_date,
-        specific_days: linkedCourse.specific_days || prev.specific_days,
-        training_schedule: linkedCourse.training_schedule || prev.training_schedule,
-      }));
-    }
-  }, [formData.company_id, formData.training_id, companies, instructors]);
+    const unitValue = parseFloat(formData.unit_value) || 0;
+    const studentsCount = parseInt(formData.students_count) || 0;
+    const totalValue = unitValue * studentsCount;
+    
+    setFormData(prev => ({
+      ...prev,
+      total_value: totalValue
+    }));
+  }, [formData.unit_value, formData.students_count]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -419,14 +405,33 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
           </div>
           <div className="space-y-2">
             <Label htmlFor="unit_value">Valor Unitário (R$)</Label>
-            <Input
-              id="unit_value"
-              type="number"
-              step="0.01"
-              value={formData.unit_value}
-              onChange={(e) => handleChange('unit_value', parseFloat(e.target.value))}
-              placeholder="0.00"
-            />
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">R$</span>
+              <Input
+                id="unit_value"
+                type="text"
+                value={formData.unit_value ? Number(formData.unit_value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
+                onChange={(e) => {
+                  const rawValue = e.target.value.replace(/[^\d]/g, '');
+                  const numericValue = rawValue === '' ? 0 : parseFloat(rawValue) / 100;
+                  handleChange('unit_value', numericValue);
+                }}
+                placeholder="0,00"
+                className="pl-10 text-right"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Valor Total (R$)</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">R$</span>
+              <Input
+                type="text"
+                value={formData.total_value ? Number(formData.total_value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'}
+                readOnly
+                className="pl-10 text-right bg-stone-50"
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label>Mês</Label>

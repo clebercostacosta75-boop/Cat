@@ -104,26 +104,14 @@ export default function BMMGenerator() {
 
       // Calcular dados das turmas
       const classesData = filteredClasses.map(classItem => {
-        // Priorizar unit_value armazenado na turma
-        let unitValue = classItem.unit_value || 0;
-        
-        // Se não tiver, buscar dos cursos vinculados da empresa
-        if (unitValue === 0 && company?.linked_courses) {
-          const linkedCourse = company.linked_courses.find(
-            lc => lc.course_id === classItem.training_id
-          );
-          if (linkedCourse) {
-            unitValue = linkedCourse.negotiated_value || 0;
-          }
-        }
-
+        const unitValue = classItem.unit_value || 0;
         const studentsCount = classItem.students_count || 1;
         const courseData = courses.find(c => c.id === classItem.training_id);
         
         return {
           ...classItem,
           unit_value: unitValue,
-          total_value: unitValue * studentsCount,
+          total_value: classItem.total_value || (unitValue * studentsCount),
           course_data: courseData
         };
       });

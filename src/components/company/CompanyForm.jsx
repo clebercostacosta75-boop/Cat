@@ -44,7 +44,6 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
     logo_url: company?.logo_url || "",
     default_bmm_template_id: company?.default_bmm_template_id || "",
     email_faturamento: company?.email_faturamento || "",
-    linked_courses: company?.linked_courses || [],
     units: company?.units || [],
     contacts: company?.contacts || [],
     billing_info: company?.billing_info || {
@@ -135,98 +134,7 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
     setFormData({ ...formData, contacts: updated });
   };
 
-  // Funções para Cursos Vinculados
-  const handleAddCourse = () => {
-    setFormData({
-      ...formData,
-      linked_courses: [
-        ...formData.linked_courses,
-        { 
-          course_id: "", 
-          course_name: "", 
-          negotiated_value: 0, 
-          instructor_id: "", 
-          instructor_name: "",
-          start_date: "",
-          end_date: "",
-          specific_days: "",
-          training_schedule: ""
-        }
-      ]
-    });
-  };
 
-  const handleRemoveCourse = (index) => {
-    setFormData({
-      ...formData,
-      linked_courses: formData.linked_courses.filter((_, i) => i !== index)
-    });
-  };
-
-  const handleCourseChange = async (index, field, value) => {
-        const updated = [...formData.linked_courses];
-        const previousInstructorId = updated[index]?.instructor_id;
-
-        if (field === 'course_id') {
-          const course = courses.find(c => c.id === value);
-          updated[index] = {
-            ...updated[index],
-            course_id: value,
-            course_name: course?.name || '',
-            negotiated_value: updated[index].negotiated_value || course?.standard_value || 0
-          };
-        } else if (field === 'instructor_id') {
-          const instructor = instructors.find(i => i.id === value);
-          updated[index] = {
-            ...updated[index],
-            instructor_id: value,
-            instructor_name: instructor?.name || ''
-          };
-
-          // Enviar notificação se opção estiver ativada
-          if (notifyInstructor && instructor) {
-            const course = courses.find(c => c.id === updated[index].course_id);
-            const isNewLink = !previousInstructorId;
-
-            setSendingNotification(prev => ({ ...prev, [index]: true }));
-
-            // Verificar se tem telefone
-            if (!instructor.phone) {
-              toast.warning(`Instrutor ${instructor.name} não possui telefone cadastrado`);
-              setSendingNotification(prev => ({ ...prev, [index]: false }));
-            } else {
-              try {
-                const response = await base44.functions.invoke('notificarInstrutorCurso', {
-                  instructor_id: instructor.id,
-                  instructor_name: instructor.name,
-                  instructor_phone: instructor.phone,
-                  course_name: course?.name || updated[index].course_name,
-                  course_modality: course?.modality,
-                  course_duration: course?.duration_hours,
-                  course_validity: course?.validity,
-                  company_name: formData.nome_fantasia || formData.razao_social,
-                  negotiated_value: updated[index].negotiated_value,
-                  action_type: isNewLink ? 'new' : 'update'
-                });
-
-                if (response.data?.success) {
-                  toast.success(`✅ Notificação enviada para ${instructor.name}`);
-                } else {
-                  toast.error(`Erro: ${response.data?.error || 'Falha ao enviar notificação'}`);
-                }
-              } catch (error) {
-                console.error('Erro ao enviar notificação:', error);
-                toast.error('Erro ao enviar notificação. Verifique as configurações.');
-              } finally {
-                setSendingNotification(prev => ({ ...prev, [index]: false }));
-              }
-            }
-          }
-        } else {
-          updated[index] = { ...updated[index], [field]: value };
-        }
-        setFormData({ ...formData, linked_courses: updated });
-      };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
