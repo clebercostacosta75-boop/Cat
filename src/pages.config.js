@@ -7,7 +7,6 @@ import Instructors from './pages/Instructors';
 import InstructorDetails from './pages/InstructorDetails';
 import ClassDetails from './pages/ClassDetails';
 import CourseCategories from './pages/CourseCategories';
-import GenerateBMM from './pages/GenerateBMM';
 import BMMTemplates from './pages/BMMTemplates';
 import Companies from './pages/Companies';
 import Contractors from './pages/Contractors';
@@ -25,7 +24,6 @@ export const PAGES = {
     "InstructorDetails": InstructorDetails,
     "ClassDetails": ClassDetails,
     "CourseCategories": CourseCategories,
-    "GenerateBMM": GenerateBMM,
     "BMMTemplates": BMMTemplates,
     "Companies": Companies,
     "Contractors": Contractors,

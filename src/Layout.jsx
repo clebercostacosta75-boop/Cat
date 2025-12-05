@@ -88,12 +88,7 @@ export default function Layout({ children }) {
         roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
       },
 
-      {
-        title: "Gerar BMM",
-        url: createPageUrl("GenerateBMM"),
-        icon: FileText,
-        roles: ['admin', 'Administrador Master', 'Financeiro']
-      },
+
       {
         title: "Importar Excel",
         url: createPageUrl("Import"),
