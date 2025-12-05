@@ -76,7 +76,6 @@ export default function CoursesPage() {
 
   const [formData, setFormData] = useState({
     name: "",
-    standard_value: "",
     duration_hours: "",
     description: "",
     modality: "Formação",
@@ -120,7 +119,6 @@ export default function CoursesPage() {
     try {
       const duplicatedCourse = {
         name: `${course.name} (Cópia)`,
-        standard_value: course.standard_value || 0,
         duration_hours: course.duration_hours || 0,
         description: course.description || "",
         modality: course.modality || "Formação",
@@ -143,7 +141,6 @@ export default function CoursesPage() {
   const resetForm = () => {
     setFormData({
       name: "",
-      standard_value: "",
       duration_hours: "",
       description: "",
       modality: "Formação",
@@ -237,7 +234,6 @@ export default function CoursesPage() {
             <th style="width: 150px;">Categoria</th>
             <th style="width: 100px;">Carga Horária</th>
             <th style="width: 100px;">Validade</th>
-            <th style="width: 120px;">Valor Padrão</th>
           </tr>
           ${courses.map(c => `
             <tr>
@@ -246,7 +242,6 @@ export default function CoursesPage() {
               <td>${c.category || ''}</td>
               <td class="numero">${c.duration_hours ? c.duration_hours + 'h' : ''}</td>
               <td>${c.validity || ''}</td>
-              <td class="numero">${c.standard_value ? 'R$ ' + c.standard_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : ''}</td>
             </tr>
           `).join('')}
         </table>
@@ -468,27 +463,7 @@ export default function CoursesPage() {
                   </div>
                 </div>
 
-                {/* Valor de Referência */}
-                <div className="space-y-4 border-t pt-4">
-                  <h3 className="font-semibold text-stone-900">Valor de Referência</h3>
-                  <div className="space-y-2">
-                    <Label htmlFor="standard_value">Valor Padrão (R$) *</Label>
-                    <Input
-                      id="standard_value"
-                      type="number"
-                      step="0.01"
-                      value={formData.standard_value}
-                      onChange={(e) => setFormData({...formData, standard_value: parseFloat(e.target.value)})}
-                      placeholder="0.00"
-                      required
-                    />
-                    <p className="text-xs text-stone-500">
-                      💡 Valores negociados por empresa são gerenciados na aba "Empresas" → "Cursos Vinculados"
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
+                <div className="space-y-2 border-t pt-4">
                   <Label htmlFor="description">Descrição</Label>
                   <Textarea
                     id="description"
@@ -555,13 +530,6 @@ export default function CoursesPage() {
                 )}
 
                 <div className="space-y-2 mb-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-stone-600">Valor Padrão:</span>
-                    <span className="font-bold text-emerald-600">
-                      R$ {(course.standard_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-
                   {course.duration_hours && (
                     <div className="flex items-center gap-2 text-sm text-stone-600">
                       <Clock className="w-4 h-4" />
