@@ -153,12 +153,60 @@ Deno.serve(async (req) => {
       }, { status: 500 });
     }
 
+    // Enviar cópia para Administradores Master
+    const adminUsers = await base44.asServiceRole.entities.User.filter({});
+    const admins = adminUsers.filter(u => 
+      (u.custom_role === 'Administrador Master' || u.role === 'admin') && 
+      u.phone && 
+      u.is_whatsapp
+    );
+
+    const adminResults = [];
+    for (const admin of admins) {
+      try {
+        let adminPhone = admin.phone.replace(/\D/g, '');
+        if (!adminPhone.startsWith('55')) {
+          adminPhone = '55' + adminPhone;
+        }
+        adminPhone = `whatsapp:+${adminPhone}`;
+
+        const adminMessageBody = `📋 *[CÓPIA - ADMINISTRADOR]*\n\n` +
+          `Mensagem enviada para: *${recipientName}*\n` +
+          `Telefone: ${phoneNumber}\n\n` +
+          `-------------------\n\n` +
+          messageBody;
+
+        const adminTwilioResponse = await fetch(twilioUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${twilioAuth}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            From: twilioWhatsAppNumber,
+            To: adminPhone,
+            Body: adminMessageBody,
+          }),
+        });
+
+        if (adminTwilioResponse.ok) {
+          adminResults.push({ admin: admin.full_name, status: 'enviado' });
+        } else {
+          adminResults.push({ admin: admin.full_name, status: 'falha' });
+        }
+      } catch (adminError) {
+        console.error(`Erro ao enviar para admin ${admin.full_name}:`, adminError);
+        adminResults.push({ admin: admin.full_name, status: 'erro' });
+      }
+    }
+
     return Response.json({ 
       success: true,
       message: 'Mensagem enviada com sucesso via WhatsApp',
       recipient: recipientName,
       phone: phoneNumber,
-      twilio_sid: twilioData.sid
+      twilio_sid: twilioData.sid,
+      admin_copies: adminResults
     });
 
   } catch (error) {
