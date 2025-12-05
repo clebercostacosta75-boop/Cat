@@ -92,23 +92,70 @@ export default function CommunicationCenter() {
       let recipientData = {};
       
       if (selectedRecipient === 'instructor') {
+        if (!selectedInstructor) {
+          toast.error('Instrutor não encontrado para esta turma');
+          setSending(false);
+          return;
+        }
+        
         recipientData = {
-          recipient_id: selectedInstructor?.id,
-          recipient_name: selectedInstructor?.name,
-          recipient_phone: selectedInstructor?.phone,
-          recipient_email: selectedInstructor?.email
+          recipient_id: selectedInstructor.id,
+          recipient_name: selectedInstructor.name,
+          recipient_phone: selectedInstructor.phone,
+          recipient_email: selectedInstructor.email
         };
+        
+        // Validar WhatsApp para instrutor
+        if (messageType === 'whatsapp' && !recipientData.recipient_phone) {
+          toast.error('Instrutor não possui telefone cadastrado');
+          setSending(false);
+          return;
+        }
+        
+        // Validar email para instrutor
+        if (messageType === 'email' && !recipientData.recipient_email) {
+          toast.error('Instrutor não possui e-mail cadastrado');
+          setSending(false);
+          return;
+        }
       } else if (selectedRecipient === 'company') {
-        const mainContact = selectedCompany?.contacts?.[0];
+        if (!selectedCompany) {
+          toast.error('Empresa não encontrada para esta turma');
+          setSending(false);
+          return;
+        }
+        
+        const mainContact = selectedCompany.contacts?.[0];
         recipientData = {
-          recipient_id: selectedCompany?.id,
-          recipient_name: selectedCompany?.nome_fantasia || selectedCompany?.razao_social,
+          recipient_id: selectedCompany.id,
+          recipient_name: selectedCompany.nome_fantasia || selectedCompany.razao_social,
           recipient_phone: mainContact?.phone,
-          recipient_email: mainContact?.email || selectedCompany?.email_faturamento
+          recipient_email: mainContact?.email || selectedCompany.email_faturamento
         };
+        
+        // Validar WhatsApp para empresa
+        if (messageType === 'whatsapp' && !recipientData.recipient_phone) {
+          toast.error('Empresa não possui telefone de contato cadastrado');
+          setSending(false);
+          return;
+        }
+        
+        // Validar email para empresa
+        if (messageType === 'email' && !recipientData.recipient_email) {
+          toast.error('Empresa não possui e-mail cadastrado');
+          setSending(false);
+          return;
+        }
       }
 
       if (messageType === 'whatsapp') {
+        console.log('Enviando WhatsApp com dados:', {
+          recipient_type: selectedRecipient,
+          ...recipientData,
+          class_schedule_id: selectedSchedule,
+          message_type: 'custom'
+        });
+        
         const response = await base44.functions.invoke('enviarNotificacaoWhatsApp', {
           recipient_type: selectedRecipient,
           ...recipientData,
@@ -117,31 +164,48 @@ export default function CommunicationCenter() {
           message_type: 'custom'
         });
 
+        console.log('Resposta do WhatsApp:', response.data);
+
         if (response.data.success) {
-          toast.success(`Mensagem enviada com sucesso!`);
-          if (response.data.admin_copies?.length > 0) {
-            toast.success(`Cópia enviada para ${response.data.admin_copies.length} administrador(es)`);
+          toast.success(`✅ Mensagem enviada para ${response.data.recipient}!`);
+          if (response.data.admin_copies && response.data.admin_copies.length > 0) {
+            const enviados = response.data.admin_copies.filter(a => a.status === 'enviado').length;
+            if (enviados > 0) {
+              toast.success(`📋 Cópia enviada para ${enviados} administrador(es)`);
+            }
           }
           setMessageContent("");
           setSelectedSchedule("");
           setSelectedRecipient("");
         } else {
-          toast.error('Erro ao enviar mensagem');
+          toast.error(response.data.error || 'Erro ao enviar mensagem');
         }
       } else if (messageType === 'email') {
+        console.log('Enviando e-mail para:', recipientData.recipient_email);
+        
         await base44.integrations.Core.SendEmail({
           to: recipientData.recipient_email,
           subject: `Notificação - ${selectedScheduleData.training_name}`,
           body: messageContent.replace(/\n/g, '<br>')
         });
-        toast.success('E-mail enviado com sucesso!');
+        
+        toast.success('✅ E-mail enviado com sucesso!');
         setMessageContent("");
         setSelectedSchedule("");
         setSelectedRecipient("");
       }
     } catch (error) {
-      console.error('Erro ao enviar mensagem:', error);
-      toast.error('Erro ao enviar mensagem');
+      console.error('Erro completo ao enviar mensagem:', error);
+      
+      let errorMessage = 'Erro ao enviar mensagem';
+      
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setSending(false);
     }
