@@ -647,19 +647,23 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
                     </div>
                     <div className="space-y-2">
                                                 <Label>Valor Negociado (R$) *</Label>
-                                                <Input
-                                                  type="text"
-                                                  value={linkedCourse.negotiated_value || ''}
-                                                  onChange={(e) => {
-                                                    const rawValue = e.target.value.replace(/[^\d.,]/g, '').replace(',', '.');
-                                                    handleCourseChange(index, 'negotiated_value', rawValue === '' ? 0 : parseFloat(rawValue) || 0);
-                                                  }}
-                                                  placeholder="0.00"
-                                                  className="text-right"
-                                                />
+                                                <div className="relative">
+                                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">R$</span>
+                                                  <Input
+                                                    type="text"
+                                                    value={linkedCourse.negotiated_value ? Number(linkedCourse.negotiated_value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
+                                                    onChange={(e) => {
+                                                      const rawValue = e.target.value.replace(/[^\d]/g, '');
+                                                      const numericValue = rawValue === '' ? 0 : parseFloat(rawValue) / 100;
+                                                      handleCourseChange(index, 'negotiated_value', numericValue);
+                                                    }}
+                                                    placeholder="0,00"
+                                                    className="pl-10 text-right"
+                                                  />
+                                                </div>
                                                 {linkedCourse.course_id && (
                                                   <p className="text-xs text-stone-500">
-                                                    Valor padrão: R$ {(courses.find(c => c.id === linkedCourse.course_id)?.standard_value || 0).toFixed(2)}
+                                                    Valor padrão: R$ {(courses.find(c => c.id === linkedCourse.course_id)?.standard_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                                   </p>
                                                 )}
                                               </div>
