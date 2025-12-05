@@ -59,7 +59,9 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
 
   const [formData, setFormData] = useState({
     training_name: "",
+    training_id: "",
     company_name: "",
+    company_id: "",
     location: "",
     students_count: "",
     status: "Agendado",
@@ -68,10 +70,12 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     specific_days: "",
     training_schedule: "",
     instructor_name: "",
+    instructor_id: "",
     modality: "",
     category: "",
     duration_hours: "",
     month: "",
+    unit_value: 0,
     notes: "",
     ...classSchedule
   });
@@ -98,12 +102,13 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleCourseSelect = (courseName) => {
-    const course = courses.find(c => c.name === courseName);
+  const handleCourseSelect = (courseId) => {
+    const course = courses.find(c => c.id === courseId);
     if (course) {
       setFormData(prev => ({
         ...prev,
-        training_name: courseName,
+        training_id: courseId,
+        training_name: course.name,
         modality: course.modality || '',
         category: course.category || '',
         duration_hours: course.duration_hours || 0
@@ -123,6 +128,33 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
       setFormData(prev => ({ ...prev, month }));
     }
   }, [formData.start_date]);
+
+  // Preencher automaticamente com dados dos cursos vinculados da empresa
+  useEffect(() => {
+    if (!formData.company_id || !formData.training_id) return;
+
+    const selectedCompany = companies.find(c => c.id === formData.company_id);
+    if (!selectedCompany?.linked_courses) return;
+
+    const linkedCourse = selectedCompany.linked_courses.find(
+      lc => lc.course_id === formData.training_id
+    );
+
+    if (linkedCourse) {
+      const instructor = instructors.find(inst => inst.id === linkedCourse.instructor_id);
+      
+      setFormData(prev => ({
+        ...prev,
+        instructor_id: linkedCourse.instructor_id || '',
+        instructor_name: instructor?.name || linkedCourse.instructor_name || '',
+        unit_value: linkedCourse.negotiated_value || 0,
+        start_date: linkedCourse.start_date || prev.start_date,
+        end_date: linkedCourse.end_date || prev.end_date,
+        specific_days: linkedCourse.specific_days || prev.specific_days,
+        training_schedule: linkedCourse.training_schedule || prev.training_schedule,
+      }));
+    }
+  }, [formData.company_id, formData.training_id, companies, instructors]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -164,13 +196,13 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
       <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="training_name">Treinamento *</Label>
-          <Select value={formData.training_name} onValueChange={handleCourseSelect}>
+          <Select value={formData.training_id} onValueChange={handleCourseSelect}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione o curso" />
             </SelectTrigger>
             <SelectContent>
               {courses.map(course => (
-                <SelectItem key={course.id} value={course.name}>
+                <SelectItem key={course.id} value={course.id}>
                   {course.name}
                 </SelectItem>
               ))}
@@ -180,13 +212,19 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
 
         <div className="space-y-2">
           <Label htmlFor="company_name">Empresa *</Label>
-          <Select value={formData.company_name} onValueChange={(value) => handleChange('company_name', value)}>
+          <Select value={formData.company_id} onValueChange={(value) => {
+            const selectedCompany = companies.find(c => c.id === value);
+            if (selectedCompany) {
+              handleChange('company_id', value);
+              handleChange('company_name', selectedCompany.nome_fantasia || selectedCompany.razao_social);
+            }
+          }}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione a empresa" />
             </SelectTrigger>
             <SelectContent>
               {companies.map(company => (
-                <SelectItem key={company.id} value={company.nome_fantasia || company.razao_social}>
+                <SelectItem key={company.id} value={company.id}>
                   🏢 {company.nome_fantasia || company.razao_social}
                 </SelectItem>
               ))}
@@ -319,13 +357,19 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
 
         <div className="space-y-2">
           <Label htmlFor="instructor_name">Instrutor</Label>
-          <Select value={formData.instructor_name} onValueChange={(value) => handleChange('instructor_name', value)}>
+          <Select value={formData.instructor_id} onValueChange={(value) => {
+            const selectedInstructor = instructors.find(inst => inst.id === value);
+            if (selectedInstructor) {
+              handleChange('instructor_id', value);
+              handleChange('instructor_name', selectedInstructor.name);
+            }
+          }}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione o instrutor" />
             </SelectTrigger>
             <SelectContent>
               {instructors.map(instructor => (
-                <SelectItem key={instructor.id} value={instructor.name}>
+                <SelectItem key={instructor.id} value={instructor.id}>
                   👨‍🏫 {instructor.name}
                 </SelectItem>
               ))}
@@ -366,10 +410,22 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
           <div className="space-y-2">
             <Label>HR (Carga Horária)</Label>
             <Input 
-              type="text"
+              type="number"
               value={formData.duration_hours} 
-              onChange={(e) => handleChange('duration_hours', e.target.value)}
-              placeholder="Ex: 8h, 40h"
+              onChange={(e) => handleChange('duration_hours', parseFloat(e.target.value))}
+              placeholder="Ex: 8, 40"
+              readOnly
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="unit_value">Valor Unitário (R$)</Label>
+            <Input
+              id="unit_value"
+              type="number"
+              step="0.01"
+              value={formData.unit_value}
+              onChange={(e) => handleChange('unit_value', parseFloat(e.target.value))}
+              placeholder="0.00"
             />
           </div>
           <div className="space-y-2">

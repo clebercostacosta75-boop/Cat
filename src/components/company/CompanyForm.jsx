@@ -141,7 +141,17 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
       ...formData,
       linked_courses: [
         ...formData.linked_courses,
-        { course_id: "", course_name: "", negotiated_value: 0, instructor_id: "", instructor_name: "" }
+        { 
+          course_id: "", 
+          course_name: "", 
+          negotiated_value: 0, 
+          instructor_id: "", 
+          instructor_name: "",
+          start_date: "",
+          end_date: "",
+          specific_days: "",
+          training_schedule: ""
+        }
       ]
     });
   };
@@ -646,23 +656,61 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
                       </div>
                     </div>
                     <div className="space-y-2">
-                                                <Label>Valor Negociado (R$) *</Label>
-                                                <div className="relative">
-                                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">R$</span>
-                                                  <Input
-                                                    type="text"
-                                                    value={linkedCourse.negotiated_value ? Number(linkedCourse.negotiated_value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
-                                                    onChange={(e) => {
-                                                      const rawValue = e.target.value.replace(/[^\d]/g, '');
-                                                      const numericValue = rawValue === '' ? 0 : parseFloat(rawValue) / 100;
-                                                      handleCourseChange(index, 'negotiated_value', numericValue);
-                                                    }}
-                                                    placeholder="0,00"
-                                                    className="pl-10 text-right"
-                                                  />
-                                                </div>
-
-                                              </div>
+                      <Label>Valor Negociado (R$) *</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">R$</span>
+                        <Input
+                          type="text"
+                          value={linkedCourse.negotiated_value ? Number(linkedCourse.negotiated_value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
+                          onChange={(e) => {
+                            const rawValue = e.target.value.replace(/[^\d]/g, '');
+                            const numericValue = rawValue === '' ? 0 : parseFloat(rawValue) / 100;
+                            handleCourseChange(index, 'negotiated_value', numericValue);
+                          }}
+                          placeholder="0,00"
+                          className="pl-10 text-right"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Campos de agendamento padrão */}
+                  <div className="col-span-full border-t pt-4 mt-4">
+                    <h5 className="font-semibold text-stone-700 mb-3">Agendamento Padrão (Opcional)</h5>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Data de Início Padrão</Label>
+                        <Input
+                          type="date"
+                          value={linkedCourse.start_date || ''}
+                          onChange={(e) => handleCourseChange(index, 'start_date', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Data de Término Padrão</Label>
+                        <Input
+                          type="date"
+                          value={linkedCourse.end_date || ''}
+                          onChange={(e) => handleCourseChange(index, 'end_date', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Dias Específicos</Label>
+                        <Input
+                          value={linkedCourse.specific_days || ''}
+                          onChange={(e) => handleCourseChange(index, 'specific_days', e.target.value)}
+                          placeholder="Ex: Segunda, Quarta, Sexta"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Horário do Treinamento</Label>
+                        <Input
+                          value={linkedCourse.training_schedule || ''}
+                          onChange={(e) => handleCourseChange(index, 'training_schedule', e.target.value)}
+                          placeholder="Ex: 07:00 às 12:00"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

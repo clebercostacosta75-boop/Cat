@@ -79,11 +79,7 @@ export default function BMMGenerator() {
 
   // Filtrar turmas por empresa e período
   const filteredClasses = classSchedules.filter(classItem => {
-    const company = companies.find(c => c.id === selectedCompany);
-    const matchCompany = company && (
-      classItem.company_name === company.nome_fantasia ||
-      classItem.company_name === company.razao_social
-    );
+    const matchCompany = classItem.company_id === selectedCompany;
     const matchPeriod = classItem.month === selectedPeriod;
     return matchCompany && matchPeriod;
   });
@@ -108,20 +104,22 @@ export default function BMMGenerator() {
 
       // Calcular dados das turmas
       const classesData = filteredClasses.map(classItem => {
-        const courseData = courseMap[classItem.training_name];
-        let unitValue = courseData?.standard_value || 0;
+        // Priorizar unit_value armazenado na turma
+        let unitValue = classItem.unit_value || 0;
         
-        // Verificar preço específico da empresa
-        if (company?.linked_courses) {
+        // Se não tiver, buscar dos cursos vinculados da empresa
+        if (unitValue === 0 && company?.linked_courses) {
           const linkedCourse = company.linked_courses.find(
-            lc => lc.course_name === classItem.training_name
+            lc => lc.course_id === classItem.training_id
           );
           if (linkedCourse) {
-            unitValue = linkedCourse.negotiated_value || unitValue;
+            unitValue = linkedCourse.negotiated_value || 0;
           }
         }
 
         const studentsCount = classItem.students_count || 1;
+        const courseData = courses.find(c => c.id === classItem.training_id);
+        
         return {
           ...classItem,
           unit_value: unitValue,
