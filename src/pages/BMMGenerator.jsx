@@ -157,62 +157,75 @@ export default function BMMGenerator() {
     }
   };
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = () => {
     if (!generatedContent) return;
 
-    toast.info('Gerando PDF...');
-    
-    try {
-      // Usar html2canvas e jspdf para gerar PDF
-      const html2canvas = (await import('html2canvas')).default;
-      const { jsPDF } = await import('jspdf');
+    // Salvar registro primeiro
+    saveBMMRecordMutation.mutate({
+      company_id: selectedCompany,
+      company_name: generatedContent.company?.nome_fantasia || generatedContent.company?.razao_social,
+      period: selectedPeriod,
+      template_id: selectedTemplate,
+      template_name: generatedContent.template?.name,
+      status: 'Gerado',
+      total_value: generatedContent.totals.value,
+      total_classes: generatedContent.totals.classes,
+      total_students: generatedContent.totals.students
+    });
 
-      const element = previewRef.current;
-      if (!element) {
-        toast.error('Elemento de preview não encontrado');
-        return;
-      }
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 10;
-
-      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-      
-      const fileName = `BMM_${generatedContent.company?.nome_fantasia || 'Empresa'}_${generatedContent.period?.replace('/', '-')}.pdf`;
-      pdf.save(fileName);
-
-      // Salvar registro
-      saveBMMRecordMutation.mutate({
-        company_id: selectedCompany,
-        company_name: generatedContent.company?.nome_fantasia || generatedContent.company?.razao_social,
-        period: selectedPeriod,
-        template_id: selectedTemplate,
-        template_name: generatedContent.template?.name,
-        status: 'Gerado',
-        total_value: generatedContent.totals.value,
-        total_classes: generatedContent.totals.classes,
-        total_students: generatedContent.totals.students
-      });
-
-      toast.success('PDF exportado com sucesso!');
-    } catch (error) {
-      console.error('Erro ao exportar PDF:', error);
-      toast.error('Erro ao exportar PDF');
+    // Usar window.print() para gerar PDF
+    const printContent = previewRef.current;
+    if (!printContent) {
+      toast.error('Elemento de preview não encontrado');
+      return;
     }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error('Popup bloqueado. Permita popups para exportar PDF.');
+      return;
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>BMM - ${generatedContent.company?.nome_fantasia || 'Empresa'} - ${generatedContent.period}</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+            th { background-color: #10b981; color: white; }
+            .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #10b981; }
+            .title { text-align: center; margin: 20px 0; }
+            .title h1 { color: #065f46; }
+            .section { margin-bottom: 20px; padding: 15px; background: #f5f5f4; border-radius: 8px; }
+            .section h2 { margin-bottom: 10px; color: #1c1917; }
+            .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+            .stat { text-align: center; padding: 15px; background: #ecfdf5; border-radius: 8px; }
+            .stat p:first-child { font-size: 24px; font-weight: bold; color: #10b981; }
+            .signatures { display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px; margin-top: 40px; padding-top: 20px; border-top: 2px solid #e5e5e5; }
+            .signature { text-align: center; }
+            .signature-line { border-top: 2px solid #78716c; width: 200px; margin: 0 auto; padding-top: 10px; }
+            .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #78716c; }
+            @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
+          </style>
+        </head>
+        <body>
+          ${printContent.innerHTML}
+          <script>
+            window.onload = function() {
+              window.print();
+              window.onafterprint = function() { window.close(); };
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+
+    toast.success('Janela de impressão aberta. Selecione "Salvar como PDF".');
   };
 
   const selectedCompanyData = companies.find(c => c.id === selectedCompany);
