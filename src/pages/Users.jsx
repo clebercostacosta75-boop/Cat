@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Edit2, X, Check, Trash2, Crown, Settings, Eye, Lock, MessageCircle, Mail, Phone, Loader2 } from "lucide-react";
+import { Users, Plus, Edit2, X, Check, Trash2, Crown, Settings, Eye, Lock, MessageCircle, Mail, Phone } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,12 +37,6 @@ export default function UsersPage() {
   const [editIsWhatsApp, setEditIsWhatsApp] = useState(false);
   const [editPermissions, setEditPermissions] = useState([]);
   const [showNewUserDialog, setShowNewUserDialog] = useState(false);
-  const [newUserEmail, setNewUserEmail] = useState("");
-  const [newUserName, setNewUserName] = useState("");
-  const [newUserPhone, setNewUserPhone] = useState("");
-  const [newUserIsWhatsApp, setNewUserIsWhatsApp] = useState(false);
-  const [newUserRole, setNewUserRole] = useState("user");
-  const [newUserPermissions, setNewUserPermissions] = useState([]);
   const queryClient = useQueryClient();
 
   // Lista de todas as permissões disponíveis
@@ -74,19 +68,6 @@ export default function UsersPage() {
       setEditRole("");
       setEditName("");
     },
-  });
-
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.User.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      setShowNewUserDialog(false);
-      resetNewUserForm();
-      alert('Usuário criado com sucesso!');
-    },
-    onError: (error) => {
-      alert('Erro ao criar usuário: ' + (error.message || 'Tente novamente'));
-    }
   });
 
   const deleteMutation = useMutation({
@@ -137,38 +118,6 @@ export default function UsersPage() {
 
   const handleDeleteUser = (userId) => {
     deleteMutation.mutate(userId);
-  };
-
-  const resetNewUserForm = () => {
-    setNewUserEmail("");
-    setNewUserName("");
-    setNewUserPhone("");
-    setNewUserIsWhatsApp(false);
-    setNewUserRole("user");
-    setNewUserPermissions([]);
-  };
-
-  const handleCreateUser = () => {
-    if (!newUserEmail || !newUserName) {
-      alert('Email e nome são obrigatórios');
-      return;
-    }
-    createMutation.mutate({
-      email: newUserEmail,
-      full_name: newUserName,
-      phone: newUserPhone,
-      is_whatsapp: newUserIsWhatsApp,
-      custom_role: newUserRole,
-      permissions: newUserPermissions
-    });
-  };
-
-  const toggleNewUserPermission = (permission) => {
-    setNewUserPermissions(prev => 
-      prev.includes(permission) 
-        ? prev.filter(p => p !== permission)
-        : [...prev, permission]
-    );
   };
 
   const roles = [
@@ -537,137 +486,33 @@ export default function UsersPage() {
         </Card>
 
         {/* Dialog Novo Usuário */}
-        <Dialog open={showNewUserDialog} onOpenChange={(open) => {
-          setShowNewUserDialog(open);
-          if (!open) resetNewUserForm();
-        }}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <Dialog open={showNewUserDialog} onOpenChange={setShowNewUserDialog}>
+          <DialogContent>
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">Adicionar Novo Usuário</DialogTitle>
+              <DialogTitle className="text-xl font-bold">ℹ️ Como Adicionar Usuários</DialogTitle>
               <DialogDescription>
-                Preencha os dados do novo usuário
+                Usuários devem ser convidados através do sistema Base44
               </DialogDescription>
             </DialogHeader>
-
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="newEmail">Email *</Label>
-                <Input
-                  id="newEmail"
-                  type="email"
-                  placeholder="usuario@exemplo.com"
-                  value={newUserEmail}
-                  onChange={(e) => setNewUserEmail(e.target.value)}
-                  className="border-purple-200 focus:border-purple-500"
-                />
+            <div className="py-4 space-y-4">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-stone-700 mb-3">
+                  <strong>Para adicionar novos usuários ao sistema:</strong>
+                </p>
+                <ol className="text-sm text-stone-600 space-y-2 list-decimal list-inside">
+                  <li>Acesse as <strong>configurações do app</strong> no painel Base44</li>
+                  <li>Vá em <strong>"Usuários"</strong> ou <strong>"Convidar Usuário"</strong></li>
+                  <li>Digite o email do usuário e envie o convite</li>
+                  <li>Após o usuário aceitar o convite, você poderá definir permissões aqui</li>
+                </ol>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="newName">Nome Completo *</Label>
-                <Input
-                  id="newName"
-                  placeholder="Nome do usuário"
-                  value={newUserName}
-                  onChange={(e) => setNewUserName(e.target.value)}
-                  className="border-purple-200 focus:border-purple-500"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="newPhone">Telefone</Label>
-                <Input
-                  id="newPhone"
-                  placeholder="(00) 00000-0000"
-                  value={newUserPhone}
-                  onChange={(e) => setNewUserPhone(e.target.value)}
-                  className="border-purple-200 focus:border-purple-500"
-                />
-                <div className="flex items-center gap-2 mt-2">
-                  <input
-                    type="checkbox"
-                    id="newWhatsapp"
-                    checked={newUserIsWhatsApp}
-                    onChange={(e) => setNewUserIsWhatsApp(e.target.checked)}
-                    className="w-4 h-4 accent-purple-600"
-                  />
-                  <label htmlFor="newWhatsapp" className="text-sm text-stone-600">
-                    É WhatsApp
-                  </label>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="newRole">Nível de Acesso</Label>
-                <Select value={newUserRole} onValueChange={setNewUserRole}>
-                  <SelectTrigger className="border-purple-200 focus:border-purple-500">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles.map(role => (
-                      <SelectItem key={role.value} value={role.value}>
-                        {role.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {newUserRole !== 'Administrador Master' && newUserRole !== 'admin' && (
-                <div className="space-y-2">
-                  <Label className="text-purple-700 font-bold flex items-center gap-1">
-                    <Lock className="w-4 h-4" />
-                    Permissões
-                  </Label>
-                  <div className="grid grid-cols-2 gap-2 p-4 bg-purple-50 rounded-lg border border-purple-200 max-h-60 overflow-y-auto">
-                    {availablePermissions.map(permission => (
-                      <label
-                        key={permission}
-                        htmlFor={`new-perm-${permission}`}
-                        className="flex items-center space-x-2 cursor-pointer hover:bg-white p-2 rounded transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          id={`new-perm-${permission}`}
-                          checked={newUserPermissions.includes(permission)}
-                          onChange={() => toggleNewUserPermission(permission)}
-                          className="w-4 h-4 accent-purple-600"
-                        />
-                        <span className="text-sm text-stone-700 font-medium">
-                          {permission}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <p className="text-xs text-stone-500 italic">
+                💡 Os usuários convidados aparecerão automaticamente nesta lista após aceitarem o convite.
+              </p>
             </div>
-
-            <DialogFooter className="gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setShowNewUserDialog(false);
-                  resetNewUserForm();
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleCreateUser}
-                disabled={createMutation.isPending || !newUserEmail || !newUserName}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-              >
-                {createMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Criando...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Criar Usuário
-                  </>
-                )}
+            <DialogFooter>
+              <Button onClick={() => setShowNewUserDialog(false)}>
+                Entendi
               </Button>
             </DialogFooter>
           </DialogContent>
