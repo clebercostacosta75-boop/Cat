@@ -323,7 +323,7 @@ export default function CoursesPage() {
             <Button
               onClick={() => {
                 resetForm();
-                setShowForm(!showForm);
+                setShowForm(true);
               }}
               className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-200"
             >
