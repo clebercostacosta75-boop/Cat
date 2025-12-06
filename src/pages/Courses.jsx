@@ -725,7 +725,26 @@ export default function CoursesPage() {
               <h3 className="text-2xl font-bold text-stone-900 mb-2">Nenhum curso cadastrado</h3>
               <p className="text-stone-600 mb-6">Comece criando o primeiro curso do catálogo</p>
               <Button 
-                onClick={() => setShowForm(true)}
+                onClick={() => {
+                  setEditingCourse(null);
+                  setFormData({
+                    name: "",
+                    duration_hours: "",
+                    standard_value: 0,
+                    description: "",
+                    modality: "Formação",
+                    category: "Presencial",
+                    validity: "",
+                    start_date: "",
+                    end_date: "",
+                    schedules: {
+                      morning: { start: "", end: "" },
+                      afternoon: { start: "", end: "" },
+                      night: { start: "", end: "" }
+                    }
+                  });
+                  setShowForm(true);
+                }}
                 className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 shadow-lg"
               >
                 <Plus className="w-5 h-5 mr-2" />

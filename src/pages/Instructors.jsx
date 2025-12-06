@@ -464,7 +464,21 @@ export default function InstructorsPage() {
               <h3 className="text-2xl font-bold text-stone-900 mb-2">Nenhum instrutor cadastrado</h3>
               <p className="text-stone-600 mb-6">Comece adicionando o primeiro instrutor ao sistema</p>
               <Button 
-                onClick={() => setShowForm(true)}
+                onClick={() => {
+                  setEditingInstructor(null);
+                  setFormData({ 
+                    name: "", 
+                    status: "Ativo",
+                    internal_code: "",
+                    cpf: "",
+                    rg: "",
+                    hourly_rate: "", 
+                    specialty: "", 
+                    email: "", 
+                    phone: "" 
+                  });
+                  setShowForm(true);
+                }}
                 className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg"
               >
                 <UserPlus className="w-5 h-5 mr-2" />

@@ -823,7 +823,10 @@ export default function ContractorsPage() {
               <h3 className="text-2xl font-bold text-stone-900 mb-2">Nenhuma contratada cadastrada</h3>
               <p className="text-stone-600 mb-6">Comece adicionando a primeira empresa prestadora de serviço</p>
               <Button 
-                onClick={() => setShowForm(true)}
+                onClick={() => {
+                  setEditingContractor(null);
+                  setShowForm(true);
+                }}
                 className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 shadow-lg"
               >
                 <Plus className="w-5 h-5 mr-2" />

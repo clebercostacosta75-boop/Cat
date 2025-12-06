@@ -395,7 +395,10 @@ export default function SchedulePage() {
               <h3 className="text-2xl font-bold text-stone-900 mb-2">Nenhuma turma agendada</h3>
               <p className="text-stone-600 mb-6">Comece criando sua primeira turma de treinamento</p>
               <Button 
-                onClick={() => setShowForm(true)}
+                onClick={() => {
+                  setEditingClass(null);
+                  setShowForm(true);
+                }}
                 className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg"
               >
                 <CalendarPlus className="w-5 h-5 mr-2" />

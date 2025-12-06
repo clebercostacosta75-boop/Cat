@@ -332,7 +332,10 @@ export default function CompaniesPage() {
               <h3 className="text-2xl font-bold text-stone-900 mb-2">Nenhuma empresa cadastrada</h3>
               <p className="text-stone-600 mb-6">Comece adicionando a primeira empresa cliente</p>
               <Button 
-                onClick={() => setShowForm(true)}
+                onClick={() => {
+                  setEditingCompany(null);
+                  setShowForm(true);
+                }}
                 className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-lg"
               >
                 <Plus className="w-5 h-5 mr-2" />
