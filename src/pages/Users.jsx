@@ -35,8 +35,24 @@ export default function UsersPage() {
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editIsWhatsApp, setEditIsWhatsApp] = useState(false);
+  const [editPermissions, setEditPermissions] = useState([]);
   const [showNewUserDialog, setShowNewUserDialog] = useState(false);
   const queryClient = useQueryClient();
+
+  // Lista de todas as permissões disponíveis
+  const availablePermissions = [
+    "Dashboard",
+    "Cronograma",
+    "Instrutores",
+    "Empresas",
+    "Contratadas",
+    "Cursos",
+    "Relatórios",
+    "Gerar BMM",
+    "Histórico BMM",
+    "Modelos E-mail",
+    "Central de Comunicação"
+  ];
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
@@ -67,6 +83,7 @@ export default function UsersPage() {
     setEditName(user.full_name || '');
     setEditPhone(user.phone || '');
     setEditIsWhatsApp(user.is_whatsapp || false);
+    setEditPermissions(user.permissions || []);
   };
 
   const handleSaveUser = (userId) => {
@@ -76,7 +93,8 @@ export default function UsersPage() {
         custom_role: editRole,
         full_name: editName,
         phone: editPhone,
-        is_whatsapp: editIsWhatsApp
+        is_whatsapp: editIsWhatsApp,
+        permissions: editPermissions
       } 
     });
   };
@@ -87,6 +105,15 @@ export default function UsersPage() {
     setEditName("");
     setEditPhone("");
     setEditIsWhatsApp(false);
+    setEditPermissions([]);
+  };
+
+  const togglePermission = (permission) => {
+    setEditPermissions(prev => 
+      prev.includes(permission) 
+        ? prev.filter(p => p !== permission)
+        : [...prev, permission]
+    );
   };
 
   const handleDeleteUser = (userId) => {
@@ -195,19 +222,20 @@ export default function UsersPage() {
                     <TableHead className="font-bold">Email</TableHead>
                     <TableHead className="font-bold">Telefone/WhatsApp</TableHead>
                     <TableHead className="font-bold">Nível de Acesso</TableHead>
+                    <TableHead className="font-bold">Permissões</TableHead>
                     <TableHead className="font-bold text-center">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-12 text-stone-500">
+                      <TableCell colSpan={6} className="text-center py-12 text-stone-500">
                         Carregando usuários...
                       </TableCell>
                     </TableRow>
                   ) : users.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-12 text-stone-500">
+                      <TableCell colSpan={6} className="text-center py-12 text-stone-500">
                         Nenhum usuário encontrado
                       </TableCell>
                     </TableRow>
@@ -295,6 +323,53 @@ export default function UsersPage() {
                               <Badge className={`${roleConfig.color} border`}>
                                 {roleConfig.label}
                               </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {isEditing && editRole !== 'Administrador Master' && editRole !== 'admin' ? (
+                              <div className="space-y-2 max-w-xs">
+                                <p className="text-xs text-stone-500 font-semibold mb-2">Selecionar Permissões:</p>
+                                <div className="grid grid-cols-1 gap-1 max-h-40 overflow-y-auto">
+                                  {availablePermissions.map(permission => (
+                                    <div key={permission} className="flex items-center space-x-2">
+                                      <input
+                                        type="checkbox"
+                                        id={`perm-${user.id}-${permission}`}
+                                        checked={editPermissions.includes(permission)}
+                                        onChange={() => togglePermission(permission)}
+                                        className="w-3 h-3"
+                                      />
+                                      <label
+                                        htmlFor={`perm-${user.id}-${permission}`}
+                                        className="text-xs text-stone-700"
+                                      >
+                                        {permission}
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-xs">
+                                {(user.custom_role === 'Administrador Master' || user.role === 'admin') ? (
+                                  <Badge className="bg-purple-100 text-purple-700">Acesso Total</Badge>
+                                ) : user.permissions && user.permissions.length > 0 ? (
+                                  <div className="flex flex-wrap gap-1">
+                                    {user.permissions.slice(0, 3).map((perm, idx) => (
+                                      <Badge key={idx} variant="outline" className="text-xs">
+                                        {perm}
+                                      </Badge>
+                                    ))}
+                                    {user.permissions.length > 3 && (
+                                      <Badge variant="outline" className="text-xs">
+                                        +{user.permissions.length - 3}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-stone-400">Nenhuma</span>
+                                )}
+                              </div>
                             )}
                           </TableCell>
                           <TableCell className="text-center">

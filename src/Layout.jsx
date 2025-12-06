@@ -48,97 +48,100 @@ export default function Layout({ children }) {
     loadUser();
   }, []);
 
-  // Definir items de navegação baseado no role
+  // Definir items de navegação baseado nas permissões do usuário
   const getNavigationItems = () => {
     const allItems = [
       {
         title: "Dashboard",
         url: createPageUrl("Dashboard"),
         icon: LayoutDashboard,
-        roles: ['admin', 'Administrador Master', 'Financeiro', 'Instrutor']
+        key: "Dashboard"
       },
       {
         title: "Cronograma",
         url: createPageUrl("Schedule"),
         icon: Calendar,
-        roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações', 'Instrutor']
+        key: "Cronograma"
       },
       {
         title: "Instrutores",
         url: createPageUrl("Instructors"),
         icon: Users,
-        roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
+        key: "Instrutores"
       },
       {
         title: "Empresas",
         url: createPageUrl("Companies"),
         icon: Building2,
-        roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
+        key: "Empresas"
       },
       {
         title: "Contratadas",
         url: createPageUrl("Contractors"),
         icon: Building2,
-        roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
+        key: "Contratadas"
       },
       {
         title: "Cursos",
         url: createPageUrl("Courses"),
         icon: BookOpen,
-        roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
+        key: "Cursos"
       },
-
-
       {
         title: "Importar Excel",
         url: createPageUrl("Import"),
         icon: Upload,
-        roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
+        key: "Importar Excel"
       },
       {
         title: "Relatórios",
         url: createPageUrl("Reports"),
         icon: BarChart3,
-        roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
+        key: "Relatórios"
       },
       {
         title: "Gerar BMM",
         url: createPageUrl("BMMGenerator"),
         icon: FileText,
-        roles: ['admin', 'Administrador Master', 'Financeiro']
+        key: "Gerar BMM"
       },
       {
         title: "Histórico BMM",
         url: createPageUrl("BMMHistory"),
         icon: History,
-        roles: ['admin', 'Administrador Master', 'Financeiro']
+        key: "Histórico BMM"
       },
       {
         title: "Modelos E-mail",
         url: createPageUrl("EmailTemplates"),
         icon: Mail,
-        roles: ['admin', 'Administrador Master', 'Financeiro']
+        key: "Modelos E-mail"
       },
       {
         title: "Central de Comunicação",
         url: createPageUrl("CommunicationCenter"),
         icon: Mail,
-        roles: ['admin', 'Administrador Master', 'Financeiro', 'Coordenador de Operações']
+        key: "Central de Comunicação"
       },
       {
         title: "Usuários",
         url: createPageUrl("Users"),
         icon: UserCog,
-        roles: ['admin', 'Administrador Master', 'Financeiro']
+        key: "Usuários"
       },
-      ];
+    ];
 
-    // Filtrar items baseado no role do usuário
-    if (!userRole) return [];
+    // Se não há usuário, não mostrar nada
+    if (!user) return [];
     
-    return allItems.filter(item => 
-      item.roles.includes(userRole) || item.roles.includes('admin')
-    );
+    // Administrador Master vê tudo
+    if (userRole === 'Administrador Master' || userRole === 'admin') {
+      return allItems;
+    }
+    
+    // Outros usuários: filtrar baseado nas permissões
+    const userPermissions = user.permissions || [];
+    return allItems.filter(item => userPermissions.includes(item.key));
   };
 
   const navigationItems = getNavigationItems();
