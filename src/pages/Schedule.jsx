@@ -141,7 +141,7 @@ export default function SchedulePage() {
           <Button 
             onClick={() => {
               setEditingClass(null);
-              setShowForm(!showForm);
+              setShowForm(true);
             }}
             className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-200"
           >
