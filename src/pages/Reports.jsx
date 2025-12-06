@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, Filter } from "lucide-react";
+import { Download, FileText, Filter, BarChart3, TrendingUp, DollarSign, Users, Building2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -260,25 +260,36 @@ export default function ReportsPage() {
     document.body.removeChild(link);
   };
 
+  const totalValue = reportData.reduce((sum, row) => sum + row.total_value, 0);
+  const totalStudents = reportData.reduce((sum, row) => sum + row.students_count, 0);
+  const uniqueCompanies = new Set(reportData.map(r => r.company)).size;
+
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Logo e Título */}
-        <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
-          <div className="flex-shrink-0">
-            <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
-              alt="CAT Logo" 
-              className="h-24 w-auto"
-            />
-          </div>
-          <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl md:text-4xl font-bold text-stone-900">Relatórios</h1>
-            <p className="text-stone-600 mt-1">Análise de custos por mês e empresa</p>
+        {/* Cabeçalho Moderno */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-2xl flex items-center justify-center shadow-xl">
+                <BarChart3 className="w-8 h-8 text-white" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-white flex items-center justify-center">
+                <TrendingUp className="w-3 h-3 text-white" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-black text-stone-900 bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+                Relatórios Analíticos
+              </h1>
+              <p className="text-stone-600 text-sm mt-1 font-medium">
+                Análise completa de custos e desempenho
+              </p>
+            </div>
           </div>
           <Button 
             onClick={exportToExcel}
-            className="bg-emerald-600 hover:bg-emerald-700 shadow-lg"
+            className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 shadow-lg hover:shadow-xl transition-all duration-200"
             disabled={reportData.length === 0}
           >
             <Download className="w-5 h-5 mr-2" />
@@ -286,8 +297,71 @@ export default function ReportsPage() {
           </Button>
         </div>
 
+        {/* Cards de Estatísticas */}
+        <div className="grid md:grid-cols-4 gap-6 mb-6">
+          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
+            <CardContent className="p-0">
+              <div className="bg-gradient-to-br from-emerald-100 to-teal-50 p-6 relative overflow-hidden">
+                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+                <div className="relative z-10">
+                  <DollarSign className="w-10 h-10 text-emerald-600 mb-3" />
+                  <p className="text-4xl font-black text-emerald-900 mb-1">
+                    R$ {(totalValue / 1000).toFixed(0)}k
+                  </p>
+                  <p className="text-xs font-semibold text-emerald-700">Valor Total</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
+            <CardContent className="p-0">
+              <div className="bg-gradient-to-br from-blue-100 to-cyan-50 p-6 relative overflow-hidden">
+                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+                <div className="relative z-10">
+                  <Users className="w-10 h-10 text-blue-600 mb-3" />
+                  <p className="text-4xl font-black text-blue-900 mb-1">{totalStudents}</p>
+                  <p className="text-xs font-semibold text-blue-700">Total de Alunos</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
+            <CardContent className="p-0">
+              <div className="bg-gradient-to-br from-amber-100 to-orange-50 p-6 relative overflow-hidden">
+                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+                <div className="relative z-10">
+                  <FileText className="w-10 h-10 text-amber-600 mb-3" />
+                  <p className="text-4xl font-black text-amber-900 mb-1">{reportData.length}</p>
+                  <p className="text-xs font-semibold text-amber-700">Total de Turmas</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
+            <CardContent className="p-0">
+              <div className="bg-gradient-to-br from-purple-100 to-violet-50 p-6 relative overflow-hidden">
+                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+                <div className="relative z-10">
+                  <Building2 className="w-10 h-10 text-purple-600 mb-3" />
+                  <p className="text-4xl font-black text-purple-900 mb-1">{uniqueCompanies}</p>
+                  <p className="text-xs font-semibold text-purple-700">Empresas Atendidas</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Filtros */}
-        <Card className="border-none shadow-lg">
+        <Card className="border-none shadow-xl">
+          <div className="bg-gradient-to-r from-violet-600 to-fuchsia-600 p-5 text-white">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <Filter className="w-5 h-5" />
+              Filtros de Análise
+            </h2>
+          </div>
           <CardContent className="p-4">
             <div className="flex flex-wrap items-end gap-4">
               <div className="flex items-center gap-2">
@@ -360,23 +434,24 @@ export default function ReportsPage() {
         </Card>
 
         <Card className="border-none shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold text-stone-900 flex items-center gap-2">
-              <FileText className="w-6 h-6 text-emerald-600" />
-              Custos por Mês e Empresa
-            </CardTitle>
-          </CardHeader>
+          <div className="bg-gradient-to-r from-violet-600 to-fuchsia-600 p-6 text-white">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <FileText className="w-6 h-6" />
+              Custos Detalhados por Mês e Empresa
+            </h2>
+            <p className="text-violet-100 text-sm mt-1">Análise completa de treinamentos realizados</p>
+          </div>
           <CardContent>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-stone-50">
-                    <TableHead className="font-bold">Mês</TableHead>
-                    <TableHead className="font-bold">Empresa</TableHead>
-                    <TableHead className="font-bold">Curso</TableHead>
-                    <TableHead className="font-bold">Instrutor</TableHead>
-                    <TableHead className="font-bold">Modalidade</TableHead>
-                    <TableHead className="font-bold text-right">Valor Total</TableHead>
+                  <TableRow className="bg-gradient-to-r from-violet-50 to-fuchsia-50 border-b-2 border-violet-200">
+                    <TableHead className="font-bold text-violet-700">📅 Mês</TableHead>
+                    <TableHead className="font-bold text-violet-700">🏢 Empresa</TableHead>
+                    <TableHead className="font-bold text-violet-700">📚 Curso</TableHead>
+                    <TableHead className="font-bold text-violet-700">👨‍🏫 Instrutor</TableHead>
+                    <TableHead className="font-bold text-violet-700">📊 Modalidade</TableHead>
+                    <TableHead className="font-bold text-right text-violet-700">💰 Valor Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -388,14 +463,20 @@ export default function ReportsPage() {
                     </TableRow>
                   ) : (
                     reportData.map((row, index) => (
-                      <TableRow key={index} className="hover:bg-stone-50">
-                        <TableCell className="font-medium">{row.month}</TableCell>
-                        <TableCell>{row.company}</TableCell>
-                        <TableCell>{row.course_name}</TableCell>
-                        <TableCell>{row.instructor_name || '-'}</TableCell>
-                        <TableCell>{row.modality || '-'}</TableCell>
-                        <TableCell className="text-right font-semibold text-emerald-600">
-                          R$ {row.total_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      <TableRow key={index} className="hover:bg-gradient-to-r hover:from-violet-50 hover:to-fuchsia-50 transition-all duration-200 border-b border-stone-100">
+                        <TableCell className="font-bold text-stone-900">{row.month}</TableCell>
+                        <TableCell className="font-medium text-stone-700">{row.company}</TableCell>
+                        <TableCell className="text-stone-700">{row.course_name}</TableCell>
+                        <TableCell className="text-stone-600">{row.instructor_name || '-'}</TableCell>
+                        <TableCell>
+                          <Badge className={row.modality === 'Formação' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}>
+                            {row.modality || '-'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span className="font-black text-emerald-600 text-lg">
+                            R$ {row.total_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
                         </TableCell>
                       </TableRow>
                     ))
@@ -406,41 +487,7 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
 
-        {reportData.length > 0 && (
-          <Card className="border-none shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold text-stone-900">Resumo Total</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-4 gap-6">
-                <div className="text-center p-4 bg-emerald-50 rounded-lg">
-                  <p className="text-sm text-stone-600 mb-2">Valor Total</p>
-                  <p className="text-3xl font-bold text-emerald-600">
-                    R$ {reportData.reduce((sum, row) => sum + row.total_value, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-stone-600 mb-2">Total de Alunos</p>
-                  <p className="text-3xl font-bold text-blue-600">
-                    {reportData.reduce((sum, row) => sum + row.students_count, 0)}
-                  </p>
-                </div>
-                <div className="text-center p-4 bg-amber-50 rounded-lg">
-                  <p className="text-sm text-stone-600 mb-2">Total de Cursos</p>
-                  <p className="text-3xl font-bold text-amber-600">
-                    {reportData.length}
-                  </p>
-                </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <p className="text-sm text-stone-600 mb-2">Empresas Atendidas</p>
-                  <p className="text-3xl font-bold text-purple-600">
-                    {new Set(reportData.map(r => r.company)).size}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, BookOpen, Clock, Download, DollarSign, X, Copy, Search } from "lucide-react";
+import { Plus, BookOpen, Clock, Download, DollarSign, X, Copy, Search, Edit2, Trash2, Award, TrendingUp, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -265,46 +265,67 @@ export default function CoursesPage() {
     'Periódico': 'bg-purple-100 text-purple-800 border-purple-200',
   };
 
+  const filteredCourses = courses.filter((course) =>
+    course.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.modality?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.category?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const stats = {
+    total: courses.length,
+    formacao: courses.filter(c => c.modality === 'Formação').length,
+    periodico: courses.filter(c => c.modality === 'Periódico').length,
+    totalHours: courses.reduce((sum, c) => sum + (c.duration_hours || 0), 0),
+  };
+
   return (
     <div className="p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Logo e Título */}
-        <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
-          <div className="flex-shrink-0">
-            <img
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png"
-              alt="CAT Logo"
-              className="h-24 w-auto"
-            />
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Cabeçalho Moderno */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-xl">
+                <BookOpen className="w-8 h-8 text-white" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-purple-500 rounded-full border-4 border-white flex items-center justify-center">
+                <span className="text-white text-xs font-bold">{stats.total}</span>
+              </div>
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-black text-stone-900 bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">
+                Catálogo de Cursos
+              </h1>
+              <p className="text-stone-600 text-sm mt-1 font-medium">
+                {stats.total} {stats.total === 1 ? 'curso cadastrado' : 'cursos cadastrados'} • Treinamentos disponíveis
+              </p>
+            </div>
           </div>
-          <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl md:text-4xl font-bold text-stone-900">Cursos</h1>
-            <p className="text-stone-600 mt-1">Catálogo de treinamentos disponíveis</p>
-          </div>
-          <div className="flex gap-3 items-center">
-                            <div className="relative">
-                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-stone-400" />
-                              <Input
-                                placeholder="Pesquisar curso..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-9 w-64"
-                              />
-                            </div>
-                            <Button
-                              onClick={exportCourses}
-                              variant="outline"
-                              disabled={courses.length === 0}
-                            >
-                              <Download className="w-4 h-4 mr-2" />
-                              Exportar Lista
-                            </Button>
+          <div className="flex flex-col md:flex-row gap-3 items-center">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-stone-400" />
+              <Input
+                placeholder="Pesquisar curso..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 w-64 border-teal-200 focus:border-teal-500"
+              />
+            </div>
+            <Button
+              onClick={exportCourses}
+              variant="outline"
+              disabled={courses.length === 0}
+              className="border-teal-300 text-teal-700 hover:bg-teal-50"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Exportar
+            </Button>
             <Button
               onClick={() => {
                 resetForm();
                 setShowForm(!showForm);
               }}
-              className="bg-emerald-600 hover:bg-emerald-700 shadow-lg"
+              className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-200"
             >
               <Plus className="w-5 h-5 mr-2" />
               Novo Curso
@@ -312,11 +333,70 @@ export default function CoursesPage() {
           </div>
         </div>
 
+        {/* Cards de Estatísticas */}
+        <div className="grid md:grid-cols-4 gap-6 mb-6">
+          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
+            <CardContent className="p-0">
+              <div className="bg-gradient-to-br from-teal-100 to-emerald-50 p-6 relative overflow-hidden">
+                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+                <div className="relative z-10">
+                  <BookOpen className="w-10 h-10 text-teal-600 mb-3" />
+                  <p className="text-4xl font-black text-teal-900 mb-1">{stats.total}</p>
+                  <p className="text-xs font-semibold text-teal-700">Total de Cursos</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
+            <CardContent className="p-0">
+              <div className="bg-gradient-to-br from-blue-100 to-cyan-50 p-6 relative overflow-hidden">
+                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+                <div className="relative z-10">
+                  <Award className="w-10 h-10 text-blue-600 mb-3" />
+                  <p className="text-4xl font-black text-blue-900 mb-1">{stats.formacao}</p>
+                  <p className="text-xs font-semibold text-blue-700">Cursos Formação</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
+            <CardContent className="p-0">
+              <div className="bg-gradient-to-br from-purple-100 to-violet-50 p-6 relative overflow-hidden">
+                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+                <div className="relative z-10">
+                  <Target className="w-10 h-10 text-purple-600 mb-3" />
+                  <p className="text-4xl font-black text-purple-900 mb-1">{stats.periodico}</p>
+                  <p className="text-xs font-semibold text-purple-700">Cursos Periódicos</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
+            <CardContent className="p-0">
+              <div className="bg-gradient-to-br from-amber-100 to-orange-50 p-6 relative overflow-hidden">
+                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+                <div className="relative z-10">
+                  <Clock className="w-10 h-10 text-amber-600 mb-3" />
+                  <p className="text-4xl font-black text-amber-900 mb-1">{stats.totalHours}h</p>
+                  <p className="text-xs font-semibold text-amber-700">Carga Horária Total</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {showForm && (
           <Card className="border-none shadow-xl">
-            <CardHeader>
-              <CardTitle>{editingCourse ? 'Editar' : 'Novo'} Curso</CardTitle>
-            </CardHeader>
+            <div className="bg-gradient-to-r from-teal-600 to-emerald-600 p-6 text-white">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <BookOpen className="w-6 h-6" />
+                {editingCourse ? 'Editar' : 'Novo'} Curso
+              </h2>
+              <p className="text-teal-100 text-sm mt-1">Cadastro completo de treinamento</p>
+            </div>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Informações Gerais */}
@@ -495,11 +575,11 @@ export default function CoursesPage() {
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={resetForm}>
+                  <Button type="button" variant="outline" onClick={resetForm} className="hover:bg-stone-100">
                     Cancelar
                   </Button>
-                  <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
-                    {editingCourse ? 'Atualizar' : 'Criar'}
+                  <Button type="submit" className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 shadow-lg">
+                    {editingCourse ? 'Atualizar' : 'Criar'} Curso
                   </Button>
                 </div>
               </form>
@@ -507,103 +587,113 @@ export default function CoursesPage() {
           </Card>
         )}
 
-        <div className="grid md:grid-cols-2 gap-6">
-                    {courses
-                      .filter((course) =>
-                        course.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        course.modality?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        course.category?.toLowerCase().includes(searchTerm.toLowerCase())
-                      )
-                      .map((course) => (
-            <Card key={course.id} className="border-none shadow-lg hover:shadow-xl transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <BookOpen className="w-6 h-6 text-emerald-600" />
-                  </div>
-                  <div className="flex gap-2">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCourses.map((course) => (
+            <Card key={course.id} className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-r from-teal-50/50 to-emerald-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <CardContent className="p-0 relative z-10">
+                {/* Header Card com Gradiente */}
+                <div className="bg-gradient-to-br from-teal-500 to-emerald-500 p-6 relative overflow-hidden">
+                  <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+                  
+                  <div className="relative z-10 flex items-start justify-between mb-4">
                     <div className="flex gap-2 flex-wrap">
                       {course.modality && (
-                        <Badge className={`${modalityColors[course.modality]} border`}>
+                        <Badge className={course.modality === 'Formação' ? 'bg-blue-500 text-white border-0' : 'bg-purple-500 text-white border-0'}>
                           {course.modality === 'Formação' ? '📚' : '🔄'} {course.modality}
                         </Badge>
                       )}
                       {course.category && (
-                        <Badge variant="outline" className="border-stone-300">
+                        <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm">
                           {course.category === 'Presencial' ? '🏢' : course.category === 'Híbrido' ? '🔀' : '💻'} {course.category}
                         </Badge>
                       )}
                     </div>
                   </div>
+                  
+                  <div className="relative z-10">
+                    <h3 className="text-xl font-black text-white mb-2 line-clamp-2">
+                      {course.name}
+                    </h3>
+                  </div>
                 </div>
 
-                <h3 className="text-xl font-bold text-stone-900 mb-2">{course.name}</h3>
+                {/* Body Card */}
+                <div className="p-6 space-y-4">
+                  {/* Descrição */}
+                  {course.description && (
+                    <p className="text-sm text-stone-600 line-clamp-3 bg-stone-50 p-3 rounded-lg">
+                      {course.description}
+                    </p>
+                  )}
 
-                {course.category && (
-                  <Badge variant="outline" className="mb-3">
-                    {course.category}
-                  </Badge>
-                )}
+                  {/* Informações Principais */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {course.duration_hours && (
+                      <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                        <Clock className="w-5 h-5 text-amber-600" />
+                        <div>
+                          <p className="text-xs text-stone-500 font-medium">Duração</p>
+                          <p className="text-lg font-black text-amber-900">{course.duration_hours}h</p>
+                        </div>
+                      </div>
+                    )}
 
-                {course.description && (
-                  <p className="text-sm text-stone-600 mb-4 line-clamp-2">{course.description}</p>
-                )}
+                    {course.standard_value > 0 && (
+                      <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                        <DollarSign className="w-5 h-5 text-green-600" />
+                        <div>
+                          <p className="text-xs text-stone-500 font-medium">Valor</p>
+                          <p className="text-lg font-black text-green-900">
+                            R$ {(course.standard_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
-                <div className="space-y-2 mb-4">
-                  {course.duration_hours && (
-                    <div className="flex items-center gap-2 text-sm text-stone-600">
-                      <Clock className="w-4 h-4" />
-                      <span>{course.duration_hours}h de duração</span>
+                  {course.validity && (
+                    <div className="text-sm text-stone-600 bg-blue-50 p-3 rounded-lg">
+                      ⏱️ <strong>Validade:</strong> {course.validity}
                     </div>
                   )}
 
-                  {course.validity && (
-                      <div className="text-sm text-stone-600">
-                        ⏱️ Validade: {course.validity}
-                      </div>
-                    )}
-
-                    {(course.start_date || course.end_date) && (
-                      <div className="text-sm text-stone-600">
-                        📅 Período: {course.start_date || '—'} a {course.end_date || '—'}
-                      </div>
-                    )}
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDuplicate(course)}
-                    className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                    disabled={createMutation.isPending}
-                    title="Duplicar este curso"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(course)}
-                    className="w-full text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                    title="Editar este curso"
-                  >
-                    ✏️
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (confirm(`Tem certeza que deseja excluir "${course.name}"?`)) {
-                        deleteMutation.mutate(course.id);
-                      }
-                    }}
-                    disabled={deleteMutation.isPending}
-                    className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-                    title="Excluir este curso"
-                  >
-                    🗑️
-                  </Button>
+                  {/* Botões de Ação */}
+                  <div className="grid grid-cols-3 gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDuplicate(course)}
+                      className="text-teal-600 hover:text-teal-700 hover:bg-teal-50 border-teal-200"
+                      disabled={createMutation.isPending}
+                      title="Duplicar"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(course)}
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                      title="Editar"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm(`Tem certeza que deseja excluir "${course.name}"?`)) {
+                          deleteMutation.mutate(course.id);
+                        }
+                      }}
+                      disabled={deleteMutation.isPending}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                      title="Excluir"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -611,12 +701,29 @@ export default function CoursesPage() {
         </div>
 
         {courses.length === 0 && (
+          <Card className="border-none shadow-xl overflow-hidden">
+            <div className="bg-gradient-to-br from-teal-50 to-emerald-50 p-16 text-center">
+              <div className="w-24 h-24 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                <BookOpen className="w-12 h-12 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-stone-900 mb-2">Nenhum curso cadastrado</h3>
+              <p className="text-stone-600 mb-6">Comece criando o primeiro curso do catálogo</p>
+              <Button 
+                onClick={() => setShowForm(true)}
+                className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 shadow-lg"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Criar Primeiro Curso
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {filteredCourses.length === 0 && courses.length > 0 && (
           <Card className="border-none shadow-lg">
             <CardContent className="p-12 text-center">
-              <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <BookOpen className="w-8 h-8 text-stone-400" />
-              </div>
-              <p className="text-stone-600">Nenhum curso cadastrado</p>
+              <Search className="w-16 h-16 mx-auto mb-4 text-stone-300" />
+              <p className="text-stone-600">Nenhum curso encontrado com "{searchTerm}"</p>
             </CardContent>
           </Card>
         )}
