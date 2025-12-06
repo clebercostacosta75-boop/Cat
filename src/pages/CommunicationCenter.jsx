@@ -149,37 +149,22 @@ export default function CommunicationCenter() {
       }
 
       if (messageType === 'whatsapp') {
-        console.log('Enviando WhatsApp com dados:', {
-          recipient_type: selectedRecipient,
-          ...recipientData,
-          class_schedule_id: selectedSchedule,
-          message_type: 'custom'
-        });
+        // Formatar telefone removendo caracteres não numéricos
+        const phoneNumber = recipientData.recipient_phone.replace(/\D/g, '');
         
-        const response = await base44.functions.invoke('enviarNotificacaoWhatsApp', {
-          recipient_type: selectedRecipient,
-          ...recipientData,
-          class_schedule_id: selectedSchedule,
-          message_body: messageContent,
-          message_type: 'custom'
-        });
-
-        console.log('Resposta do WhatsApp:', response.data);
-
-        if (response.data.success) {
-          toast.success(`✅ Mensagem enviada para ${response.data.recipient}!`);
-          if (response.data.admin_copies && response.data.admin_copies.length > 0) {
-            const enviados = response.data.admin_copies.filter(a => a.status === 'enviado').length;
-            if (enviados > 0) {
-              toast.success(`📋 Cópia enviada para ${enviados} administrador(es)`);
-            }
-          }
-          setMessageContent("");
-          setSelectedSchedule("");
-          setSelectedRecipient("");
-        } else {
-          toast.error(response.data.error || 'Erro ao enviar mensagem');
-        }
+        // Codificar mensagem para URL
+        const encodedMessage = encodeURIComponent(messageContent);
+        
+        // Construir URL do WhatsApp (incluir código do Brasil +55)
+        const whatsappUrl = `https://wa.me/55${phoneNumber}?text=${encodedMessage}`;
+        
+        // Abrir WhatsApp no navegador
+        window.open(whatsappUrl, '_blank');
+        
+        toast.success(`✅ WhatsApp aberto para ${recipientData.recipient_name}!`);
+        setMessageContent("");
+        setSelectedSchedule("");
+        setSelectedRecipient("");
       } else if (messageType === 'email') {
         console.log('Enviando e-mail para:', recipientData.recipient_email);
         
@@ -312,9 +297,16 @@ export default function CommunicationCenter() {
                       rows={12}
                       className="font-mono text-sm"
                     />
-                    <p className="text-xs text-stone-500">
-                      ⚠️ Uma cópia desta mensagem será enviada automaticamente para os Administradores Master
-                    </p>
+                    {messageType === 'whatsapp' && (
+                      <p className="text-xs text-stone-500">
+                        💬 O WhatsApp será aberto em uma nova aba com a mensagem preenchida
+                      </p>
+                    )}
+                    {messageType === 'email' && (
+                      <p className="text-xs text-stone-500">
+                        📧 O e-mail será enviado diretamente para o destinatário
+                      </p>
+                    )}
                   </div>
 
                   <Button
