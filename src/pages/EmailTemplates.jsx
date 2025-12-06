@@ -400,21 +400,6 @@ export default function EmailTemplatesPage() {
 
                 {/* Body */}
                 <div className="p-6 space-y-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-5 h-5 text-emerald-600" />
-                    <h3 className="font-bold text-stone-900">{template.name}</h3>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className={typeColors[template.type] || typeColors['Personalizado']}>
-                      {template.type}
-                    </Badge>
-                    {template.is_default && (
-                      <Badge className="bg-amber-100 text-amber-800">Padrão</Badge>
-                    )}
-                  </div>
-                </div>
-
                   <div className="bg-gradient-to-br from-stone-50 to-stone-100 rounded-xl p-4 border border-stone-200">
                     <p className="text-xs text-stone-500 font-medium mb-2">📧 Assunto do E-mail:</p>
                     <p className="text-sm font-bold text-stone-900">{template.subject}</p>

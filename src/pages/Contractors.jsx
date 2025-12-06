@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Building, FileText, X, CreditCard, MapPin, Edit2, Trash2, TrendingUp, Briefcase, Search } from "lucide-react";
+import { Plus, Building, FileText, X, CreditCard, MapPin, Edit2, Trash2, TrendingUp, Briefcase, Search, Mail } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export default function ContractorsPage() {
