@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Edit2, X, Check, Trash2, Crown, Settings, Eye, Lock, MessageCircle } from "lucide-react";
+import { Users, Plus, Edit2, X, Check, Trash2, Crown, Settings, Eye, Lock, MessageCircle, Mail, Phone } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -176,18 +176,27 @@ export default function UsersPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-              <Users className="w-6 h-6 text-purple-600" />
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center shadow-xl">
+                <Users className="w-8 h-8 text-white" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center">
+                <span className="text-white text-xs font-bold">{users.length}</span>
+              </div>
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-stone-900">Gestão de Usuários</h1>
-              <p className="text-stone-500 text-sm">{users.length} usuários cadastrados</p>
+              <h1 className="text-3xl md:text-4xl font-black text-stone-900 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Gestão de Usuários
+              </h1>
+              <p className="text-stone-600 text-sm mt-1 font-medium">
+                {users.length} {users.length === 1 ? 'usuário cadastrado' : 'usuários cadastrados'} • Controle total de acessos
+              </p>
             </div>
           </div>
           <Button 
             onClick={() => setShowNewUserDialog(true)}
-            className="bg-purple-600 hover:bg-purple-700"
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-200"
           >
             <Plus className="w-4 h-4 mr-2" />
             Novo Usuário
@@ -195,16 +204,17 @@ export default function UsersPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {statsCards.map((stat, index) => (
-            <Card key={index} className="border-none shadow-md">
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className={`w-12 h-12 ${stat.iconBg} rounded-full flex items-center justify-center`}>
-                  <stat.icon className={`w-6 h-6 ${stat.iconColor}`} />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-stone-900">{stat.count}</p>
-                  <p className="text-sm text-stone-500">{stat.label}</p>
+            <Card key={index} className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
+              <CardContent className="p-0">
+                <div className={`${stat.iconBg} p-6 relative overflow-hidden`}>
+                  <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+                  <div className="relative z-10">
+                    <stat.icon className={`w-10 h-10 ${stat.iconColor} mb-3`} />
+                    <p className="text-4xl font-black text-stone-900 mb-1">{stat.count}</p>
+                    <p className="text-sm font-semibold text-stone-700">{stat.label}</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -212,18 +222,25 @@ export default function UsersPage() {
         </div>
 
         {/* Lista de Usuários */}
-        <Card className="border-none shadow-xl">
+        <Card className="border-none shadow-xl overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <Users className="w-6 h-6" />
+              Lista de Usuários
+            </h2>
+            <p className="text-purple-100 text-sm mt-1">Gerencie permissões e acessos dos usuários</p>
+          </div>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-stone-50">
-                    <TableHead className="font-bold">Nome</TableHead>
-                    <TableHead className="font-bold">Email</TableHead>
-                    <TableHead className="font-bold">Telefone/WhatsApp</TableHead>
-                    <TableHead className="font-bold">Nível de Acesso</TableHead>
-                    <TableHead className="font-bold">Permissões</TableHead>
-                    <TableHead className="font-bold text-center">Ações</TableHead>
+                  <TableRow className="bg-gradient-to-r from-stone-50 to-stone-100 border-b-2 border-stone-200">
+                    <TableHead className="font-bold text-stone-700">👤 Nome</TableHead>
+                    <TableHead className="font-bold text-stone-700">📧 Email</TableHead>
+                    <TableHead className="font-bold text-stone-700">📱 Telefone/WhatsApp</TableHead>
+                    <TableHead className="font-bold text-stone-700">🎯 Nível de Acesso</TableHead>
+                    <TableHead className="font-bold text-stone-700">🔐 Permissões</TableHead>
+                    <TableHead className="font-bold text-center text-stone-700">⚙️ Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -245,13 +262,16 @@ export default function UsersPage() {
                       const isEditing = editingUser === user.id;
                       
                       return (
-                        <TableRow key={user.id} className="hover:bg-stone-50">
+                        <TableRow key={user.id} className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all duration-200 border-b border-stone-100">
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                                <span className="text-purple-700 font-semibold">
-                                  {user.full_name?.charAt(0)?.toUpperCase() || '?'}
-                                </span>
+                              <div className="relative">
+                                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                                  <span className="text-white font-bold text-lg">
+                                    {user.full_name?.charAt(0)?.toUpperCase() || '?'}
+                                  </span>
+                                </div>
+                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                               </div>
                               <div>
                                 {isEditing ? (
@@ -259,15 +279,23 @@ export default function UsersPage() {
                                     value={editName}
                                     onChange={(e) => setEditName(e.target.value)}
                                     placeholder="Nome do usuário"
-                                    className="w-[200px]"
+                                    className="w-[200px] border-purple-200 focus:border-purple-500"
                                   />
                                 ) : (
-                                  <p className="font-medium text-stone-900">{user.full_name || 'Sem nome'}</p>
+                                  <>
+                                    <p className="font-semibold text-stone-900">{user.full_name || 'Sem nome'}</p>
+                                    <p className="text-xs text-stone-500">ID: {user.id.slice(0, 8)}</p>
+                                  </>
                                 )}
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="text-stone-600">{user.email}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Mail className="w-4 h-4 text-stone-400" />
+                              <span className="text-stone-600 font-mono text-sm">{user.email}</span>
+                            </div>
+                          </TableCell>
                           <TableCell>
                             {isEditing ? (
                               <div className="space-y-2">
@@ -294,13 +322,17 @@ export default function UsersPage() {
                               <div className="flex items-center gap-2">
                                 {user.phone ? (
                                   <>
-                                    <span className="text-stone-600">{user.phone}</span>
+                                    <Phone className="w-4 h-4 text-stone-400" />
+                                    <span className="text-stone-600 font-mono text-sm">{user.phone}</span>
                                     {user.is_whatsapp && (
-                                      <MessageCircle className="w-4 h-4 text-green-600" />
+                                      <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
+                                        <MessageCircle className="w-3 h-3 mr-1" />
+                                        WhatsApp
+                                      </Badge>
                                     )}
                                   </>
                                 ) : (
-                                  <span className="text-stone-400 text-sm">Não cadastrado</span>
+                                  <span className="text-stone-400 text-sm italic">Não cadastrado</span>
                                 )}
                               </div>
                             )}
@@ -308,7 +340,7 @@ export default function UsersPage() {
                           <TableCell>
                             {isEditing ? (
                               <Select value={editRole} onValueChange={setEditRole}>
-                                <SelectTrigger className="w-[220px]">
+                                <SelectTrigger className="w-[220px] border-purple-200 focus:border-purple-500">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -320,7 +352,7 @@ export default function UsersPage() {
                                 </SelectContent>
                               </Select>
                             ) : (
-                              <Badge className={`${roleConfig.color} border`}>
+                              <Badge className={`${roleConfig.color} border font-semibold px-3 py-1`}>
                                 {roleConfig.label}
                               </Badge>
                             )}
@@ -328,46 +360,54 @@ export default function UsersPage() {
                           <TableCell>
                             {isEditing && editRole !== 'Administrador Master' && editRole !== 'admin' ? (
                               <div className="space-y-2 max-w-xs">
-                                <p className="text-xs text-stone-500 font-semibold mb-2">Selecionar Permissões:</p>
-                                <div className="grid grid-cols-1 gap-1 max-h-40 overflow-y-auto">
+                                <p className="text-xs text-purple-700 font-bold mb-2 flex items-center gap-1">
+                                  <Lock className="w-3 h-3" />
+                                  Selecionar Permissões:
+                                </p>
+                                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto p-3 bg-purple-50 rounded-lg border border-purple-200">
                                   {availablePermissions.map(permission => (
-                                    <div key={permission} className="flex items-center space-x-2">
+                                    <label
+                                      key={permission}
+                                      htmlFor={`perm-${user.id}-${permission}`}
+                                      className="flex items-center space-x-3 cursor-pointer hover:bg-white p-2 rounded transition-colors"
+                                    >
                                       <input
                                         type="checkbox"
                                         id={`perm-${user.id}-${permission}`}
                                         checked={editPermissions.includes(permission)}
                                         onChange={() => togglePermission(permission)}
-                                        className="w-3 h-3"
+                                        className="w-4 h-4 accent-purple-600"
                                       />
-                                      <label
-                                        htmlFor={`perm-${user.id}-${permission}`}
-                                        className="text-xs text-stone-700"
-                                      >
+                                      <span className="text-sm text-stone-700 font-medium">
                                         {permission}
-                                      </label>
-                                    </div>
+                                      </span>
+                                    </label>
                                   ))}
                                 </div>
                               </div>
                             ) : (
                               <div className="text-xs">
                                 {(user.custom_role === 'Administrador Master' || user.role === 'admin') ? (
-                                  <Badge className="bg-purple-100 text-purple-700">Acesso Total</Badge>
+                                  <Badge className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-0 px-3 py-1">
+                                    ⭐ Acesso Total
+                                  </Badge>
                                 ) : user.permissions && user.permissions.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1">
-                                    {user.permissions.slice(0, 3).map((perm, idx) => (
-                                      <Badge key={idx} variant="outline" className="text-xs">
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {user.permissions.slice(0, 2).map((perm, idx) => (
+                                      <Badge key={idx} className="bg-blue-100 text-blue-700 border-blue-200 text-xs">
                                         {perm}
                                       </Badge>
                                     ))}
-                                    {user.permissions.length > 3 && (
-                                      <Badge variant="outline" className="text-xs">
-                                        +{user.permissions.length - 3}
+                                    {user.permissions.length > 2 && (
+                                      <Badge className="bg-stone-200 text-stone-700 border-stone-300 text-xs font-bold">
+                                        +{user.permissions.length - 2} mais
                                       </Badge>
                                     )}
                                   </div>
                                 ) : (
-                                  <span className="text-stone-400">Nenhuma</span>
+                                  <Badge variant="outline" className="text-stone-400 border-stone-300">
+                                    Sem permissões
+                                  </Badge>
                                 )}
                               </div>
                             )}
@@ -378,28 +418,30 @@ export default function UsersPage() {
                                 <Button
                                   size="sm"
                                   onClick={() => handleSaveUser(user.id)}
-                                  className="bg-emerald-600 hover:bg-emerald-700"
+                                  className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white shadow-lg"
                                   disabled={updateMutation.isPending}
                                 >
-                                  <Check className="w-4 h-4" />
+                                  <Check className="w-4 h-4 mr-1" />
+                                  Salvar
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   onClick={handleCancelEdit}
+                                  className="hover:bg-stone-100"
                                 >
-                                  <X className="w-4 h-4" />
+                                  <X className="w-4 h-4 mr-1" />
+                                  Cancelar
                                 </Button>
                               </div>
                             ) : (
                               <div className="flex items-center justify-center gap-2">
                                 <Button
                                   size="sm"
-                                  variant="outline"
                                   onClick={() => handleEditUser(user)}
-                                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                  className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-md"
                                 >
-                                  <Edit2 className="w-4 h-4 mr-1" />
+                                  <Edit2 className="w-3 h-3 mr-1" />
                                   Editar
                                 </Button>
                                 <AlertDialog>
@@ -407,9 +449,9 @@ export default function UsersPage() {
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                      className="text-red-600 hover:text-white hover:bg-gradient-to-r hover:from-red-500 hover:to-red-600 border-red-300"
                                     >
-                                      <Trash2 className="w-4 h-4" />
+                                      <Trash2 className="w-3 h-3" />
                                     </Button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
