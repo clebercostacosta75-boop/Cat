@@ -242,7 +242,7 @@ export default function ContractorsPage() {
             </div>
             <Button 
               onClick={() => {
-                resetForm();
+                setEditingContractor(null);
                 setShowForm(true);
               }}
               className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 shadow-lg hover:shadow-xl transition-all duration-200"

@@ -322,7 +322,23 @@ export default function CoursesPage() {
             </Button>
             <Button
               onClick={() => {
-                resetForm();
+                setEditingCourse(null);
+                setFormData({
+                  name: "",
+                  duration_hours: "",
+                  standard_value: 0,
+                  description: "",
+                  modality: "Formação",
+                  category: "Presencial",
+                  validity: "",
+                  start_date: "",
+                  end_date: "",
+                  schedules: {
+                    morning: { start: "", end: "" },
+                    afternoon: { start: "", end: "" },
+                    night: { start: "", end: "" }
+                  }
+                });
                 setShowForm(true);
               }}
               className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-200"

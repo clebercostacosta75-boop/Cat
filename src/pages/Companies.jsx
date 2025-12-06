@@ -116,7 +116,7 @@ export default function CompaniesPage() {
             </div>
             <Button 
               onClick={() => {
-                resetForm();
+                setEditingCompany(null);
                 setShowForm(true);
               }}
               className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-lg hover:shadow-xl transition-all duration-200"

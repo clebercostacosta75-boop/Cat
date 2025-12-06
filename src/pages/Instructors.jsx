@@ -153,7 +153,18 @@ export default function InstructorsPage() {
             </div>
             <Button 
               onClick={() => {
-                resetForm();
+                setEditingInstructor(null);
+                setFormData({ 
+                  name: "", 
+                  status: "Ativo",
+                  internal_code: "",
+                  cpf: "",
+                  rg: "",
+                  hourly_rate: "", 
+                  specialty: "", 
+                  email: "", 
+                  phone: "" 
+                });
                 setShowForm(true);
               }}
               className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200"
