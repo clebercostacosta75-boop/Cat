@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { 
   MessageCircle, Mail, Phone, Send, Loader2, 
-  CheckCircle, Clock, AlertCircle, Users, Building2
+  CheckCircle, Clock, AlertCircle, Users, Building2, Sparkles, Zap
 } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -199,27 +199,37 @@ export default function CommunicationCenter() {
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header */}
+        {/* Cabeçalho Moderno */}
         <div className="flex items-center gap-4 mb-8">
-          <div className="p-3 bg-emerald-100 rounded-lg">
-            <MessageCircle className="w-8 h-8 text-emerald-600" />
+          <div className="relative">
+            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-xl">
+              <Zap className="w-8 h-8 text-white" />
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full border-4 border-white flex items-center justify-center">
+              <Send className="w-3 h-3 text-white" />
+            </div>
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-stone-900">Central de Comunicação</h1>
-            <p className="text-stone-600">Envie mensagens para instrutores, empresas e administradores</p>
+            <h1 className="text-3xl md:text-4xl font-black text-stone-900 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+              Central de Comunicação
+            </h1>
+            <p className="text-stone-600 text-sm mt-1 font-medium">
+              Envie mensagens profissionais via WhatsApp e E-mail
+            </p>
           </div>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Formulário de Envio */}
-          <Card className="border-none shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Send className="w-5 h-5 text-emerald-600" />
+          <Card className="border-none shadow-xl">
+            <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-6 text-white">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Send className="w-6 h-6" />
                 Enviar Nova Mensagem
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </h2>
+              <p className="text-green-100 text-sm mt-1">Configure e envie comunicações</p>
+            </div>
+            <CardContent className="p-6 space-y-4">
               <div className="space-y-2">
                 <Label>Selecionar Turma/Cronograma *</Label>
                 <Select value={selectedSchedule} onValueChange={(value) => {
@@ -312,7 +322,7 @@ export default function CommunicationCenter() {
                   <Button
                     onClick={handleSendMessage}
                     disabled={sending || !messageContent}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700"
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg"
                   >
                     {sending ? (
                       <>
@@ -335,11 +345,14 @@ export default function CommunicationCenter() {
           <div className="space-y-6">
             {selectedScheduleData ? (
               <>
-                <Card className="border-none shadow-lg bg-gradient-to-br from-emerald-50 to-white">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Detalhes da Turma</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
+                <Card className="border-none shadow-xl">
+                  <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-5 text-white">
+                    <h2 className="text-lg font-bold flex items-center gap-2">
+                      <Building2 className="w-5 h-5" />
+                      Detalhes da Turma
+                    </h2>
+                  </div>
+                  <CardContent className="p-6 space-y-3">
                     <div>
                       <p className="text-sm font-medium text-stone-500">Curso</p>
                       <p className="text-lg font-semibold text-stone-900">{selectedScheduleData.training_name}</p>
@@ -386,23 +399,23 @@ export default function CommunicationCenter() {
                 </Card>
 
                 {selectedRecipient && (
-                  <Card className="border-none shadow-lg">
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
+                  <Card className="border-none shadow-xl">
+                    <div className={`${selectedRecipient === 'instructor' ? 'bg-gradient-to-r from-purple-600 to-violet-600' : 'bg-gradient-to-r from-blue-600 to-cyan-600'} p-5 text-white`}>
+                      <h2 className="text-lg font-bold flex items-center gap-2">
                         {selectedRecipient === 'instructor' ? (
                           <>
-                            <Users className="w-5 h-5 text-purple-600" />
+                            <Users className="w-5 h-5" />
                             Informações do Instrutor
                           </>
                         ) : (
                           <>
-                            <Building2 className="w-5 h-5 text-blue-600" />
+                            <Building2 className="w-5 h-5" />
                             Informações da Empresa
                           </>
                         )}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
+                      </h2>
+                    </div>
+                    <CardContent className="p-6 space-y-3">
                       {selectedRecipient === 'instructor' && selectedInstructor && (
                         <>
                           <div>
@@ -448,11 +461,14 @@ export default function CommunicationCenter() {
                 )}
               </>
             ) : (
-              <Card className="border-none shadow-lg">
-                <CardContent className="py-12 text-center">
-                  <MessageCircle className="w-16 h-16 mx-auto mb-4 text-stone-300" />
-                  <p className="text-stone-500">Selecione uma turma para começar</p>
-                </CardContent>
+              <Card className="border-none shadow-xl overflow-hidden">
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-16 text-center">
+                  <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                    <MessageCircle className="w-12 h-12 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-stone-900 mb-2">Selecione uma turma</h3>
+                  <p className="text-stone-600">Escolha um cronograma para começar a enviar mensagens</p>
+                </div>
               </Card>
             )}
           </div>

@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { 
   FileText, Building2, Calendar, Eye, Download, Mail, 
-  Loader2, CheckCircle, AlertCircle, RefreshCw 
+  Loader2, CheckCircle, AlertCircle, RefreshCw, Sparkles, Send, Users, DollarSign
 } from "lucide-react";
 import { toast } from "sonner";
 import BMMPreview from "@/components/bmm/BMMPreview";
@@ -219,32 +219,39 @@ export default function BMMGenerator() {
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
-          <div className="flex-shrink-0">
-            <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
-              alt="CAT Logo" 
-              className="h-20 w-auto"
-            />
-          </div>
-          <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl md:text-4xl font-bold text-stone-900">Gerador de BMM</h1>
-            <p className="text-stone-600 mt-1">Boletim Mensal de Medição</p>
+        {/* Cabeçalho Moderno */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-xl">
+                <Sparkles className="w-8 h-8 text-white" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-white flex items-center justify-center">
+                <FileText className="w-3 h-3 text-white" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-black text-stone-900 bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
+                Gerador de BMM
+              </h1>
+              <p className="text-stone-600 text-sm mt-1 font-medium">
+                Boletim Mensal de Medição • Gere documentos profissionais
+              </p>
+            </div>
           </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="config" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-3 mb-6 bg-gradient-to-r from-rose-100 to-pink-100 p-1 h-auto">
+            <TabsTrigger value="config" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-pink-600 data-[state=active]:text-white py-3">
               <Building2 className="w-4 h-4" />
               Configuração
             </TabsTrigger>
-            <TabsTrigger value="preview" className="flex items-center gap-2" disabled={!generatedContent}>
+            <TabsTrigger value="preview" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-pink-600 data-[state=active]:text-white py-3" disabled={!generatedContent}>
               <Eye className="w-4 h-4" />
               Pré-visualização
             </TabsTrigger>
-            <TabsTrigger value="send" className="flex items-center gap-2" disabled={!generatedContent}>
+            <TabsTrigger value="send" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-pink-600 data-[state=active]:text-white py-3" disabled={!generatedContent}>
               <Mail className="w-4 h-4" />
               Enviar
             </TabsTrigger>
@@ -254,14 +261,15 @@ export default function BMMGenerator() {
           <TabsContent value="config">
             <div className="grid md:grid-cols-2 gap-6">
               {/* Seleção */}
-              <Card className="border-none shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-emerald-600" />
+              <Card className="border-none shadow-xl">
+                <div className="bg-gradient-to-r from-rose-600 to-pink-600 p-5 text-white">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
                     Configurar BMM
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                  </h2>
+                  <p className="text-rose-100 text-sm mt-1">Selecione os parâmetros</p>
+                </div>
+                <CardContent className="p-6 space-y-4">
                   <div className="space-y-2">
                     <Label>Empresa *</Label>
                     <Select value={selectedCompany} onValueChange={setSelectedCompany}>
@@ -318,17 +326,17 @@ export default function BMMGenerator() {
 
                   <Button 
                     onClick={handleGenerate}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 mt-4"
+                    className="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 shadow-lg mt-4"
                     disabled={!selectedCompany || !selectedPeriod || isGenerating}
                   >
                     {isGenerating ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Gerando...
+                        Gerando BMM...
                       </>
                     ) : (
                       <>
-                        <RefreshCw className="w-4 h-4 mr-2" />
+                        <Sparkles className="w-4 h-4 mr-2" />
                         Gerar BMM
                       </>
                     )}
@@ -337,14 +345,15 @@ export default function BMMGenerator() {
               </Card>
 
               {/* Resumo */}
-              <Card className="border-none shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-blue-600" />
+              <Card className="border-none shadow-xl">
+                <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-5 text-white">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <Calendar className="w-5 h-5" />
                     Resumo do Período
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+                  </h2>
+                  <p className="text-blue-100 text-sm mt-1">Visão geral das turmas</p>
+                </div>
+                <CardContent className="p-6">
                   {selectedCompany && selectedPeriod ? (
                     <div className="space-y-4">
                       {selectedCompanyData?.logo_url && (
@@ -357,15 +366,17 @@ export default function BMMGenerator() {
                         </div>
                       )}
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center p-4 bg-emerald-50 rounded-lg">
-                          <p className="text-2xl font-bold text-emerald-600">{filteredClasses.length}</p>
-                          <p className="text-sm text-stone-600">Turmas</p>
+                        <div className="text-center p-5 bg-gradient-to-br from-emerald-100 to-teal-50 rounded-xl border-2 border-emerald-200">
+                          <FileText className="w-6 h-6 text-emerald-600 mx-auto mb-2" />
+                          <p className="text-3xl font-black text-emerald-900">{filteredClasses.length}</p>
+                          <p className="text-xs font-semibold text-emerald-700">Turmas</p>
                         </div>
-                        <div className="text-center p-4 bg-blue-50 rounded-lg">
-                          <p className="text-2xl font-bold text-blue-600">
+                        <div className="text-center p-5 bg-gradient-to-br from-blue-100 to-cyan-50 rounded-xl border-2 border-blue-200">
+                          <Users className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                          <p className="text-3xl font-black text-blue-900">
                             {filteredClasses.reduce((sum, c) => sum + (c.students_count || 0), 0)}
                           </p>
-                          <p className="text-sm text-stone-600">Alunos</p>
+                          <p className="text-xs font-semibold text-blue-700">Alunos</p>
                         </div>
                       </div>
                       
