@@ -496,7 +496,6 @@ function DashboardAdminMaster() {
             <p className="text-emerald-100 text-sm mt-1">Visualização completa com opções de notificação</p>
           </div>
           <CardContent className="p-0">
-          <CardContent>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -599,6 +598,7 @@ function DashboardAdminMaster() {
               </Table>
             </div>
           </CardContent>
+        </Card>
         </Card>
 
         <div className="grid md:grid-cols-2 gap-6">
