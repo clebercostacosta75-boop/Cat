@@ -279,12 +279,7 @@ export default function BMMGenerator() {
                       <SelectContent>
                         {companies.filter(c => c.status === 'Ativo').map(company => (
                           <SelectItem key={company.id} value={company.id}>
-                            <div className="flex items-center gap-2">
-                              {company.logo_url && (
-                                <img src={company.logo_url} alt="" className="w-5 h-5 object-contain" />
-                              )}
-                              🏢 {company.nome_fantasia || company.razao_social}
-                            </div>
+                            🏢 {company.nome_fantasia || company.razao_social}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -316,8 +311,7 @@ export default function BMMGenerator() {
                       <SelectContent>
                         {templates.map(template => (
                           <SelectItem key={template.id} value={template.id}>
-                            📄 {template.name}
-                            {template.is_default && <Badge className="ml-2 bg-emerald-100 text-emerald-700">Padrão</Badge>}
+                            📄 {template.name} {template.is_default ? '⭐' : ''}
                           </SelectItem>
                         ))}
                       </SelectContent>
