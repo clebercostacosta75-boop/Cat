@@ -599,7 +599,6 @@ function DashboardAdminMaster() {
             </div>
           </CardContent>
         </Card>
-        </Card>
 
         <div className="grid md:grid-cols-2 gap-6">
           <Alert className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 shadow-lg">
