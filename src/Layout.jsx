@@ -2,20 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText, Building2, UserCog, Mail, History } from "lucide-react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText, Building2, UserCog, Mail, History, Menu } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import IAFloatingButton from "./components/IAFloatingButton";
 
 export default function Layout({ children }) {
@@ -23,6 +11,7 @@ export default function Layout({ children }) {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -147,78 +136,136 @@ export default function Layout({ children }) {
   const navigationItems = getNavigationItems();
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-[#FAFAF9]">
-        <Sidebar className="border-r border-stone-200">
-          <SidebarHeader className="border-b border-stone-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+    <div className="min-h-screen flex w-full bg-gradient-to-br from-stone-50 to-stone-100">
+      {/* Sidebar Desktop */}
+      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-stone-200 shadow-sm">
+        {/* Header */}
+        <div className="p-6 border-b border-stone-200">
+          <div className="flex items-center gap-3 mb-4">
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
+              alt="CAT Logo" 
+              className="w-10 h-10 object-contain flex-shrink-0"
+            />
+            <div>
+              <h2 className="font-bold text-stone-900 text-sm leading-tight">Sistema de<br/>Treinamento</h2>
+            </div>
+          </div>
+          {userRole && (
+            <div className="px-3 py-1.5 bg-emerald-50 rounded-lg border border-emerald-200">
+              <p className="text-xs font-semibold text-emerald-700">
+                {userRole === 'Instrutor' && '👨‍🏫 Instrutor'}
+                {userRole === 'Coordenador de Operações' && '⚙️ Coordenador'}
+                {userRole === 'Financeiro' && '💰 Financeiro'}
+                {(userRole === 'admin' || userRole === 'Administrador Master') && '👑 Administrador'}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-3 overflow-y-auto">
+          <div className="space-y-1">
+            {navigationItems.map((item) => (
+              <Link
+                key={item.title}
+                to={item.url}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                  location.pathname === item.url
+                    ? 'bg-emerald-500 text-white shadow-md'
+                    : 'text-stone-700 hover:bg-stone-100'
+                }`}
+              >
+                <item.icon className="w-5 h-5 flex-shrink-0" />
+                <span className="font-medium text-sm">{item.title}</span>
+              </Link>
+            ))}
+          </div>
+        </nav>
+      </aside>
+
+      {/* Sidebar Mobile */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        >
+          <aside 
+            className="w-64 bg-white h-full shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 border-b border-stone-200">
+              <div className="flex items-center gap-3 mb-4">
                 <img 
                   src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
                   alt="CAT Logo" 
-                  className="w-full h-full object-contain"
+                  className="w-10 h-10 object-contain"
                 />
+                <h2 className="font-bold text-stone-900 text-sm">Sistema de Treinamento</h2>
               </div>
-              <div>
-                <h2 className="font-bold text-stone-900">Sistema de Treinamento</h2>
-                <p className="text-xs text-stone-500">
-                  {userRole === 'Instrutor' && '👨‍🏫 Instrutor'}
-                  {userRole === 'Coordenador de Operações' && '⚙️ Coordenador'}
-                  {userRole === 'Financeiro' && '💰 Financeiro'}
-                  {(userRole === 'admin' || userRole === 'Administrador Master') && '👑 Administrador'}
-                </p>
+              {userRole && (
+                <div className="px-3 py-1.5 bg-emerald-50 rounded-lg">
+                  <p className="text-xs font-semibold text-emerald-700">
+                    {userRole === 'Instrutor' && '👨‍🏫 Instrutor'}
+                    {userRole === 'Coordenador de Operações' && '⚙️ Coordenador'}
+                    {userRole === 'Financeiro' && '💰 Financeiro'}
+                    {(userRole === 'admin' || userRole === 'Administrador Master') && '👑 Administrador'}
+                  </p>
+                </div>
+              )}
+            </div>
+            <nav className="p-3">
+              <div className="space-y-1">
+                {navigationItems.map((item) => (
+                  <Link
+                    key={item.title}
+                    to={item.url}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+                      location.pathname === item.url
+                        ? 'bg-emerald-500 text-white'
+                        : 'text-stone-700 hover:bg-stone-100'
+                    }`}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span className="font-medium text-sm">{item.title}</span>
+                  </Link>
+                ))}
               </div>
-            </div>
-          </SidebarHeader>
-          
-          <SidebarContent className="p-2">
-            <SidebarGroup>
-              <SidebarGroupLabel className="text-xs font-medium text-stone-500 uppercase tracking-wider px-2 py-2">
-                Navegação
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {navigationItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton 
-                        asChild 
-                        className={`hover:bg-emerald-50 hover:text-emerald-700 transition-colors duration-200 rounded-lg mb-1 ${
-                          location.pathname === item.url ? 'bg-emerald-50 text-emerald-700' : ''
-                        }`}
-                      >
-                        <Link to={item.url} className="flex items-center gap-3 px-3 py-2">
-                          <item.icon className="w-4 h-4" />
-                          <span className="font-medium">{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
+            </nav>
+          </aside>
+        </div>
+      )}
 
-        <main className="flex-1 flex flex-col">
-          <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200 px-6 py-4 md:hidden sticky top-0 z-10">
-            <div className="flex items-center gap-4">
-              <SidebarTrigger className="hover:bg-stone-100 p-2 rounded-lg transition-colors duration-200" />
-              <img 
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
-                alt="CAT Logo" 
-                className="h-8 w-auto"
-              />
-              <h1 className="text-xl font-semibold text-stone-900">Sistema de Treinamento</h1>
-            </div>
-          </header>
-
-          <div className="flex-1 overflow-auto">
-            {children}
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-w-0">
+        {/* Mobile Header */}
+        <header className="lg:hidden bg-white border-b border-stone-200 px-4 py-3 sticky top-0 z-30">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(true)}
+              className="flex-shrink-0"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
+              alt="CAT Logo" 
+              className="h-8 w-auto"
+            />
+            <h1 className="text-lg font-bold text-stone-900">CAT</h1>
           </div>
-          
-          <IAFloatingButton />
-        </main>
-      </div>
-    </SidebarProvider>
+        </header>
+
+        {/* Page Content */}
+        <div className="flex-1 overflow-auto">
+          {children}
+        </div>
+        
+        <IAFloatingButton />
+      </main>
+    </div>
   );
 }
