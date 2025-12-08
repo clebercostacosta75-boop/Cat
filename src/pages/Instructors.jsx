@@ -124,13 +124,8 @@ export default function InstructorsPage() {
         {/* Cabeçalho Moderno */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-xl">
-                <UsersIcon className="w-8 h-8 text-white" />
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center">
-                <span className="text-white text-xs font-bold">{stats.total}</span>
-              </div>
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-xl flex-shrink-0">
+              <UsersIcon className="w-8 h-8 text-white" />
             </div>
             <div>
               <h1 className="text-3xl md:text-4xl font-black text-stone-900 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
@@ -141,9 +136,9 @@ export default function InstructorsPage() {
               </p>
             </div>
           </div>
-          <div className="flex flex-col md:flex-row gap-3 items-center">
+          <div className="flex flex-col md:flex-row gap-3 items-center flex-shrink-0">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-stone-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
               <Input
                 placeholder="Pesquisar instrutor..."
                 value={searchTerm}

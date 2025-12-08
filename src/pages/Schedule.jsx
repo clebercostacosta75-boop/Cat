@@ -121,13 +121,8 @@ export default function SchedulePage() {
         {/* Cabeçalho Moderno */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-xl">
-                <Calendar className="w-8 h-8 text-white" />
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full border-4 border-white flex items-center justify-center">
-                <span className="text-white text-xs font-bold">{stats.total}</span>
-              </div>
+            <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-xl flex-shrink-0">
+              <Calendar className="w-8 h-8 text-white" />
             </div>
             <div>
               <h1 className="text-3xl md:text-4xl font-black text-stone-900 bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
@@ -143,7 +138,7 @@ export default function SchedulePage() {
               setEditingClass(null);
               setShowForm(true);
             }}
-            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-200"
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-200 flex-shrink-0"
           >
             <CalendarPlus className="w-5 h-5 mr-2" />
             Nova Turma
