@@ -7,6 +7,7 @@ import { Download, FileText, Filter, BarChart3, TrendingUp, DollarSign, Users, B
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
 export default function ReportsPage() {
   const [selectedCompany, setSelectedCompany] = useState("all");
