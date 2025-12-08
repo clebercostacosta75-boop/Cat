@@ -148,11 +148,11 @@ export default function Layout({ children }) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-[#FAFAF9]">
-        <Sidebar className="border-r border-stone-200">
-          <SidebarHeader className="border-b border-stone-200 p-4">
+      <div className="min-h-screen flex w-full bg-gray-50">
+        <Sidebar className="border-r border-gray-200 bg-white">
+          <SidebarHeader className="border-b border-gray-200 p-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
                 <img 
                   src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
                   alt="CAT Logo" 
@@ -160,20 +160,22 @@ export default function Layout({ children }) {
                 />
               </div>
               <div>
-                <h2 className="font-bold text-stone-900">Sistema de Treinamento</h2>
-                <p className="text-xs text-stone-500">
-                  {userRole === 'Instrutor' && '👨‍🏫 Instrutor'}
-                  {userRole === 'Coordenador de Operações' && '⚙️ Coordenador'}
-                  {userRole === 'Financeiro' && '💰 Financeiro'}
-                  {(userRole === 'admin' || userRole === 'Administrador Master') && '👑 Administrador'}
-                </p>
+                <h2 className="font-semibold text-gray-900 text-sm">Sistema de Treinamento</h2>
+                {userRole && (
+                  <p className="text-xs text-gray-500">
+                    {userRole === 'Instrutor' && 'Instrutor'}
+                    {userRole === 'Coordenador de Operações' && 'Coordenador'}
+                    {userRole === 'Financeiro' && 'Financeiro'}
+                    {(userRole === 'admin' || userRole === 'Administrador Master') && 'Administrador'}
+                  </p>
+                )}
               </div>
             </div>
           </SidebarHeader>
           
           <SidebarContent className="p-2">
             <SidebarGroup>
-              <SidebarGroupLabel className="text-xs font-medium text-stone-500 uppercase tracking-wider px-2 py-2">
+              <SidebarGroupLabel className="text-xs font-medium text-gray-500 uppercase tracking-wider px-3 py-2">
                 Navegação
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -182,13 +184,13 @@ export default function Layout({ children }) {
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton 
                         asChild 
-                        className={`hover:bg-emerald-50 hover:text-emerald-700 transition-colors duration-200 rounded-lg mb-1 ${
-                          location.pathname === item.url ? 'bg-emerald-50 text-emerald-700' : ''
+                        className={`hover:bg-gray-100 transition-colors duration-150 rounded-md mb-1 ${
+                          location.pathname === item.url ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
                         }`}
                       >
                         <Link to={item.url} className="flex items-center gap-3 px-3 py-2">
                           <item.icon className="w-4 h-4" />
-                          <span className="font-medium">{item.title}</span>
+                          <span className="font-normal text-sm">{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -199,16 +201,16 @@ export default function Layout({ children }) {
           </SidebarContent>
         </Sidebar>
 
-        <main className="flex-1 flex flex-col">
-          <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200 px-6 py-4 md:hidden sticky top-0 z-10">
+        <main className="flex-1 flex flex-col bg-white">
+          <header className="bg-white border-b border-gray-200 px-6 py-3 md:hidden sticky top-0 z-10">
             <div className="flex items-center gap-4">
-              <SidebarTrigger className="hover:bg-stone-100 p-2 rounded-lg transition-colors duration-200" />
+              <SidebarTrigger className="hover:bg-gray-100 p-2 rounded-md transition-colors" />
               <img 
                 src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
                 alt="CAT Logo" 
-                className="h-8 w-auto"
+                className="h-7 w-auto"
               />
-              <h1 className="text-xl font-semibold text-stone-900">Sistema de Treinamento</h1>
+              <h1 className="text-base font-semibold text-gray-900">Sistema de Treinamento</h1>
             </div>
           </header>
 
