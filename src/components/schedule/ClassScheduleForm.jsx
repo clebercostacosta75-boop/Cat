@@ -9,53 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MapPin, ExternalLink } from "lucide-react";
 
 export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel }) {
-  const [locationSuggestions, setLocationSuggestions] = useState([]);
-  const [searchTimeout, setSearchTimeout] = useState(null);
-
-  const handleLocationSearch = async (query) => {
-    if (searchTimeout) clearTimeout(searchTimeout);
-    
-    if (!query || query.length < 3) {
-      setLocationSuggestions([]);
-      return;
-    }
-
-    const timeout = setTimeout(async () => {
-      try {
-        const response = await base44.integrations.Core.InvokeLLM({
-          prompt: `Busque endereços reais no Brasil que correspondam a: "${query}". Retorne até 5 sugestões de endereços completos e reais.`,
-          add_context_from_internet: true,
-          response_json_schema: {
-            type: "object",
-            properties: {
-              suggestions: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    description: { type: "string" },
-                    structured_formatting: {
-                      type: "object",
-                      properties: {
-                        main_text: { type: "string" },
-                        secondary_text: { type: "string" }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        });
-        setLocationSuggestions(response.suggestions || []);
-      } catch (error) {
-        console.error('Erro ao buscar locais:', error);
-        setLocationSuggestions([]);
-      }
-    }, 500);
-
-    setSearchTimeout(timeout);
-  };
 
   const [formData, setFormData] = useState({
     training_name: "",
@@ -222,40 +175,14 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
           <Label htmlFor="location">Local</Label>
           <div className="flex gap-2">
             <div className="flex-1 relative">
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                <Input
-                  id="location"
-                  value={formData.location || ''}
-                  onChange={(e) => {
-                    handleChange('location', e.target.value);
-                    handleLocationSearch(e.target.value);
-                  }}
-                  placeholder="Digite o endereço..."
-                  className="pl-10"
-                />
-              </div>
-              {locationSuggestions.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-white border border-stone-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {locationSuggestions.map((suggestion, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      className="w-full px-4 py-3 text-left hover:bg-emerald-50 flex items-start gap-3 border-b border-stone-100 last:border-0"
-                      onClick={() => {
-                        handleChange('location', suggestion.description);
-                        setLocationSuggestions([]);
-                      }}
-                    >
-                      <MapPin className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium text-stone-900 text-sm">{suggestion.structured_formatting?.main_text || suggestion.description}</p>
-                        <p className="text-xs text-stone-500">{suggestion.structured_formatting?.secondary_text}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+              <Input
+                id="location"
+                value={formData.location || ''}
+                onChange={(e) => handleChange('location', e.target.value)}
+                placeholder="Digite o endereço..."
+                className="pl-10"
+              />
             </div>
             {formData.location && (
               <Button
