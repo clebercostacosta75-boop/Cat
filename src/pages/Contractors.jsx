@@ -220,18 +220,9 @@ export default function ContractorsPage() {
           </p>
         </div>
 
-        {/* Botão e Pesquisa */}
-        <div className="flex flex-col md:flex-row gap-3 mb-6">
-          <button 
-            onClick={() => {
-              resetForm();
-              setShowForm(true);
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Nova Contratada
-          </button>
-          <div className="relative flex-1">
+        {/* Pesquisa */}
+        <div className="mb-6">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
               placeholder="Pesquisar contratada..."
@@ -811,6 +802,20 @@ export default function ContractorsPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Botão Fixo no Rodapé */}
+        <div className="fixed bottom-8 right-8 z-50">
+          <button 
+            onClick={() => {
+              resetForm();
+              setShowForm(true);
+            }}
+            className="px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow-lg flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            Nova Contratada
+          </button>
+        </div>
       </div>
     </div>
   );

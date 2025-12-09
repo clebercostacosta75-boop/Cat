@@ -128,18 +128,7 @@ export default function SchedulePage() {
           </p>
         </div>
 
-        {/* Botão Nova Turma */}
-        <div className="mb-6">
-          <button 
-            onClick={() => {
-              setEditingClass(null);
-              setShowForm(true);
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Nova Turma
-          </button>
-        </div>
+
 
         {/* Cards de Estatísticas */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -317,6 +306,22 @@ export default function SchedulePage() {
             </Card>
           ))}
         </div>
+
+        {/* Botão Fixo no Rodapé */}
+        {classes.length > 0 && (
+          <div className="fixed bottom-8 right-8 z-50">
+            <button 
+              onClick={() => {
+                setEditingClass(null);
+                setShowForm(true);
+              }}
+              className="px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow-lg flex items-center gap-2"
+            >
+              <CalendarPlus className="w-5 h-5" />
+              Nova Turma
+            </button>
+          </div>
+        )}
 
         {classes.length === 0 && !isLoading && (
           <Card className="border border-gray-300 bg-white">
