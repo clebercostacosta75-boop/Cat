@@ -47,19 +47,17 @@ export default function InstructorsPage() {
     },
   });
 
-  const [formData, setFormData] = useState(
-    editingInstructor || {
-      name: "",
-      status: "Ativo",
-      internal_code: "",
-      cpf: "",
-      rg: "",
-      hourly_rate: "",
-      specialty: "",
-      email: "",
-      phone: ""
-    }
-  );
+  const [formData, setFormData] = useState({
+    name: "",
+    status: "Ativo",
+    internal_code: "",
+    cpf: "",
+    rg: "",
+    hourly_rate: "",
+    specialty: "",
+    email: "",
+    phone: ""
+  });
 
   React.useEffect(() => {
     if (editingInstructor) {
@@ -94,6 +92,17 @@ export default function InstructorsPage() {
   };
 
   const resetForm = () => {
+    setFormData({
+      name: "",
+      status: "Ativo",
+      internal_code: "",
+      cpf: "",
+      rg: "",
+      hourly_rate: "",
+      specialty: "",
+      email: "",
+      phone: ""
+    });
     setEditingInstructor(null);
     setShowForm(false);
   };
