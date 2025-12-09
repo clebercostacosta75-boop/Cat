@@ -794,7 +794,7 @@ export default function ContractorsPage() {
                   resetForm();
                   setShowForm(true);
                 }}
-                className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 shadow-lg"
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 <Plus className="w-5 h-5 mr-2" />
                 Cadastrar Primeira Contratada

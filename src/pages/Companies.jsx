@@ -303,7 +303,7 @@ export default function CompaniesPage() {
                   setEditingCompany(null);
                   setShowForm(true);
                 }}
-                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-lg"
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 <Plus className="w-5 h-5 mr-2" />
                 Cadastrar Primeira Empresa

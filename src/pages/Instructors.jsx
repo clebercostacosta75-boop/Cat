@@ -47,17 +47,37 @@ export default function InstructorsPage() {
     },
   });
 
-  const [formData, setFormData] = useState({
-    name: "",
-    status: "Ativo",
-    internal_code: "",
-    cpf: "",
-    rg: "",
-    hourly_rate: "",
-    specialty: "",
-    email: "",
-    phone: ""
-  });
+  const [formData, setFormData] = useState(
+    editingInstructor || {
+      name: "",
+      status: "Ativo",
+      internal_code: "",
+      cpf: "",
+      rg: "",
+      hourly_rate: "",
+      specialty: "",
+      email: "",
+      phone: ""
+    }
+  );
+
+  React.useEffect(() => {
+    if (editingInstructor) {
+      setFormData(editingInstructor);
+    } else {
+      setFormData({
+        name: "",
+        status: "Ativo",
+        internal_code: "",
+        cpf: "",
+        rg: "",
+        hourly_rate: "",
+        specialty: "",
+        email: "",
+        phone: ""
+      });
+    }
+  }, [editingInstructor]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -70,22 +90,10 @@ export default function InstructorsPage() {
 
   const handleEdit = (instructor) => {
     setEditingInstructor(instructor);
-    setFormData(instructor);
     setShowForm(true);
   };
 
   const resetForm = () => {
-    setFormData({ 
-      name: "", 
-      status: "Ativo",
-      internal_code: "",
-      cpf: "",
-      rg: "",
-      hourly_rate: "", 
-      specialty: "", 
-      email: "", 
-      phone: "" 
-    });
     setEditingInstructor(null);
     setShowForm(false);
   };
@@ -136,17 +144,6 @@ export default function InstructorsPage() {
           <button 
             onClick={() => {
               setEditingInstructor(null);
-              setFormData({ 
-                name: "", 
-                status: "Ativo",
-                internal_code: "",
-                cpf: "",
-                rg: "",
-                hourly_rate: "", 
-                specialty: "", 
-                email: "", 
-                phone: "" 
-              });
               setShowForm(true);
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -438,20 +435,9 @@ export default function InstructorsPage() {
               <Button 
                 onClick={() => {
                   setEditingInstructor(null);
-                  setFormData({ 
-                    name: "", 
-                    status: "Ativo",
-                    internal_code: "",
-                    cpf: "",
-                    rg: "",
-                    hourly_rate: "", 
-                    specialty: "", 
-                    email: "", 
-                    phone: "" 
-                  });
                   setShowForm(true);
                 }}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg"
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 <UserPlus className="w-5 h-5 mr-2" />
                 Adicionar Primeiro Instrutor
