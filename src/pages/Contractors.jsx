@@ -243,69 +243,47 @@ export default function ContractorsPage() {
         </div>
 
         {/* Cards de Estatísticas */}
-        <div className="grid md:grid-cols-4 gap-6 mb-6">
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-orange-100 to-red-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <Briefcase className="w-10 h-10 text-orange-600 mb-3" />
-                  <p className="text-4xl font-black text-orange-900 mb-1">{stats.total}</p>
-                  <p className="text-xs font-semibold text-orange-700">Total Contratadas</p>
-                </div>
-              </div>
+        <div className="grid md:grid-cols-4 gap-4 mb-6">
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <Briefcase className="w-6 h-6 text-orange-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{stats.total}</p>
+              <p className="text-sm text-gray-600">Total Contratadas</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-green-100 to-emerald-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <TrendingUp className="w-10 h-10 text-green-600 mb-3" />
-                  <p className="text-4xl font-black text-green-900 mb-1">{stats.active}</p>
-                  <p className="text-xs font-semibold text-green-700">Contratadas Ativas</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <TrendingUp className="w-6 h-6 text-green-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{stats.active}</p>
+              <p className="text-sm text-gray-600">Contratadas Ativas</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-blue-100 to-cyan-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <FileText className="w-10 h-10 text-blue-600 mb-3" />
-                  <p className="text-4xl font-black text-blue-900 mb-1">{stats.totalContracts}</p>
-                  <p className="text-xs font-semibold text-blue-700">Total Contratos</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <FileText className="w-6 h-6 text-blue-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{stats.totalContracts}</p>
+              <p className="text-sm text-gray-600">Total Contratos</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-purple-100 to-violet-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <TrendingUp className="w-10 h-10 text-purple-600 mb-3" />
-                  <p className="text-4xl font-black text-purple-900 mb-1">{stats.activeContracts}</p>
-                  <p className="text-xs font-semibold text-purple-700">Contratos Ativos</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <TrendingUp className="w-6 h-6 text-purple-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{stats.activeContracts}</p>
+              <p className="text-sm text-gray-600">Contratos Ativos</p>
             </CardContent>
           </Card>
         </div>
 
         {showForm && (
-          <Card className="border-none shadow-xl">
-            <div className="bg-gradient-to-r from-orange-600 to-red-600 p-6 text-white">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Briefcase className="w-6 h-6" />
+          <Card className="border border-gray-300 bg-white mb-6">
+            <CardHeader>
+              <h2 className="text-lg font-bold text-black">
                 {editingContractor ? 'Editar' : 'Nova'} Empresa Contratada
               </h2>
-              <p className="text-orange-100 text-sm mt-1">Cadastro completo com contratos e dados bancários</p>
-            </div>
+            </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Dados Básicos */}

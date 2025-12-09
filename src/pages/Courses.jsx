@@ -279,11 +279,11 @@ export default function CoursesPage() {
   };
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Cabeçalho */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-black">
             Catálogo de Cursos
           </h1>
           <p className="text-gray-600 text-sm mt-1">
@@ -291,27 +291,9 @@ export default function CoursesPage() {
           </p>
         </div>
 
-        {/* Barra de Pesquisa e Botões */}
+        {/* Botões e Pesquisa */}
         <div className="flex flex-col md:flex-row gap-3 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              placeholder="Pesquisar curso..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <Button
-            onClick={exportCourses}
-            variant="outline"
-            disabled={courses.length === 0}
-            className="border-gray-300 text-gray-700 hover:bg-gray-100"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Exportar
-          </Button>
-          <Button
+          <button
             onClick={() => {
               setEditingCourse(null);
               setFormData({
@@ -332,77 +314,72 @@ export default function CoursesPage() {
               });
               setShowForm(true);
             }}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            <Plus className="w-5 h-5 mr-2" />
             Novo Curso
+          </button>
+          <Button
+            onClick={exportCourses}
+            variant="outline"
+            disabled={courses.length === 0}
+            className="border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Exportar
           </Button>
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Pesquisar curso..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </div>
 
         {/* Cards de Estatísticas */}
-        <div className="grid md:grid-cols-4 gap-6 mb-6">
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-teal-100 to-emerald-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <BookOpen className="w-10 h-10 text-teal-600 mb-3" />
-                  <p className="text-4xl font-black text-teal-900 mb-1">{stats.total}</p>
-                  <p className="text-xs font-semibold text-teal-700">Total de Cursos</p>
-                </div>
-              </div>
+        <div className="grid md:grid-cols-4 gap-4 mb-6">
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <BookOpen className="w-6 h-6 text-blue-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{stats.total}</p>
+              <p className="text-sm text-gray-600">Total de Cursos</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-blue-100 to-cyan-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <Award className="w-10 h-10 text-blue-600 mb-3" />
-                  <p className="text-4xl font-black text-blue-900 mb-1">{stats.formacao}</p>
-                  <p className="text-xs font-semibold text-blue-700">Cursos Formação</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <Award className="w-6 h-6 text-blue-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{stats.formacao}</p>
+              <p className="text-sm text-gray-600">Cursos Formação</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-purple-100 to-violet-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <Target className="w-10 h-10 text-purple-600 mb-3" />
-                  <p className="text-4xl font-black text-purple-900 mb-1">{stats.periodico}</p>
-                  <p className="text-xs font-semibold text-purple-700">Cursos Periódicos</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <Target className="w-6 h-6 text-purple-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{stats.periodico}</p>
+              <p className="text-sm text-gray-600">Cursos Periódicos</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-amber-100 to-orange-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <Clock className="w-10 h-10 text-amber-600 mb-3" />
-                  <p className="text-4xl font-black text-amber-900 mb-1">{stats.totalHours}h</p>
-                  <p className="text-xs font-semibold text-amber-700">Carga Horária Total</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <Clock className="w-6 h-6 text-orange-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{stats.totalHours}h</p>
+              <p className="text-sm text-gray-600">Carga Horária Total</p>
             </CardContent>
           </Card>
         </div>
 
         {showForm && (
-          <Card className="border-none shadow-xl">
-            <div className="bg-gradient-to-r from-teal-600 to-emerald-600 p-6 text-white">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <BookOpen className="w-6 h-6" />
+          <Card className="border border-gray-300 bg-white mb-6">
+            <CardHeader>
+              <h2 className="text-lg font-bold text-black">
                 {editingCourse ? 'Editar' : 'Novo'} Curso
               </h2>
-              <p className="text-teal-100 text-sm mt-1">Cadastro completo de treinamento</p>
-            </div>
+            </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Informações Gerais */}
