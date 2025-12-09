@@ -119,11 +119,11 @@ export default function InstructorsPage() {
   };
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Cabeçalho */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-black">
             Instrutores
           </h1>
           <p className="text-gray-600 text-sm mt-1">
@@ -131,18 +131,9 @@ export default function InstructorsPage() {
           </p>
         </div>
 
-        {/* Barra de Pesquisa e Botões */}
+        {/* Botão e Pesquisa */}
         <div className="flex flex-col md:flex-row gap-3 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              placeholder="Pesquisar instrutor..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <Button 
+          <button 
             onClick={() => {
               setEditingInstructor(null);
               setFormData({ 
@@ -158,11 +149,19 @@ export default function InstructorsPage() {
               });
               setShowForm(true);
             }}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            <UserPlus className="w-5 h-5 mr-2" />
             Novo Instrutor
-          </Button>
+          </button>
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Pesquisar instrutor..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </div>
 
         {/* Cards de Estatísticas */}
