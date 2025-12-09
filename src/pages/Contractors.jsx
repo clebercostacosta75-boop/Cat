@@ -237,7 +237,7 @@ export default function ContractorsPage() {
         <div className="grid md:grid-cols-4 gap-4 mb-6">
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <Briefcase className="w-6 h-6 text-orange-600 mb-2" />
+              <Briefcase className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{stats.total}</p>
               <p className="text-sm text-gray-600">Total Contratadas</p>
             </CardContent>
@@ -245,7 +245,7 @@ export default function ContractorsPage() {
 
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <TrendingUp className="w-6 h-6 text-green-600 mb-2" />
+              <TrendingUp className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{stats.active}</p>
               <p className="text-sm text-gray-600">Contratadas Ativas</p>
             </CardContent>
@@ -253,7 +253,7 @@ export default function ContractorsPage() {
 
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <FileText className="w-6 h-6 text-blue-600 mb-2" />
+              <FileText className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{stats.totalContracts}</p>
               <p className="text-sm text-gray-600">Total Contratos</p>
             </CardContent>
@@ -261,7 +261,7 @@ export default function ContractorsPage() {
 
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <TrendingUp className="w-6 h-6 text-purple-600 mb-2" />
+              <TrendingUp className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{stats.activeContracts}</p>
               <p className="text-sm text-gray-600">Contratos Ativos</p>
             </CardContent>

@@ -317,7 +317,7 @@ export default function CoursesPage() {
         <div className="grid md:grid-cols-4 gap-4 mb-6">
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <BookOpen className="w-6 h-6 text-blue-600 mb-2" />
+              <BookOpen className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{stats.total}</p>
               <p className="text-sm text-gray-600">Total de Cursos</p>
             </CardContent>
@@ -325,7 +325,7 @@ export default function CoursesPage() {
 
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <Award className="w-6 h-6 text-blue-600 mb-2" />
+              <Award className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{stats.formacao}</p>
               <p className="text-sm text-gray-600">Cursos Formação</p>
             </CardContent>
@@ -333,7 +333,7 @@ export default function CoursesPage() {
 
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <Target className="w-6 h-6 text-purple-600 mb-2" />
+              <Target className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{stats.periodico}</p>
               <p className="text-sm text-gray-600">Cursos Periódicos</p>
             </CardContent>
@@ -341,7 +341,7 @@ export default function CoursesPage() {
 
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <Clock className="w-6 h-6 text-orange-600 mb-2" />
+              <Clock className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{stats.totalHours}h</p>
               <p className="text-sm text-gray-600">Carga Horária Total</p>
             </CardContent>

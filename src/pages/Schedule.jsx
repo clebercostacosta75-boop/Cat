@@ -60,10 +60,10 @@ export default function SchedulePage() {
   };
 
   const statusColors = {
-    'Agendado': 'bg-blue-100 text-blue-800 border border-blue-300',
-    'Em Andamento': 'bg-orange-100 text-orange-800 border border-orange-300',
-    'Concluído': 'bg-green-100 text-green-800 border border-green-300',
-    'Cancelado': 'bg-red-100 text-red-800 border border-red-300',
+    'Agendado': 'bg-gray-100 text-gray-800 border border-gray-300',
+    'Em Andamento': 'bg-gray-100 text-gray-800 border border-gray-300',
+    'Concluído': 'bg-gray-100 text-gray-800 border border-gray-300',
+    'Cancelado': 'bg-gray-100 text-gray-800 border border-gray-300',
   };
 
   // Estatísticas
@@ -134,7 +134,7 @@ export default function SchedulePage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <Calendar className="w-6 h-6 text-blue-600 mb-2" />
+              <Calendar className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{stats.agendado}</p>
               <p className="text-sm text-gray-600">Agendadas</p>
             </CardContent>
@@ -142,7 +142,7 @@ export default function SchedulePage() {
 
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <Clock className="w-6 h-6 text-orange-600 mb-2" />
+              <Clock className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{stats.emAndamento}</p>
               <p className="text-sm text-gray-600">Em Andamento</p>
             </CardContent>
@@ -150,7 +150,7 @@ export default function SchedulePage() {
 
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <BookOpen className="w-6 h-6 text-green-600 mb-2" />
+              <BookOpen className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{stats.concluido}</p>
               <p className="text-sm text-gray-600">Concluídas</p>
             </CardContent>
@@ -158,7 +158,7 @@ export default function SchedulePage() {
 
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <Users className="w-6 h-6 text-purple-600 mb-2" />
+              <Users className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{classes.reduce((sum, c) => sum + (c.students_count || 0), 0)}</p>
               <p className="text-sm text-gray-600">Total Alunos</p>
             </CardContent>

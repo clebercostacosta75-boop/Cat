@@ -165,7 +165,7 @@ export default function InstructorsPage() {
         <div className="grid md:grid-cols-3 gap-4 mb-6">
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <UsersIcon className="w-6 h-6 text-purple-600 mb-2" />
+              <UsersIcon className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{stats.total}</p>
               <p className="text-sm text-gray-600">Total de Instrutores</p>
             </CardContent>
@@ -173,7 +173,7 @@ export default function InstructorsPage() {
 
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <Star className="w-6 h-6 text-green-600 mb-2" />
+              <Star className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{stats.active}</p>
               <p className="text-sm text-gray-600">Instrutores Ativos</p>
             </CardContent>
@@ -181,7 +181,7 @@ export default function InstructorsPage() {
 
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <DollarSign className="w-6 h-6 text-orange-600 mb-2" />
+              <DollarSign className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">
                 R$ {(stats.totalValue / stats.total || 0).toFixed(0)}
               </p>
