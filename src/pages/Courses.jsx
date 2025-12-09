@@ -536,7 +536,7 @@ export default function CoursesPage() {
                   <Button type="button" variant="outline" onClick={resetForm} className="hover:bg-stone-100">
                     Cancelar
                   </Button>
-                  <Button type="submit" className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 shadow-lg">
+                  <Button type="submit" className="bg-gray-900 hover:bg-gray-800">
                     {editingCourse ? 'Atualizar' : 'Criar'} Curso
                   </Button>
                 </div>
@@ -545,113 +545,88 @@ export default function CoursesPage() {
           </Card>
         )}
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredCourses.map((course) => (
-            <Card key={course.id} className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-r from-teal-50/50 to-emerald-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <CardContent className="p-0 relative z-10">
-                {/* Header Card com Gradiente */}
-                <div className="bg-gradient-to-br from-teal-500 to-emerald-500 p-6 relative overflow-hidden">
-                  <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-                  
-                  <div className="relative z-10 flex items-start justify-between mb-4">
-                    <div className="flex gap-2 flex-wrap">
-                      {course.modality && (
-                        <Badge className={course.modality === 'Formação' ? 'bg-blue-500 text-white border-0' : 'bg-purple-500 text-white border-0'}>
-                          {course.modality === 'Formação' ? '📚' : '🔄'} {course.modality}
-                        </Badge>
-                      )}
-                      {course.category && (
-                        <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm">
-                          {course.category === 'Presencial' ? '🏢' : course.category === 'Híbrido' ? '🔀' : '💻'} {course.category}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="relative z-10">
-                    <h3 className="text-xl font-black text-white mb-2 line-clamp-2">
-                      {course.name}
-                    </h3>
+            <Card key={course.id} className="border border-gray-300 hover:shadow-md transition-shadow">
+              <CardHeader className="border-b border-gray-200 bg-gray-50">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex gap-2 flex-wrap">
+                    {course.modality && (
+                      <Badge variant="outline" className="text-xs">
+                        {course.modality}
+                      </Badge>
+                    )}
+                    {course.category && (
+                      <Badge variant="outline" className="text-xs">
+                        {course.category}
+                      </Badge>
+                    )}
                   </div>
                 </div>
+                <CardTitle className="text-lg text-black">{course.name}</CardTitle>
+              </CardHeader>
 
-                {/* Body Card */}
-                <div className="p-6 space-y-4">
-                  {/* Descrição */}
-                  {course.description && (
-                    <p className="text-sm text-stone-600 line-clamp-3 bg-stone-50 p-3 rounded-lg">
-                      {course.description}
-                    </p>
-                  )}
+              <CardContent className="p-4 space-y-3">
+                {course.description && (
+                  <p className="text-sm text-gray-600 line-clamp-3">
+                    {course.description}
+                  </p>
+                )}
 
-                  {/* Informações Principais */}
-                  <div className="grid grid-cols-2 gap-3">
-                    {course.duration_hours && (
-                      <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                        <Clock className="w-5 h-5 text-amber-600" />
-                        <div>
-                          <p className="text-xs text-stone-500 font-medium">Duração</p>
-                          <p className="text-lg font-black text-amber-900">{course.duration_hours}h</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {course.standard_value > 0 && (
-                      <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                        <DollarSign className="w-5 h-5 text-green-600" />
-                        <div>
-                          <p className="text-xs text-stone-500 font-medium">Valor</p>
-                          <p className="text-lg font-black text-green-900">
-                            R$ {(course.standard_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {course.validity && (
-                    <div className="text-sm text-stone-600 bg-blue-50 p-3 rounded-lg">
-                      ⏱️ <strong>Validade:</strong> {course.validity}
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t">
+                  {course.duration_hours && (
+                    <div className="text-sm">
+                      <p className="text-gray-500">Duração</p>
+                      <p className="font-bold text-black">{course.duration_hours}h</p>
                     </div>
                   )}
+                  {course.standard_value > 0 && (
+                    <div className="text-sm">
+                      <p className="text-gray-500">Valor</p>
+                      <p className="font-bold text-black">
+                        R$ {(course.standard_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
+                      </p>
+                    </div>
+                  )}
+                </div>
 
-                  {/* Botões de Ação */}
-                  <div className="grid grid-cols-3 gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDuplicate(course)}
-                      className="text-teal-600 hover:text-teal-700 hover:bg-teal-50 border-teal-200"
-                      disabled={createMutation.isPending}
-                      title="Duplicar"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(course)}
-                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
-                      title="Editar"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (confirm(`Tem certeza que deseja excluir "${course.name}"?`)) {
-                          deleteMutation.mutate(course.id);
-                        }
-                      }}
-                      disabled={deleteMutation.isPending}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                      title="Excluir"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                {course.validity && (
+                  <p className="text-xs text-gray-600">
+                    Validade: {course.validity}
+                  </p>
+                )}
+
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDuplicate(course)}
+                    disabled={createMutation.isPending}
+                    title="Duplicar"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(course)}
+                    title="Editar"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (confirm(`Tem certeza que deseja excluir "${course.name}"?`)) {
+                        deleteMutation.mutate(course.id);
+                      }
+                    }}
+                    disabled={deleteMutation.isPending}
+                    title="Excluir"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -659,13 +634,11 @@ export default function CoursesPage() {
         </div>
 
         {courses.length === 0 && (
-          <Card className="border-none shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-br from-teal-50 to-emerald-50 p-16 text-center">
-              <div className="w-24 h-24 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
-                <BookOpen className="w-12 h-12 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-stone-900 mb-2">Nenhum curso cadastrado</h3>
-              <p className="text-stone-600 mb-6">Comece criando o primeiro curso do catálogo</p>
+          <Card className="border border-gray-300">
+            <CardContent className="p-16 text-center">
+              <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-xl font-bold text-black mb-2">Nenhum curso cadastrado</h3>
+              <p className="text-gray-600 mb-6">Comece criando o primeiro curso do catálogo</p>
               <Button 
                 onClick={() => {
                   setEditingCourse(null);
@@ -687,12 +660,12 @@ export default function CoursesPage() {
                   });
                   setShowForm(true);
                 }}
-                className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 shadow-lg"
+                className="bg-gray-900 hover:bg-gray-800"
               >
                 <Plus className="w-5 h-5 mr-2" />
                 Criar Primeiro Curso
               </Button>
-            </div>
+            </CardContent>
           </Card>
         )}
 
@@ -729,7 +702,7 @@ export default function CoursesPage() {
                 });
                 setShowForm(true);
               }}
-              className="px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow-lg flex items-center gap-2"
+              className="px-6 py-3 bg-gray-900 text-white rounded-full hover:bg-gray-800 shadow-lg flex items-center gap-2"
             >
               <Plus className="w-5 h-5" />
               Novo Curso

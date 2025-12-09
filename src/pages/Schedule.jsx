@@ -315,7 +315,7 @@ export default function SchedulePage() {
                 setEditingClass(null);
                 setShowForm(true);
               }}
-              className="px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow-lg flex items-center gap-2"
+              className="px-6 py-3 bg-gray-900 text-white rounded-full hover:bg-gray-800 shadow-lg flex items-center gap-2"
             >
               <CalendarPlus className="w-5 h-5" />
               Nova Turma

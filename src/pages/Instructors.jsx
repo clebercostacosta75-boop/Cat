@@ -282,7 +282,7 @@ export default function InstructorsPage() {
                   <Button type="button" variant="outline" onClick={resetForm} className="hover:bg-stone-100">
                     Cancelar
                   </Button>
-                  <Button type="submit" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg">
+                  <Button type="submit" className="bg-gray-900 hover:bg-gray-800">
                     {editingInstructor ? 'Atualizar' : 'Criar'} Instrutor
                   </Button>
                 </div>
@@ -291,133 +291,78 @@ export default function InstructorsPage() {
           </Card>
         )}
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredInstructors.map((instructor) => (
-            <Card key={instructor.id} className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <CardContent className="p-0 relative z-10">
-                {/* Header Card com Gradiente */}
-                <div className="bg-gradient-to-br from-indigo-500 to-purple-500 p-6 pb-12 relative overflow-hidden">
-                  <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-                  <div className="absolute -left-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-                  
-                  <div className="relative z-10 flex items-start justify-between mb-4">
-                    <Badge className={instructor.status === 'Ativo' ? 'bg-green-500 text-white border-0 shadow-lg' : 'bg-red-500 text-white border-0 shadow-lg'}>
-                      <div className="flex items-center gap-1">
-                        <div className={`w-2 h-2 rounded-full bg-white animate-pulse`} />
-                        {instructor.status || 'Ativo'}
-                      </div>
+            <Card key={instructor.id} className="border border-gray-300 hover:shadow-md transition-shadow">
+              <CardHeader className="border-b border-gray-200 bg-gray-50">
+                <div className="flex items-start justify-between mb-2">
+                  <Badge variant="outline" className="text-xs">
+                    {instructor.status || 'Ativo'}
+                  </Badge>
+                  {instructor.internal_code && (
+                    <Badge variant="outline" className="text-xs">
+                      Cód: {instructor.internal_code}
                     </Badge>
-                    {instructor.internal_code && (
-                      <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm">
-                        Cód: {instructor.internal_code}
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <div className="relative z-10 flex items-center gap-4">
-                    {instructor.photo_url ? (
-                      <img 
-                        src={instructor.photo_url} 
-                        alt={instructor.name}
-                        className="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-xl"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-4 border-white shadow-xl">
-                        <User className="w-10 h-10 text-white" />
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <h3 className="text-xl font-black text-white mb-1 line-clamp-2">{instructor.name}</h3>
-                      {instructor.specialty && (
-                        <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm text-xs">
-                          <Award className="w-3 h-3 mr-1" />
-                          {instructor.specialty}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </div>
+                <CardTitle className="text-lg text-black">{instructor.name}</CardTitle>
+                {instructor.specialty && (
+                  <p className="text-sm text-gray-600">{instructor.specialty}</p>
+                )}
+              </CardHeader>
 
-                {/* Body Card */}
-                <div className="p-6 pt-4 space-y-4">
-                  {/* Valor Destaque */}
-                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-xl border-2 border-amber-200">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="w-5 h-5 text-amber-600" />
-                        <span className="text-sm font-semibold text-amber-900">Valor/Hora</span>
-                      </div>
-                      <span className="text-2xl font-black text-amber-600">
-                        R$ {(instructor.hourly_rate || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
+              <CardContent className="p-4 space-y-3">
+                {instructor.hourly_rate && (
+                  <div className="border border-gray-300 p-3 rounded">
+                    <p className="text-xs text-gray-500">Valor/Hora</p>
+                    <p className="text-xl font-bold text-black">
+                      R$ {(instructor.hourly_rate || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
                   </div>
+                )}
 
-                  {/* Informações de Contato */}
-                  <div className="space-y-3">
-                    {instructor.cpf && (
-                      <div className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg">
-                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <span className="text-xs font-bold text-blue-600">📄</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs text-stone-500 font-medium">CPF</p>
-                          <p className="text-sm font-bold text-stone-900">{instructor.cpf}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {instructor.email && (
-                      <div className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg">
-                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <Mail className="w-4 h-4 text-purple-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs text-stone-500 font-medium">Email</p>
-                          <p className="text-sm font-medium text-stone-900 truncate">{instructor.email}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {instructor.phone && (
-                      <div className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg">
-                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                          <Phone className="w-4 h-4 text-green-600" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs text-stone-500 font-medium">Telefone</p>
-                          <p className="text-sm font-bold text-stone-900">{instructor.phone}</p>
-                        </div>
-                      </div>
-                    )}
+                {instructor.cpf && (
+                  <div className="text-sm">
+                    <p className="text-gray-500">CPF</p>
+                    <p className="font-medium text-black">{instructor.cpf}</p>
                   </div>
+                )}
 
-                  {/* Botões de Ação */}
-                  <div className="flex gap-2 pt-4">
-                    <Link to={createPageUrl(`InstructorDetails?id=${instructor.id}`)} className="flex-1">
-                      <Button size="sm" className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-md">
-                        <Eye className="w-4 h-4 mr-2" />
-                        Ver Detalhes
-                      </Button>
-                    </Link>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleEdit(instructor)}
-                      className="hover:bg-blue-50 border-blue-200 text-blue-700"
-                    >
-                      <Edit2 className="w-4 h-4" />
+                {instructor.email && (
+                  <div className="text-sm">
+                    <p className="text-gray-500">Email</p>
+                    <p className="font-medium text-black truncate">{instructor.email}</p>
+                  </div>
+                )}
+
+                {instructor.phone && (
+                  <div className="text-sm">
+                    <p className="text-gray-500">Telefone</p>
+                    <p className="font-medium text-black">{instructor.phone}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-2 border-t">
+                  <Link to={createPageUrl(`InstructorDetails?id=${instructor.id}`)} className="flex-1">
+                    <Button size="sm" className="w-full bg-gray-900 hover:bg-gray-800">
+                      <Eye className="w-4 h-4 mr-2" />
+                      Ver Detalhes
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => deleteMutation.mutate(instructor.id)}
-                      className="hover:bg-red-50 border-red-200 text-red-600"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  </Link>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleEdit(instructor)}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => deleteMutation.mutate(instructor.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -425,24 +370,22 @@ export default function InstructorsPage() {
         </div>
 
         {instructors.length === 0 && (
-          <Card className="border-none shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-16 text-center">
-              <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
-                <UsersIcon className="w-12 h-12 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-stone-900 mb-2">Nenhum instrutor cadastrado</h3>
-              <p className="text-stone-600 mb-6">Comece adicionando o primeiro instrutor ao sistema</p>
+          <Card className="border border-gray-300">
+            <CardContent className="p-16 text-center">
+              <UsersIcon className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-xl font-bold text-black mb-2">Nenhum instrutor cadastrado</h3>
+              <p className="text-gray-600 mb-6">Comece adicionando o primeiro instrutor ao sistema</p>
               <Button 
                 onClick={() => {
                   setEditingInstructor(null);
                   setShowForm(true);
                 }}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-gray-900 hover:bg-gray-800"
               >
                 <UserPlus className="w-5 h-5 mr-2" />
                 Adicionar Primeiro Instrutor
               </Button>
-            </div>
+            </CardContent>
           </Card>
         )}
 
@@ -462,7 +405,7 @@ export default function InstructorsPage() {
               setEditingInstructor(null);
               setShowForm(true);
             }}
-            className="px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow-lg flex items-center gap-2"
+            className="px-6 py-3 bg-gray-900 text-white rounded-full hover:bg-gray-800 shadow-lg flex items-center gap-2"
           >
             <UserPlus className="w-5 h-5" />
             Novo Instrutor
