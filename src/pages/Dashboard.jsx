@@ -157,7 +157,7 @@ function DashboardAdminMaster() {
     return monthlyData.slice(0, 6);
   }, [monthlyData]);
 
-  const COLORS = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899'];
+  const COLORS = ['#374151', '#4B5563', '#6B7280', '#9CA3AF', '#D1D5DB', '#E5E7EB'];
 
   const exportToExcel = () => {
     const htmlContent = `
@@ -296,30 +296,20 @@ function DashboardAdminMaster() {
     <div className="p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Cabeçalho */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-black">
-              Dashboard Analytics
-            </h1>
-            <p className="text-gray-600 text-sm mt-1">
-              Visão completa de custos e desempenho
-            </p>
-          </div>
-          <Button 
-            onClick={exportToExcel}
-            disabled={tableData.length === 0}
-            variant="outline"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Exportar Excel
-          </Button>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-black">
+            Dashboard Analytics
+          </h1>
+          <p className="text-gray-600 text-sm mt-1">
+            Visão completa de custos e desempenho
+          </p>
         </div>
 
         {/* Cards de Estatísticas */}
         <div className="grid md:grid-cols-4 gap-4">
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <DollarSign className="w-6 h-6 text-green-600 mb-2" />
+              <DollarSign className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">
                 R$ {(totalGeral / 1000).toFixed(0)}k
               </p>
@@ -329,7 +319,7 @@ function DashboardAdminMaster() {
 
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <Calendar className="w-6 h-6 text-blue-600 mb-2" />
+              <Calendar className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{totalTreinamentos}</p>
               <p className="text-sm text-gray-600">Treinamentos Concluídos</p>
             </CardContent>
@@ -337,7 +327,7 @@ function DashboardAdminMaster() {
 
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <Building2 className="w-6 h-6 text-purple-600 mb-2" />
+              <Building2 className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{empresasAtendidas}</p>
               <p className="text-sm text-gray-600">Empresas Atendidas</p>
             </CardContent>
@@ -345,7 +335,7 @@ function DashboardAdminMaster() {
 
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <TrendingUp className="w-6 h-6 text-orange-600 mb-2" />
+              <TrendingUp className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">
                 R$ {totalGeral > 0 ? (totalGeral / totalTreinamentos).toFixed(0) : 0}
               </p>
@@ -375,7 +365,7 @@ function DashboardAdminMaster() {
                       formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                     />
                     <Legend />
-                    <Line type="monotone" dataKey="total" stroke="#10B981" strokeWidth={3} name="Custo Total" dot={{ fill: '#10B981', r: 5 }} />
+                    <Line type="monotone" dataKey="total" stroke="#6b7280" strokeWidth={2} name="Custo Total" dot={{ fill: '#6b7280', r: 4 }} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
@@ -442,7 +432,7 @@ function DashboardAdminMaster() {
                     formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                   />
                   <Legend />
-                  <Bar dataKey="total" fill="#3B82F6" name="Custo Total" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="total" fill="#6b7280" name="Custo Total" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -490,7 +480,7 @@ function DashboardAdminMaster() {
                           <TableCell className="font-semibold text-black">{row.month}</TableCell>
                           <TableCell className="text-gray-700">{row.company}</TableCell>
                           <TableCell className="text-right">
-                            <span className="font-bold text-green-600">
+                            <span className="font-bold text-black">
                               R$ {row.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </span>
                           </TableCell>
@@ -566,7 +556,7 @@ function DashboardAdminMaster() {
         </Card>
 
         <div className="grid md:grid-cols-2 gap-4">
-          <Alert className="bg-blue-50 border-blue-200">
+          <Alert className="bg-gray-50 border-gray-200">
             <AlertDescription>
               <p className="font-semibold text-black mb-1">Sobre os Custos (HP)</p>
               <p className="text-sm text-gray-700">
@@ -575,7 +565,7 @@ function DashboardAdminMaster() {
             </AlertDescription>
           </Alert>
 
-          <Alert className="bg-purple-50 border-purple-200">
+          <Alert className="bg-gray-50 border-gray-200">
             <AlertDescription>
               <p className="font-semibold text-black mb-1">Insights de Performance</p>
               <p className="text-sm text-gray-700">
@@ -584,6 +574,19 @@ function DashboardAdminMaster() {
             </AlertDescription>
           </Alert>
         </div>
+
+        {/* Botão Fixo no Rodapé */}
+        {tableData.length > 0 && (
+          <div className="fixed bottom-8 right-8 z-50">
+            <button 
+              onClick={exportToExcel}
+              className="px-6 py-3 bg-gray-900 text-white rounded-full hover:bg-gray-800 shadow-lg flex items-center gap-2"
+            >
+              <Download className="w-5 h-5" />
+              Exportar Excel
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -614,10 +617,10 @@ function DashboardInstrutor({ instructor }) {
   const completedClasses = myClasses.filter(c => c.status === 'Concluído');
 
   const statusColors = {
-    'Agendado': 'bg-blue-100 text-blue-800',
-    'Em Andamento': 'bg-yellow-100 text-yellow-800',
-    'Concluído': 'bg-green-100 text-green-800',
-    'Cancelado': 'bg-red-100 text-red-800',
+    'Agendado': 'bg-gray-100 text-gray-800 border border-gray-300',
+    'Em Andamento': 'bg-gray-100 text-gray-800 border border-gray-300',
+    'Concluído': 'bg-gray-100 text-gray-800 border border-gray-300',
+    'Cancelado': 'bg-gray-100 text-gray-800 border border-gray-300',
   };
 
   if (isLoading) {
@@ -641,7 +644,7 @@ function DashboardInstrutor({ instructor }) {
         <div className="grid md:grid-cols-3 gap-4">
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <Calendar className="w-6 h-6 text-blue-600 mb-2" />
+              <Calendar className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{upcomingClasses.length}</p>
               <p className="text-sm text-gray-600">Próximos</p>
             </CardContent>
@@ -649,7 +652,7 @@ function DashboardInstrutor({ instructor }) {
 
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <CheckCircle className="w-6 h-6 text-green-600 mb-2" />
+              <CheckCircle className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{completedClasses.length}</p>
               <p className="text-sm text-gray-600">Concluídos</p>
             </CardContent>
@@ -657,7 +660,7 @@ function DashboardInstrutor({ instructor }) {
 
           <Card className="border border-gray-200">
             <CardContent className="p-4">
-              <BookOpen className="w-6 h-6 text-purple-600 mb-2" />
+              <BookOpen className="w-6 h-6 text-gray-600 mb-2" />
               <p className="text-2xl font-bold text-black">{myClasses.length}</p>
               <p className="text-sm text-gray-600">Total</p>
             </CardContent>
@@ -740,7 +743,7 @@ function DashboardInstrutor({ instructor }) {
                         {classItem.company_name} • {classItem.start_date}
                       </p>
                     </div>
-                    <Badge className="bg-green-100 text-green-800">
+                    <Badge className="bg-gray-100 text-gray-800 border border-gray-300">
                       Concluído
                     </Badge>
                   </div>
