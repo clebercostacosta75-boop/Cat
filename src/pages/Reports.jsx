@@ -268,29 +268,19 @@ export default function ReportsPage() {
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Cabeçalho Moderno */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-2xl flex items-center justify-center shadow-xl">
-                <BarChart3 className="w-8 h-8 text-white" />
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-white flex items-center justify-center">
-                <TrendingUp className="w-3 h-3 text-white" />
-              </div>
-            </div>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-black text-stone-900 bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
-                Relatórios Analíticos
-              </h1>
-              <p className="text-stone-600 text-sm mt-1 font-medium">
-                Análise completa de custos e desempenho
-              </p>
-            </div>
+        {/* Cabeçalho */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-black">
+              Relatórios Analíticos
+            </h1>
+            <p className="text-gray-600 text-sm mt-1">
+              Análise completa de custos e desempenho
+            </p>
           </div>
           <Button 
             onClick={exportToExcel}
-            className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 shadow-lg hover:shadow-xl transition-all duration-200"
+            className="bg-gray-900 hover:bg-gray-800"
             disabled={reportData.length === 0}
           >
             <Download className="w-5 h-5 mr-2" />
@@ -299,70 +289,50 @@ export default function ReportsPage() {
         </div>
 
         {/* Cards de Estatísticas */}
-        <div className="grid md:grid-cols-4 gap-6 mb-6">
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-emerald-100 to-teal-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <DollarSign className="w-10 h-10 text-emerald-600 mb-3" />
-                  <p className="text-4xl font-black text-emerald-900 mb-1">
-                    R$ {(totalValue / 1000).toFixed(0)}k
-                  </p>
-                  <p className="text-xs font-semibold text-emerald-700">Valor Total</p>
-                </div>
-              </div>
+        <div className="grid md:grid-cols-4 gap-4 mb-6">
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <DollarSign className="w-6 h-6 text-gray-600 mb-2" />
+              <p className="text-2xl font-bold text-black">
+                R$ {(totalValue / 1000).toFixed(0)}k
+              </p>
+              <p className="text-sm text-gray-600">Valor Total</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-blue-100 to-cyan-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <Users className="w-10 h-10 text-blue-600 mb-3" />
-                  <p className="text-4xl font-black text-blue-900 mb-1">{totalStudents}</p>
-                  <p className="text-xs font-semibold text-blue-700">Total de Alunos</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <Users className="w-6 h-6 text-gray-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{totalStudents}</p>
+              <p className="text-sm text-gray-600">Total de Alunos</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-amber-100 to-orange-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <FileText className="w-10 h-10 text-amber-600 mb-3" />
-                  <p className="text-4xl font-black text-amber-900 mb-1">{reportData.length}</p>
-                  <p className="text-xs font-semibold text-amber-700">Total de Turmas</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <FileText className="w-6 h-6 text-gray-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{reportData.length}</p>
+              <p className="text-sm text-gray-600">Total de Turmas</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-purple-100 to-violet-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <Building2 className="w-10 h-10 text-purple-600 mb-3" />
-                  <p className="text-4xl font-black text-purple-900 mb-1">{uniqueCompanies}</p>
-                  <p className="text-xs font-semibold text-purple-700">Empresas Atendidas</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <Building2 className="w-6 h-6 text-gray-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{uniqueCompanies}</p>
+              <p className="text-sm text-gray-600">Empresas Atendidas</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Filtros */}
-        <Card className="border-none shadow-xl">
-          <div className="bg-gradient-to-r from-violet-600 to-fuchsia-600 p-5 text-white">
-            <h2 className="text-lg font-bold flex items-center gap-2">
+        <Card className="border border-gray-300">
+          <CardHeader className="bg-gray-100">
+            <h2 className="text-lg font-bold flex items-center gap-2 text-black">
               <Filter className="w-5 h-5" />
               Filtros de Análise
             </h2>
-          </div>
+          </CardHeader>
           <CardContent className="p-4">
             <div className="flex flex-wrap items-end gap-4">
               <div className="flex items-center gap-2">
@@ -434,25 +404,25 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-xl">
-          <div className="bg-gradient-to-r from-violet-600 to-fuchsia-600 p-6 text-white">
-            <h2 className="text-2xl font-bold flex items-center gap-2">
+        <Card className="border border-gray-300">
+          <CardHeader className="bg-gray-100">
+            <h2 className="text-xl font-bold flex items-center gap-2 text-black">
               <FileText className="w-6 h-6" />
               Custos Detalhados por Mês e Empresa
             </h2>
-            <p className="text-violet-100 text-sm mt-1">Análise completa de treinamentos realizados</p>
-          </div>
+            <p className="text-gray-600 text-sm mt-1">Análise completa de treinamentos realizados</p>
+          </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gradient-to-r from-violet-50 to-fuchsia-50 border-b-2 border-violet-200">
-                    <TableHead className="font-bold text-violet-700">📅 Mês</TableHead>
-                    <TableHead className="font-bold text-violet-700">🏢 Empresa</TableHead>
-                    <TableHead className="font-bold text-violet-700">📚 Curso</TableHead>
-                    <TableHead className="font-bold text-violet-700">👨‍🏫 Instrutor</TableHead>
-                    <TableHead className="font-bold text-violet-700">📊 Modalidade</TableHead>
-                    <TableHead className="font-bold text-right text-violet-700">💰 Valor Total</TableHead>
+                  <TableRow className="bg-gray-100 border-b-2 border-gray-200">
+                    <TableHead className="font-bold text-black">📅 Mês</TableHead>
+                    <TableHead className="font-bold text-black">🏢 Empresa</TableHead>
+                    <TableHead className="font-bold text-black">📚 Curso</TableHead>
+                    <TableHead className="font-bold text-black">👨‍🏫 Instrutor</TableHead>
+                    <TableHead className="font-bold text-black">📊 Modalidade</TableHead>
+                    <TableHead className="font-bold text-right text-black">💰 Valor Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -464,18 +434,18 @@ export default function ReportsPage() {
                     </TableRow>
                   ) : (
                     reportData.map((row, index) => (
-                      <TableRow key={index} className="hover:bg-gradient-to-r hover:from-violet-50 hover:to-fuchsia-50 transition-all duration-200 border-b border-stone-100">
-                        <TableCell className="font-bold text-stone-900">{row.month}</TableCell>
-                        <TableCell className="font-medium text-stone-700">{row.company}</TableCell>
-                        <TableCell className="text-stone-700">{row.course_name}</TableCell>
-                        <TableCell className="text-stone-600">{row.instructor_name || '-'}</TableCell>
+                      <TableRow key={index} className="hover:bg-gray-50 transition-all duration-200 border-b border-gray-100">
+                        <TableCell className="font-bold text-black">{row.month}</TableCell>
+                        <TableCell className="font-medium text-gray-700">{row.company}</TableCell>
+                        <TableCell className="text-gray-700">{row.course_name}</TableCell>
+                        <TableCell className="text-gray-600">{row.instructor_name || '-'}</TableCell>
                         <TableCell>
-                          <Badge className={row.modality === 'Formação' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}>
+                          <Badge variant="outline">
                             {row.modality || '-'}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <span className="font-black text-emerald-600 text-lg">
+                          <span className="font-bold text-black">
                             R$ {row.total_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </span>
                         </TableCell>

@@ -125,7 +125,7 @@ export default function ClassDetails() {
             <h1 className="text-3xl font-bold text-stone-900">{classItem.training_name}</h1>
             <p className="text-stone-600">{classItem.company_name}</p>
           </div>
-          <Badge className={`${statusColors[classItem.status]} border text-base px-4 py-2`}>
+          <Badge variant="outline" className="text-base px-4 py-2">
             {classItem.status}
           </Badge>
         </div>
@@ -174,7 +174,7 @@ export default function ClassDetails() {
                 setEditingRecord(null);
                 setShowDailyForm(!showDailyForm);
               }}
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-gray-900 hover:bg-gray-800"
             >
               <Plus className="w-4 h-4 mr-2" />
               Novo Lançamento
@@ -232,28 +232,28 @@ export default function ClassDetails() {
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-sm">
                           <div>
                             <p className="text-stone-500">Almoço</p>
-                            <p className="font-semibold text-emerald-600">R$ {(record.lunch_cost || 0).toFixed(2)}</p>
+                            <p className="font-semibold text-black">R$ {(record.lunch_cost || 0).toFixed(2)}</p>
                           </div>
                           <div>
                             <p className="text-stone-500">Transporte</p>
-                            <p className="font-semibold text-emerald-600">R$ {(record.transport_cost || 0).toFixed(2)}</p>
+                            <p className="font-semibold text-black">R$ {(record.transport_cost || 0).toFixed(2)}</p>
                           </div>
                           <div>
                             <p className="text-stone-500">Coffee Break</p>
-                            <p className="font-semibold text-emerald-600">R$ {(record.coffee_break_cost || 0).toFixed(2)}</p>
+                            <p className="font-semibold text-black">R$ {(record.coffee_break_cost || 0).toFixed(2)}</p>
                           </div>
                           <div>
                             <p className="text-stone-500">Taxi</p>
-                            <p className="font-semibold text-emerald-600">R$ {(record.taxi_cost || 0).toFixed(2)}</p>
+                            <p className="font-semibold text-black">R$ {(record.taxi_cost || 0).toFixed(2)}</p>
                           </div>
                           <div>
                             <p className="text-stone-500">Custo HP</p>
-                            <p className="font-semibold text-emerald-600">R$ {(record.hp_cost || 0).toFixed(2)}</p>
+                            <p className="font-semibold text-black">R$ {(record.hp_cost || 0).toFixed(2)}</p>
                           </div>
                         </div>
                         <div className="mt-3 pt-3 border-t border-stone-200">
                           <p className="text-sm text-stone-500">Total do Dia</p>
-                          <p className="text-lg font-bold text-emerald-600">
+                          <p className="text-lg font-bold text-black">
                             R$ {(record.total_daily_cost || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </p>
                         </div>
@@ -282,11 +282,11 @@ export default function ClassDetails() {
             </div>
 
             {dailyRecords.length > 0 && (
-              <Card className="bg-emerald-50 border-emerald-200">
+              <Card className="bg-gray-50 border-gray-200">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-lg font-semibold text-stone-900">Custo Total da Turma</p>
-                    <p className="text-2xl font-bold text-emerald-600">
+                    <p className="text-lg font-semibold text-black">Custo Total da Turma</p>
+                    <p className="text-2xl font-bold text-black">
                       R$ {totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                   </div>

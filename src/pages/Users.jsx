@@ -175,28 +175,18 @@ export default function UsersPage() {
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center shadow-xl">
-                <Users className="w-8 h-8 text-white" />
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center">
-                <span className="text-white text-xs font-bold">{users.length}</span>
-              </div>
-            </div>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-black text-stone-900 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                Gestão de Usuários
-              </h1>
-              <p className="text-stone-600 text-sm mt-1 font-medium">
-                {users.length} {users.length === 1 ? 'usuário cadastrado' : 'usuários cadastrados'} • Controle total de acessos
-              </p>
-            </div>
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-black">
+              Gestão de Usuários
+            </h1>
+            <p className="text-gray-600 text-sm mt-1">
+              {users.length} {users.length === 1 ? 'usuário cadastrado' : 'usuários cadastrados'} • Controle total de acessos
+            </p>
           </div>
           <Button 
             onClick={() => setShowNewUserDialog(true)}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-200"
+            className="bg-gray-900 hover:bg-gray-800"
           >
             <Plus className="w-4 h-4 mr-2" />
             Novo Usuário
@@ -204,43 +194,38 @@ export default function UsersPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {statsCards.map((stat, index) => (
-            <Card key={index} className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-              <CardContent className="p-0">
-                <div className={`${stat.iconBg} p-6 relative overflow-hidden`}>
-                  <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                  <div className="relative z-10">
-                    <stat.icon className={`w-10 h-10 ${stat.iconColor} mb-3`} />
-                    <p className="text-4xl font-black text-stone-900 mb-1">{stat.count}</p>
-                    <p className="text-sm font-semibold text-stone-700">{stat.label}</p>
-                  </div>
-                </div>
+            <Card key={index} className="border border-gray-200">
+              <CardContent className="p-4">
+                <stat.icon className="w-6 h-6 text-gray-600 mb-2" />
+                <p className="text-2xl font-bold text-black">{stat.count}</p>
+                <p className="text-sm text-gray-600">{stat.label}</p>
               </CardContent>
             </Card>
           ))}
         </div>
 
         {/* Lista de Usuários */}
-        <Card className="border-none shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white">
-            <h2 className="text-2xl font-bold flex items-center gap-2">
+        <Card className="border border-gray-300">
+          <CardHeader className="bg-gray-100">
+            <h2 className="text-xl font-bold flex items-center gap-2 text-black">
               <Users className="w-6 h-6" />
               Lista de Usuários
             </h2>
-            <p className="text-purple-100 text-sm mt-1">Gerencie permissões e acessos dos usuários</p>
-          </div>
+            <p className="text-gray-600 text-sm">Gerencie permissões e acessos dos usuários</p>
+          </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gradient-to-r from-stone-50 to-stone-100 border-b-2 border-stone-200">
-                    <TableHead className="font-bold text-stone-700">👤 Nome</TableHead>
-                    <TableHead className="font-bold text-stone-700">📧 Email</TableHead>
-                    <TableHead className="font-bold text-stone-700">📱 Telefone/WhatsApp</TableHead>
-                    <TableHead className="font-bold text-stone-700">🎯 Nível de Acesso</TableHead>
-                    <TableHead className="font-bold text-stone-700">🔐 Permissões</TableHead>
-                    <TableHead className="font-bold text-center text-stone-700">⚙️ Ações</TableHead>
+                  <TableRow className="bg-gray-100 border-b-2 border-gray-200">
+                    <TableHead className="font-bold text-black">👤 Nome</TableHead>
+                    <TableHead className="font-bold text-black">📧 Email</TableHead>
+                    <TableHead className="font-bold text-black">📱 Telefone/WhatsApp</TableHead>
+                    <TableHead className="font-bold text-black">🎯 Nível de Acesso</TableHead>
+                    <TableHead className="font-bold text-black">🔐 Permissões</TableHead>
+                    <TableHead className="font-bold text-center text-black">⚙️ Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -262,16 +247,15 @@ export default function UsersPage() {
                       const isEditing = editingUser === user.id;
                       
                       return (
-                        <TableRow key={user.id} className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all duration-200 border-b border-stone-100">
+                        <TableRow key={user.id} className="hover:bg-gray-50 transition-all duration-200 border-b border-gray-100">
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <div className="relative">
-                                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                                  <span className="text-white font-bold text-lg">
+                                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                                  <span className="text-gray-700 font-bold text-lg">
                                     {user.full_name?.charAt(0)?.toUpperCase() || '?'}
                                   </span>
                                 </div>
-                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                               </div>
                               <div>
                                 {isEditing ? (
@@ -325,7 +309,7 @@ export default function UsersPage() {
                                     <Phone className="w-4 h-4 text-stone-400" />
                                     <span className="text-stone-600 font-mono text-sm">{user.phone}</span>
                                     {user.is_whatsapp && (
-                                      <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
+                                      <Badge variant="outline" className="text-xs">
                                         <MessageCircle className="w-3 h-3 mr-1" />
                                         WhatsApp
                                       </Badge>
@@ -352,7 +336,7 @@ export default function UsersPage() {
                                 </SelectContent>
                               </Select>
                             ) : (
-                              <Badge className={`${roleConfig.color} border font-semibold px-3 py-1`}>
+                              <Badge variant="outline" className="px-3 py-1">
                                 {roleConfig.label}
                               </Badge>
                             )}
@@ -388,24 +372,24 @@ export default function UsersPage() {
                             ) : (
                               <div className="text-xs">
                                 {(user.custom_role === 'Administrador Master' || user.role === 'admin') ? (
-                                  <Badge className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-0 px-3 py-1">
+                                  <Badge variant="outline" className="px-3 py-1">
                                     ⭐ Acesso Total
                                   </Badge>
                                 ) : user.permissions && user.permissions.length > 0 ? (
                                   <div className="flex flex-wrap gap-1.5">
                                     {user.permissions.slice(0, 2).map((perm, idx) => (
-                                      <Badge key={idx} className="bg-blue-100 text-blue-700 border-blue-200 text-xs">
+                                      <Badge key={idx} variant="outline" className="text-xs">
                                         {perm}
                                       </Badge>
                                     ))}
                                     {user.permissions.length > 2 && (
-                                      <Badge className="bg-stone-200 text-stone-700 border-stone-300 text-xs font-bold">
-                                        +{user.permissions.length - 2} mais
+                                      <Badge variant="outline" className="text-xs font-bold">
+                                        +{user.permissions.length - 2}
                                       </Badge>
                                     )}
                                   </div>
                                 ) : (
-                                  <Badge variant="outline" className="text-stone-400 border-stone-300">
+                                  <Badge variant="outline" className="text-xs">
                                     Sem permissões
                                   </Badge>
                                 )}
@@ -418,7 +402,7 @@ export default function UsersPage() {
                                 <Button
                                   size="sm"
                                   onClick={() => handleSaveUser(user.id)}
-                                  className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white shadow-lg"
+                                  className="bg-gray-900 hover:bg-gray-800 text-white"
                                   disabled={updateMutation.isPending}
                                 >
                                   <Check className="w-4 h-4 mr-1" />
@@ -439,7 +423,7 @@ export default function UsersPage() {
                                 <Button
                                   size="sm"
                                   onClick={() => handleEditUser(user)}
-                                  className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-md"
+                                  variant="outline"
                                 >
                                   <Edit2 className="w-3 h-3 mr-1" />
                                   Editar
@@ -449,7 +433,6 @@ export default function UsersPage() {
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      className="text-red-600 hover:text-white hover:bg-gradient-to-r hover:from-red-500 hover:to-red-600 border-red-300"
                                     >
                                       <Trash2 className="w-3 h-3" />
                                     </Button>

@@ -192,7 +192,7 @@ export default function SchedulePage() {
                         <h3 className="text-lg font-bold text-black mb-1">{classItem.training_name}</h3>
                         <p className="text-sm text-gray-600">{classItem.company_name}</p>
                       </div>
-                      <Badge className={statusColors[classItem.status]}>
+                      <Badge variant="outline">
                         {classItem.status}
                       </Badge>
                     </div>
@@ -257,7 +257,7 @@ export default function SchedulePage() {
                   {/* Ações */}
                   <div className="flex flex-col gap-2">
                     <Link to={createPageUrl(`ClassDetails?id=${classItem.id}`)}>
-                      <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                      <Button size="sm" className="w-full bg-gray-900 hover:bg-gray-800 text-white">
                         <Eye className="w-4 h-4 mr-2" />
                         Ver Detalhes
                       </Button>
@@ -268,7 +268,7 @@ export default function SchedulePage() {
                         size="sm" 
                         onClick={() => handleSendWhatsApp(classItem)}
                         disabled={sendingWhatsApp === classItem.id}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        className="w-full bg-gray-900 hover:bg-gray-800 text-white"
                       >
                         <MessageCircle className="w-4 h-4 mr-2" />
                         {sendingWhatsApp === classItem.id ? 'Enviando...' : 'WhatsApp'}

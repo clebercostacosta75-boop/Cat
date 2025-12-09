@@ -157,32 +157,22 @@ export default function EmailTemplatesPage() {
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Cabeçalho Moderno */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-rose-500 rounded-2xl flex items-center justify-center shadow-xl">
-                <MessageSquare className="w-8 h-8 text-white" />
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full border-4 border-white flex items-center justify-center">
-                <span className="text-white text-xs font-bold">{stats.total}</span>
-              </div>
-            </div>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-black text-stone-900 bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
-                Modelos de E-mail
-              </h1>
-              <p className="text-stone-600 text-sm mt-1 font-medium">
-                {stats.total} {stats.total === 1 ? 'modelo cadastrado' : 'modelos cadastrados'} • Templates personalizados
-              </p>
-            </div>
+        {/* Cabeçalho */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-black">
+              Modelos de E-mail
+            </h1>
+            <p className="text-gray-600 text-sm mt-1">
+              {stats.total} {stats.total === 1 ? 'modelo cadastrado' : 'modelos cadastrados'} • Templates personalizados
+            </p>
           </div>
           <Button 
             onClick={() => {
               resetForm();
               setShowForm(true);
             }}
-            className="bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 shadow-lg hover:shadow-xl transition-all duration-200"
+            className="bg-gray-900 hover:bg-gray-800"
           >
             <Plus className="w-5 h-5 mr-2" />
             Novo Modelo
@@ -190,57 +180,42 @@ export default function EmailTemplatesPage() {
         </div>
 
         {/* Cards de Estatísticas */}
-        <div className="grid md:grid-cols-3 gap-6 mb-6">
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-pink-100 to-rose-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <Mail className="w-10 h-10 text-pink-600 mb-3" />
-                  <p className="text-4xl font-black text-pink-900 mb-1">{stats.total}</p>
-                  <p className="text-xs font-semibold text-pink-700">Total de Modelos</p>
-                </div>
-              </div>
+        <div className="grid md:grid-cols-3 gap-4 mb-6">
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <Mail className="w-6 h-6 text-gray-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{stats.total}</p>
+              <p className="text-sm text-gray-600">Total de Modelos</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-emerald-100 to-teal-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <FileText className="w-10 h-10 text-emerald-600 mb-3" />
-                  <p className="text-4xl font-black text-emerald-900 mb-1">{stats.bmm}</p>
-                  <p className="text-xs font-semibold text-emerald-700">Modelos BMM</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <FileText className="w-6 h-6 text-gray-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{stats.bmm}</p>
+              <p className="text-sm text-gray-600">Modelos BMM</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-blue-100 to-cyan-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <Sparkles className="w-10 h-10 text-blue-600 mb-3" />
-                  <p className="text-4xl font-black text-blue-900 mb-1">{stats.notificacao}</p>
-                  <p className="text-xs font-semibold text-blue-700">Notificações</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <Sparkles className="w-6 h-6 text-gray-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{stats.notificacao}</p>
+              <p className="text-sm text-gray-600">Notificações</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Formulário */}
         {showForm && (
-          <Card className="border-none shadow-xl">
-            <div className="bg-gradient-to-r from-pink-600 to-rose-600 p-6 text-white">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
+          <Card className="border border-gray-300">
+            <CardHeader className="bg-gray-100 border-b border-gray-200">
+              <h2 className="text-xl font-bold flex items-center gap-2 text-black">
                 <Mail className="w-6 h-6" />
                 {editingTemplate ? 'Editar Modelo' : 'Novo Modelo de E-mail'}
               </h2>
-              <p className="text-pink-100 text-sm mt-1">Configure o template de comunicação</p>
-            </div>
+              <p className="text-gray-600 text-sm">Configure o template de comunicação</p>
+            </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
@@ -363,7 +338,7 @@ export default function EmailTemplatesPage() {
                     <X className="w-4 h-4 mr-2" />
                     Cancelar
                   </Button>
-                  <Button type="submit" className="bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 shadow-lg">
+                  <Button type="submit" className="bg-gray-900 hover:bg-gray-800">
                     <Save className="w-4 h-4 mr-2" />
                     {editingTemplate ? 'Atualizar' : 'Criar'} Modelo
                   </Button>
@@ -374,85 +349,74 @@ export default function EmailTemplatesPage() {
         )}
 
         {/* Lista de Modelos */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-4">
           {templates.map(template => (
-            <Card key={template.id} className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-r from-pink-50/50 to-rose-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <CardContent className="p-0 relative z-10">
-                {/* Header */}
-                <div className="bg-gradient-to-br from-pink-500 to-rose-500 p-5 relative overflow-hidden">
-                  <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-                  <div className="relative z-10 flex items-start justify-between">
-                    <Badge className={typeColors[template.type] || typeColors['Personalizado']}>
-                      {template.type}
-                    </Badge>
-                    {template.is_default && (
-                      <Badge className="bg-amber-500 text-white border-0 shadow-md">⭐ Padrão</Badge>
-                    )}
-                  </div>
-                  <div className="relative z-10 mt-3">
-                    <h3 className="text-xl font-black text-white mb-1">{template.name}</h3>
-                    {template.description && (
-                      <p className="text-pink-100 text-sm">{template.description}</p>
-                    )}
-                  </div>
+            <Card key={template.id} className="border border-gray-300 hover:shadow-md transition-shadow">
+              <CardHeader className="border-b border-gray-200 bg-gray-50">
+                <div className="flex items-start justify-between mb-2">
+                  <Badge variant="outline" className="text-xs">
+                    {template.type}
+                  </Badge>
+                  {template.is_default && (
+                    <Badge variant="outline" className="text-xs">⭐ Padrão</Badge>
+                  )}
+                </div>
+                <CardTitle className="text-lg text-black">{template.name}</CardTitle>
+                {template.description && (
+                  <p className="text-sm text-gray-600">{template.description}</p>
+                )}
+              </CardHeader>
+
+              <CardContent className="p-4 space-y-3">
+                <div className="border border-gray-200 rounded p-3">
+                  <p className="text-xs text-gray-500 mb-1">Assunto:</p>
+                  <p className="text-sm font-medium text-black">{template.subject}</p>
                 </div>
 
-                {/* Body */}
-                <div className="p-6 space-y-4">
-                  <div className="bg-gradient-to-br from-stone-50 to-stone-100 rounded-xl p-4 border border-stone-200">
-                    <p className="text-xs text-stone-500 font-medium mb-2">📧 Assunto do E-mail:</p>
-                    <p className="text-sm font-bold text-stone-900">{template.subject}</p>
-                  </div>
-
-                  {/* Botões de Ação */}
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEdit(template)}
-                      className="flex-1 hover:bg-pink-50 border-pink-200 text-pink-700"
-                    >
-                      <Edit2 className="w-4 h-4 mr-2" />
-                      Editar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDuplicate(template)}
-                      className="hover:bg-blue-50 border-blue-200 text-blue-700"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="hover:bg-red-50 border-red-200 text-red-600"
+                <div className="flex gap-2 pt-2 border-t">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleEdit(template)}
+                    className="flex-1"
+                  >
+                    <Edit2 className="w-4 h-4 mr-2" />
+                    Editar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDuplicate(template)}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir Modelo</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza que deseja excluir o modelo "{template.name}"?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteMutation.mutate(template.id)}
+                          className="bg-red-600 hover:bg-red-700"
                         >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Excluir Modelo</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Tem certeza que deseja excluir o modelo "{template.name}"?
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => deleteMutation.mutate(template.id)}
-                            className="bg-red-600 hover:bg-red-700"
-                          >
-                            Excluir
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+                          Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </CardContent>
             </Card>
@@ -460,21 +424,19 @@ export default function EmailTemplatesPage() {
         </div>
 
         {templates.length === 0 && !isLoading && !showForm && (
-          <Card className="border-none shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-br from-pink-50 to-rose-50 p-16 text-center">
-              <div className="w-24 h-24 bg-gradient-to-br from-pink-500 to-rose-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
-                <Mail className="w-12 h-12 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-stone-900 mb-2">Nenhum modelo cadastrado</h3>
-              <p className="text-stone-600 mb-6">Crie seu primeiro template de e-mail personalizado</p>
+          <Card className="border border-gray-300">
+            <CardContent className="p-16 text-center">
+              <Mail className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-xl font-bold text-black mb-2">Nenhum modelo cadastrado</h3>
+              <p className="text-gray-600 mb-6">Crie seu primeiro template de e-mail personalizado</p>
               <Button 
                 onClick={() => setShowForm(true)}
-                className="bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 shadow-lg"
+                className="bg-gray-900 hover:bg-gray-800"
               >
                 <Plus className="w-5 h-5 mr-2" />
                 Criar Primeiro Modelo
               </Button>
-            </div>
+            </CardContent>
           </Card>
         )}
       </div>
