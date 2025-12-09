@@ -118,27 +118,24 @@ export default function SchedulePage() {
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Cabeçalho Moderno */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-xl flex-shrink-0">
-              <Calendar className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-black text-stone-900 bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                Cronograma de Turmas
-              </h1>
-              <p className="text-stone-600 text-sm mt-1 font-medium">
-                {stats.total} {stats.total === 1 ? 'turma agendada' : 'turmas agendadas'} • Gestão completa de treinamentos
-              </p>
-            </div>
-          </div>
+        {/* Cabeçalho */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Cronograma de Turmas
+          </h1>
+          <p className="text-gray-600 text-sm mt-1">
+            {stats.total} {stats.total === 1 ? 'turma agendada' : 'turmas agendadas'}
+          </p>
+        </div>
+
+        {/* Botões de Ação */}
+        <div className="mb-6">
           <Button 
             onClick={() => {
               setEditingClass(null);
               setShowForm(true);
             }}
-            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-200 flex-shrink-0"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             <CalendarPlus className="w-5 h-5 mr-2" />
             Nova Turma

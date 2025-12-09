@@ -121,53 +121,48 @@ export default function InstructorsPage() {
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Cabeçalho Moderno */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-xl flex-shrink-0">
-              <UsersIcon className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-black text-stone-900 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                Instrutores
-              </h1>
-              <p className="text-stone-600 text-sm mt-1 font-medium">
-                {stats.total} {stats.total === 1 ? 'instrutor cadastrado' : 'instrutores cadastrados'} • Gestão completa
-              </p>
-            </div>
+        {/* Cabeçalho */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Instrutores
+          </h1>
+          <p className="text-gray-600 text-sm mt-1">
+            {stats.total} {stats.total === 1 ? 'instrutor cadastrado' : 'instrutores cadastrados'}
+          </p>
+        </div>
+
+        {/* Barra de Pesquisa e Botões */}
+        <div className="flex flex-col md:flex-row gap-3 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Pesquisar instrutor..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
           </div>
-          <div className="flex flex-col md:flex-row gap-3 items-center flex-shrink-0">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
-              <Input
-                placeholder="Pesquisar instrutor..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 w-64 border-indigo-200 focus:border-indigo-500"
-              />
-            </div>
-            <Button 
-              onClick={() => {
-                setEditingInstructor(null);
-                setFormData({ 
-                  name: "", 
-                  status: "Ativo",
-                  internal_code: "",
-                  cpf: "",
-                  rg: "",
-                  hourly_rate: "", 
-                  specialty: "", 
-                  email: "", 
-                  phone: "" 
-                });
-                setShowForm(true);
-              }}
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200"
-            >
-              <UserPlus className="w-5 h-5 mr-2" />
-              Novo Instrutor
-            </Button>
-          </div>
+          <Button 
+            onClick={() => {
+              setEditingInstructor(null);
+              setFormData({ 
+                name: "", 
+                status: "Ativo",
+                internal_code: "",
+                cpf: "",
+                rg: "",
+                hourly_rate: "", 
+                specialty: "", 
+                email: "", 
+                phone: "" 
+              });
+              setShowForm(true);
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <UserPlus className="w-5 h-5 mr-2" />
+            Novo Instrutor
+          </Button>
         </div>
 
         {/* Cards de Estatísticas */}

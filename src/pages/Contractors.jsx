@@ -210,42 +210,37 @@ export default function ContractorsPage() {
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Cabeçalho Moderno */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-xl flex-shrink-0">
-              <Briefcase className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-black text-stone-900 bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                Empresas Contratadas
-              </h1>
-              <p className="text-stone-600 text-sm mt-1 font-medium">
-                {stats.total} {stats.total === 1 ? 'contratada cadastrada' : 'contratadas cadastradas'} • Prestadoras de serviço
-              </p>
-            </div>
+        {/* Cabeçalho */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Empresas Contratadas
+          </h1>
+          <p className="text-gray-600 text-sm mt-1">
+            {stats.total} {stats.total === 1 ? 'contratada cadastrada' : 'contratadas cadastradas'}
+          </p>
+        </div>
+
+        {/* Barra de Pesquisa e Botões */}
+        <div className="flex flex-col md:flex-row gap-3 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Pesquisar contratada..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
           </div>
-          <div className="flex flex-col md:flex-row gap-3 items-center flex-shrink-0">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
-              <Input
-                placeholder="Pesquisar contratada..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 w-64 border-orange-200 focus:border-orange-500"
-              />
-            </div>
-            <Button 
-              onClick={() => {
-                resetForm();
-                setShowForm(true);
-              }}
-              className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 shadow-lg hover:shadow-xl transition-all duration-200"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Nova Contratada
-            </Button>
-          </div>
+          <Button 
+            onClick={() => {
+              resetForm();
+              setShowForm(true);
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Nova Contratada
+          </Button>
         </div>
 
         {/* Cards de Estatísticas */}
