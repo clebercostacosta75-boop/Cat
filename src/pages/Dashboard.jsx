@@ -293,93 +293,63 @@ function DashboardAdminMaster() {
   }
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Cabeçalho Moderno */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-xl">
-                <BarChart3 className="w-8 h-8 text-white" />
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-purple-500 rounded-full border-4 border-white flex items-center justify-center">
-                <TrendingUp className="w-3 h-3 text-white" />
-              </div>
-            </div>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-black text-stone-900 bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                Dashboard Analytics
-              </h1>
-              <p className="text-stone-600 text-sm mt-1 font-medium">
-                Visão completa de custos, desempenho e atividades
-              </p>
-            </div>
+        {/* Cabeçalho */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-black">
+              Dashboard Analytics
+            </h1>
+            <p className="text-gray-600 text-sm mt-1">
+              Visão completa de custos e desempenho
+            </p>
           </div>
           <Button 
             onClick={exportToExcel}
             disabled={tableData.length === 0}
-            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-200"
+            variant="outline"
           >
-            <Download className="w-5 h-5 mr-2" />
+            <Download className="w-4 h-4 mr-2" />
             Exportar Excel
           </Button>
         </div>
 
         {/* Cards de Estatísticas */}
-        <div className="grid md:grid-cols-4 gap-6">
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-emerald-100 to-teal-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <DollarSign className="w-10 h-10 text-emerald-600 mb-3" />
-                  <p className="text-4xl font-black text-emerald-900 mb-1">
-                    R$ {(totalGeral / 1000).toFixed(0)}k
-                  </p>
-                  <p className="text-xs font-semibold text-emerald-700">Total em Custos</p>
-                </div>
-              </div>
+        <div className="grid md:grid-cols-4 gap-4">
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <DollarSign className="w-6 h-6 text-green-600 mb-2" />
+              <p className="text-2xl font-bold text-black">
+                R$ {(totalGeral / 1000).toFixed(0)}k
+              </p>
+              <p className="text-sm text-gray-600">Total em Custos</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-blue-100 to-cyan-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <Calendar className="w-10 h-10 text-blue-600 mb-3" />
-                  <p className="text-4xl font-black text-blue-900 mb-1">{totalTreinamentos}</p>
-                  <p className="text-xs font-semibold text-blue-700">Treinamentos Concluídos</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <Calendar className="w-6 h-6 text-blue-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{totalTreinamentos}</p>
+              <p className="text-sm text-gray-600">Treinamentos Concluídos</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-purple-100 to-violet-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <Building2 className="w-10 h-10 text-purple-600 mb-3" />
-                  <p className="text-4xl font-black text-purple-900 mb-1">{empresasAtendidas}</p>
-                  <p className="text-xs font-semibold text-purple-700">Empresas Atendidas</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <Building2 className="w-6 h-6 text-purple-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{empresasAtendidas}</p>
+              <p className="text-sm text-gray-600">Empresas Atendidas</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-amber-100 to-orange-50 p-6 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <TrendingUp className="w-10 h-10 text-amber-600 mb-3" />
-                  <p className="text-4xl font-black text-amber-900 mb-1">
-                    R$ {totalGeral > 0 ? (totalGeral / totalTreinamentos).toFixed(0) : 0}
-                  </p>
-                  <p className="text-xs font-semibold text-amber-700">Custo Médio/Turma</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <TrendingUp className="w-6 h-6 text-orange-600 mb-2" />
+              <p className="text-2xl font-bold text-black">
+                R$ {totalGeral > 0 ? (totalGeral / totalTreinamentos).toFixed(0) : 0}
+              </p>
+              <p className="text-sm text-gray-600">Custo Médio/Turma</p>
             </CardContent>
           </Card>
         </div>
@@ -387,10 +357,9 @@ function DashboardAdminMaster() {
         {/* Gráficos */}
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Gráfico de Linha - Evolução Mensal */}
-          <Card className="border-none shadow-xl">
+          <Card className="border border-gray-200">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-stone-900">
-                <TrendingUp className="w-5 h-5 text-emerald-600" />
+              <CardTitle className="text-lg font-bold text-black">
                 Evolução de Custos por Mês
               </CardTitle>
             </CardHeader>
@@ -418,10 +387,9 @@ function DashboardAdminMaster() {
           </Card>
 
           {/* Gráfico de Pizza - Distribuição por Mês */}
-          <Card className="border-none shadow-xl">
+          <Card className="border border-gray-200">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-stone-900">
-                <PieChart className="w-5 h-5 text-purple-600" />
+              <CardTitle className="text-lg font-bold text-black">
                 Distribuição de Custos
               </CardTitle>
             </CardHeader>
@@ -456,10 +424,9 @@ function DashboardAdminMaster() {
         </div>
 
         {/* Gráfico de Barras - Top 5 Empresas */}
-        <Card className="border-none shadow-xl">
+        <Card className="border border-gray-200">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-stone-900">
-              <BarChart3 className="w-5 h-5 text-blue-600" />
+            <CardTitle className="text-lg font-bold text-black">
               Top 5 Empresas por Custo
             </CardTitle>
           </CardHeader>
@@ -487,24 +454,22 @@ function DashboardAdminMaster() {
         </Card>
 
         {/* Tabela Detalhada */}
-        <Card className="border-none shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 text-white">
-            <h2 className="text-2xl font-bold flex items-center gap-2">
-              <DollarSign className="w-6 h-6" />
+        <Card className="border border-gray-200">
+          <CardHeader>
+            <CardTitle className="text-lg font-bold text-black">
               Custos Detalhados por Mês e Empresa
-            </h2>
-            <p className="text-emerald-100 text-sm mt-1">Visualização completa com opções de notificação</p>
-          </div>
+            </CardTitle>
+          </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gradient-to-r from-stone-50 to-stone-100 border-b-2 border-stone-200">
-                    <TableHead className="font-bold text-stone-700">📅 Mês</TableHead>
-                    <TableHead className="font-bold text-stone-700">🏢 Empresa</TableHead>
-                    <TableHead className="font-bold text-right text-stone-700">💰 Custo Total (HP)</TableHead>
-                    <TableHead className="font-bold text-right text-stone-700">📊 Quantidade</TableHead>
-                    <TableHead className="font-bold text-center text-stone-700">📢 Notificações</TableHead>
+                  <TableRow className="bg-gray-50 border-b border-gray-200">
+                    <TableHead className="font-bold text-black">Mês</TableHead>
+                    <TableHead className="font-bold text-black">Empresa</TableHead>
+                    <TableHead className="font-bold text-right text-black">Custo Total (HP)</TableHead>
+                    <TableHead className="font-bold text-right text-black">Quantidade</TableHead>
+                    <TableHead className="font-bold text-center text-black">Notificações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -521,16 +486,16 @@ function DashboardAdminMaster() {
                       const result = notificationResults[key];
 
                       return (
-                        <TableRow key={index} className="hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 transition-all duration-200 border-b border-stone-100">
-                          <TableCell className="font-bold text-stone-900">{row.month}</TableCell>
-                          <TableCell className="font-medium text-stone-700">{row.company}</TableCell>
+                        <TableRow key={index} className="hover:bg-gray-50 border-b border-gray-200">
+                          <TableCell className="font-semibold text-black">{row.month}</TableCell>
+                          <TableCell className="text-gray-700">{row.company}</TableCell>
                           <TableCell className="text-right">
-                            <span className="font-black text-emerald-600 text-lg">
+                            <span className="font-bold text-green-600">
                               R$ {row.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </span>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Badge className="bg-blue-100 text-blue-700 font-bold">{row.classCount}</Badge>
+                            <Badge variant="outline">{row.classCount}</Badge>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center justify-center gap-2">
@@ -552,7 +517,7 @@ function DashboardAdminMaster() {
                                     onClick={() => handleSendNotifications(row.classIds, 'email')}
                                     disabled={!!sending}
                                     title="Enviar E-mail"
-                                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md"
+                                    variant="outline"
                                   >
                                     {sending === 'email' ? (
                                       <Loader2 className="w-3 h-3 animate-spin" />
@@ -565,7 +530,7 @@ function DashboardAdminMaster() {
                                     onClick={() => handleSendNotifications(row.classIds, 'whatsapp')}
                                     disabled={!!sending}
                                     title="Enviar WhatsApp"
-                                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-md"
+                                    variant="outline"
                                   >
                                     {sending === 'whatsapp' ? (
                                       <Loader2 className="w-3 h-3 animate-spin" />
@@ -578,7 +543,7 @@ function DashboardAdminMaster() {
                                     onClick={() => handleSendNotifications(row.classIds, 'all')}
                                     disabled={!!sending}
                                     title="Enviar Tudo"
-                                    className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-md"
+                                    variant="outline"
                                   >
                                     {sending === 'all' ? (
                                       <Loader2 className="w-3 h-3 animate-spin" />
@@ -600,36 +565,22 @@ function DashboardAdminMaster() {
           </CardContent>
         </Card>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <Alert className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 shadow-lg">
+        <div className="grid md:grid-cols-2 gap-4">
+          <Alert className="bg-blue-50 border-blue-200">
             <AlertDescription>
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
-                  <DollarSign className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="font-bold text-blue-900 mb-1">💡 Sobre os Custos (HP)</p>
-                  <p className="text-sm text-blue-800">
-                    Os valores exibidos representam a soma de todos os custos diários registrados para cada turma concluída.
-                  </p>
-                </div>
-              </div>
+              <p className="font-semibold text-black mb-1">Sobre os Custos (HP)</p>
+              <p className="text-sm text-gray-700">
+                Os valores exibidos representam a soma de todos os custos diários registrados para cada turma concluída.
+              </p>
             </AlertDescription>
           </Alert>
 
-          <Alert className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200 shadow-lg">
+          <Alert className="bg-purple-50 border-purple-200">
             <AlertDescription>
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-violet-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
-                  <TrendingUp className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="font-bold text-purple-900 mb-1">📊 Insights de Performance</p>
-                  <p className="text-sm text-purple-800">
-                    Use os gráficos acima para identificar tendências de custos e otimizar o planejamento de treinamentos.
-                  </p>
-                </div>
-              </div>
+              <p className="font-semibold text-black mb-1">Insights de Performance</p>
+              <p className="text-sm text-gray-700">
+                Use os gráficos acima para identificar tendências de custos e otimizar o planejamento de treinamentos.
+              </p>
             </AlertDescription>
           </Alert>
         </div>
@@ -678,63 +629,45 @@ function DashboardInstrutor({ instructor }) {
   }
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
-          <div className="flex-shrink-0">
-            <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
-              alt="CAT Logo" 
-              className="h-24 w-auto"
-            />
-          </div>
-          <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl md:text-4xl font-bold text-stone-900">
-              Meus Treinamentos
-            </h1>
-            <p className="text-stone-600">Olá, {instructor?.name || 'Instrutor'}!</p>
-          </div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-black">
+            Meus Treinamentos
+          </h1>
+          <p className="text-gray-600 text-sm mt-1">Olá, {instructor?.name || 'Instrutor'}!</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card className="border-none shadow-xl bg-gradient-to-br from-blue-50 to-cyan-50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-stone-600">Próximos</CardTitle>
-              <Calendar className="w-5 h-5 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">{upcomingClasses.length}</div>
-              <p className="text-xs text-stone-600 mt-1">Treinamentos agendados</p>
+        <div className="grid md:grid-cols-3 gap-4">
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <Calendar className="w-6 h-6 text-blue-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{upcomingClasses.length}</p>
+              <p className="text-sm text-gray-600">Próximos</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl bg-gradient-to-br from-green-50 to-emerald-50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-stone-600">Concluídos</CardTitle>
-              <CheckCircle className="w-5 h-5 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">{completedClasses.length}</div>
-              <p className="text-xs text-stone-600 mt-1">Treinamentos finalizados</p>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <CheckCircle className="w-6 h-6 text-green-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{completedClasses.length}</p>
+              <p className="text-sm text-gray-600">Concluídos</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl bg-gradient-to-br from-purple-50 to-violet-50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-stone-600">Total</CardTitle>
-              <BookOpen className="w-5 h-5 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-purple-600">{myClasses.length}</div>
-              <p className="text-xs text-stone-600 mt-1">Todos os treinamentos</p>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <BookOpen className="w-6 h-6 text-purple-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{myClasses.length}</p>
+              <p className="text-sm text-gray-600">Total</p>
             </CardContent>
           </Card>
         </div>
 
         {upcomingClasses.length > 0 && (
-          <Card className="border-none shadow-xl">
+          <Card className="border border-gray-200">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-stone-900">
+              <CardTitle className="text-lg font-bold text-black">
                 Próximos Treinamentos
               </CardTitle>
             </CardHeader>
@@ -791,9 +724,9 @@ function DashboardInstrutor({ instructor }) {
         )}
 
         {completedClasses.length > 0 && (
-          <Card className="border-none shadow-xl">
+          <Card className="border border-gray-200">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-stone-900">
+              <CardTitle className="text-lg font-bold text-black">
                 Treinamentos Concluídos
               </CardTitle>
             </CardHeader>
@@ -818,10 +751,10 @@ function DashboardInstrutor({ instructor }) {
         )}
 
         {myClasses.length === 0 && (
-          <Card className="border-none shadow-lg">
+          <Card className="border border-gray-200">
             <CardContent className="p-12 text-center">
-              <Calendar className="w-16 h-16 mx-auto mb-4 text-stone-300" />
-              <p className="text-stone-600">Nenhum treinamento agendado</p>
+              <Calendar className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <p className="text-gray-600">Nenhum treinamento agendado</p>
             </CardContent>
           </Card>
         )}
