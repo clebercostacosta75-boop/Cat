@@ -291,33 +291,8 @@ export default function CoursesPage() {
           </p>
         </div>
 
-        {/* Botões e Pesquisa */}
+        {/* Pesquisa e Exportar */}
         <div className="flex flex-col md:flex-row gap-3 mb-6">
-          <button
-            onClick={() => {
-              setEditingCourse(null);
-              setFormData({
-                name: "",
-                duration_hours: "",
-                standard_value: 0,
-                description: "",
-                modality: "Formação",
-                category: "Presencial",
-                validity: "",
-                start_date: "",
-                end_date: "",
-                schedules: {
-                  morning: { start: "", end: "" },
-                  afternoon: { start: "", end: "" },
-                  night: { start: "", end: "" }
-                }
-              });
-              setShowForm(true);
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Novo Curso
-          </button>
           <Button
             onClick={exportCourses}
             variant="outline"
@@ -728,6 +703,38 @@ export default function CoursesPage() {
               <p className="text-stone-600">Nenhum curso encontrado com "{searchTerm}"</p>
             </CardContent>
           </Card>
+        )}
+
+        {/* Botão Fixo no Rodapé */}
+        {courses.length > 0 && (
+          <div className="fixed bottom-8 right-8 z-50">
+            <button 
+              onClick={() => {
+                setEditingCourse(null);
+                setFormData({
+                  name: "",
+                  duration_hours: "",
+                  standard_value: 0,
+                  description: "",
+                  modality: "Formação",
+                  category: "Presencial",
+                  validity: "",
+                  start_date: "",
+                  end_date: "",
+                  schedules: {
+                    morning: { start: "", end: "" },
+                    afternoon: { start: "", end: "" },
+                    night: { start: "", end: "" }
+                  }
+                });
+                setShowForm(true);
+              }}
+              className="px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow-lg flex items-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              Novo Curso
+            </button>
+          </div>
         )}
       </div>
     </div>
