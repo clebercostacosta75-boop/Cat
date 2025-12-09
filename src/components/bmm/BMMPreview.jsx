@@ -163,7 +163,7 @@ export default function BMMPreview({ content }) {
 
       {/* Assinaturas */}
       <div className="border-t-2 border-stone-200 pt-6 mt-8">
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-8 mb-8">
           <div className="text-center">
             <div className="border-t-2 border-stone-400 w-64 mx-auto pt-2">
               <p className="font-semibold text-stone-900">CONTRATADA</p>
@@ -174,6 +174,28 @@ export default function BMMPreview({ content }) {
             <div className="border-t-2 border-stone-400 w-64 mx-auto pt-2">
               <p className="font-semibold text-stone-900">CONTRATANTE</p>
               <p className="text-sm text-stone-600">{company?.nome_fantasia || company?.razao_social}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Assinaturas Fiscalização e Gestor */}
+        <div className="grid md:grid-cols-2 gap-8 mt-6">
+          <div className="text-center">
+            <div className="border-t-2 border-stone-400 w-64 mx-auto pt-2">
+              <p className="font-semibold text-stone-900">FISCALIZAÇÃO</p>
+              <p className="text-sm text-stone-600">{company?.fiscal_name || '______________________________'}</p>
+              {company?.fiscal_role && (
+                <p className="text-xs text-stone-500 mt-1">{company.fiscal_role}</p>
+              )}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="border-t-2 border-stone-400 w-64 mx-auto pt-2">
+              <p className="font-semibold text-stone-900">GESTOR DO CONTRATO</p>
+              <p className="text-sm text-stone-600">{company?.contract_manager_name || '______________________________'}</p>
+              {company?.contract_manager_role && (
+                <p className="text-xs text-stone-500 mt-1">{company.contract_manager_role}</p>
+              )}
             </div>
           </div>
         </div>

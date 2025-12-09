@@ -49,7 +49,11 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
     billing_info: company?.billing_info || {
       contact_reference: "",
       contract_object: ""
-    }
+    },
+    fiscal_name: company?.fiscal_name || "",
+    fiscal_role: company?.fiscal_role || "",
+    contract_manager_name: company?.contract_manager_name || "",
+    contract_manager_role: company?.contract_manager_role || ""
   });
 
   const handleSubmit = (e) => {
@@ -464,7 +468,7 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <span className="text-2xl">📄</span>
-            4. Informações de Faturamento (Vínculo com BMM)
+            4. Informações de Faturamento e Assinaturas
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -532,6 +536,48 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
               placeholder="Descrição detalhada do objeto do contrato"
               rows={3}
             />
+          </div>
+
+          {/* Assinaturas BMM */}
+          <div className="border-t pt-4 mt-4">
+            <h3 className="font-semibold text-stone-900 mb-3">Assinaturas para BMM</h3>
+            <p className="text-xs text-stone-500 mb-3">
+              Configure quem assina o BMM (assinatura manual)
+            </p>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Nome - Fiscalização</Label>
+                <Input
+                  value={formData.fiscal_name || ''}
+                  onChange={(e) => setFormData({...formData, fiscal_name: e.target.value})}
+                  placeholder="Nome completo do fiscal"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Cargo - Fiscalização</Label>
+                <Input
+                  value={formData.fiscal_role || ''}
+                  onChange={(e) => setFormData({...formData, fiscal_role: e.target.value})}
+                  placeholder="Ex: Fiscal de Contratos"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Nome - Gestor do Contrato</Label>
+                <Input
+                  value={formData.contract_manager_name || ''}
+                  onChange={(e) => setFormData({...formData, contract_manager_name: e.target.value})}
+                  placeholder="Nome completo do gestor"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Cargo - Gestor do Contrato</Label>
+                <Input
+                  value={formData.contract_manager_role || ''}
+                  onChange={(e) => setFormData({...formData, contract_manager_role: e.target.value})}
+                  placeholder="Ex: Gerente de Operações"
+                />
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
