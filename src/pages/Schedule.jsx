@@ -60,10 +60,10 @@ export default function SchedulePage() {
   };
 
   const statusColors = {
-    'Agendado': 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 shadow-md',
-    'Em Andamento': 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 shadow-md',
-    'Concluído': 'bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-md',
-    'Cancelado': 'bg-gradient-to-r from-red-500 to-rose-500 text-white border-0 shadow-md',
+    'Agendado': 'bg-blue-100 text-blue-800 border border-blue-300',
+    'Em Andamento': 'bg-orange-100 text-orange-800 border border-orange-300',
+    'Concluído': 'bg-green-100 text-green-800 border border-green-300',
+    'Cancelado': 'bg-red-100 text-red-800 border border-red-300',
   };
 
   // Estatísticas
@@ -116,11 +116,11 @@ export default function SchedulePage() {
   };
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Cabeçalho */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-black">
             Cronograma de Turmas
           </h1>
           <p className="text-gray-600 text-sm mt-1">
@@ -128,77 +128,56 @@ export default function SchedulePage() {
           </p>
         </div>
 
-        {/* Botões de Ação */}
+        {/* Botão Nova Turma */}
         <div className="mb-6">
-          <Button 
+          <button 
             onClick={() => {
               setEditingClass(null);
               setShowForm(true);
             }}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            <CalendarPlus className="w-5 h-5 mr-2" />
             Nova Turma
-          </Button>
+          </button>
         </div>
 
         {/* Cards de Estatísticas */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card className="border-none shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-blue-100 to-blue-50 p-5 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-20 h-20 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <Calendar className="w-8 h-8 text-blue-600 mb-2" />
-                  <p className="text-3xl font-black text-blue-900 mb-1">{stats.agendado}</p>
-                  <p className="text-xs font-semibold text-blue-700">Agendadas</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <Calendar className="w-6 h-6 text-blue-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{stats.agendado}</p>
+              <p className="text-sm text-gray-600">Agendadas</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-amber-100 to-orange-50 p-5 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-20 h-20 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <Clock className="w-8 h-8 text-amber-600 mb-2" />
-                  <p className="text-3xl font-black text-amber-900 mb-1">{stats.emAndamento}</p>
-                  <p className="text-xs font-semibold text-amber-700">Em Andamento</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <Clock className="w-6 h-6 text-orange-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{stats.emAndamento}</p>
+              <p className="text-sm text-gray-600">Em Andamento</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-green-100 to-emerald-50 p-5 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-20 h-20 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <BookOpen className="w-8 h-8 text-green-600 mb-2" />
-                  <p className="text-3xl font-black text-green-900 mb-1">{stats.concluido}</p>
-                  <p className="text-xs font-semibold text-green-700">Concluídas</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <BookOpen className="w-6 h-6 text-green-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{stats.concluido}</p>
+              <p className="text-sm text-gray-600">Concluídas</p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-purple-100 to-purple-50 p-5 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-20 h-20 bg-white/30 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                <div className="relative z-10">
-                  <Users className="w-8 h-8 text-purple-600 mb-2" />
-                  <p className="text-3xl font-black text-purple-900 mb-1">{classes.reduce((sum, c) => sum + (c.students_count || 0), 0)}</p>
-                  <p className="text-xs font-semibold text-purple-700">Total Alunos</p>
-                </div>
-              </div>
+          <Card className="border border-gray-200">
+            <CardContent className="p-4">
+              <Users className="w-6 h-6 text-purple-600 mb-2" />
+              <p className="text-2xl font-bold text-black">{classes.reduce((sum, c) => sum + (c.students_count || 0), 0)}</p>
+              <p className="text-sm text-gray-600">Total Alunos</p>
             </CardContent>
           </Card>
         </div>
 
         {showForm && (
-          <Card className="border-none shadow-xl">
+          <Card className="border border-gray-300 bg-white mb-6">
             <CardContent className="p-6">
               <ClassScheduleForm
                 classSchedule={editingClass}
@@ -212,87 +191,51 @@ export default function SchedulePage() {
           </Card>
         )}
 
-        <div className="grid gap-6">
+        <div className="grid gap-4">
           {classes.map((classItem) => (
-            <Card key={classItem.id} className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-50/50 to-teal-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <CardContent className="p-6 relative z-10">
-                <div className="flex flex-col lg:flex-row justify-between gap-6">
-                  <div className="flex-1 space-y-4">
+            <Card key={classItem.id} className="border border-gray-300 bg-white">
+              <CardContent className="p-6">
+                <div className="flex flex-col lg:flex-row justify-between gap-4">
+                  <div className="flex-1 space-y-3">
                     {/* Cabeçalho da Turma */}
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
-                            <BookOpen className="w-6 h-6 text-white" />
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-black text-stone-900">{classItem.training_name}</h3>
-                            <p className="text-sm text-stone-600 font-medium flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {classItem.company_name}
-                            </p>
-                          </div>
-                        </div>
+                        <h3 className="text-lg font-bold text-black mb-1">{classItem.training_name}</h3>
+                        <p className="text-sm text-gray-600">{classItem.company_name}</p>
                       </div>
-                      <Badge className={`${statusColors[classItem.status]} px-4 py-1.5 font-bold`}>
+                      <Badge className={statusColors[classItem.status]}>
                         {classItem.status}
                       </Badge>
                     </div>
 
                     {/* Informações em Grid */}
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 bg-stone-50 p-4 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <Calendar className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-stone-500 font-medium">Período</p>
-                          <p className="text-sm font-bold text-stone-900">{classItem.start_date}</p>
-                        </div>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 border-t border-gray-200 pt-3">
+                      <div>
+                        <p className="text-xs text-gray-500">Período</p>
+                        <p className="text-sm font-semibold text-black">{classItem.start_date}</p>
                       </div>
                       
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <MapPin className="w-5 h-5 text-purple-600" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-stone-500 font-medium">Local</p>
-                          <p className="text-sm font-bold text-stone-900">{classItem.location || 'Não definido'}</p>
-                        </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Local</p>
+                        <p className="text-sm font-semibold text-black">{classItem.location || 'Não definido'}</p>
                       </div>
                       
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                          <Users className="w-5 h-5 text-green-600" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-stone-500 font-medium">Alunos</p>
-                          <p className="text-sm font-bold text-stone-900">{classItem.students_count || 0}</p>
-                        </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Alunos</p>
+                        <p className="text-sm font-semibold text-black">{classItem.students_count || 0}</p>
                       </div>
 
                       {classItem.training_schedule && (
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                            <Clock className="w-5 h-5 text-amber-600" />
-                          </div>
-                          <div>
-                            <p className="text-xs text-stone-500 font-medium">Horário</p>
-                            <p className="text-sm font-bold text-stone-900">{classItem.training_schedule}</p>
-                          </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Horário</p>
+                          <p className="text-sm font-semibold text-black">{classItem.training_schedule}</p>
                         </div>
                       )}
 
                       {classItem.instructor_name && (
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                            <User className="w-5 h-5 text-indigo-600" />
-                          </div>
-                          <div>
-                            <p className="text-xs text-stone-500 font-medium">Instrutor</p>
-                            <p className="text-sm font-bold text-stone-900">{classItem.instructor_name}</p>
-                          </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Instrutor</p>
+                          <p className="text-sm font-semibold text-black">{classItem.instructor_name}</p>
                         </div>
                       )}
                     </div>
@@ -300,35 +243,32 @@ export default function SchedulePage() {
                     {/* Badges */}
                     <div className="flex flex-wrap gap-2">
                       {classItem.modality && (
-                        <Badge className="bg-blue-100 text-blue-700 border-blue-200 font-semibold">
-                          {classItem.modality === 'Formação' ? '📚' : '🔄'} {classItem.modality}
+                        <Badge variant="outline" className="text-xs">
+                          {classItem.modality}
                         </Badge>
                       )}
                       {classItem.category && (
-                        <Badge className="bg-purple-100 text-purple-700 border-purple-200 font-semibold">
-                          {classItem.category === 'Presencial' && '🏢'}
-                          {classItem.category === 'Híbrido' && '🔀'}
-                          {classItem.category === 'Online' && '💻'}
-                          {' '}{classItem.category}
+                        <Badge variant="outline" className="text-xs">
+                          {classItem.category}
                         </Badge>
                       )}
                       {classItem.duration_hours && (
-                        <Badge className="bg-green-100 text-green-700 border-green-200 font-semibold">
-                          ⏱️ {classItem.duration_hours}h
+                        <Badge variant="outline" className="text-xs">
+                          {classItem.duration_hours}h
                         </Badge>
                       )}
                       {classItem.month && (
-                        <Badge className="bg-orange-100 text-orange-700 border-orange-200 font-semibold">
-                          📅 {classItem.month}
+                        <Badge variant="outline" className="text-xs">
+                          {classItem.month}
                         </Badge>
                       )}
                     </div>
                   </div>
 
                   {/* Ações */}
-                  <div className="flex flex-col justify-between gap-3">
+                  <div className="flex flex-col gap-2">
                     <Link to={createPageUrl(`ClassDetails?id=${classItem.id}`)}>
-                      <Button size="sm" className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md">
+                      <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
                         <Eye className="w-4 h-4 mr-2" />
                         Ver Detalhes
                       </Button>
@@ -339,7 +279,7 @@ export default function SchedulePage() {
                         size="sm" 
                         onClick={() => handleSendWhatsApp(classItem)}
                         disabled={sendingWhatsApp === classItem.id}
-                        className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-md"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
                       >
                         <MessageCircle className="w-4 h-4 mr-2" />
                         {sendingWhatsApp === classItem.id ? 'Enviando...' : 'WhatsApp'}
@@ -350,7 +290,7 @@ export default function SchedulePage() {
                       variant="outline" 
                       size="sm" 
                       onClick={() => handleEdit(classItem)}
-                      className="w-full hover:bg-blue-50 border-blue-200 text-blue-700"
+                      className="w-full"
                     >
                       <Edit2 className="w-4 h-4 mr-2" />
                       Editar
@@ -360,7 +300,7 @@ export default function SchedulePage() {
                       variant="outline" 
                       size="sm" 
                       onClick={() => deleteMutation.mutate(classItem.id)}
-                      className="w-full hover:bg-red-50 border-red-200 text-red-600"
+                      className="w-full text-red-600"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
                       Excluir
@@ -369,8 +309,8 @@ export default function SchedulePage() {
                 </div>
 
                 {classItem.notes && (
-                  <div className="mt-6 p-4 bg-amber-50 border-l-4 border-amber-400 rounded-lg">
-                    <p className="text-sm text-amber-900 font-medium">📝 {classItem.notes}</p>
+                  <div className="mt-4 p-3 bg-gray-50 border-l-4 border-gray-400">
+                    <p className="text-sm text-gray-700">{classItem.notes}</p>
                   </div>
                 )}
               </CardContent>
@@ -379,24 +319,21 @@ export default function SchedulePage() {
         </div>
 
         {classes.length === 0 && !isLoading && (
-          <Card className="border-none shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-16 text-center">
-              <div className="w-24 h-24 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
-                <Calendar className="w-12 h-12 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-stone-900 mb-2">Nenhuma turma agendada</h3>
-              <p className="text-stone-600 mb-6">Comece criando sua primeira turma de treinamento</p>
-              <Button 
+          <Card className="border border-gray-300 bg-white">
+            <CardContent className="p-12 text-center">
+              <Calendar className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-xl font-bold text-black mb-2">Nenhuma turma agendada</h3>
+              <p className="text-gray-600 mb-6">Comece criando sua primeira turma de treinamento</p>
+              <button 
                 onClick={() => {
                   setEditingClass(null);
                   setShowForm(true);
                 }}
-                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg"
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
-                <CalendarPlus className="w-5 h-5 mr-2" />
                 Agendar Primeira Turma
-              </Button>
-            </div>
+              </button>
+            </CardContent>
           </Card>
         )}
       </div>
