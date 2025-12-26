@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { logAction } from "@/components/audit/AuditLogger";
+import ClassCard from "@/components/instructor/ClassCard";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -912,54 +913,10 @@ function DashboardInstrutor({ instructor }) {
                 Próximos Treinamentos
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {upcomingClasses.map((classItem) => (
-                  <Card key={classItem.id} className="border-stone-200">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-xl font-bold text-stone-900">
-                              {classItem.training_name}
-                            </h3>
-                            <Badge className={statusColors[classItem.status]}>
-                              {classItem.status}
-                            </Badge>
-                          </div>
-                          <p className="text-stone-600 mb-3">{classItem.company_name}</p>
-                        </div>
-                      </div>
-
-                      <div className="grid md:grid-cols-2 gap-3">
-                        <div className="flex items-center gap-2 text-sm text-stone-600">
-                          <Calendar className="w-4 h-4" />
-                          <span>{classItem.start_date} a {classItem.end_date}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-stone-600">
-                          <Clock className="w-4 h-4" />
-                          <span>{classItem.training_schedule || 'Não definido'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-stone-600">
-                          <MapPin className="w-4 h-4" />
-                          <span>{classItem.location || 'Não definido'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-stone-600">
-                          👥 <span>{classItem.students_count || 0} alunos</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 pt-4 border-t border-stone-200">
-                        <Link to={createPageUrl(`ClassDetails?id=${classItem.id}`)}>
-                          <Button variant="outline" size="sm">
-                            Ver Detalhes
-                          </Button>
-                        </Link>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+            <CardContent className="space-y-3">
+              {upcomingClasses.map((classItem) => (
+                <ClassCard key={classItem.id} classItem={classItem} />
+              ))}
             </CardContent>
           </Card>
         )}
