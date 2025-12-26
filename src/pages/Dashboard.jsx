@@ -509,30 +509,75 @@ function DashboardAdminMaster() {
           </Card>
         </div>
 
-        {/* Alertas de Reciclagem */}
-        {trainingsToExpire.length > 0 && (
-          <Card className="border border-orange-200 bg-orange-50">
-            <CardContent className="p-4">
-              <h3 className="text-sm font-semibold mb-4 flex items-center gap-2 text-black">
-                <Bell className="w-4 h-4 text-orange-500" />
-                Alertas de Reciclagem (Próximos 30 dias)
-              </h3>
-              <div className="space-y-3">
-                {trainingsToExpire.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center p-3 bg-white rounded-lg border border-orange-200">
-                    <div className="flex-1">
-                      <p className="text-xs font-medium text-gray-900">{item.aluno_nome}</p>
-                      <p className="text-[10px] text-gray-500">{item.curso_nome}</p>
-                    </div>
-                    <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-300 mr-2">
-                      Vence em {item.dias_restantes} dias
-                    </Badge>
-                    <Button size="sm" variant="ghost" onClick={() => handleNotifyRecycle(item)} title="Enviar Notificação">
-                      <Send className="w-3 h-3 text-gray-600" />
-                    </Button>
-                  </div>
-                ))}
+        {/* Card de Reciclagens Pendentes */}
+        {recyclableTrainings.total > 0 && (
+          <Card className="border border-red-200 bg-gradient-to-br from-red-50 to-orange-50">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-bold text-black flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-red-500" />
+                  Reciclagens Pendentes
+                </CardTitle>
+                <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300">
+                  {recyclableTrainings.total} {recyclableTrainings.total === 1 ? 'turma' : 'turmas'}
+                </Badge>
               </div>
+              <p className="text-xs text-gray-600 mt-1">
+                Mantenha os treinamentos de Alubar e Unitapajós atualizados
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Vencidos - URGENTE */}
+              {recyclableTrainings.expired.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-semibold text-red-700 mb-3 flex items-center gap-2">
+                    <AlertOctagon className="w-4 h-4" />
+                    URGENTE - Vencidos ({recyclableTrainings.expired.length})
+                  </h4>
+                  <div className="space-y-2">
+                    {recyclableTrainings.expired.map((item) => (
+                      <div key={item.id} className="flex justify-between items-center p-3 bg-white rounded-lg border-2 border-red-300 shadow-sm">
+                        <div className="flex-1">
+                          <p className="text-xs font-bold text-gray-900">{item.aluno_nome}</p>
+                          <p className="text-[10px] text-gray-600">{item.curso_nome}</p>
+                        </div>
+                        <Badge className="text-[10px] bg-red-100 text-red-800 border border-red-300 mr-2">
+                          Vencido há {item.dias_restantes} dias
+                        </Badge>
+                        <Button size="sm" variant="ghost" onClick={() => handleNotifyRecycle(item)} title="Notificar via WhatsApp" className="hover:bg-red-100">
+                          <Send className="w-3 h-3 text-red-600" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Próximos de Vencer */}
+              {recyclableTrainings.expiring.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-semibold text-orange-700 mb-3 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Vencem nos Próximos 30 Dias ({recyclableTrainings.expiring.length})
+                  </h4>
+                  <div className="space-y-2">
+                    {recyclableTrainings.expiring.map((item) => (
+                      <div key={item.id} className="flex justify-between items-center p-3 bg-white rounded-lg border border-orange-200 shadow-sm">
+                        <div className="flex-1">
+                          <p className="text-xs font-medium text-gray-900">{item.aluno_nome}</p>
+                          <p className="text-[10px] text-gray-500">{item.curso_nome}</p>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-300 mr-2">
+                          {item.dias_restantes} dias
+                        </Badge>
+                        <Button size="sm" variant="ghost" onClick={() => handleNotifyRecycle(item)} title="Notificar via WhatsApp" className="hover:bg-orange-100">
+                          <Send className="w-3 h-3 text-orange-600" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
