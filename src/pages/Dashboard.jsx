@@ -264,6 +264,15 @@ function DashboardAdminMaster() {
   const totalTreinamentos = tableData.reduce((sum, row) => sum + row.classCount, 0);
   const empresasAtendidas = new Set(tableData.map(row => row.company)).size;
 
+  // Cálculos financeiros
+  const financialSummary = React.useMemo(() => {
+    const totalReceita = completedClasses.reduce((sum, c) => sum + (c.total_value || 0), 0);
+    const totalCustos = allDailyRecords.reduce((sum, r) => sum + (r.total_daily_cost || 0), 0);
+    const lucroLiquido = totalReceita - totalCustos;
+
+    return { totalReceita, totalCustos, lucroLiquido };
+  }, [completedClasses, allDailyRecords]);
+
   // Dados para gráfico de linha (custos por mês)
   const monthlyData = React.useMemo(() => {
     const grouped = {};
