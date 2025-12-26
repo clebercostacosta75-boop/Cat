@@ -1,6 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+const ROLE_HIERARCHY = {
+  'Administrador Master': 3,
+  'Financeiro': 2,
+  'Coordenador de Operações': 2,
+  'Instrutor': 1,
+  'user': 1,
+  'Bloqueado': 0
+};
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +46,20 @@ export default function UsersPage() {
   const [editIsWhatsApp, setEditIsWhatsApp] = useState(false);
   const [editPermissions, setEditPermissions] = useState([]);
   const [showNewUserDialog, setShowNewUserDialog] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const loadCurrentUser = async () => {
+      try {
+        const user = await base44.auth.me();
+        setCurrentUser(user);
+      } catch (error) {
+        console.error('Erro ao carregar usuário atual:', error);
+      }
+    };
+    loadCurrentUser();
+  }, []);
 
   // Lista de todas as permissões disponíveis
   const availablePermissions = [
@@ -118,6 +140,21 @@ export default function UsersPage() {
 
   const handleDeleteUser = (userId) => {
     deleteMutation.mutate(userId);
+  };
+
+  const getUserHierarchyLevel = (user) => {
+    const role = user.custom_role || user.role || 'user';
+    return ROLE_HIERARCHY[role] || 0;
+  };
+
+  const canEditUser = (targetUser) => {
+    if (!currentUser) return false;
+    if (targetUser.id === currentUser.id) return false;
+    
+    const currentLevel = getUserHierarchyLevel(currentUser);
+    const targetLevel = getUserHierarchyLevel(targetUser);
+    
+    return currentLevel > targetLevel;
   };
 
   const roles = [
@@ -424,37 +461,43 @@ export default function UsersPage() {
                                   size="sm"
                                   onClick={() => handleEditUser(user)}
                                   variant="outline"
+                                  disabled={!canEditUser(user)}
+                                  title={!canEditUser(user) ? (user.id === currentUser?.id ? "Não pode editar a si mesmo" : "Sem permissão para editar este usuário") : ""}
                                 >
                                   <Edit2 className="w-3 h-3 mr-1" />
                                   Editar
                                 </Button>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Excluir Usuário</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Tem certeza que deseja excluir o usuário <strong>{user.full_name || user.email}</strong>? Esta ação não pode ser desfeita.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() => handleDeleteUser(user.id)}
-                                        className="bg-red-600 hover:bg-red-700"
+                                
+                                {currentUser && user.id !== currentUser.id && canEditUser(user) && (
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="text-red-600 hover:bg-red-50"
                                       >
-                                        Excluir
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Deseja excluir <strong>{user.full_name || user.email}</strong>? Esta ação é irreversível.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => handleDeleteUser(user.id)}
+                                          className="bg-red-600 hover:bg-red-700"
+                                        >
+                                          Excluir
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                )}
                               </div>
                             )}
                           </TableCell>
