@@ -138,21 +138,78 @@ function DashboardAdminMaster() {
 
   const handleNotifyRecycle = async (item) => {
     try {
-      // Aqui você pode implementar o envio de notificação
-      alert(`Notificação enviada para ${item.aluno_nome} sobre reciclagem do curso ${item.curso_nome}`);
+      // Buscar empresa para pegar contatos
+      const companies = await base44.entities.Company.list();
+      const company = companies.find(c => 
+        c.nome_fantasia === item.aluno_nome || 
+        c.razao_social === item.aluno_nome ||
+        c.id === item.company_id
+      );
+
+      if (!company || !company.contacts || company.contacts.length === 0) {
+        alert('Empresa não possui contatos cadastrados');
+        return;
+      }
+
+      // Buscar primeiro contato com WhatsApp
+      const contact = company.contacts.find(c => c.is_whatsapp && c.phone);
       
+      if (!contact) {
+        alert('Empresa não possui contato com WhatsApp cadastrado');
+        return;
+      }
+
+      // Validar telefone
+      const phoneRegex = /^\(\d{2}\)\s?\d{4,5}-?\d{4}$/;
+      if (!phoneRegex.test(contact.phone)) {
+        alert('Telefone do contato está em formato inválido');
+        return;
+      }
+
+      // Calcular data de vencimento
+      const dataVencimento = new Date(item.end_date);
+      dataVencimento.setMonth(dataVencimento.getMonth() + parseInt(courses.find(c => c.name === item.curso_nome)?.validity || 12));
+      const dataFormatada = dataVencimento.toLocaleDateString('pt-BR');
+
+      const mensagem = `Olá ${contact.name || company.nome_fantasia}, o treinamento de *${item.curso_nome}* da empresa *${item.aluno_nome}* vence em ${dataFormatada} (${item.dias_restantes} dias). Favor agendar a reciclagem com a coordenação.`;
+      
+      // Formatar telefone para WhatsApp (remover caracteres especiais)
+      const phoneClean = contact.phone.replace(/\D/g, '');
+      const whatsappUrl = `https://wa.me/55${phoneClean}?text=${encodeURIComponent(mensagem)}`;
+      
+      // Abrir WhatsApp
+      window.open(whatsappUrl, '_blank');
+      
+      // Registrar no log de auditoria
       await logAction(
-        "ENVIO_EMAIL",
+        "ENVIO_WHATSAPP",
         "ClassSchedule",
         item.id,
         `Reciclagem: ${item.curso_nome}`,
         { 
           empresa: item.aluno_nome,
-          dias_restantes: item.dias_restantes
+          dias_restantes: item.dias_restantes,
+          contato: contact.name,
+          telefone: contact.phone,
+          status: 'Sucesso'
         }
       );
     } catch (error) {
       console.error('Erro ao enviar notificação:', error);
+      
+      await logAction(
+        "ENVIO_WHATSAPP",
+        "ClassSchedule",
+        item.id || '',
+        `Reciclagem: ${item.curso_nome}`,
+        { 
+          empresa: item.aluno_nome,
+          status: 'Falha',
+          erro: error.message
+        }
+      );
+      
+      alert('Erro ao enviar notificação: ' + error.message);
     }
   };
 
