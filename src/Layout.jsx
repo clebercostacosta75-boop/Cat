@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText, Building2, UserCog, Mail, History } from "lucide-react";
+import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText, Building2, UserCog, Mail, History, Bell } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -56,6 +56,12 @@ export default function Layout({ children }) {
         url: createPageUrl("Dashboard"),
         icon: LayoutDashboard,
         key: "Dashboard"
+      },
+      {
+        title: "Alertas de Reciclagem",
+        url: createPageUrl("RecyclingAlerts"),
+        icon: Bell,
+        key: "Alertas de Reciclagem"
       },
       {
         title: "Cronograma",
