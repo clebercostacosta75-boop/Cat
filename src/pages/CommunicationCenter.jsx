@@ -13,6 +13,34 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { logAction } from "@/components/audit/AuditLogger";
+
+// Função para validar destinatário
+const validateRecipient = (phone, email, type) => {
+  const errors = [];
+  
+  if (type === 'whatsapp') {
+    if (!phone) {
+      errors.push('Telefone não cadastrado');
+    } else {
+      const cleanPhone = phone.replace(/\D/g, '');
+      if (cleanPhone.length < 10) {
+        errors.push('Telefone inválido');
+      }
+    }
+  } else if (type === 'email') {
+    if (!email) {
+      errors.push('E-mail não cadastrado');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.push('E-mail inválido');
+    }
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
 
 export default function CommunicationCenter() {
   const queryClient = useQueryClient();
@@ -88,9 +116,9 @@ export default function CommunicationCenter() {
     }
 
     setSending(true);
+    let recipientData = {};
+    
     try {
-      let recipientData = {};
-      
       if (selectedRecipient === 'instructor') {
         if (!selectedInstructor) {
           toast.error('Instrutor não encontrado para esta turma');
@@ -104,20 +132,6 @@ export default function CommunicationCenter() {
           recipient_phone: selectedInstructor.phone,
           recipient_email: selectedInstructor.email
         };
-        
-        // Validar WhatsApp para instrutor
-        if (messageType === 'whatsapp' && !recipientData.recipient_phone) {
-          toast.error('Instrutor não possui telefone cadastrado');
-          setSending(false);
-          return;
-        }
-        
-        // Validar email para instrutor
-        if (messageType === 'email' && !recipientData.recipient_email) {
-          toast.error('Instrutor não possui e-mail cadastrado');
-          setSending(false);
-          return;
-        }
       } else if (selectedRecipient === 'company') {
         if (!selectedCompany) {
           toast.error('Empresa não encontrada para esta turma');
@@ -132,47 +146,65 @@ export default function CommunicationCenter() {
           recipient_phone: mainContact?.phone,
           recipient_email: mainContact?.email || selectedCompany.email_faturamento
         };
-        
-        // Validar WhatsApp para empresa
-        if (messageType === 'whatsapp' && !recipientData.recipient_phone) {
-          toast.error('Empresa não possui telefone de contato cadastrado');
-          setSending(false);
-          return;
-        }
-        
-        // Validar email para empresa
-        if (messageType === 'email' && !recipientData.recipient_email) {
-          toast.error('Empresa não possui e-mail cadastrado');
-          setSending(false);
-          return;
-        }
+      }
+
+      // Validar destinatário
+      const validation = validateRecipient(
+        recipientData.recipient_phone, 
+        recipientData.recipient_email, 
+        messageType
+      );
+      
+      if (!validation.isValid) {
+        toast.error(`Erro: ${validation.errors.join(". ")}`);
+        setSending(false);
+        return;
       }
 
       if (messageType === 'whatsapp') {
-        // Formatar telefone removendo caracteres não numéricos
         const phoneNumber = recipientData.recipient_phone.replace(/\D/g, '');
-        
-        // Codificar mensagem para URL
         const encodedMessage = encodeURIComponent(messageContent);
-        
-        // Construir URL do WhatsApp (incluir código do Brasil +55)
         const whatsappUrl = `https://wa.me/55${phoneNumber}?text=${encodedMessage}`;
         
-        // Abrir WhatsApp no navegador
         window.open(whatsappUrl, '_blank');
+        
+        // Registrar sucesso no log
+        await logAction(
+          "ENVIO_WHATSAPP",
+          selectedRecipient === 'instructor' ? 'Instrutor' : 'Empresa',
+          recipientData.recipient_id,
+          recipientData.recipient_name,
+          { 
+            tipo: 'WhatsApp',
+            turma: selectedScheduleData.training_name,
+            status: 'Sucesso'
+          }
+        );
         
         toast.success(`✅ WhatsApp aberto para ${recipientData.recipient_name}!`);
         setMessageContent("");
         setSelectedSchedule("");
         setSelectedRecipient("");
       } else if (messageType === 'email') {
-        console.log('Enviando e-mail para:', recipientData.recipient_email);
-        
         await base44.integrations.Core.SendEmail({
           to: recipientData.recipient_email,
           subject: `Notificação - ${selectedScheduleData.training_name}`,
           body: messageContent.replace(/\n/g, '<br>')
         });
+        
+        // Registrar sucesso no log
+        await logAction(
+          "ENVIO_EMAIL",
+          selectedRecipient === 'instructor' ? 'Instrutor' : 'Empresa',
+          recipientData.recipient_id,
+          recipientData.recipient_name,
+          { 
+            tipo: 'E-mail',
+            turma: selectedScheduleData.training_name,
+            status: 'Sucesso',
+            email: recipientData.recipient_email
+          }
+        );
         
         toast.success('✅ E-mail enviado com sucesso!');
         setMessageContent("");
@@ -182,15 +214,28 @@ export default function CommunicationCenter() {
     } catch (error) {
       console.error('Erro completo ao enviar mensagem:', error);
       
-      let errorMessage = 'Erro ao enviar mensagem';
+      // Registrar falha no log
+      await logAction(
+        messageType === 'whatsapp' ? "ENVIO_WHATSAPP" : "ENVIO_EMAIL",
+        selectedRecipient === 'instructor' ? 'Instrutor' : 'Empresa',
+        recipientData.recipient_id || '',
+        recipientData.recipient_name || '',
+        { 
+          tipo: messageType === 'whatsapp' ? 'WhatsApp' : 'E-mail',
+          turma: selectedScheduleData?.training_name,
+          status: 'Falha',
+          erro: error.message
+        }
+      );
       
+      let errorMessage = 'Erro ao enviar mensagem';
       if (error.response?.data?.error) {
         errorMessage = error.response.data.error;
       } else if (error.message) {
         errorMessage = error.message;
       }
       
-      toast.error(errorMessage);
+      toast.error(errorMessage + '. Verifique o log de auditoria.');
     } finally {
       setSending(false);
     }

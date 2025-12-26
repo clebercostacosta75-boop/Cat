@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { logAction } from "@/components/audit/AuditLogger";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -267,6 +268,19 @@ function DashboardAdminMaster() {
 
       const allSuccess = results.every(r => r.data?.success);
       
+      // Registrar no log de auditoria
+      await logAction(
+        "ENVIO_EMAIL",
+        "ClassSchedule",
+        classIds[0],
+        `${classIds.length} turma(s)`,
+        { 
+          tipo: type === 'email' ? 'E-mail' : type === 'whatsapp' ? 'WhatsApp' : 'Todos',
+          quantidade: classIds.length,
+          status: allSuccess ? 'Sucesso' : 'Parcial'
+        }
+      );
+      
       setNotificationResults(prev => ({ 
         ...prev, 
         [key]: { 
@@ -275,6 +289,20 @@ function DashboardAdminMaster() {
         } 
       }));
     } catch (error) {
+      // Registrar falha no log
+      await logAction(
+        "ENVIO_EMAIL",
+        "ClassSchedule",
+        classIds[0] || '',
+        `${classIds.length} turma(s)`,
+        { 
+          tipo: type === 'email' ? 'E-mail' : type === 'whatsapp' ? 'WhatsApp' : 'Todos',
+          quantidade: classIds.length,
+          status: 'Falha',
+          erro: error.message
+        }
+      );
+      
       setNotificationResults(prev => ({ 
         ...prev, 
         [key]: { success: false, message: 'Erro ao enviar notificações' } 
