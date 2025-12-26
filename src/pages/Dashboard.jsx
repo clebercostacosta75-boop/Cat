@@ -104,8 +104,9 @@ function DashboardAdminMaster() {
     return { status: "VÁLIDO", color: "text-green-600", icon: "CheckCircle", dias: diffDays };
   };
 
-  // Calcular treinamentos próximos de vencer (próximos 30 dias)
-  const trainingsToExpire = React.useMemo(() => {
+  // Calcular treinamentos para reciclagem (vencidos e próximos)
+  const recyclableTrainings = React.useMemo(() => {
+    const expired = [];
     const expiring = [];
     
     completedClasses.forEach(classItem => {
@@ -119,21 +120,28 @@ function DashboardAdminMaster() {
       
       const recycleStatus = checkRecyclableStatus(classItem.end_date, validityMonths);
       
-      // Adicionar apenas os que vencem nos próximos 30 dias (não os já vencidos)
-      if (recycleStatus.status === "RECICLAGEM PRÓXIMA") {
-        expiring.push({
-          id: classItem.id,
-          aluno_nome: classItem.company_name,
-          curso_nome: classItem.training_name,
-          dias_restantes: recycleStatus.dias,
-          end_date: classItem.end_date,
-          company_id: classItem.company_id
-        });
+      const item = {
+        id: classItem.id,
+        aluno_nome: classItem.company_name,
+        curso_nome: classItem.training_name,
+        dias_restantes: Math.abs(recycleStatus.dias),
+        end_date: classItem.end_date,
+        company_id: classItem.company_id,
+        status: recycleStatus.status
+      };
+      
+      if (recycleStatus.status === "VENCIDO") {
+        expired.push(item);
+      } else if (recycleStatus.status === "RECICLAGEM PRÓXIMA") {
+        expiring.push(item);
       }
     });
     
-    // Ordenar por dias restantes (mais urgente primeiro)
-    return expiring.sort((a, b) => a.dias_restantes - b.dias_restantes).slice(0, 5);
+    return {
+      expired: expired.sort((a, b) => b.dias_restantes - a.dias_restantes),
+      expiring: expiring.sort((a, b) => a.dias_restantes - b.dias_restantes),
+      total: expired.length + expiring.length
+    };
   }, [completedClasses, courses]);
 
   const handleNotifyRecycle = async (item) => {
