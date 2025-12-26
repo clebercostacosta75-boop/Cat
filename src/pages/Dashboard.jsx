@@ -833,11 +833,11 @@ function DashboardAdminMaster() {
 // ===== DASHBOARD INSTRUTOR =====
 function DashboardInstrutor({ instructor }) {
   const { data: myClasses = [], isLoading } = useQuery({
-    queryKey: ['instructorClasses', instructor?.name],
+    queryKey: ['instructorClasses', instructor?.id],
     queryFn: async () => {
-      if (!instructor?.name) return [];
+      if (!instructor?.id) return [];
       const allClasses = await base44.entities.ClassSchedule.filter({ 
-        instructor_name: instructor.name 
+        instructor_id: instructor.id 
       });
       return allClasses.sort((a, b) => {
         if (a.start_date > b.start_date) return 1;
@@ -845,7 +845,7 @@ function DashboardInstrutor({ instructor }) {
         return 0;
       });
     },
-    enabled: !!instructor?.name,
+    enabled: !!instructor?.id,
     initialData: [],
   });
 
