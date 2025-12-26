@@ -480,6 +480,28 @@ function DashboardAdminMaster() {
           </p>
         </div>
 
+        {/* Resumo Financeiro */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-green-50 p-4 rounded-xl border border-green-200">
+            <p className="text-xs text-green-700 font-medium">Receita Projetada (BMM)</p>
+            <h2 className="text-2xl font-bold text-green-900">
+              R$ {financialSummary.totalReceita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </h2>
+          </div>
+          <div className="bg-red-50 p-4 rounded-xl border border-red-200">
+            <p className="text-xs text-red-700 font-medium">Custo Operacional (Instrutores)</p>
+            <h2 className="text-2xl font-bold text-red-900">
+              R$ {financialSummary.totalCustos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </h2>
+          </div>
+          <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+            <p className="text-xs text-blue-700 font-medium">Lucro Líquido Real</p>
+            <h2 className="text-2xl font-bold text-blue-900">
+              R$ {financialSummary.lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </h2>
+          </div>
+        </div>
+
         {/* Cards de Estatísticas */}
         <div className="grid md:grid-cols-4 gap-4">
           <Card className="border border-gray-200">
