@@ -444,6 +444,34 @@ function DashboardAdminMaster() {
           </Card>
         </div>
 
+        {/* Alertas de Reciclagem */}
+        {trainingsToExpire.length > 0 && (
+          <Card className="border border-orange-200 bg-orange-50">
+            <CardContent className="p-4">
+              <h3 className="text-sm font-semibold mb-4 flex items-center gap-2 text-black">
+                <Bell className="w-4 h-4 text-orange-500" />
+                Alertas de Reciclagem (Próximos 30 dias)
+              </h3>
+              <div className="space-y-3">
+                {trainingsToExpire.map((item) => (
+                  <div key={item.id} className="flex justify-between items-center p-3 bg-white rounded-lg border border-orange-200">
+                    <div className="flex-1">
+                      <p className="text-xs font-medium text-gray-900">{item.aluno_nome}</p>
+                      <p className="text-[10px] text-gray-500">{item.curso_nome}</p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-300 mr-2">
+                      Vence em {item.dias_restantes} dias
+                    </Badge>
+                    <Button size="sm" variant="ghost" onClick={() => handleNotifyRecycle(item)} title="Enviar Notificação">
+                      <Send className="w-3 h-3 text-gray-600" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Gráficos */}
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Gráfico de Linha - Evolução Mensal */}
