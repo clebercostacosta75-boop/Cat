@@ -15,6 +15,7 @@ import BMMGenerator from './pages/BMMGenerator';
 import EmailTemplates from './pages/EmailTemplates';
 import BMMHistory from './pages/BMMHistory';
 import CommunicationCenter from './pages/CommunicationCenter';
+import AuditLog from './pages/AuditLog';
 import __Layout from './Layout.jsx';
 
 
@@ -36,6 +37,7 @@ export const PAGES = {
     "EmailTemplates": EmailTemplates,
     "BMMHistory": BMMHistory,
     "CommunicationCenter": CommunicationCenter,
+    "AuditLog": AuditLog,
 }
 
 export const pagesConfig = {

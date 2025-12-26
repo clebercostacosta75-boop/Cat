@@ -129,7 +129,13 @@ export default function Layout({ children }) {
         icon: UserCog,
         key: "Usuários"
       },
-    ];
+      {
+        title: "Log de Auditoria",
+        url: createPageUrl("AuditLog"),
+        icon: FileText,
+        key: "Log de Auditoria"
+      },
+      ];
 
     // Se não há usuário, não mostrar nada
     if (!user) return [];
