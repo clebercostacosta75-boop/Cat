@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Calendar } from "lucide-react";
+import { ArrowLeft, Plus, Calendar, CheckCircle, Loader2 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { Badge } from "@/components/ui/badge";
 import DailyRecordForm from "@/components/schedule/DailyRecordForm";
@@ -58,6 +58,32 @@ export default function ClassDetails() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dailyRecords', id] });
     },
+  });
+
+  const finalizarTurmaMutation = useMutation({
+    mutationFn: async () => {
+      const response = await base44.functions.invoke('finalizarTurma', { 
+        turma_id: id 
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['classSchedule', id] });
+      
+      // Enviar notificações WhatsApp
+      if (data.notificacoes && data.notificacoes.length > 0) {
+        data.notificacoes.forEach(notif => {
+          const phoneClean = notif.phone.replace(/\D/g, '');
+          const whatsappUrl = `https://wa.me/55${phoneClean}?text=${encodeURIComponent(notif.mensagem)}`;
+          window.open(whatsappUrl, '_blank');
+        });
+      }
+      
+      alert('Turma finalizada com sucesso! Administradores foram notificados.');
+    },
+    onError: (error) => {
+      alert('Erro ao finalizar turma: ' + error.message);
+    }
   });
 
   const handleSubmitDaily = (data) => {
@@ -125,9 +151,30 @@ export default function ClassDetails() {
             <h1 className="text-3xl font-bold text-stone-900">{classItem.training_name}</h1>
             <p className="text-stone-600">{classItem.company_name}</p>
           </div>
-          <Badge variant="outline" className="text-base px-4 py-2">
-            {classItem.status}
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className="text-base px-4 py-2">
+              {classItem.status}
+            </Badge>
+            {classItem.status !== 'Concluído' && dailyRecords.length > 0 && (
+              <Button
+                onClick={() => finalizarTurmaMutation.mutate()}
+                disabled={finalizarTurmaMutation.isPending}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                {finalizarTurmaMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Finalizando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Finalizar Turma
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Informações Gerais da Turma */}
