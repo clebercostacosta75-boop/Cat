@@ -17,6 +17,7 @@ import BMMHistory from './pages/BMMHistory';
 import CommunicationCenter from './pages/CommunicationCenter';
 import AuditLog from './pages/AuditLog';
 import RecyclingAlerts from './pages/RecyclingAlerts';
+import ProfitabilityAnalysis from './pages/ProfitabilityAnalysis';
 import __Layout from './Layout.jsx';
 
 
@@ -40,6 +41,7 @@ export const PAGES = {
     "CommunicationCenter": CommunicationCenter,
     "AuditLog": AuditLog,
     "RecyclingAlerts": RecyclingAlerts,
+    "ProfitabilityAnalysis": ProfitabilityAnalysis,
 }
 
 export const pagesConfig = {

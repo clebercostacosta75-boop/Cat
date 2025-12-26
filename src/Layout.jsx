@@ -64,6 +64,12 @@ export default function Layout({ children }) {
         key: "Alertas de Reciclagem"
       },
       {
+        title: "Análise de Lucratividade",
+        url: createPageUrl("ProfitabilityAnalysis"),
+        icon: BarChart3,
+        key: "Análise de Lucratividade"
+      },
+      {
         title: "Cronograma",
         url: createPageUrl("Schedule"),
         icon: Calendar,
