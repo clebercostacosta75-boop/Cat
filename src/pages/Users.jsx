@@ -322,7 +322,7 @@ export default function UsersPage() {
                               <div className="space-y-2">
                                 <Input
                                   value={editPhone}
-                                  onChange={(e) => setEditPhone(e.target.value)}
+                                  onChange={(e) => setEditPhone(formatPhoneNumber(e.target.value))}
                                   placeholder="(00) 00000-0000"
                                   className="w-[160px]"
                                 />
