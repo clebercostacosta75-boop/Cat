@@ -84,6 +84,78 @@ function DashboardAdminMaster() {
     initialData: [],
   });
 
+  const { data: courses = [] } = useQuery({
+    queryKey: ['courses'],
+    queryFn: () => base44.entities.Course.list(),
+    initialData: [],
+  });
+
+  // Função para verificar status de reciclagem
+  const checkRecyclableStatus = (dataRealizacao, validadeMeses) => {
+    const hoje = new Date();
+    const dataVencimento = new Date(dataRealizacao);
+    dataVencimento.setMonth(dataVencimento.getMonth() + validadeMeses);
+
+    const diffTime = dataVencimento - hoje;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 0) return { status: "VENCIDO", color: "text-red-600", icon: "AlertOctagon", dias: diffDays };
+    if (diffDays <= 30) return { status: "RECICLAGEM PRÓXIMA", color: "text-orange-500", icon: "Clock", dias: diffDays };
+    return { status: "VÁLIDO", color: "text-green-600", icon: "CheckCircle", dias: diffDays };
+  };
+
+  // Calcular treinamentos próximos de vencer (próximos 30 dias)
+  const trainingsToExpire = React.useMemo(() => {
+    const expiring = [];
+    
+    completedClasses.forEach(classItem => {
+      // Buscar curso para pegar a validade
+      const course = courses.find(c => c.name === classItem.training_name);
+      if (!course || !course.validity || !classItem.end_date) return;
+      
+      // Extrair número de meses da validade (ex: "12 meses" -> 12)
+      const validityMonths = parseInt(course.validity);
+      if (isNaN(validityMonths)) return;
+      
+      const recycleStatus = checkRecyclableStatus(classItem.end_date, validityMonths);
+      
+      // Adicionar apenas os que vencem nos próximos 30 dias (não os já vencidos)
+      if (recycleStatus.status === "RECICLAGEM PRÓXIMA") {
+        expiring.push({
+          id: classItem.id,
+          aluno_nome: classItem.company_name,
+          curso_nome: classItem.training_name,
+          dias_restantes: recycleStatus.dias,
+          end_date: classItem.end_date,
+          company_id: classItem.company_id
+        });
+      }
+    });
+    
+    // Ordenar por dias restantes (mais urgente primeiro)
+    return expiring.sort((a, b) => a.dias_restantes - b.dias_restantes).slice(0, 5);
+  }, [completedClasses, courses]);
+
+  const handleNotifyRecycle = async (item) => {
+    try {
+      // Aqui você pode implementar o envio de notificação
+      alert(`Notificação enviada para ${item.aluno_nome} sobre reciclagem do curso ${item.curso_nome}`);
+      
+      await logAction(
+        "ENVIO_EMAIL",
+        "ClassSchedule",
+        item.id,
+        `Reciclagem: ${item.curso_nome}`,
+        { 
+          empresa: item.aluno_nome,
+          dias_restantes: item.dias_restantes
+        }
+      );
+    } catch (error) {
+      console.error('Erro ao enviar notificação:', error);
+    }
+  };
+
   const tableData = React.useMemo(() => {
     const groupedData = {};
 
