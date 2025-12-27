@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import ClassScheduleForm from "@/components/schedule/ClassScheduleForm";
+import { toast } from "sonner";
 
 export default function SchedulePage() {
   const [showForm, setShowForm] = useState(false);
@@ -27,7 +28,13 @@ export default function SchedulePage() {
       queryClient.invalidateQueries({ queryKey: ['classSchedules'] });
       setShowForm(false);
       setEditingClass(null);
+      toast.success('✅ Turma criada com sucesso!');
     },
+    onError: (error) => {
+      toast.error('❌ Erro ao criar turma', {
+        description: error.message || 'Não foi possível criar a turma. Verifique os dados e tente novamente.'
+      });
+    }
   });
 
   const updateMutation = useMutation({
@@ -36,14 +43,26 @@ export default function SchedulePage() {
       queryClient.invalidateQueries({ queryKey: ['classSchedules'] });
       setShowForm(false);
       setEditingClass(null);
+      toast.success('✅ Turma atualizada com sucesso!');
     },
+    onError: (error) => {
+      toast.error('❌ Erro ao atualizar turma', {
+        description: error.message || 'Não foi possível atualizar a turma. Verifique os dados e tente novamente.'
+      });
+    }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.ClassSchedule.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['classSchedules'] });
+      toast.success('✅ Turma excluída com sucesso!');
     },
+    onError: (error) => {
+      toast.error('❌ Erro ao excluir turma', {
+        description: error.message || 'Não foi possível excluir a turma. Tente novamente.'
+      });
+    }
   });
 
   const handleSubmit = (data) => {
@@ -80,7 +99,9 @@ export default function SchedulePage() {
       // Buscar instrutor
       const instructors = await base44.entities.Instructor.filter({ name: classItem.instructor_name });
       if (instructors.length === 0) {
-        alert('Instrutor não encontrado');
+        toast.error('❌ Atenção: Instrutor não encontrado', {
+          description: 'Não foi possível localizar o instrutor. Verifique se o nome está correto.'
+        });
         return;
       }
       const instructor = instructors[0];
@@ -88,13 +109,17 @@ export default function SchedulePage() {
       // Buscar usuário do instrutor pelo email
       const users = await base44.entities.User.filter({ email: instructor.email });
       if (users.length === 0) {
-        alert('Usuário do instrutor não encontrado');
+        toast.error('❌ Atenção: Usuário do instrutor não encontrado', {
+          description: 'O instrutor não possui um usuário vinculado no sistema. Crie um usuário com o email do instrutor.'
+        });
         return;
       }
       const user = users[0];
 
       if (!user.phone || !user.is_whatsapp) {
-        alert('O instrutor não possui WhatsApp cadastrado');
+        toast.error('❌ Atenção: WhatsApp não cadastrado', {
+          description: 'O instrutor não possui WhatsApp cadastrado. Edite o usuário e adicione o telefone marcando como WhatsApp.'
+        });
         return;
       }
 
@@ -106,13 +131,17 @@ export default function SchedulePage() {
         class_schedule_id: classItem.id
       });
 
-      alert('Cronograma enviado com sucesso via WhatsApp!');
-    } catch (error) {
+      toast.success('✅ Cronograma enviado com sucesso!', {
+        description: 'O instrutor foi notificado via WhatsApp.'
+      });
+      } catch (error) {
       console.error('Erro ao enviar WhatsApp:', error);
-      alert('Erro ao enviar mensagem: ' + (error.message || 'Erro desconhecido'));
-    } finally {
+      toast.error('❌ Erro ao enviar mensagem', {
+        description: error.message || 'Ocorreu um erro desconhecido ao tentar enviar o WhatsApp. Tente novamente.'
+      });
+      } finally {
       setSendingWhatsApp(null);
-    }
+      }
   };
 
   return (

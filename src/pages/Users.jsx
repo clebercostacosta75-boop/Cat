@@ -30,6 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Users, Plus, Edit2, X, Check, Trash2, Crown, Settings, Eye, Lock, MessageCircle, Mail, Phone } from "lucide-react";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -106,14 +107,26 @@ export default function UsersPage() {
       setEditingUser(null);
       setEditRole("");
       setEditName("");
+      toast.success('✅ Usuário atualizado com sucesso!');
     },
+    onError: (error) => {
+      toast.error('❌ Erro ao atualizar usuário', {
+        description: error.message || 'Não foi possível atualizar o usuário. Verifique os dados e tente novamente.'
+      });
+    }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.User.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('✅ Usuário excluído com sucesso!');
     },
+    onError: (error) => {
+      toast.error('❌ Erro ao excluir usuário', {
+        description: error.message || 'Não foi possível excluir o usuário. Tente novamente.'
+      });
+    }
   });
 
   const handleEditUser = (user) => {

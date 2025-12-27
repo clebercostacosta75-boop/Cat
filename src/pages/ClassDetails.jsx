@@ -8,6 +8,7 @@ import { ArrowLeft, Plus, Calendar, CheckCircle, Loader2 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { Badge } from "@/components/ui/badge";
 import DailyRecordForm from "@/components/schedule/DailyRecordForm";
+import { toast } from "sonner";
 
 export default function ClassDetails() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -41,7 +42,13 @@ export default function ClassDetails() {
       queryClient.invalidateQueries({ queryKey: ['dailyRecords', id] });
       setShowDailyForm(false);
       setEditingRecord(null);
+      toast.success('✅ Lançamento diário criado com sucesso!');
     },
+    onError: (error) => {
+      toast.error('❌ Erro ao criar lançamento', {
+        description: error.message || 'Não foi possível criar o lançamento diário. Verifique os dados e tente novamente.'
+      });
+    }
   });
 
   const updateRecordMutation = useMutation({
@@ -50,14 +57,26 @@ export default function ClassDetails() {
       queryClient.invalidateQueries({ queryKey: ['dailyRecords', id] });
       setShowDailyForm(false);
       setEditingRecord(null);
+      toast.success('✅ Lançamento diário atualizado com sucesso!');
     },
+    onError: (error) => {
+      toast.error('❌ Erro ao atualizar lançamento', {
+        description: error.message || 'Não foi possível atualizar o lançamento diário. Verifique os dados e tente novamente.'
+      });
+    }
   });
 
   const deleteRecordMutation = useMutation({
     mutationFn: (recordId) => base44.entities.ClassDailyRecord.delete(recordId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dailyRecords', id] });
+      toast.success('✅ Lançamento diário excluído com sucesso!');
     },
+    onError: (error) => {
+      toast.error('❌ Erro ao excluir lançamento', {
+        description: error.message || 'Não foi possível excluir o lançamento diário. Tente novamente.'
+      });
+    }
   });
 
   const finalizarTurmaMutation = useMutation({
@@ -69,7 +88,7 @@ export default function ClassDetails() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['classSchedule', id] });
-      
+
       // Enviar notificações WhatsApp
       if (data.notificacoes && data.notificacoes.length > 0) {
         data.notificacoes.forEach(notif => {
@@ -78,11 +97,15 @@ export default function ClassDetails() {
           window.open(whatsappUrl, '_blank');
         });
       }
-      
-      alert('Turma finalizada com sucesso! Administradores foram notificados.');
+
+      toast.success('✅ Turma finalizada com sucesso!', {
+        description: 'Administradores foram notificados via WhatsApp.'
+      });
     },
     onError: (error) => {
-      alert('Erro ao finalizar turma: ' + error.message);
+      toast.error('❌ Erro ao finalizar turma', {
+        description: error.message || 'Não foi possível finalizar a turma. Verifique se há lançamentos diários cadastrados e tente novamente.'
+      });
     }
   });
 

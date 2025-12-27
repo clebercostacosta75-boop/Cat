@@ -17,6 +17,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import IAFloatingButton from "./components/IAFloatingButton";
+import { Toaster } from "sonner";
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -235,10 +236,11 @@ export default function Layout({ children }) {
           <div className="flex-1 overflow-auto">
             {children}
           </div>
-          
+
           <IAFloatingButton />
-        </main>
-      </div>
-    </SidebarProvider>
-  );
-}
+          </main>
+          </div>
+          <Toaster position="top-right" richColors />
+          </SidebarProvider>
+          );
+          }

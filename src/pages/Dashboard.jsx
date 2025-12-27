@@ -12,6 +12,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { logAction } from "@/components/audit/AuditLogger";
 import ClassCard from "@/components/instructor/ClassCard";
+import { toast } from "sonner";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -159,7 +160,9 @@ function DashboardAdminMaster() {
       );
 
       if (!company || !company.contacts || company.contacts.length === 0) {
-        alert('Empresa não possui contatos cadastrados');
+        toast.error('❌ Atenção: Empresa sem contatos', {
+          description: 'A empresa não possui contatos cadastrados. Acesse a página de Empresas e adicione um contato com WhatsApp para poder enviar notificações.'
+        });
         return;
       }
 
@@ -167,14 +170,18 @@ function DashboardAdminMaster() {
       const contact = company.contacts.find(c => c.is_whatsapp && c.phone);
       
       if (!contact) {
-        alert('Empresa não possui contato com WhatsApp cadastrado');
+        toast.error('❌ Atenção: WhatsApp não cadastrado', {
+          description: 'A empresa não possui contato com WhatsApp cadastrado. Edite a empresa e marque um contato como WhatsApp.'
+        });
         return;
       }
 
       // Validar telefone
       const phoneRegex = /^\(\d{2}\)\s?\d{4,5}-?\d{4}$/;
       if (!phoneRegex.test(contact.phone)) {
-        alert('Telefone do contato está em formato inválido');
+        toast.error('❌ Atenção: Telefone inválido', {
+          description: 'O telefone do contato está em formato inválido. Corrija o formato para (XX) XXXXX-XXXX na página de Empresas.'
+        });
         return;
       }
 
@@ -191,6 +198,10 @@ function DashboardAdminMaster() {
       
       // Abrir WhatsApp
       window.open(whatsappUrl, '_blank');
+      
+      toast.success('✅ Notificação enviada com sucesso!', {
+        description: `WhatsApp aberto para ${contact.name || company.nome_fantasia}`
+      });
       
       // Registrar no log de auditoria
       await logAction(
@@ -221,7 +232,9 @@ function DashboardAdminMaster() {
         }
       );
       
-      alert('Erro ao enviar notificação: ' + error.message);
+      toast.error('❌ Erro ao enviar notificação', {
+        description: error.message || 'Ocorreu um erro ao tentar enviar a notificação via WhatsApp. Tente novamente.'
+      });
     }
   };
 
