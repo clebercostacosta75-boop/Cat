@@ -392,30 +392,40 @@ export default function UsersPage() {
                           </TableCell>
                           <TableCell>
                             {isEditing && editRole !== 'Administrador Master' && editRole !== 'admin' ? (
-                              <div className="space-y-2 max-w-xs">
-                                <p className="text-xs text-purple-700 font-bold mb-2 flex items-center gap-1">
-                                  <Lock className="w-3 h-3" />
-                                  Selecionar Permissões:
-                                </p>
-                                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto p-3 bg-purple-50 rounded-lg border border-purple-200">
+                              <div className="space-y-3 max-w-sm">
+                                <div className="bg-gradient-to-br from-purple-600 to-purple-700 text-white px-4 py-3 rounded-lg shadow-md">
+                                  <p className="text-sm font-bold flex items-center gap-2">
+                                    <Lock className="w-4 h-4" />
+                                    PERMISSÕES DE ACESSO
+                                  </p>
+                                  <p className="text-xs opacity-90 mt-1">
+                                    Marque as funcionalidades que este usuário poderá acessar
+                                  </p>
+                                </div>
+                                <div className="grid grid-cols-1 gap-2.5 max-h-64 overflow-y-auto p-4 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border-2 border-purple-300 shadow-inner">
                                   {availablePermissions.map(permission => (
                                     <label
                                       key={permission}
                                       htmlFor={`perm-${user.id}-${permission}`}
-                                      className="flex items-center space-x-3 cursor-pointer hover:bg-white p-2 rounded transition-colors"
+                                      className="flex items-center space-x-3 cursor-pointer hover:bg-white p-3 rounded-lg transition-all duration-200 hover:shadow-md border border-transparent hover:border-purple-300"
                                     >
                                       <input
                                         type="checkbox"
                                         id={`perm-${user.id}-${permission}`}
                                         checked={editPermissions.includes(permission)}
                                         onChange={() => togglePermission(permission)}
-                                        className="w-4 h-4 accent-purple-600"
+                                        className="w-5 h-5 accent-purple-600 cursor-pointer"
                                       />
-                                      <span className="text-sm text-stone-700 font-medium">
+                                      <span className="text-sm text-stone-900 font-semibold">
                                         {permission}
                                       </span>
                                     </label>
                                   ))}
+                                </div>
+                                <div className="bg-blue-50 border border-blue-300 rounded-lg p-3">
+                                  <p className="text-xs text-blue-800 font-medium">
+                                    ℹ️ Selecionadas: <strong>{editPermissions.length}</strong> de {availablePermissions.length}
+                                  </p>
                                 </div>
                               </div>
                             ) : (
