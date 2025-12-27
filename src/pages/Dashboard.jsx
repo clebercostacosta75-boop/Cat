@@ -43,16 +43,19 @@ export default function Dashboard() {
     loadUser();
   }, []);
 
+  // Redirecionar coordenador
+  useEffect(() => {
+    if (userRole === 'Coordenador de Operações') {
+      navigate(createPageUrl('Schedule'));
+    }
+  }, [userRole, navigate]);
+
   // Renderizar dashboard específico baseado no role
   if (userRole === 'Instrutor') {
     return <DashboardInstrutor instructor={instructorData} />;
   }
 
   if (userRole === 'Coordenador de Operações') {
-    // Coordenador não tem Dashboard, redirecionar para Cronograma
-    useEffect(() => {
-      navigate(createPageUrl('Schedule'));
-    }, [navigate]);
     return (
       <div className="p-8 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
