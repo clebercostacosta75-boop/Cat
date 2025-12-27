@@ -76,16 +76,21 @@ export default function UsersPage() {
   // Lista de todas as permissões disponíveis
   const availablePermissions = [
     "Dashboard",
+    "Alertas de Reciclagem",
+    "Análise de Lucratividade",
     "Cronograma",
     "Instrutores",
     "Empresas",
     "Contratadas",
     "Cursos",
+    "Importar Excel",
     "Relatórios",
     "Gerar BMM",
     "Histórico BMM",
     "Modelos E-mail",
-    "Central de Comunicação"
+    "Central de Comunicação",
+    "Usuários",
+    "Log de Auditoria"
   ];
 
   const { data: users = [], isLoading } = useQuery({
