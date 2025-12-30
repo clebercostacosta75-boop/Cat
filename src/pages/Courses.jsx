@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, BookOpen, Clock, Download, DollarSign, X, Copy, Search, Edit2, Trash2, Award, TrendingUp, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 export default function CoursesPage() {
   const [showForm, setShowForm] = useState(false);
@@ -40,11 +41,13 @@ export default function CoursesPage() {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       setShowForm(false);
       setEditingCourse(null);
-      alert('Curso criado com sucesso!');
+      toast.success('✅ Curso criado com sucesso!');
     },
     onError: (error) => {
       console.error('Erro ao criar:', error);
-      alert('Erro ao criar curso: ' + (error.message || 'Tente novamente'));
+      toast.error('❌ Erro ao criar curso', {
+        description: error.message || 'Verifique os dados e tente novamente.'
+      });
     }
   });
 
@@ -54,11 +57,13 @@ export default function CoursesPage() {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       setShowForm(false);
       setEditingCourse(null);
-      alert('Curso atualizado com sucesso!');
+      toast.success('✅ Curso atualizado com sucesso!');
     },
     onError: (error) => {
       console.error('Erro ao atualizar:', error);
-      alert('Erro ao atualizar curso: ' + (error.message || 'Tente novamente'));
+      toast.error('❌ Erro ao atualizar curso', {
+        description: error.message || 'Verifique os dados e tente novamente.'
+      });
     }
   });
 
@@ -66,17 +71,21 @@ export default function CoursesPage() {
     mutationFn: (id) => base44.entities.Course.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
-      alert('Curso excluído com sucesso!');
+      toast.success('✅ Curso excluído com sucesso!');
     },
     onError: (error) => {
       console.error('Erro ao excluir:', error);
-      alert('Erro ao excluir curso: ' + (error.message || 'Tente novamente'));
+      toast.error('❌ Erro ao excluir curso', {
+        description: error.message || 'Não foi possível excluir o curso. Tente novamente.'
+      });
     }
   });
 
   const [formData, setFormData] = useState({
     name: "",
     duration_hours: "",
+    theoretical_hours: "",
+    practical_hours: "",
     standard_value: 0,
     description: "",
     modality: "Formação",
@@ -107,6 +116,8 @@ export default function CoursesPage() {
       start_date: course.start_date || "",
       end_date: course.end_date || "",
       category: course.category || "Presencial",
+      theoretical_hours: course.theoretical_hours || "",
+      practical_hours: course.practical_hours || "",
       schedules: course.schedules || {
         morning: { start: "", end: "" },
         afternoon: { start: "", end: "" },
@@ -133,9 +144,12 @@ export default function CoursesPage() {
       };
       
       await createMutation.mutateAsync(duplicatedCourse);
+      toast.success('✅ Curso duplicado com sucesso!');
     } catch (error) {
       console.error('Erro ao duplicar curso:', error);
-      alert('Erro ao duplicar curso. Tente novamente.');
+      toast.error('❌ Erro ao duplicar curso', {
+        description: 'Não foi possível duplicar o curso. Tente novamente.'
+      });
     }
   };
 
@@ -143,6 +157,8 @@ export default function CoursesPage() {
     setFormData({
       name: "",
       duration_hours: "",
+      theoretical_hours: "",
+      practical_hours: "",
       standard_value: 0,
       description: "",
       modality: "Formação",
@@ -372,13 +388,25 @@ export default function CoursesPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="duration_hours">Carga Horária (horas) *</Label>
+                      <Label htmlFor="duration_hours">Carga Horária Total (horas) *</Label>
                       <Input
                         id="duration_hours"
                         type="number"
                         step="0.5"
                         value={formData.duration_hours}
-                        onChange={(e) => setFormData({...formData, duration_hours: parseFloat(e.target.value)})}
+                        onChange={(e) => {
+                          const totalHours = parseFloat(e.target.value) || 0;
+                          const newFormData = {...formData, duration_hours: totalHours};
+                          
+                          // Se for híbrido, dividir automaticamente 50/50
+                          if (formData.category === "Híbrido" && totalHours > 0) {
+                            const halfHours = totalHours / 2;
+                            newFormData.theoretical_hours = halfHours;
+                            newFormData.practical_hours = halfHours;
+                          }
+                          
+                          setFormData(newFormData);
+                        }}
                         placeholder="8"
                         required
                       />
@@ -420,7 +448,23 @@ export default function CoursesPage() {
                       <Label htmlFor="category">Categoria</Label>
                       <Select
                         value={formData.category}
-                        onValueChange={(value) => setFormData({...formData, category: value})}
+                        onValueChange={(value) => {
+                          const newFormData = {...formData, category: value};
+                          
+                          // Se mudou para híbrido e tem carga horária, dividir 50/50
+                          if (value === "Híbrido" && formData.duration_hours > 0) {
+                            const halfHours = formData.duration_hours / 2;
+                            newFormData.theoretical_hours = halfHours;
+                            newFormData.practical_hours = halfHours;
+                          }
+                          // Se mudou de híbrido para outro, limpar os campos
+                          else if (value !== "Híbrido") {
+                            newFormData.theoretical_hours = "";
+                            newFormData.practical_hours = "";
+                          }
+                          
+                          setFormData(newFormData);
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione a categoria" />
@@ -435,13 +479,43 @@ export default function CoursesPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="validity">Validade</Label>
+                      <Input
+                        id="validity"
+                        value={formData.validity}
+                        onChange={(e) => setFormData({...formData, validity: e.target.value})}
+                        placeholder="Ex: 12 meses, 24 meses"
+                      />
+                    </div>
+                    
+                    {formData.category === "Híbrido" && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="theoretical_hours">Horas Teóricas/Online</Label>
                           <Input
-                            id="validity"
-                            value={formData.validity}
-                            onChange={(e) => setFormData({...formData, validity: e.target.value})}
-                            placeholder="Ex: 12 meses, 24 meses"
+                            id="theoretical_hours"
+                            type="number"
+                            step="0.5"
+                            value={formData.theoretical_hours}
+                            onChange={(e) => setFormData({...formData, theoretical_hours: parseFloat(e.target.value) || 0})}
+                            placeholder="4"
                           />
                         </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="practical_hours">Horas Práticas/Presenciais *</Label>
+                          <Input
+                            id="practical_hours"
+                            type="number"
+                            step="0.5"
+                            value={formData.practical_hours}
+                            onChange={(e) => setFormData({...formData, practical_hours: parseFloat(e.target.value) || 0})}
+                            placeholder="4"
+                          />
+                          <p className="text-xs text-gray-500">
+                            💡 Base para cálculo do pagamento do instrutor
+                          </p>
+                        </div>
+                      </>
+                    )}
                         <div className="space-y-2">
                           <Label htmlFor="start_date">Data de Início</Label>
                           <Input
@@ -576,8 +650,13 @@ export default function CoursesPage() {
                 <div className="grid grid-cols-2 gap-2 pt-2 border-t">
                   {course.duration_hours && (
                     <div className="text-sm">
-                      <p className="text-gray-500">Duração</p>
+                      <p className="text-gray-500">Duração Total</p>
                       <p className="font-bold text-black">{course.duration_hours}h</p>
+                      {course.category === "Híbrido" && course.practical_hours && (
+                        <p className="text-xs text-gray-500">
+                          {course.theoretical_hours}h teórica + {course.practical_hours}h prática
+                        </p>
+                      )}
                     </div>
                   )}
                   {course.standard_value > 0 && (
@@ -645,6 +724,8 @@ export default function CoursesPage() {
                   setFormData({
                     name: "",
                     duration_hours: "",
+                    theoretical_hours: "",
+                    practical_hours: "",
                     standard_value: 0,
                     description: "",
                     modality: "Formação",

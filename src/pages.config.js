@@ -1,47 +1,49 @@
-import Dashboard from './pages/Dashboard';
-import Import from './pages/Import';
-import Schedule from './pages/Schedule';
-import Courses from './pages/Courses';
-import Reports from './pages/Reports';
-import Instructors from './pages/Instructors';
-import InstructorDetails from './pages/InstructorDetails';
-import ClassDetails from './pages/ClassDetails';
-import CourseCategories from './pages/CourseCategories';
+import AuditLog from './pages/AuditLog';
+import BMMGenerator from './pages/BMMGenerator';
+import BMMHistory from './pages/BMMHistory';
 import BMMTemplates from './pages/BMMTemplates';
+import ClassDetails from './pages/ClassDetails';
+import CommunicationCenter from './pages/CommunicationCenter';
 import Companies from './pages/Companies';
 import Contractors from './pages/Contractors';
-import Users from './pages/Users';
-import BMMGenerator from './pages/BMMGenerator';
+import CourseCategories from './pages/CourseCategories';
+import Courses from './pages/Courses';
+import Dashboard from './pages/Dashboard';
 import EmailTemplates from './pages/EmailTemplates';
-import BMMHistory from './pages/BMMHistory';
-import CommunicationCenter from './pages/CommunicationCenter';
-import AuditLog from './pages/AuditLog';
-import RecyclingAlerts from './pages/RecyclingAlerts';
+import Home from './pages/Home';
+import Import from './pages/Import';
+import InstructorDetails from './pages/InstructorDetails';
+import Instructors from './pages/Instructors';
 import ProfitabilityAnalysis from './pages/ProfitabilityAnalysis';
+import RecyclingAlerts from './pages/RecyclingAlerts';
+import Reports from './pages/Reports';
+import Schedule from './pages/Schedule';
+import Users from './pages/Users';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Dashboard": Dashboard,
-    "Import": Import,
-    "Schedule": Schedule,
-    "Courses": Courses,
-    "Reports": Reports,
-    "Instructors": Instructors,
-    "InstructorDetails": InstructorDetails,
-    "ClassDetails": ClassDetails,
-    "CourseCategories": CourseCategories,
+    "AuditLog": AuditLog,
+    "BMMGenerator": BMMGenerator,
+    "BMMHistory": BMMHistory,
     "BMMTemplates": BMMTemplates,
+    "ClassDetails": ClassDetails,
+    "CommunicationCenter": CommunicationCenter,
     "Companies": Companies,
     "Contractors": Contractors,
-    "Users": Users,
-    "BMMGenerator": BMMGenerator,
+    "CourseCategories": CourseCategories,
+    "Courses": Courses,
+    "Dashboard": Dashboard,
     "EmailTemplates": EmailTemplates,
-    "BMMHistory": BMMHistory,
-    "CommunicationCenter": CommunicationCenter,
-    "AuditLog": AuditLog,
-    "RecyclingAlerts": RecyclingAlerts,
+    "Home": Home,
+    "Import": Import,
+    "InstructorDetails": InstructorDetails,
+    "Instructors": Instructors,
     "ProfitabilityAnalysis": ProfitabilityAnalysis,
+    "RecyclingAlerts": RecyclingAlerts,
+    "Reports": Reports,
+    "Schedule": Schedule,
+    "Users": Users,
 }
 
 export const pagesConfig = {
