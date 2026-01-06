@@ -19,6 +19,7 @@ import RecyclingAlerts from './pages/RecyclingAlerts';
 import Reports from './pages/Reports';
 import Schedule from './pages/Schedule';
 import Users from './pages/Users';
+import NotificationSettings from './pages/NotificationSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -44,6 +45,7 @@ export const PAGES = {
     "Reports": Reports,
     "Schedule": Schedule,
     "Users": Users,
+    "NotificationSettings": NotificationSettings,
 }
 
 export const pagesConfig = {

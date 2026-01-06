@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText, Building2, UserCog, Mail, History, Bell } from "lucide-react";
+import NotificationBell from "./components/notifications/NotificationBell";
 import {
   Sidebar,
   SidebarContent,
@@ -220,15 +221,20 @@ export default function Layout({ children }) {
         </Sidebar>
 
         <main className="flex-1 flex flex-col bg-white">
-          <header className="bg-white border-b border-gray-200 px-6 py-3 md:hidden sticky top-0 z-10">
-            <div className="flex items-center gap-4">
-              <SidebarTrigger className="hover:bg-gray-100 p-2 rounded-md transition-colors" />
-              <img 
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
-                alt="CAT Logo" 
-                className="h-7 w-auto"
-              />
-              <h1 className="text-base font-semibold text-gray-900">Sistema de Treinamento</h1>
+          <header className="bg-white border-b border-gray-200 px-6 py-3 sticky top-0 z-10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <SidebarTrigger className="hover:bg-gray-100 p-2 rounded-md transition-colors md:hidden" />
+                <img 
+                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
+                  alt="CAT Logo" 
+                  className="h-7 w-auto md:hidden"
+                />
+                <h1 className="text-base font-semibold text-gray-900 md:hidden">Sistema de Treinamento</h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <NotificationBell />
+              </div>
             </div>
           </header>
 
