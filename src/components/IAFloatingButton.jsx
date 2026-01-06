@@ -26,7 +26,6 @@ export default function IAFloatingButton() {
     const initConversation = async () => {
       if (isOpen && !conversationId) {
         try {
-          // Buscar informações do usuário atual
           const currentUser = await base44.auth.me();
           const userRole = currentUser.custom_role || currentUser.role || 'user';
           const userPermissions = currentUser.permissions || [];
