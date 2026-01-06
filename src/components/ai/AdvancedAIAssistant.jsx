@@ -156,18 +156,42 @@ export default function AdvancedAIAssistant() {
   const handleSendMessage = async () => {
     if ((!inputMessage.trim() && uploadedFiles.length === 0) || isSending) return;
 
-    if (!conversationId) {
-      await createNewConversation();
-      return;
-    }
-
     setIsSending(true);
     const userMessage = inputMessage;
     const filesUrls = uploadedFiles.map(f => f.url);
     setInputMessage("");
 
     try {
-      const conversation = await base44.agents.getConversation(conversationId);
+      let currentConversationId = conversationId;
+      let currentHistoryRecordId = historyRecordId;
+
+      // Criar conversa se não existir
+      if (!currentConversationId) {
+        const conversation = await base44.agents.createConversation({
+          agent_name: "app_assistant",
+          metadata: {
+            name: "Nova Conversa",
+            description: "Conversa com Assistente IA Avançado",
+            user_name: user.full_name,
+            user_email: user.email,
+          },
+        });
+        
+        const historyRecord = await base44.entities.ConversationHistory.create({
+          user_id: user.id,
+          conversation_id: conversation.id,
+          title: userMessage.substring(0, 50) || "Nova Conversa",
+          message_count: 0,
+          documents: uploadedFiles,
+        });
+
+        currentConversationId = conversation.id;
+        currentHistoryRecordId = historyRecord.id;
+        setConversationId(conversation.id);
+        setHistoryRecordId(historyRecord.id);
+      }
+
+      const conversation = await base44.agents.getConversation(currentConversationId);
       
       await base44.agents.addMessage(conversation, {
         role: "user",
@@ -176,14 +200,12 @@ export default function AdvancedAIAssistant() {
       });
 
       // Atualizar histórico
-      if (historyRecordId) {
+      if (currentHistoryRecordId) {
         const messageCount = messages.length + 1;
-        const title = messageCount === 1 ? userMessage.substring(0, 50) : undefined;
         
-        await base44.entities.ConversationHistory.update(historyRecordId, {
+        await base44.entities.ConversationHistory.update(currentHistoryRecordId, {
           last_message: userMessage,
           message_count: messageCount,
-          ...(title && { title }),
         });
         
         loadConversationHistory();
