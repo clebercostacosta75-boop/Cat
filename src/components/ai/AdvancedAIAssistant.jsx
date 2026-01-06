@@ -70,7 +70,7 @@ export default function AdvancedAIAssistant() {
     }
   };
 
-  const createNewConversation = async () => {
+  const createNewConversation = async (initialMessage = "Nova Conversa", initialFiles = []) => {
     try {
       const conversation = await base44.agents.createConversation({
         agent_name: "app_assistant",
@@ -85,19 +85,21 @@ export default function AdvancedAIAssistant() {
       const historyRecord = await base44.entities.ConversationHistory.create({
         user_id: user.id,
         conversation_id: conversation.id,
-        title: "Nova Conversa",
+        title: initialMessage.substring(0, 50),
         message_count: 0,
-        documents: [],
+        documents: initialFiles,
       });
 
       setConversationId(conversation.id);
       setHistoryRecordId(historyRecord.id);
       setMessages(conversation.messages || []);
-      setUploadedFiles([]);
+      setUploadedFiles(initialFiles);
       loadConversationHistory();
+      return { conversation, historyRecord };
     } catch (error) {
       console.error("Erro ao criar conversa:", error);
       toast.error("Erro ao criar nova conversa");
+      throw error;
     }
   };
 
@@ -162,49 +164,28 @@ export default function AdvancedAIAssistant() {
     setInputMessage("");
 
     try {
-      let currentConversationId = conversationId;
+      let currentConversation = null;
       let currentHistoryRecordId = historyRecordId;
 
-      // Criar conversa se não existir
-      if (!currentConversationId) {
-        const conversation = await base44.agents.createConversation({
-          agent_name: "app_assistant",
-          metadata: {
-            name: "Nova Conversa",
-            description: "Conversa com Assistente IA Avançado",
-            user_name: user.full_name,
-            user_email: user.email,
-          },
-        });
-        
-        const historyRecord = await base44.entities.ConversationHistory.create({
-          user_id: user.id,
-          conversation_id: conversation.id,
-          title: userMessage.substring(0, 50) || "Nova Conversa",
-          message_count: 0,
-          documents: uploadedFiles,
-        });
-
-        currentConversationId = conversation.id;
+      if (!conversationId) {
+        const { conversation, historyRecord } = await createNewConversation(userMessage, uploadedFiles);
+        currentConversation = conversation;
         currentHistoryRecordId = historyRecord.id;
-        setConversationId(conversation.id);
-        setHistoryRecordId(historyRecord.id);
+      } else {
+        currentConversation = await base44.agents.getConversation(conversationId);
       }
-
-      const conversation = await base44.agents.getConversation(currentConversationId);
       
-      await base44.agents.addMessage(conversation, {
+      await base44.agents.addMessage(currentConversation, {
         role: "user",
         content: userMessage || "Analise os documentos enviados.",
         file_urls: filesUrls.length > 0 ? filesUrls : undefined,
       });
 
-      // Atualizar histórico
       if (currentHistoryRecordId) {
         const messageCount = messages.length + 1;
         
         await base44.entities.ConversationHistory.update(currentHistoryRecordId, {
-          last_message: userMessage,
+          last_message: userMessage || "Análise de documentos",
           message_count: messageCount,
         });
         
