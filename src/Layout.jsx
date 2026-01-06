@@ -16,7 +16,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import IAFloatingButton from "./components/IAFloatingButton";
 import { Toaster } from "sonner";
 
 export default function Layout({ children }) {
