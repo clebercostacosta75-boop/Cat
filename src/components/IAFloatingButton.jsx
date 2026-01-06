@@ -26,11 +26,20 @@ export default function IAFloatingButton() {
     const initConversation = async () => {
       if (isOpen && !conversationId) {
         try {
+          // Buscar informações do usuário atual
+          const currentUser = await base44.auth.me();
+          const userRole = currentUser.custom_role || currentUser.role || 'user';
+          const userPermissions = currentUser.permissions || [];
+          
           const conversation = await base44.agents.createConversation({
             agent_name: "app_assistant",
             metadata: {
               name: "Conversa com Assistente IA",
               description: "Assistente para busca de informações",
+              user_role: userRole,
+              user_permissions: userPermissions,
+              user_name: currentUser.full_name,
+              user_email: currentUser.email,
             },
           });
           setConversationId(conversation.id);
@@ -66,9 +75,15 @@ export default function IAFloatingButton() {
 
     try {
       const conversation = await base44.agents.getConversation(conversationId);
+      const currentUser = await base44.auth.me();
+      const userRole = currentUser.custom_role || currentUser.role || 'user';
+      
+      // Adicionar contexto de permissões do usuário à mensagem
+      const messageWithContext = `[Perfil do Usuário: ${userRole}]\n\n${userMessage}`;
+      
       await base44.agents.addMessage(conversation, {
         role: "user",
-        content: userMessage,
+        content: messageWithContext,
       });
     } catch (error) {
       console.error("Erro ao enviar mensagem:", error);
