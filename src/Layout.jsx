@@ -235,8 +235,6 @@ export default function Layout({ children }) {
           <div className="flex-1 overflow-auto">
             {children}
           </div>
-
-          <IAFloatingButton />
           </main>
           </div>
           <Toaster position="top-right" richColors />
