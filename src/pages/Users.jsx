@@ -180,10 +180,20 @@ export default function UsersPage() {
   const canEditUser = (targetUser) => {
     if (!currentUser) return false;
     if (targetUser.id === currentUser.id) return false;
-    
+
+    const currentUserRole = currentUser.custom_role || currentUser.role;
+    const targetUserRole = targetUser.custom_role || targetUser.role;
+
+    // Administrador Master pode editar/excluir outros Administradores Master
+    if (currentUserRole === 'Administrador Master' || currentUserRole === 'admin') {
+      if (targetUserRole === 'Administrador Master' || targetUserRole === 'admin') {
+        return true;
+      }
+    }
+
     const currentLevel = getUserHierarchyLevel(currentUser);
     const targetLevel = getUserHierarchyLevel(targetUser);
-    
+
     return currentLevel > targetLevel;
   };
 
