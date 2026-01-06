@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,94 +8,74 @@ import { Badge } from "@/components/ui/badge";
 
 export default function IAFloatingButton() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content: "👋 Olá! Sou a assistente inteligente do Sistema de Treinamentos.\n\nPosso ajudar com:\n• 📊 Consultar informações de treinamentos\n• 👨‍🏫 Dados de instrutores\n• 🏢 Informações de empresas\n• 📅 Status do cronograma\n• 💡 Sugestões de melhorias\n• 🐛 Reportar erros\n\nComo posso ajudar?"
-    }
-  ]);
+  const [conversation, setConversation] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Criar conversa ao abrir o chat
+  React.useEffect(() => {
+    if (isOpen && !conversation) {
+      createConversation();
+    }
+  }, [isOpen]);
+
+  const createConversation = async () => {
+    try {
+      const newConversation = await base44.agents.createConversation({
+        agent_name: "app_assistant",
+        metadata: {
+          name: "Chat Assistente",
+          created_at: new Date().toISOString()
+        }
+      });
+      setConversation(newConversation);
+      
+      // Carregar mensagens existentes se houver
+      if (newConversation.messages && newConversation.messages.length > 0) {
+        setMessages(newConversation.messages);
+      } else {
+        // Mensagem de boas-vindas
+        setMessages([{
+          role: "assistant",
+          content: "👋 Olá! Sou a assistente inteligente do Sistema de Treinamentos CAT.\n\nPosso ajudar com:\n• 📊 Consultar informações de treinamentos\n• 👨‍🏫 Dados de instrutores\n• 🏢 Informações de empresas e endereços\n• 📅 Status do cronograma e datas\n• 💡 Orientações sobre como usar o sistema\n• 🔍 Buscar qualquer informação no app\n\nComo posso ajudar?"
+        }]);
+      }
+    } catch (error) {
+      console.error('Erro ao criar conversa:', error);
+    }
+  };
+
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || !conversation) return;
 
     const userMessage = input.trim();
     setInput("");
+    
+    // Adicionar mensagem do usuário imediatamente
     setMessages(prev => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
 
     try {
-      // Buscar contexto do sistema
-      const [classes, instructors, companies, courses] = await Promise.all([
-        base44.entities.ClassSchedule.list(),
-        base44.entities.Instructor.list(),
-        base44.entities.Company.list(),
-        base44.entities.Course.list()
-      ]);
-
-      const context = {
-        total_treinamentos: classes.length,
-        treinamentos_agendados: classes.filter(c => c.status === 'Agendado').length,
-        treinamentos_concluidos: classes.filter(c => c.status === 'Concluído').length,
-        total_instrutores: instructors.length,
-        instrutores_ativos: instructors.filter(i => i.status === 'Ativo').length,
-        total_empresas: companies.length,
-        total_cursos: courses.length,
-        ultimos_treinamentos: classes.slice(0, 5).map(c => ({
-          nome: c.training_name,
-          empresa: c.company_name,
-          data: c.start_date,
-          status: c.status
-        }))
-      };
-
-      // Chamar IA com contexto
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `Você é uma assistente especializada no Sistema de Treinamentos da empresa.
-
-CONTEXTO DO SISTEMA:
-${JSON.stringify(context, null, 2)}
-
-FUNCIONALIDADES DO SISTEMA:
-- Gestão de Cronograma de Treinamentos
-- Cadastro de Instrutores (com perfil profissional gerado por IA)
-- Cadastro de Empresas Clientes (com unidades e contatos)
-- Cadastro de Empresas Contratadas (prestadoras de serviço)
-- Cadastro de Cursos
-- Geração de BMM (Boletim Mensal de Medição)
-- Relatórios e Dashboards
-- Importação de dados via Excel
-- Notificações automáticas (Email, WhatsApp, SMS)
-
-PERFIS DE USUÁRIO:
-- Administrador Master: Acesso total
-- Financeiro: Acesso total
-- Coordenador de Operações: Acesso operacional (sem BMM)
-- Instrutor: Apenas seus treinamentos
-
-PERGUNTA DO USUÁRIO:
-${userMessage}
-
-INSTRUÇÕES:
-1. Responda de forma amigável e profissional
-2. Use os dados do contexto quando relevante
-3. Se for pergunta sobre funcionalidade, explique claramente
-4. Se for sobre dados, forneça números precisos
-5. Se identificar erro ou problema, sugira solução
-6. Use emojis para deixar a resposta mais amigável
-7. Seja conciso mas completo
-
-Responda em português do Brasil.`,
-        add_context_from_internet: false
+      // Enviar mensagem para o agente
+      await base44.agents.addMessage(conversation, {
+        role: "user",
+        content: userMessage
       });
 
-      setMessages(prev => [...prev, { 
-        role: "assistant", 
-        content: response 
-      }]);
+      // Inscrever-se para receber atualizações da resposta do agente
+      const unsubscribe = base44.agents.subscribeToConversation(conversation.id, (data) => {
+        setMessages(data.messages);
+      });
+
+      // Aguardar um tempo para a resposta ser processada
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Cancelar inscrição após obter resposta
+      unsubscribe();
 
     } catch (error) {
+      console.error('Erro ao enviar mensagem:', error);
       setMessages(prev => [...prev, { 
         role: "assistant", 
         content: "❌ Desculpe, ocorreu um erro ao processar sua solicitação. Por favor, tente novamente." 
