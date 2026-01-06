@@ -14,12 +14,12 @@ import Home from './pages/Home';
 import Import from './pages/Import';
 import InstructorDetails from './pages/InstructorDetails';
 import Instructors from './pages/Instructors';
+import NotificationSettings from './pages/NotificationSettings';
 import ProfitabilityAnalysis from './pages/ProfitabilityAnalysis';
 import RecyclingAlerts from './pages/RecyclingAlerts';
 import Reports from './pages/Reports';
 import Schedule from './pages/Schedule';
 import Users from './pages/Users';
-import NotificationSettings from './pages/NotificationSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -40,12 +40,12 @@ export const PAGES = {
     "Import": Import,
     "InstructorDetails": InstructorDetails,
     "Instructors": Instructors,
+    "NotificationSettings": NotificationSettings,
     "ProfitabilityAnalysis": ProfitabilityAnalysis,
     "RecyclingAlerts": RecyclingAlerts,
     "Reports": Reports,
     "Schedule": Schedule,
     "Users": Users,
-    "NotificationSettings": NotificationSettings,
 }
 
 export const pagesConfig = {
