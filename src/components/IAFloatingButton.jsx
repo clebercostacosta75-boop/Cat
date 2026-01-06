@@ -75,18 +75,14 @@ export default function IAFloatingButton() {
 
     try {
       const conversation = await base44.agents.getConversation(conversationId);
-      const currentUser = await base44.auth.me();
-      const userRole = currentUser.custom_role || currentUser.role || 'user';
-      
-      // Adicionar contexto de permissões do usuário à mensagem
-      const messageWithContext = `[Perfil do Usuário: ${userRole}]\n\n${userMessage}`;
       
       await base44.agents.addMessage(conversation, {
         role: "user",
-        content: messageWithContext,
+        content: userMessage,
       });
     } catch (error) {
       console.error("Erro ao enviar mensagem:", error);
+      setInputMessage(userMessage);
     } finally {
       setIsSending(false);
     }
