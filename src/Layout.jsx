@@ -4,6 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText, Building2, UserCog, Mail, History, Bell } from "lucide-react";
 import NotificationBell from "./components/notifications/NotificationBell";
+import AdvancedAIAssistant from "./components/ai/AdvancedAIAssistant";
 import {
   Sidebar,
   SidebarContent,
@@ -241,6 +242,8 @@ export default function Layout({ children }) {
           <div className="flex-1 overflow-auto">
             {children}
           </div>
+
+          <AdvancedAIAssistant />
           </main>
           </div>
           <Toaster position="top-right" richColors />
