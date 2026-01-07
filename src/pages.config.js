@@ -13,6 +13,7 @@ import EmailTemplates from './pages/EmailTemplates';
 import Home from './pages/Home';
 import Import from './pages/Import';
 import InstructorDetails from './pages/InstructorDetails';
+import InstructorFinancialControl from './pages/InstructorFinancialControl';
 import InstructorPaymentReport from './pages/InstructorPaymentReport';
 import Instructors from './pages/Instructors';
 import NotificationSettings from './pages/NotificationSettings';
@@ -21,7 +22,7 @@ import RecyclingAlerts from './pages/RecyclingAlerts';
 import Reports from './pages/Reports';
 import Schedule from './pages/Schedule';
 import Users from './pages/Users';
-import InstructorFinancialControl from './pages/InstructorFinancialControl';
+import PaymentAutomation from './pages/PaymentAutomation';
 import __Layout from './Layout.jsx';
 
 
@@ -41,6 +42,7 @@ export const PAGES = {
     "Home": Home,
     "Import": Import,
     "InstructorDetails": InstructorDetails,
+    "InstructorFinancialControl": InstructorFinancialControl,
     "InstructorPaymentReport": InstructorPaymentReport,
     "Instructors": Instructors,
     "NotificationSettings": NotificationSettings,
@@ -49,7 +51,7 @@ export const PAGES = {
     "Reports": Reports,
     "Schedule": Schedule,
     "Users": Users,
-    "InstructorFinancialControl": InstructorFinancialControl,
+    "PaymentAutomation": PaymentAutomation,
 }
 
 export const pagesConfig = {
