@@ -1,15 +1,23 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
+  console.error('=== INÍCIO DO PROCESSAMENTO ===');
   try {
     const base44 = createClientFromRequest(req);
+    console.error('DEBUG: Base44 client criado');
+    
     const user = await base44.auth.me();
+    console.error('DEBUG: Usuário autenticado:', user?.email);
 
     if (!user) {
+      console.error('ERRO: Usuário não autenticado');
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { file_url, company_id } = await req.json();
+    const body = await req.json();
+    console.error('DEBUG: Body recebido:', JSON.stringify(body));
+    
+    const { file_url, company_id } = body;
 
     console.error('DEBUG: file_url recebido:', file_url);
     console.error('DEBUG: company_id recebido:', company_id);
@@ -30,9 +38,14 @@ Deno.serve(async (req) => {
     }
 
     // Extrair dados do arquivo Excel
-    const extractResult = await base44.integrations.Core.ExtractDataFromUploadedFile({
-      file_url: file_url,
-      json_schema: {
+    console.error('DEBUG: Iniciando extração de dados do arquivo...');
+    console.error('DEBUG: file_url para extração:', file_url);
+    
+    let extractResult;
+    try {
+      extractResult = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url: file_url,
+        json_schema: {
         type: "object",
         properties: {
           courses: {
@@ -53,6 +66,14 @@ Deno.serve(async (req) => {
         }
       }
     });
+    } catch (extractError) {
+      console.error('ERRO na extração de dados:', extractError.message, extractError.stack);
+      return Response.json({ 
+        error: 'Erro ao extrair dados do arquivo',
+        details: extractError.message,
+        hint: 'Verifique se o arquivo Excel está no formato correto e se contém as colunas necessárias'
+      }, { status: 500 });
+    }
 
     console.error('DEBUG: Resultado da extração:', JSON.stringify(extractResult, null, 2));
 
@@ -70,12 +91,16 @@ Deno.serve(async (req) => {
     const errors = [];
 
     // Buscar todos os cursos para validação
+    console.error('DEBUG: Buscando cursos cadastrados...');
     const allCourses = await base44.entities.Course.list();
+    console.error('DEBUG: Total de cursos encontrados:', allCourses.length);
     const courseMap = new Map(allCourses.map(c => [c.id, c]));
 
     // Processar cada curso
+    console.error('DEBUG: Processando', coursesData.length, 'cursos...');
     for (let i = 0; i < coursesData.length; i++) {
       const courseData = coursesData[i];
+      console.error('DEBUG: Processando linha', i + 2, ':', JSON.stringify(courseData));
       
       try {
         // Validar se o curso existe
