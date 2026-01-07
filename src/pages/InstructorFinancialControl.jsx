@@ -34,6 +34,12 @@ export default function InstructorFinancialControl() {
     initialData: [],
   });
 
+  const { data: courses = [] } = useQuery({
+    queryKey: ['courses'],
+    queryFn: () => base44.entities.Course.list(),
+    initialData: [],
+  });
+
   const updateInstructorMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Instructor.update(id, data),
     onSuccess: () => {
@@ -446,6 +452,21 @@ export default function InstructorFinancialControl() {
                                 {format(new Date(cls.start_date), 'dd/MM/yyyy')}
                               </span>
                             </div>
+                            {(() => {
+                              const course = courses.find(c => c.id === cls.training_id);
+                              const instructor = instructors.find(i => i.id === cls.instructor_id);
+                              const practicalHours = course?.practical_hours || cls.duration_hours || 0;
+                              const hourlyRate = instructor?.hourly_rate || 0;
+
+                              if (practicalHours > 0 && hourlyRate > 0) {
+                                return (
+                                  <p className="text-xs text-gray-500 mt-2">
+                                    💡 Cálculo: {practicalHours}h (prática) × R$ {hourlyRate.toFixed(2)}/h = R$ {(practicalHours * hourlyRate).toFixed(2)}
+                                  </p>
+                                );
+                              }
+                              return null;
+                            })()}
                           </div>
                           <div className="text-right">
                             <p className="text-lg font-bold text-emerald-600">
