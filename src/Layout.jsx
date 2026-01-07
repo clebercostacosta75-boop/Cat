@@ -119,6 +119,12 @@ export default function Layout({ children }) {
         key: "Controle Financeiro Instrutor"
       },
       {
+        title: "Automação de Pagamentos",
+        url: createPageUrl("PaymentAutomation"),
+        icon: DollarSign,
+        key: "Automação de Pagamentos"
+      },
+      {
         title: "Gerar BMM",
         url: createPageUrl("BMMGenerator"),
         icon: FileText,
