@@ -86,7 +86,7 @@ export default function CompanyCoursesForm({ companyCourses, courses, onChange }
                       <SelectValue placeholder="Selecione o curso" />
                     </SelectTrigger>
                     <SelectContent>
-                      {courses.map((c) => (
+                      {courses.filter(c => c.id && c.id.trim() !== '').map((c) => (
                         <SelectItem key={c.id} value={c.id}>
                           📚 {c.name}
                         </SelectItem>
