@@ -83,7 +83,7 @@ export default function BulkCoursesUploader({ companyId, onSuccess }) {
 
     try {
       // Upload do arquivo
-      const { data: uploadData } = await base44.functions.invoke('uploadFile', { file });
+      const uploadData = await base44.integrations.Core.UploadFile({ file });
       
       if (!uploadData.file_url) {
         throw new Error('Erro ao fazer upload do arquivo');
@@ -91,15 +91,15 @@ export default function BulkCoursesUploader({ companyId, onSuccess }) {
 
       // Processar o arquivo
       setProcessing(true);
-      const { data: processResult } = await base44.functions.invoke('bulkCreateCompanyCourses', {
+      const processResult = await base44.functions.invoke('bulkCreateCompanyCourses', {
         file_url: uploadData.file_url,
         company_id: companyId
       });
 
-      setResult(processResult);
+      setResult(processResult.data);
 
-      if (processResult.success) {
-        toast.success(processResult.message);
+      if (processResult.data.success) {
+        toast.success(processResult.data.message);
         if (onSuccess) {
           onSuccess();
         }
