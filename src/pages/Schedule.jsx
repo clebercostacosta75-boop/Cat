@@ -147,18 +147,6 @@ export default function SchedulePage() {
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Cabeçalho */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-black">
-            Cronograma de Turmas
-          </h1>
-          <p className="text-gray-600 text-sm mt-1">
-            {stats.total} {stats.total === 1 ? 'turma agendada' : 'turmas agendadas'}
-          </p>
-        </div>
-
-
-
         {/* Cards de Estatísticas */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Card className="border border-gray-200">
