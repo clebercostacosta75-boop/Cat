@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, ExternalLink } from "lucide-react";
+import PaymentInstallmentsForm from "./PaymentInstallmentsForm";
 
 export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel }) {
 
@@ -30,11 +31,15 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     month: "",
     unit_value: 0,
     notes: "",
+    instructor_payment_value: 0,
+    payment_status: "Pendente",
+    payment_installments: [],
     ...classSchedule
   });
 
   const [selectedCompanyDetails, setSelectedCompanyDetails] = useState(null);
   const [availableCourses, setAvailableCourses] = useState([]);
+  const [selectedCourseDetails, setSelectedCourseDetails] = useState(null);
 
   const { data: courses = [] } = useQuery({
     queryKey: ['courses'],
@@ -84,6 +89,8 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
   };
 
   const handleCourseSelect = (courseIdOrName) => {
+    let courseDetails = null;
+    
     // Verificar se é um curso personalizado da empresa
     if (selectedCompanyDetails?.company_courses && selectedCompanyDetails.company_courses.length > 0) {
       const companyCourse = selectedCompanyDetails.company_courses.find(
@@ -91,6 +98,11 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
       );
       
       if (companyCourse) {
+        courseDetails = {
+          practical_hours: companyCourse.practical_hours || companyCourse.workload_hours || 0,
+          theoretical_hours: companyCourse.theoretical_hours || 0
+        };
+        
         setFormData(prev => ({
           ...prev,
           training_id: companyCourse.course_id,
@@ -101,6 +113,7 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
           duration_hours: companyCourse.workload_hours || 0,
           unit_value: companyCourse.specific_price || 0
         }));
+        setSelectedCourseDetails(courseDetails);
         return;
       }
     }
@@ -108,6 +121,11 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     // Fallback para curso padrão
     const course = courses.find(c => c.id === courseIdOrName);
     if (course) {
+      courseDetails = {
+        practical_hours: course.practical_hours || course.duration_hours || 0,
+        theoretical_hours: course.theoretical_hours || 0
+      };
+      
       setFormData(prev => ({
         ...prev,
         training_id: courseIdOrName,
@@ -117,6 +135,7 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
         duration_hours: course.duration_hours || 0,
         unit_value: course.standard_value || 0
       }));
+      setSelectedCourseDetails(courseDetails);
     }
   };
 
@@ -144,6 +163,54 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
       total_value: totalValue
     }));
   }, [formData.unit_value, formData.students_count]);
+
+  // Calcular valor do instrutor e criar parcelas automaticamente
+  useEffect(() => {
+    if (formData.instructor_id && selectedCourseDetails) {
+      const selectedInstructor = instructors.find(i => i.id === formData.instructor_id);
+      if (selectedInstructor && selectedInstructor.hourly_rate) {
+        const practicalHours = selectedCourseDetails.practical_hours || 0;
+        const instructorPayment = selectedInstructor.hourly_rate * practicalHours;
+        
+        // Criar parcelas automaticamente (2x com 30 e 60 dias)
+        const today = new Date();
+        const firstDueDate = new Date(today);
+        firstDueDate.setDate(today.getDate() + 30);
+        
+        const secondDueDate = new Date(today);
+        secondDueDate.setDate(today.getDate() + 60);
+        
+        const halfAmount = instructorPayment / 2;
+        
+        const newInstallments = [
+          {
+            installment_number: 1,
+            amount: halfAmount,
+            due_date: firstDueDate.toISOString().split('T')[0],
+            status: "Pendente",
+            paid_date: "",
+            proof_of_payment_url: "",
+            notes: ""
+          },
+          {
+            installment_number: 2,
+            amount: halfAmount,
+            due_date: secondDueDate.toISOString().split('T')[0],
+            status: "Pendente",
+            paid_date: "",
+            proof_of_payment_url: "",
+            notes: ""
+          }
+        ];
+        
+        setFormData(prev => ({
+          ...prev,
+          instructor_payment_value: instructorPayment,
+          payment_installments: prev.payment_installments?.length > 0 ? prev.payment_installments : newInstallments
+        }));
+      }
+    }
+  }, [formData.instructor_id, selectedCourseDetails, instructors]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -467,6 +534,49 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
           </div>
         </div>
       </div>
+
+      {/* Pagamento do Instrutor */}
+      {formData.instructor_id && selectedCourseDetails && (
+        <div className="border-t pt-4">
+          <h3 className="font-semibold text-stone-900 mb-3">Pagamento do Instrutor</h3>
+          <div className="grid md:grid-cols-2 gap-4 mb-4">
+            <div className="space-y-2">
+              <Label>Valor Total do Instrutor (R$)</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">R$</span>
+                <Input
+                  type="text"
+                  value={formData.instructor_payment_value ? Number(formData.instructor_payment_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}
+                  readOnly
+                  className="pl-10 text-right bg-emerald-50 font-semibold text-emerald-700"
+                />
+              </div>
+              <p className="text-xs text-gray-500">
+                Calculado: {instructors.find(i => i.id === formData.instructor_id)?.hourly_rate || 0} R$/h × {selectedCourseDetails.practical_hours} horas
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Status de Pagamento</Label>
+              <Select value={formData.payment_status} onValueChange={(value) => handleChange('payment_status', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Pendente">⏳ Pendente</SelectItem>
+                  <SelectItem value="Parcialmente Pago">💰 Parcialmente Pago</SelectItem>
+                  <SelectItem value="Pago">✅ Pago</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <PaymentInstallmentsForm
+            installments={formData.payment_installments || []}
+            onChange={(installments) => handleChange('payment_installments', installments)}
+            instructorPaymentValue={formData.instructor_payment_value}
+          />
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="notes">Observações</Label>
