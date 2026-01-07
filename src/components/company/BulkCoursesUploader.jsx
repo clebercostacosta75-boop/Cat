@@ -164,7 +164,7 @@ export default function BulkCoursesUploader({ companyId, onSuccess }) {
             <label className="flex-1">
               <Input
                 type="file"
-                accept=".xls,.xlsx"
+                accept=".xls,.xlsx,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 onChange={handleFileUpload}
                 disabled={uploading || processing}
                 className="cursor-pointer"
