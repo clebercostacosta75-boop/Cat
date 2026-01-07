@@ -154,7 +154,7 @@ export default function AuditLogPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas</SelectItem>
-                    {entities.map(entity => (
+                    {entities.filter(entity => entity && entity.trim() !== '').map(entity => (
                       <SelectItem key={entity} value={entity}>{entity}</SelectItem>
                     ))}
                   </SelectContent>
