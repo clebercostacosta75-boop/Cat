@@ -11,6 +11,9 @@ Deno.serve(async (req) => {
 
     const { file_url, company_id } = await req.json();
 
+    console.error('DEBUG: file_url recebido:', file_url);
+    console.error('DEBUG: company_id recebido:', company_id);
+
     if (!file_url || !company_id) {
       return Response.json({ 
         error: 'file_url e company_id são obrigatórios' 
@@ -19,6 +22,7 @@ Deno.serve(async (req) => {
 
     // Buscar a empresa
     const company = await base44.entities.Company.get(company_id);
+    console.error('DEBUG: Empresa encontrada:', company?.id);
     if (!company) {
       return Response.json({ 
         error: 'Empresa não encontrada' 
@@ -50,14 +54,18 @@ Deno.serve(async (req) => {
       }
     });
 
+    console.error('DEBUG: Resultado da extração:', JSON.stringify(extractResult, null, 2));
+
     if (extractResult.status !== 'success' || !extractResult.output?.courses) {
       return Response.json({ 
-        error: 'Erro ao processar arquivo',
-        details: extractResult.details
+        error: 'Erro ao processar arquivo ou estrutura de dados inválida',
+        details: extractResult.details || 'Verifique o formato do arquivo e o schema esperado.',
+        extractResult: extractResult
       }, { status: 400 });
     }
 
     const coursesData = extractResult.output.courses;
+    console.error('DEBUG: coursesData extraído:', coursesData.length, 'cursos');
     const results = [];
     const errors = [];
 
@@ -146,9 +154,11 @@ Deno.serve(async (req) => {
     const existingCourseIds = new Set(currentCourses.map(c => c.course_id));
     const coursesToAdd = newCourses.filter(c => !existingCourseIds.has(c.course_id));
     
+    console.error('DEBUG: Iniciando atualização da empresa:', company_id);
     await base44.entities.Company.update(company_id, {
       company_courses: [...currentCourses, ...coursesToAdd]
     });
+    console.error('DEBUG: Empresa atualizada com sucesso.');
 
     return Response.json({
       success: true,
@@ -159,7 +169,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Erro ao processar cursos em massa:', error);
+    console.error('ERRO FATAL ao processar cursos em massa:', error.message, error.stack);
     return Response.json({ 
       error: error.message || 'Erro ao processar cursos em massa' 
     }, { status: 500 });
