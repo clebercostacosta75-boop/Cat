@@ -172,21 +172,13 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
         const practicalHours = selectedCourseDetails.practical_hours || 0;
         const instructorPayment = selectedInstructor.hourly_rate * practicalHours;
         
-        // Criar parcelas automaticamente (2x com 30 e 60 dias)
-        const today = new Date();
-        const firstDueDate = new Date(today);
-        firstDueDate.setDate(today.getDate() + 30);
-        
-        const secondDueDate = new Date(today);
-        secondDueDate.setDate(today.getDate() + 60);
-        
         const halfAmount = instructorPayment / 2;
         
         const newInstallments = [
           {
             installment_number: 1,
             amount: halfAmount,
-            due_date: firstDueDate.toISOString().split('T')[0],
+            due_date: "",
             status: "Pendente",
             paid_date: "",
             proof_of_payment_url: "",
@@ -195,7 +187,7 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
           {
             installment_number: 2,
             amount: halfAmount,
-            due_date: secondDueDate.toISOString().split('T')[0],
+            due_date: "",
             status: "Pendente",
             paid_date: "",
             proof_of_payment_url: "",
