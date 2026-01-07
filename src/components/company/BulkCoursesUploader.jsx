@@ -78,23 +78,51 @@ export default function BulkCoursesUploader({ companyId, onSuccess }) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    console.log('=== UPLOAD INICIADO ===');
+    console.log('Arquivo selecionado:', file.name, 'Tipo:', file.type, 'Tamanho:', file.size);
+
     setUploading(true);
     setResult(null);
 
     try {
-      // Upload do arquivo
-      const uploadData = await base44.integrations.Core.UploadFile({ file });
+      // Validar tipo de arquivo
+      const validTypes = [
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/csv'
+      ];
       
-      if (!uploadData.file_url) {
-        throw new Error('Erro ao fazer upload do arquivo');
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+      const validExtensions = ['xls', 'xlsx', 'csv'];
+      
+      if (!validExtensions.includes(fileExtension) && !validTypes.includes(file.type)) {
+        throw new Error('Formato de arquivo inválido. Use arquivos .xls, .xlsx ou .csv');
       }
 
+      console.log('Validação do arquivo OK');
+
+      // Upload do arquivo
+      console.log('Iniciando upload do arquivo...');
+      const uploadData = await base44.integrations.Core.UploadFile({ file });
+      console.log('Upload concluído:', uploadData);
+      
+      if (!uploadData.file_url) {
+        throw new Error('Erro ao fazer upload do arquivo - URL não retornada');
+      }
+
+      console.log('file_url recebido:', uploadData.file_url);
+
       // Processar o arquivo
+      setUploading(false);
       setProcessing(true);
+      console.log('Chamando função backend com:', { file_url: uploadData.file_url, company_id: companyId });
+      
       const processResult = await base44.functions.invoke('bulkCreateCompanyCourses', {
         file_url: uploadData.file_url,
         company_id: companyId
       });
+
+      console.log('Resultado da função:', processResult);
 
       setResult(processResult.data);
 
@@ -108,13 +136,23 @@ export default function BulkCoursesUploader({ companyId, onSuccess }) {
       }
 
     } catch (error) {
-      console.error('Erro ao processar arquivo:', error);
+      console.error('=== ERRO NO UPLOAD/PROCESSAMENTO ===');
+      console.error('Erro completo:', error);
+      console.error('Mensagem:', error.message);
+      console.error('Stack:', error.stack);
+      
+      const errorMessage = error.response?.data?.error || error.message || 'Ocorreu um erro ao processar o arquivo';
+      const errorDetails = error.response?.data?.details || error.response?.data?.hint || '';
+      
       toast.error('Erro ao processar arquivo', {
-        description: error.message || 'Ocorreu um erro ao processar o arquivo'
+        description: errorDetails ? `${errorMessage}: ${errorDetails}` : errorMessage
       });
+      
       setResult({
         success: false,
-        message: error.message || 'Erro ao processar arquivo'
+        message: errorMessage,
+        details: errorDetails,
+        fullError: error.response?.data
       });
     } finally {
       setUploading(false);
