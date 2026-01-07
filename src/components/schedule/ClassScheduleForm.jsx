@@ -457,36 +457,6 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="unit_value">Valor Unitário (R$)</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">R$</span>
-              <Input
-                id="unit_value"
-                type="text"
-                value={formData.unit_value ? Number(formData.unit_value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
-                onChange={(e) => {
-                  const rawValue = e.target.value.replace(/[^\d]/g, '');
-                  const numericValue = rawValue === '' ? 0 : parseFloat(rawValue) / 100;
-                  handleChange('unit_value', numericValue);
-                }}
-                placeholder="0,00"
-                className="pl-10 text-right"
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Valor Total (R$)</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">R$</span>
-              <Input
-                type="text"
-                value={formData.total_value ? Number(formData.total_value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'}
-                readOnly
-                className="pl-10 text-right bg-stone-50"
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
             <Label>Mês</Label>
             <div className="flex gap-2">
               <Select 
