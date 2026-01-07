@@ -33,6 +33,9 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     ...classSchedule
   });
 
+  const [selectedCompanyDetails, setSelectedCompanyDetails] = useState(null);
+  const [availableCourses, setAvailableCourses] = useState([]);
+
   const { data: courses = [] } = useQuery({
     queryKey: ['courses'],
     queryFn: () => base44.entities.Course.list(),
@@ -55,15 +58,62 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleCourseSelect = (courseId) => {
-    const course = courses.find(c => c.id === courseId);
+  const handleCompanySelect = async (companyId) => {
+    const selectedCompany = companies.find(c => c.id === companyId);
+    if (selectedCompany) {
+      handleChange('company_id', companyId);
+      handleChange('company_name', selectedCompany.nome_fantasia || selectedCompany.razao_social);
+      
+      // Buscar detalhes completos da empresa incluindo company_courses
+      try {
+        const companyDetails = await base44.entities.Company.get(companyId);
+        setSelectedCompanyDetails(companyDetails);
+        
+        // Se a empresa tem cursos personalizados, usar esses
+        if (companyDetails.company_courses && companyDetails.company_courses.length > 0) {
+          setAvailableCourses(companyDetails.company_courses);
+        } else {
+          // Senão, mostrar todos os cursos
+          setAvailableCourses(courses);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar detalhes da empresa:', error);
+        setAvailableCourses(courses);
+      }
+    }
+  };
+
+  const handleCourseSelect = (courseIdOrName) => {
+    // Verificar se é um curso personalizado da empresa
+    if (selectedCompanyDetails?.company_courses && selectedCompanyDetails.company_courses.length > 0) {
+      const companyCourse = selectedCompanyDetails.company_courses.find(
+        c => c.course_id === courseIdOrName || c.course_name === courseIdOrName
+      );
+      
+      if (companyCourse) {
+        setFormData(prev => ({
+          ...prev,
+          training_id: companyCourse.course_id,
+          training_name: companyCourse.course_name,
+          modality: companyCourse.modality === 'Presencial' ? 'Formação' : 
+                    companyCourse.modality === 'Online' ? 'Periódico' : 'Formação',
+          category: companyCourse.modality || '',
+          duration_hours: companyCourse.workload_hours || 0,
+          unit_value: companyCourse.specific_price || 0
+        }));
+        return;
+      }
+    }
+    
+    // Fallback para curso padrão
+    const course = courses.find(c => c.id === courseIdOrName);
     if (course) {
       setFormData(prev => ({
         ...prev,
-        training_id: courseId,
+        training_id: courseIdOrName,
         training_name: course.name,
         modality: course.modality || '',
-        category: course.category || '',
+        category: course.training_type || '',
         duration_hours: course.duration_hours || 0,
         unit_value: course.standard_value || 0
       }));
@@ -134,15 +184,15 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="training_name">Treinamento *</Label>
-          <Select value={formData.training_id} onValueChange={handleCourseSelect}>
+          <Label htmlFor="company_name">Empresa *</Label>
+          <Select value={formData.company_id} onValueChange={handleCompanySelect}>
             <SelectTrigger>
-              <SelectValue placeholder="Selecione o curso" />
+              <SelectValue placeholder="Selecione a empresa primeiro" />
             </SelectTrigger>
             <SelectContent>
-              {courses.map(course => (
-                <SelectItem key={course.id} value={course.id}>
-                  {course.name}
+              {companies.filter(c => c.id && c.id.trim() !== '').map(company => (
+                <SelectItem key={company.id} value={company.id}>
+                  🏢 {company.nome_fantasia || company.razao_social}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -150,25 +200,42 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="company_name">Empresa *</Label>
-          <Select value={formData.company_id} onValueChange={(value) => {
-            const selectedCompany = companies.find(c => c.id === value);
-            if (selectedCompany) {
-              handleChange('company_id', value);
-              handleChange('company_name', selectedCompany.nome_fantasia || selectedCompany.razao_social);
-            }
-          }}>
+          <Label htmlFor="training_name">Treinamento *</Label>
+          <Select 
+            value={formData.training_id} 
+            onValueChange={handleCourseSelect}
+            disabled={!formData.company_id}
+          >
             <SelectTrigger>
-              <SelectValue placeholder="Selecione a empresa" />
+              <SelectValue placeholder={formData.company_id ? "Selecione o curso" : "Selecione uma empresa primeiro"} />
             </SelectTrigger>
             <SelectContent>
-              {companies.map(company => (
-                <SelectItem key={company.id} value={company.id}>
-                  🏢 {company.nome_fantasia || company.razao_social}
+              {availableCourses.length > 0 ? (
+                availableCourses.map((course, idx) => (
+                  <SelectItem 
+                    key={course.course_id || course.id || idx} 
+                    value={course.course_id || course.id}
+                  >
+                    📚 {course.course_name || course.name}
+                    {course.specific_price && (
+                      <span className="text-xs text-emerald-600 ml-2">
+                        (R$ {Number(course.specific_price).toFixed(2)})
+                      </span>
+                    )}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="no-courses" disabled>
+                  Nenhum curso disponível
                 </SelectItem>
-              ))}
+              )}
             </SelectContent>
           </Select>
+          {selectedCompanyDetails?.company_courses && selectedCompanyDetails.company_courses.length > 0 && (
+            <p className="text-xs text-emerald-600">
+              ✓ Exibindo {selectedCompanyDetails.company_courses.length} curso(s) personalizado(s) para esta empresa
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
