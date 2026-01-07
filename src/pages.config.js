@@ -20,6 +20,7 @@ import RecyclingAlerts from './pages/RecyclingAlerts';
 import Reports from './pages/Reports';
 import Schedule from './pages/Schedule';
 import Users from './pages/Users';
+import InstructorPaymentReport from './pages/InstructorPaymentReport';
 import __Layout from './Layout.jsx';
 
 
@@ -46,6 +47,7 @@ export const PAGES = {
     "Reports": Reports,
     "Schedule": Schedule,
     "Users": Users,
+    "InstructorPaymentReport": InstructorPaymentReport,
 }
 
 export const pagesConfig = {
