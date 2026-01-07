@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LogoUploader from "./LogoUploader";
 import CompanyCoursesForm from "./CompanyCoursesForm";
 import CompanyContractsForm from "./CompanyContractsForm";
+import BulkCoursesUploader from "./BulkCoursesUploader";
 
 export default function CompanyForm({ company, onSubmit, onCancel }) {
   const [notifyInstructor, setNotifyInstructor] = useState(false);
@@ -64,6 +65,17 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(formData);
+  };
+
+  const handleBulkUploadSuccess = async () => {
+    // Recarregar dados da empresa
+    if (company?.id) {
+      const updatedCompany = await base44.entities.Company.get(company.id);
+      setFormData({
+        ...formData,
+        company_courses: updatedCompany.company_courses || []
+      });
+    }
   };
 
   // Funções para Unidades
@@ -488,7 +500,16 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
                 Contratos
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="courses" className="mt-4">
+            <TabsContent value="courses" className="mt-4 space-y-4">
+              {/* Upload em Massa */}
+              {company?.id && (
+                <BulkCoursesUploader 
+                  companyId={company.id}
+                  onSuccess={handleBulkUploadSuccess}
+                />
+              )}
+              
+              {/* Formulário Manual */}
               <CompanyCoursesForm
                 companyCourses={formData.company_courses}
                 courses={courses}
