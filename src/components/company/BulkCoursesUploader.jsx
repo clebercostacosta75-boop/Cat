@@ -11,6 +11,7 @@ export default function BulkCoursesUploader({ companyId, onSuccess }) {
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const downloadTemplate = () => {
     const templateData = [
@@ -74,8 +75,38 @@ export default function BulkCoursesUploader({ companyId, onSuccess }) {
     toast.success('Modelo de planilha baixado com sucesso!');
   };
 
-  const handleFileUpload = async (e) => {
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
+  const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+    e.target.value = '';
+  };
+
+  const processFile = async (file) => {
     if (!file) return;
 
     console.log('=== UPLOAD INICIADO ===');
@@ -157,7 +188,6 @@ export default function BulkCoursesUploader({ companyId, onSuccess }) {
     } finally {
       setUploading(false);
       setProcessing(false);
-      e.target.value = '';
     }
   };
 
@@ -198,22 +228,53 @@ export default function BulkCoursesUploader({ companyId, onSuccess }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <label className="flex-1">
-              <Input
-                type="file"
-                accept=".xls,.xlsx,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                onChange={handleFileUpload}
-                disabled={uploading || processing}
-                className="cursor-pointer"
-              />
-            </label>
-            {(uploading || processing) && (
-              <div className="flex items-center gap-2 text-sm text-stone-600">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                {uploading ? 'Enviando...' : 'Processando...'}
-              </div>
-            )}
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`
+              relative border-2 border-dashed rounded-lg p-8 transition-all duration-200
+              ${isDragging 
+                ? 'border-emerald-500 bg-emerald-50 scale-[1.02]' 
+                : 'border-stone-300 bg-white hover:border-emerald-400 hover:bg-emerald-50/50'
+              }
+              ${(uploading || processing) ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}
+            `}
+          >
+            <input
+              type="file"
+              accept=".xls,.xlsx,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              onChange={handleFileSelect}
+              disabled={uploading || processing}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              id="file-upload"
+            />
+            
+            <div className="flex flex-col items-center justify-center gap-3 text-center">
+              {(uploading || processing) ? (
+                <>
+                  <Loader2 className="w-12 h-12 text-emerald-600 animate-spin" />
+                  <p className="text-sm font-medium text-stone-700">
+                    {uploading ? 'Enviando arquivo...' : 'Processando dados...'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Upload className={`w-12 h-12 transition-colors ${isDragging ? 'text-emerald-600' : 'text-stone-400'}`} />
+                  <div>
+                    <p className="text-base font-semibold text-stone-900 mb-1">
+                      {isDragging ? 'Solte o arquivo aqui' : 'Arraste o arquivo Excel aqui'}
+                    </p>
+                    <p className="text-sm text-stone-600">
+                      ou <label htmlFor="file-upload" className="text-emerald-600 hover:text-emerald-700 font-medium cursor-pointer underline">clique para selecionar</label>
+                    </p>
+                  </div>
+                  <p className="text-xs text-stone-500 mt-2">
+                    Formatos aceitos: .xls, .xlsx, .csv (máx. 10MB)
+                  </p>
+                </>
+              )}
+            </div>
           </div>
 
           {result && (
