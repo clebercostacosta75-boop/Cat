@@ -57,6 +57,7 @@ export default function ContractorsPage() {
     company_name: "",
     razao_social: "",
     cnpj: "",
+    logo_url: "",
     address: {
       street: "",
       number: "",
@@ -119,6 +120,7 @@ export default function ContractorsPage() {
       company_name: "",
       razao_social: "",
       cnpj: "",
+      logo_url: "",
       address: {
         street: "",
         number: "",
@@ -302,6 +304,41 @@ export default function ContractorsPage() {
                         onChange={(e) => setFormData({...formData, razao_social: e.target.value})}
                         placeholder="Ex: V.S. Nunes Cursos e Treinamento LTDA"
                         required
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="logo_url">Logo da Empresa</Label>
+                      {formData.logo_url && (
+                        <div className="mb-2 flex items-center gap-3">
+                          <img 
+                            src={formData.logo_url} 
+                            alt="Logo" 
+                            className="h-16 w-auto object-contain border rounded p-2"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setFormData({...formData, logo_url: ''})}
+                          >
+                            Remover
+                          </Button>
+                        </div>
+                      )}
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                              setFormData({...formData, logo_url: file_url});
+                            } catch (error) {
+                              console.error('Erro ao enviar logo:', error);
+                            }
+                          }
+                        }}
                       />
                     </div>
                     <div className="space-y-2">
