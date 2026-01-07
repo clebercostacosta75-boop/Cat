@@ -7,12 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, X, MapPin, Users, BookOpen, MessageCircle, Loader2 } from "lucide-react";
+import { Plus, X, MapPin, Users, BookOpen, MessageCircle, Loader2, FileText } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LogoUploader from "./LogoUploader";
+import CompanyCoursesForm from "./CompanyCoursesForm";
+import CompanyContractsForm from "./CompanyContractsForm";
 
 export default function CompanyForm({ company, onSubmit, onCancel }) {
   const [notifyInstructor, setNotifyInstructor] = useState(false);
@@ -53,7 +56,9 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
     fiscal_name: company?.fiscal_name || "",
     fiscal_role: company?.fiscal_role || "",
     contract_manager_name: company?.contract_manager_name || "",
-    contract_manager_role: company?.contract_manager_role || ""
+    contract_manager_role: company?.contract_manager_role || "",
+    company_courses: company?.company_courses || [],
+    company_contracts: company?.company_contracts || []
   });
 
   const handleSubmit = (e) => {
@@ -463,12 +468,49 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
         </CardContent>
       </Card>
 
-      {/* 4. Informações de Faturamento */}
+      {/* 4. Cursos e Contratos */}
+      <Card className="border-indigo-200 bg-indigo-50/30">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-indigo-600" />
+            4. Cursos e Contratos da Empresa
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="courses" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="courses">
+                <BookOpen className="w-4 h-4 mr-2" />
+                Cursos Personalizados
+              </TabsTrigger>
+              <TabsTrigger value="contracts">
+                <FileText className="w-4 h-4 mr-2" />
+                Contratos
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="courses" className="mt-4">
+              <CompanyCoursesForm
+                companyCourses={formData.company_courses}
+                courses={courses}
+                onChange={(courses) => setFormData({ ...formData, company_courses: courses })}
+              />
+            </TabsContent>
+            <TabsContent value="contracts" className="mt-4">
+              <CompanyContractsForm
+                companyContracts={formData.company_contracts}
+                onChange={(contracts) => setFormData({ ...formData, company_contracts: contracts })}
+              />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* 5. Informações de Faturamento */}
       <Card className="border-orange-200 bg-orange-50/30">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <span className="text-2xl">📄</span>
-            4. Informações de Faturamento e Assinaturas
+            5. Informações de Faturamento e Assinaturas
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
