@@ -22,6 +22,9 @@ export default function BMMPreview({ content }) {
     }
   };
 
+  // Buscar contrato ativo da empresa
+  const activeContract = company?.company_contracts?.find(c => c.status === 'Ativo');
+
   return (
     <Card className="border-none shadow-xl bg-white p-8">
       {/* Cabeçalho */}
@@ -59,6 +62,16 @@ export default function BMMPreview({ content }) {
           <p className="text-lg text-stone-600 mt-1">
             Período: <strong>{period}</strong>
           </p>
+          {activeContract && (
+            <div className="text-sm text-stone-600 mt-2">
+              <p>
+                <strong>Contrato:</strong> {activeContract.contract_number}
+                {activeContract.amendment_number && (
+                  <span> | <strong>Aditivo:</strong> {activeContract.amendment_number}</span>
+                )}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

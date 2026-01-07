@@ -14,6 +14,7 @@ export default function CompanyContractsForm({ companyContracts, onChange }) {
       ...companyContracts,
       {
         contract_number: "",
+        amendment_number: "",
         start_date: "",
         end_date: "",
         description: "",
@@ -99,20 +100,12 @@ export default function CompanyContractsForm({ companyContracts, onChange }) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Status</Label>
-                    <Select 
-                      value={contract.status} 
-                      onValueChange={(value) => handleContractChange(index, 'status', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Ativo">✅ Ativo</SelectItem>
-                        <SelectItem value="Vencido">⏰ Vencido</SelectItem>
-                        <SelectItem value="Cancelado">❌ Cancelado</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label>Número do Aditivo</Label>
+                    <Input
+                      value={contract.amendment_number || ""}
+                      onChange={(e) => handleContractChange(index, 'amendment_number', e.target.value)}
+                      placeholder="Ex: AD-001 (se houver)"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Data de Início *</Label>
@@ -131,6 +124,22 @@ export default function CompanyContractsForm({ companyContracts, onChange }) {
                       onChange={(e) => handleContractChange(index, 'end_date', e.target.value)}
                       required
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select 
+                      value={contract.status} 
+                      onValueChange={(value) => handleContractChange(index, 'status', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Ativo">✅ Ativo</SelectItem>
+                        <SelectItem value="Vencido">⏰ Vencido</SelectItem>
+                        <SelectItem value="Cancelado">❌ Cancelado</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label>Descrição do Contrato</Label>
