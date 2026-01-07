@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DollarSign, Calendar, CheckCircle, AlertCircle, Clock, Upload, FileText, Edit, Save, X, Loader2, Building2, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import GeneralFinancialControl from "@/components/financial/GeneralFinancialControl";
 
 export default function InstructorFinancialControl() {
   const queryClient = useQueryClient();
@@ -207,6 +208,9 @@ export default function InstructorFinancialControl() {
             Gestão completa de pagamentos e dados bancários
           </p>
         </div>
+
+        {/* Controle Geral */}
+        <GeneralFinancialControl />
 
         {/* Seleção de Instrutor */}
         <Card className="border-2 border-emerald-200">
