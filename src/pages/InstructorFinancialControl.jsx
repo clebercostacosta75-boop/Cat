@@ -66,8 +66,11 @@ export default function InstructorFinancialControl() {
         },
         pix_keys: selectedInstructor.pix_keys || []
       });
+      setEditingInstructor(false);
+    } else {
+      setInstructorData(null);
     }
-  }, [selectedInstructor]);
+  }, [selectedInstructor, selectedInstructorId]);
 
   const instructorClasses = React.useMemo(() => {
     if (!selectedInstructorId) return [];
