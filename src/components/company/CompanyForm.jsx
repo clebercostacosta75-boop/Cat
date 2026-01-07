@@ -242,7 +242,7 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
                     <SelectValue placeholder="Selecione o modelo" />
                   </SelectTrigger>
                   <SelectContent>
-                    {bmmTemplates.map(template => (
+                    {bmmTemplates.filter(template => template.id && template.id.trim() !== '').map(template => (
                       <SelectItem key={template.id} value={template.id}>
                         📄 {template.name}
                       </SelectItem>
@@ -434,7 +434,7 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
                           <SelectValue placeholder="Selecione a unidade" />
                         </SelectTrigger>
                         <SelectContent>
-                          {formData.units.map((unit, idx) => (
+                          {formData.units.filter(unit => unit.name && unit.name.trim() !== '').map((unit, idx) => (
                             <SelectItem key={idx} value={unit.name}>
                               📍 {unit.name}
                             </SelectItem>
@@ -553,7 +553,7 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
                     <SelectValue placeholder="Selecione o contato de referência para o BMM" />
                   </SelectTrigger>
                   <SelectContent>
-                    {formData.contacts.map((contact, idx) => (
+                    {formData.contacts.filter(contact => contact.name && contact.name.trim() !== '').map((contact, idx) => (
                       <SelectItem key={idx} value={contact.name}>
                         👤 {contact.name} {contact.role && `- ${contact.role}`}
                       </SelectItem>
