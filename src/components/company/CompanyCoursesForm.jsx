@@ -15,6 +15,8 @@ export default function CompanyCoursesForm({ companyCourses, courses, onChange }
         course_name: "",
         workload_hours: 0,
         modality: "Presencial",
+        theoretical_hours: 0,
+        practical_hours: 0,
         specific_price: 0
       }
     ]);
@@ -37,6 +39,8 @@ export default function CompanyCoursesForm({ companyCourses, courses, onChange }
           course_name: selectedCourse.name,
           workload_hours: selectedCourse.duration_hours || 0,
           modality: selectedCourse.training_type || "Presencial",
+          theoretical_hours: selectedCourse.theoretical_hours || 0,
+          practical_hours: selectedCourse.practical_hours || 0,
           specific_price: selectedCourse.standard_value || 0
         };
       }
@@ -91,7 +95,7 @@ export default function CompanyCoursesForm({ companyCourses, courses, onChange }
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Carga Horária (horas) *</Label>
+                  <Label>Carga Horária Total (horas) *</Label>
                   <Input
                     type="number"
                     value={course.workload_hours}
@@ -128,6 +132,30 @@ export default function CompanyCoursesForm({ companyCourses, courses, onChange }
                   />
                 </div>
               </div>
+              
+              {/* Campos adicionais para modalidade Híbrido */}
+              {course.modality === 'Híbrido' && (
+                <div className="grid md:grid-cols-2 gap-3 mt-3 pt-3 border-t">
+                  <div className="space-y-2">
+                    <Label>Carga Horária EAD (horas)</Label>
+                    <Input
+                      type="number"
+                      value={course.theoretical_hours || 0}
+                      onChange={(e) => handleCourseChange(index, 'theoretical_hours', parseFloat(e.target.value) || 0)}
+                      placeholder="Ex: 4"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Carga Horária Presencial (horas)</Label>
+                    <Input
+                      type="number"
+                      value={course.practical_hours || 0}
+                      onChange={(e) => handleCourseChange(index, 'practical_hours', parseFloat(e.target.value) || 0)}
+                      placeholder="Ex: 4"
+                    />
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))
