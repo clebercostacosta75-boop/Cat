@@ -31,15 +31,24 @@ export default function BMMPreview({ content }) {
       <div className="border-b-2 border-emerald-600 pb-6 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            {/* Logo da Contratada (CAT) */}
-            <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
-              alt="CAT Logo" 
-              className="h-16 w-auto"
-            />
+            {/* Logo da Contratada */}
+            {contractor?.logo_url ? (
+              <img 
+                src={contractor.logo_url} 
+                alt={contractor.company_name} 
+                className="h-16 w-auto object-contain"
+              />
+            ) : (
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png" 
+                alt="Logo Padrão" 
+                className="h-16 w-auto"
+              />
+            )}
             {contractor && (
               <div className="text-sm text-stone-600">
                 <p className="font-bold text-stone-900">{contractor.company_name}</p>
+                <p className="text-xs">{contractor.razao_social}</p>
                 <p>CNPJ: {contractor.cnpj}</p>
               </div>
             )}

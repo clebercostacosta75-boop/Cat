@@ -18,6 +18,7 @@ import BMMEmailSender from "@/components/bmm/BMMEmailSender";
 export default function BMMGenerator() {
   const queryClient = useQueryClient();
   const [selectedCompany, setSelectedCompany] = useState("");
+  const [selectedContractor, setSelectedContractor] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [generatedContent, setGeneratedContent] = useState(null);
@@ -94,7 +95,7 @@ export default function BMMGenerator() {
     try {
       const company = companies.find(c => c.id === selectedCompany);
       const template = templates.find(t => t.id === selectedTemplate);
-      const contractor = contractors[0]; // Pegar primeira contratada
+      const contractor = contractors.find(c => c.id === selectedContractor) || contractors[0];
 
       // Mapear cursos com valores
       const courseMap = courses.reduce((acc, course) => {
@@ -259,15 +260,31 @@ export default function BMMGenerator() {
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
                   <div className="space-y-2">
-                    <Label>Empresa *</Label>
+                    <Label>Empresa Cliente *</Label>
                     <Select value={selectedCompany} onValueChange={setSelectedCompany}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione a empresa" />
+                        <SelectValue placeholder="Selecione a empresa cliente" />
                       </SelectTrigger>
                       <SelectContent>
                         {companies.filter(c => c.status === 'Ativo').map(company => (
                           <SelectItem key={company.id} value={company.id}>
                             🏢 {company.nome_fantasia || company.razao_social}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Empresa Contratada *</Label>
+                    <Select value={selectedContractor} onValueChange={setSelectedContractor}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a contratada" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {contractors.filter(c => c.status === 'Ativo').map(contractor => (
+                          <SelectItem key={contractor.id} value={contractor.id}>
+                            🏭 {contractor.company_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -309,7 +326,7 @@ export default function BMMGenerator() {
                   <Button 
                     onClick={handleGenerate}
                     className="w-full bg-gray-900 hover:bg-gray-800 mt-4"
-                    disabled={!selectedCompany || !selectedPeriod || isGenerating}
+                    disabled={!selectedCompany || !selectedContractor || !selectedPeriod || isGenerating}
                   >
                     {isGenerating ? (
                       <>
