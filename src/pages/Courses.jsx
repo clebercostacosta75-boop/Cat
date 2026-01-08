@@ -84,8 +84,8 @@ export default function CoursesPage() {
   const [formData, setFormData] = useState({
     name: "",
     duration_hours: "",
-    theoretical_hours: "",
-    practical_hours: "",
+    theoretical_hours: 0,
+    practical_hours: 0,
     standard_value: 0,
     description: "",
     modality: "Formação",
@@ -116,8 +116,8 @@ export default function CoursesPage() {
       start_date: course.start_date || "",
       end_date: course.end_date || "",
       category: course.category || "Presencial",
-      theoretical_hours: course.theoretical_hours || "",
-      practical_hours: course.practical_hours || "",
+      theoretical_hours: parseFloat(course.theoretical_hours) || 0,
+      practical_hours: parseFloat(course.practical_hours) || 0,
       schedules: course.schedules || {
         morning: { start: "", end: "" },
         afternoon: { start: "", end: "" },
@@ -131,11 +131,16 @@ export default function CoursesPage() {
     try {
       const duplicatedCourse = {
         name: `${course.name} (Cópia)`,
-        duration_hours: course.duration_hours || 0,
+        duration_hours: parseFloat(course.duration_hours) || 0,
+        theoretical_hours: parseFloat(course.theoretical_hours) || 0,
+        practical_hours: parseFloat(course.practical_hours) || 0,
+        standard_value: parseFloat(course.standard_value) || 0,
         description: course.description || "",
         modality: course.modality || "Formação",
         category: course.category || "",
         validity: course.validity || "",
+        start_date: course.start_date || "",
+        end_date: course.end_date || "",
         schedules: course.schedules || {
           morning: { start: "", end: "" },
           afternoon: { start: "", end: "" },
@@ -157,8 +162,8 @@ export default function CoursesPage() {
     setFormData({
       name: "",
       duration_hours: "",
-      theoretical_hours: "",
-      practical_hours: "",
+      theoretical_hours: 0,
+      practical_hours: 0,
       standard_value: 0,
       description: "",
       modality: "Formação",
@@ -459,8 +464,8 @@ export default function CoursesPage() {
                           }
                           // Se mudou de híbrido para outro, limpar os campos
                           else if (value !== "Híbrido") {
-                            newFormData.theoretical_hours = "";
-                            newFormData.practical_hours = "";
+                            newFormData.theoretical_hours = 0;
+                            newFormData.practical_hours = 0;
                           }
                           
                           setFormData(newFormData);
@@ -724,8 +729,8 @@ export default function CoursesPage() {
                   setFormData({
                     name: "",
                     duration_hours: "",
-                    theoretical_hours: "",
-                    practical_hours: "",
+                    theoretical_hours: 0,
+                    practical_hours: 0,
                     standard_value: 0,
                     description: "",
                     modality: "Formação",
@@ -768,6 +773,8 @@ export default function CoursesPage() {
                 setFormData({
                   name: "",
                   duration_hours: "",
+                  theoretical_hours: 0,
+                  practical_hours: 0,
                   standard_value: 0,
                   description: "",
                   modality: "Formação",

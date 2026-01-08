@@ -17,12 +17,12 @@ import InstructorFinancialControl from './pages/InstructorFinancialControl';
 import InstructorPaymentReport from './pages/InstructorPaymentReport';
 import Instructors from './pages/Instructors';
 import NotificationSettings from './pages/NotificationSettings';
+import PaymentAutomation from './pages/PaymentAutomation';
 import ProfitabilityAnalysis from './pages/ProfitabilityAnalysis';
 import RecyclingAlerts from './pages/RecyclingAlerts';
 import Reports from './pages/Reports';
 import Schedule from './pages/Schedule';
 import Users from './pages/Users';
-import PaymentAutomation from './pages/PaymentAutomation';
 import __Layout from './Layout.jsx';
 
 
@@ -46,12 +46,12 @@ export const PAGES = {
     "InstructorPaymentReport": InstructorPaymentReport,
     "Instructors": Instructors,
     "NotificationSettings": NotificationSettings,
+    "PaymentAutomation": PaymentAutomation,
     "ProfitabilityAnalysis": ProfitabilityAnalysis,
     "RecyclingAlerts": RecyclingAlerts,
     "Reports": Reports,
     "Schedule": Schedule,
     "Users": Users,
-    "PaymentAutomation": PaymentAutomation,
 }
 
 export const pagesConfig = {
