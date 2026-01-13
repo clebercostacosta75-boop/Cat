@@ -17,14 +17,30 @@ export default function BMMPreview({ content }) {
           margin: 10mm;
         }
         
-        body {
+        body, html {
+          height: auto !important;
+          overflow: visible !important;
           print-color-adjust: exact;
           -webkit-print-color-adjust: exact;
         }
         
-        /* Ocultar elementos da interface */
-        nav, header, aside, .sidebar, [role="navigation"], [role="banner"] {
+        /* Ocultar elementos da interface da aplicação */
+        #app-sidebar, 
+        #app-header,
+        nav, 
+        header:not(#bmm-print-container header), 
+        aside, 
+        .sidebar, 
+        [role="navigation"], 
+        [role="banner"],
+        button,
+        .bg-gray-50 {
           display: none !important;
+        }
+        
+        /* Garantir que apenas o BMM seja exibido */
+        #app-root {
+          background: white !important;
         }
         
         /* Container principal do BMM */
@@ -34,54 +50,109 @@ export default function BMMPreview({ content }) {
           margin: 0 !important;
           padding: 0 !important;
           page-break-after: avoid;
+          display: block !important;
         }
         
         /* Card do preview */
         #bmm-print-container > div {
           box-shadow: none !important;
           border: none !important;
-          padding: 15mm !important;
+          padding: 10mm !important;
           background: white !important;
+          margin: 0 !important;
+        }
+        
+        /* Cabeçalho do BMM */
+        #bmm-print-container .border-b-2 {
+          border-bottom: 2px solid #10b981 !important;
+          padding-bottom: 8px !important;
+          margin-bottom: 10px !important;
         }
         
         /* Tabela responsiva */
         table {
           width: 100% !important;
-          font-size: 9pt !important;
+          font-size: 8.5pt !important;
           page-break-inside: avoid;
+          border-collapse: collapse !important;
+        }
+        
+        thead {
+          background-color: #10b981 !important;
+          color: white !important;
         }
         
         th, td {
-          padding: 4px 6px !important;
-          font-size: 9pt !important;
+          padding: 3px 5px !important;
+          font-size: 8.5pt !important;
+          border: 1px solid #ccc !important;
+        }
+        
+        th {
+          background-color: #10b981 !important;
+          color: white !important;
         }
         
         /* Logos */
         img {
-          max-height: 40px !important;
+          max-height: 35px !important;
           page-break-inside: avoid;
         }
         
         /* Títulos e textos */
         h1 {
-          font-size: 16pt !important;
-          margin: 8px 0 !important;
+          font-size: 14pt !important;
+          margin: 6px 0 !important;
         }
         
         h2 {
-          font-size: 11pt !important;
-          margin: 6px 0 !important;
+          font-size: 10pt !important;
+          margin: 5px 0 !important;
+          font-weight: bold !important;
+        }
+        
+        /* Seção de dados do cliente */
+        .bg-stone-50 {
+          background: #f5f5f4 !important;
+          padding: 8px !important;
+          margin-bottom: 10px !important;
         }
         
         /* Cards de resumo */
         .grid {
           page-break-inside: avoid;
+          display: grid !important;
+          grid-template-columns: repeat(3, 1fr) !important;
+          gap: 10px !important;
+          margin: 10px 0 !important;
+        }
+        
+        .bg-emerald-50, .bg-blue-50, .bg-amber-50 {
+          padding: 8px !important;
+          text-align: center !important;
+          border-radius: 4px !important;
         }
         
         /* Assinaturas */
         .signature-section {
           page-break-inside: avoid;
-          margin-top: 15mm !important;
+          margin-top: 12mm !important;
+          padding-top: 10px !important;
+        }
+        
+        .signature-section .grid {
+          margin-top: 8px !important;
+        }
+        
+        .border-t-2 {
+          border-top: 2px solid #e5e5e5 !important;
+        }
+        
+        /* Rodapé */
+        .border-t.border-stone-200 {
+          margin-top: 10px !important;
+          padding-top: 8px !important;
+          font-size: 7pt !important;
         }
       }
     `;
