@@ -160,59 +160,9 @@ export default function BMMGenerator() {
       total_students: generatedContent.totals.students
     });
 
-    // Usar window.print() para gerar PDF
-    const printContent = previewRef.current;
-    if (!printContent) {
-      toast.error('Elemento de preview não encontrado');
-      return;
-    }
-
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      toast.error('Popup bloqueado. Permita popups para exportar PDF.');
-      return;
-    }
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>BMM - ${generatedContent.company?.nome_fantasia || 'Empresa'} - ${generatedContent.period}</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-            th { background-color: #10b981; color: white; }
-            .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #10b981; }
-            .title { text-align: center; margin: 20px 0; }
-            .title h1 { color: #065f46; }
-            .section { margin-bottom: 20px; padding: 15px; background: #f5f5f4; border-radius: 8px; }
-            .section h2 { margin-bottom: 10px; color: #1c1917; }
-            .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
-            .stat { text-align: center; padding: 15px; background: #ecfdf5; border-radius: 8px; }
-            .stat p:first-child { font-size: 24px; font-weight: bold; color: #10b981; }
-            .signatures { display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px; margin-top: 40px; padding-top: 20px; border-top: 2px solid #e5e5e5; }
-            .signature { text-align: center; }
-            .signature-line { border-top: 2px solid #78716c; width: 200px; margin: 0 auto; padding-top: 10px; }
-            .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #78716c; }
-            @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
-          </style>
-        </head>
-        <body>
-          ${printContent.innerHTML}
-          <script>
-            window.onload = function() {
-              window.print();
-              window.onafterprint = function() { window.close(); };
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-
-    toast.success('Janela de impressão aberta. Selecione "Salvar como PDF".');
+    // Usar window.print() diretamente na janela atual para gerar PDF em A4 paisagem
+    window.print();
+    toast.success('Janela de impressão aberta. Configure como A4 Paisagem e selecione "Salvar como PDF".');
   };
 
   const selectedCompanyData = companies.find(c => c.id === selectedCompany);

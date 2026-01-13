@@ -6,6 +6,95 @@ export default function BMMPreview({ content }) {
 
   const { company, contractor, period, classes, totals, template } = content;
 
+  // Adicionar estilos de impressão A4 Paisagem
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.id = 'bmm-print-styles';
+    style.textContent = `
+      @media print {
+        @page {
+          size: A4 landscape;
+          margin: 10mm;
+        }
+        
+        body {
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+        
+        /* Ocultar elementos da interface */
+        nav, header, aside, .sidebar, [role="navigation"], [role="banner"] {
+          display: none !important;
+        }
+        
+        /* Container principal do BMM */
+        #bmm-print-container {
+          width: 100% !important;
+          max-width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          page-break-after: avoid;
+        }
+        
+        /* Card do preview */
+        #bmm-print-container > div {
+          box-shadow: none !important;
+          border: none !important;
+          padding: 15mm !important;
+          background: white !important;
+        }
+        
+        /* Tabela responsiva */
+        table {
+          width: 100% !important;
+          font-size: 9pt !important;
+          page-break-inside: avoid;
+        }
+        
+        th, td {
+          padding: 4px 6px !important;
+          font-size: 9pt !important;
+        }
+        
+        /* Logos */
+        img {
+          max-height: 40px !important;
+          page-break-inside: avoid;
+        }
+        
+        /* Títulos e textos */
+        h1 {
+          font-size: 16pt !important;
+          margin: 8px 0 !important;
+        }
+        
+        h2 {
+          font-size: 11pt !important;
+          margin: 6px 0 !important;
+        }
+        
+        /* Cards de resumo */
+        .grid {
+          page-break-inside: avoid;
+        }
+        
+        /* Assinaturas */
+        .signature-section {
+          page-break-inside: avoid;
+          margin-top: 15mm !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      const existingStyle = document.getElementById('bmm-print-styles');
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+    };
+  }, []);
+
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -26,7 +115,7 @@ export default function BMMPreview({ content }) {
   const activeContract = company?.company_contracts?.find(c => c.status === 'Ativo');
 
   return (
-    <Card className="border-none shadow-xl bg-white p-8">
+    <Card id="bmm-print-container" className="border-none shadow-xl bg-white p-8">
       {/* Cabeçalho */}
       <div className="border-b-2 border-emerald-600 pb-6 mb-6">
         <div className="flex items-center justify-between">
@@ -184,7 +273,7 @@ export default function BMMPreview({ content }) {
       </div>
 
       {/* Assinaturas */}
-      <div className="border-t-2 border-stone-200 pt-6 mt-8">
+      <div className="signature-section border-t-2 border-stone-200 pt-6 mt-8">
         <div className="grid md:grid-cols-2 gap-8 mb-8">
           <div className="text-center">
             <div className="border-t-2 border-stone-400 w-64 mx-auto pt-2">
