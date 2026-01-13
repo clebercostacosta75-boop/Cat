@@ -22,185 +22,60 @@ export default function BMMPreview({ content }) {
           -webkit-print-color-adjust: exact !important;
         }
         
-        body, html {
-          height: auto !important;
-          overflow: visible !important;
-          background: white !important;
-        }
-        
-        /* Ocultar elementos da interface da aplicação */
-        body > div:not(#app-root),
-        #app-sidebar, 
-        #app-header,
-        nav:not(#bmm-print-container nav), 
-        header:not(#bmm-print-container header), 
-        aside, 
-        .sidebar,
-        button:not(#bmm-print-container button),
-        [role="navigation"], 
-        [role="banner"] {
-          display: none !important;
-          visibility: hidden !important;
-        }
-        
-        /* Garantir que o container raiz e o BMM sejam visíveis */
-        #app-root {
-          background: white !important;
-          display: block !important;
-          visibility: visible !important;
-        }
-        
-        #app-root > * {
+        /* Ocultar apenas sidebar e header */
+        #app-sidebar,
+        #app-header {
           display: none !important;
         }
         
-        #app-root #bmm-print-container,
-        #app-root #bmm-print-container * {
-          display: block !important;
+        /* Garantir que tudo seja impresso */
+        body, html, * {
           visibility: visible !important;
         }
         
-        /* Container principal do BMM */
+        body {
+          background: white !important;
+        }
+        
+        /* Container do BMM */
         #bmm-print-container {
+          display: block !important;
           width: 100% !important;
-          max-width: 100% !important;
           margin: 0 !important;
           padding: 0 !important;
-          page-break-after: avoid;
-          position: static !important;
         }
         
-        /* Card do preview */
+        /* Card */
         #bmm-print-container > div {
           box-shadow: none !important;
           border: none !important;
           padding: 10mm !important;
-          background: white !important;
-          margin: 0 !important;
         }
         
-        /* Cabeçalho do BMM */
-        #bmm-print-container .border-b-2 {
-          border-bottom: 2px solid #10b981 !important;
-          padding-bottom: 8px !important;
-          margin-bottom: 10px !important;
-        }
-        
-        /* Flexbox e Grid mantêm display */
-        #bmm-print-container .flex {
-          display: flex !important;
-        }
-        
-        #bmm-print-container .grid {
-          display: grid !important;
-        }
-        
-        /* Tabela responsiva */
-        #bmm-print-container table {
-          display: table !important;
+        /* Tabela */
+        table {
           width: 100% !important;
           font-size: 8.5pt !important;
-          page-break-inside: avoid;
           border-collapse: collapse !important;
         }
         
-        #bmm-print-container thead {
-          display: table-header-group !important;
-          background-color: #10b981 !important;
-          color: white !important;
-        }
-        
-        #bmm-print-container tbody {
-          display: table-row-group !important;
-        }
-        
-        #bmm-print-container tfoot {
-          display: table-footer-group !important;
-        }
-        
-        #bmm-print-container tr {
-          display: table-row !important;
-        }
-        
-        #bmm-print-container th,
-        #bmm-print-container td {
-          display: table-cell !important;
+        th, td {
           padding: 3px 5px !important;
-          font-size: 8.5pt !important;
           border: 1px solid #ccc !important;
         }
         
-        #bmm-print-container th {
+        thead {
           background-color: #10b981 !important;
           color: white !important;
         }
         
-        /* Logos */
-        #bmm-print-container img {
-          display: inline-block !important;
+        /* Textos */
+        h1 { font-size: 14pt !important; }
+        h2 { font-size: 10pt !important; }
+        
+        /* Imagens */
+        img {
           max-height: 35px !important;
-          page-break-inside: avoid;
-        }
-        
-        /* Títulos e textos */
-        #bmm-print-container h1 {
-          font-size: 14pt !important;
-          margin: 6px 0 !important;
-        }
-        
-        #bmm-print-container h2 {
-          font-size: 10pt !important;
-          margin: 5px 0 !important;
-          font-weight: bold !important;
-        }
-        
-        #bmm-print-container p {
-          display: block !important;
-        }
-        
-        /* Seção de dados do cliente */
-        #bmm-print-container .bg-stone-50 {
-          background: #f5f5f4 !important;
-          padding: 8px !important;
-          margin-bottom: 10px !important;
-        }
-        
-        /* Cards de resumo */
-        #bmm-print-container .grid {
-          page-break-inside: avoid;
-          grid-template-columns: repeat(3, 1fr) !important;
-          gap: 10px !important;
-          margin: 10px 0 !important;
-        }
-        
-        #bmm-print-container .bg-emerald-50,
-        #bmm-print-container .bg-blue-50,
-        #bmm-print-container .bg-amber-50 {
-          padding: 8px !important;
-          text-align: center !important;
-          border-radius: 4px !important;
-        }
-        
-        /* Assinaturas */
-        #bmm-print-container .signature-section {
-          page-break-inside: avoid;
-          margin-top: 12mm !important;
-          padding-top: 10px !important;
-        }
-        
-        #bmm-print-container .signature-section .grid {
-          margin-top: 8px !important;
-        }
-        
-        #bmm-print-container .border-t-2 {
-          border-top: 2px solid #e5e5e5 !important;
-        }
-        
-        /* Rodapé */
-        #bmm-print-container .border-t.border-stone-200 {
-          margin-top: 10px !important;
-          padding-top: 8px !important;
-          font-size: 7pt !important;
         }
       }
     `;
