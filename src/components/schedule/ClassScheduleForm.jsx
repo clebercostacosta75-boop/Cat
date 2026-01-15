@@ -19,8 +19,6 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     location: "",
     students_count: "",
     status: "Agendado",
-    start_date: "",
-    end_date: "",
     realization_dates: [],
     specific_days: "",
     training_schedule: "",
@@ -140,10 +138,10 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     }
   };
 
-  // Calcular o mês automaticamente quando a data de início mudar
+  // Calcular o mês automaticamente quando a primeira data de realização mudar
   useEffect(() => {
-    if (formData.start_date) {
-      const date = new Date(formData.start_date);
+    if (formData.realization_dates && formData.realization_dates.length > 0 && formData.realization_dates[0]) {
+      const date = new Date(formData.realization_dates[0]);
       const monthNames = [
         'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
         'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
@@ -151,7 +149,7 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
       const month = `${monthNames[date.getMonth()]}/${date.getFullYear()}`;
       setFormData(prev => ({ ...prev, month }));
     }
-  }, [formData.start_date]);
+  }, [formData.realization_dates]);
 
   // Calcular valor total automaticamente
   useEffect(() => {
@@ -219,7 +217,7 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
         entity_type: 'ClassSchedule',
         entity_id: classSchedule?.id,
         entity_name: formData.training_name,
-        details: `Empresa: ${formData.company_name}\nData: ${formData.start_date}\nInstrutor: ${formData.instructor_name}`
+        details: `Empresa: ${formData.company_name}\nDatas: ${(formData.realization_dates || []).join(', ')}\nInstrutor: ${formData.instructor_name}`
       }).catch(err => console.error('Erro ao notificar admins:', err));
     } catch (error) {
       console.error('Erro ao notificar admins:', error);
@@ -352,27 +350,6 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
               <SelectItem value="Cancelado">Cancelado</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="start_date">Data de Início *</Label>
-          <Input
-            id="start_date"
-            type="date"
-            value={formData.start_date}
-            onChange={(e) => handleChange('start_date', e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="end_date">Data de Finalização</Label>
-          <Input
-            id="end_date"
-            type="date"
-            value={formData.end_date}
-            onChange={(e) => handleChange('end_date', e.target.value)}
-          />
         </div>
 
         <div className="space-y-2 md:col-span-2">

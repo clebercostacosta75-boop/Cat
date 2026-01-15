@@ -195,9 +195,7 @@ export default function BMMPreview({ content }) {
             <thead>
               <tr className="bg-emerald-600 text-white">
                 <th className="border border-emerald-700 px-3 py-2 text-left">Nº</th>
-                <th className="border border-emerald-700 px-3 py-2 text-left">Treinamento</th>
-                <th className="border border-emerald-700 px-3 py-2 text-center">Data Início</th>
-                <th className="border border-emerald-700 px-3 py-2 text-center">Data Fim</th>
+                <th className="border border-emerald-700 px-3 py-2 text-left">Treinamento / Datas de Realização</th>
                 <th className="border border-emerald-700 px-3 py-2 text-center">C.H.</th>
                 <th className="border border-emerald-700 px-3 py-2 text-center">Qtd. Alunos</th>
                 <th className="border border-emerald-700 px-3 py-2 text-right">Valor Unit.</th>
@@ -209,18 +207,12 @@ export default function BMMPreview({ content }) {
                 <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-stone-50'}>
                   <td className="border border-stone-300 px-3 py-2">{index + 1}</td>
                   <td className="border border-stone-300 px-3 py-2 font-medium">
-                    {classItem.training_name}
+                    <div>{classItem.training_name}</div>
                     {classItem.realization_dates && classItem.realization_dates.length > 0 && (
-                      <div className="text-xs text-stone-500 mt-1">
-                        Datas: {classItem.realization_dates.map(d => formatDate(d)).join(', ')}
+                      <div className="text-xs text-stone-600 mt-1">
+                        📅 {classItem.realization_dates.map(d => formatDate(d)).join(', ')}
                       </div>
                     )}
-                  </td>
-                  <td className="border border-stone-300 px-3 py-2 text-center">
-                    {formatDate(classItem.start_date)}
-                  </td>
-                  <td className="border border-stone-300 px-3 py-2 text-center">
-                    {formatDate(classItem.end_date)}
                   </td>
                   <td className="border border-stone-300 px-3 py-2 text-center">
                     {classItem.duration_hours || '-'}h
@@ -239,7 +231,7 @@ export default function BMMPreview({ content }) {
             </tbody>
             <tfoot>
               <tr className="bg-emerald-100 font-bold">
-                <td colSpan={5} className="border border-stone-300 px-3 py-2 text-right">
+                <td colSpan={3} className="border border-stone-300 px-3 py-2 text-right">
                   TOTAIS:
                 </td>
                 <td className="border border-stone-300 px-3 py-2 text-center">
