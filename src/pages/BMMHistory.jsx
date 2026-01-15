@@ -216,19 +216,20 @@ export default function BMMHistoryPage() {
                     <TableHead className="font-bold text-right text-black">💰 Valor</TableHead>
                     <TableHead className="font-bold text-center text-black">📊 Status</TableHead>
                     <TableHead className="font-bold text-black">🕒 Gerado em</TableHead>
+                    <TableHead className="font-bold text-center text-black">📋 Histórico</TableHead>
                     <TableHead className="font-bold text-center text-black">⚙️ Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-12 text-stone-500">
+                      <TableCell colSpan={9} className="text-center py-12 text-stone-500">
                         Carregando...
                       </TableCell>
                     </TableRow>
                   ) : filteredRecords.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-12 text-stone-500">
+                      <TableCell colSpan={9} className="text-center py-12 text-stone-500">
                         Nenhum BMM encontrado
                       </TableCell>
                     </TableRow>
@@ -258,6 +259,29 @@ export default function BMMHistoryPage() {
                           </TableCell>
                           <TableCell className="text-sm text-gray-600">
                             {formatDateTime(record.created_date)}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {record.history && record.history.length > 0 ? (
+                              <div className="space-y-1">
+                                {record.history.map((event, idx) => (
+                                  <div key={idx} className="text-xs text-gray-600">
+                                    <Badge variant="outline" className="text-xs">
+                                      {event.action}
+                                    </Badge>
+                                    <div className="text-[10px] text-gray-500 mt-0.5">
+                                      {formatDateTime(event.timestamp)}
+                                    </div>
+                                    {event.user_email && (
+                                      <div className="text-[10px] text-gray-500">
+                                        {event.user_email}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400">Sem histórico</span>
+                            )}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center justify-center gap-2">

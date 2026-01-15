@@ -144,25 +144,40 @@ export default function BMMGenerator() {
     }
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!generatedContent) return;
 
-    // Salvar registro primeiro
-    saveBMMRecordMutation.mutate({
-      company_id: selectedCompany,
-      company_name: generatedContent.company?.nome_fantasia || generatedContent.company?.razao_social,
-      period: selectedPeriod,
-      template_id: selectedTemplate,
-      template_name: generatedContent.template?.name,
-      status: 'Gerado',
-      total_value: generatedContent.totals.value,
-      total_classes: generatedContent.totals.classes,
-      total_students: generatedContent.totals.students
-    });
+    try {
+      const user = await base44.auth.me();
+      
+      // Salvar registro primeiro com histórico
+      saveBMMRecordMutation.mutate({
+        company_id: selectedCompany,
+        company_name: generatedContent.company?.nome_fantasia || generatedContent.company?.razao_social,
+        period: selectedPeriod,
+        template_id: selectedTemplate,
+        template_name: generatedContent.template?.name,
+        status: 'Gerado',
+        total_value: generatedContent.totals.value,
+        total_classes: generatedContent.totals.classes,
+        total_students: generatedContent.totals.students,
+        history: [
+          {
+            action: 'Gerado',
+            timestamp: new Date().toISOString(),
+            user_email: user?.email || 'Sistema',
+            details: `BMM gerado com ${generatedContent.totals.classes} turmas e ${generatedContent.totals.students} alunos`
+          }
+        ]
+      });
 
-    // Usar window.print() diretamente na janela atual para gerar PDF em A4 paisagem
-    window.print();
-    toast.success('Janela de impressão aberta. Configure como A4 Paisagem e selecione "Salvar como PDF".');
+      // Usar window.print() diretamente na janela atual para gerar PDF em A4 paisagem
+      window.print();
+      toast.success('Janela de impressão aberta. Configure como A4 Paisagem e selecione "Salvar como PDF".');
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
+      toast.error('Erro ao exportar PDF');
+    }
   };
 
   const selectedCompanyData = companies.find(c => c.id === selectedCompany);
