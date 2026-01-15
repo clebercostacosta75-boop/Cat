@@ -210,6 +210,11 @@ export default function BMMPreview({ content }) {
                   <td className="border border-stone-300 px-3 py-2">{index + 1}</td>
                   <td className="border border-stone-300 px-3 py-2 font-medium">
                     {classItem.training_name}
+                    {classItem.realization_dates && classItem.realization_dates.length > 0 && (
+                      <div className="text-xs text-stone-500 mt-1">
+                        Datas: {classItem.realization_dates.map(d => formatDate(d)).join(', ')}
+                      </div>
+                    )}
                   </td>
                   <td className="border border-stone-300 px-3 py-2 text-center">
                     {formatDate(classItem.start_date)}

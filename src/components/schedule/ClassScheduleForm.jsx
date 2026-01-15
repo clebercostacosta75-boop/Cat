@@ -21,6 +21,7 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     status: "Agendado",
     start_date: "",
     end_date: "",
+    realization_dates: [],
     specific_days: "",
     training_schedule: "",
     instructor_name: "",
@@ -374,14 +375,45 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="specific_days">Dias em Específico</Label>
-          <Input
-            id="specific_days"
-            value={formData.specific_days}
-            onChange={(e) => handleChange('specific_days', e.target.value)}
-            placeholder="Ex: Segunda, Quarta, Sexta"
-          />
+        <div className="space-y-2 md:col-span-2">
+          <Label>Datas de Realização do Treinamento</Label>
+          <div className="space-y-2">
+            {(formData.realization_dates || []).map((date, idx) => (
+              <div key={idx} className="flex gap-2">
+                <Input
+                  type="date"
+                  value={date}
+                  onChange={(e) => {
+                    const newDates = [...(formData.realization_dates || [])];
+                    newDates[idx] = e.target.value;
+                    handleChange('realization_dates', newDates);
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    const newDates = (formData.realization_dates || []).filter((_, i) => i !== idx);
+                    handleChange('realization_dates', newDates);
+                  }}
+                >
+                  ✕
+                </Button>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                const newDates = [...(formData.realization_dates || []), ""];
+                handleChange('realization_dates', newDates);
+              }}
+              className="w-full"
+            >
+              + Adicionar Data
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-2">
