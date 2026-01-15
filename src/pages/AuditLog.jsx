@@ -25,7 +25,11 @@ export default function AuditLogPage() {
 
   // Filtrar logs
   const filteredLogs = logs.filter(log => {
+    if (!log.created_date) return false;
+    
     const logDate = new Date(log.created_date);
+    if (isNaN(logDate.getTime())) return false;
+    
     const logMonth = logDate.getMonth();
     const logYear = logDate.getFullYear();
     
@@ -224,17 +228,25 @@ export default function AuditLogPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredLogs.map((log) => (
-                      <TableRow key={log.id} className="hover:bg-gray-50">
-                        <TableCell className="text-sm">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <div>
-                              <p className="font-medium">{format(new Date(log.created_date), 'dd/MM/yyyy')}</p>
-                              <p className="text-xs text-gray-500">{format(new Date(log.created_date), 'HH:mm:ss')}</p>
+                    filteredLogs.map((log) => {
+                      const logDate = log.created_date ? new Date(log.created_date) : null;
+                      const isValidDate = logDate && !isNaN(logDate.getTime());
+
+                      return (
+                        <TableRow key={log.id} className="hover:bg-gray-50">
+                          <TableCell className="text-sm">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-gray-400" />
+                              <div>
+                                <p className="font-medium">
+                                  {isValidDate ? format(logDate, 'dd/MM/yyyy') : '-'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {isValidDate ? format(logDate, 'HH:mm:ss') : '-'}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        </TableCell>
+                          </TableCell>
                         <TableCell className="text-sm">
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-gray-400" />
@@ -263,7 +275,8 @@ export default function AuditLogPage() {
                           )}
                         </TableCell>
                       </TableRow>
-                    ))
+                    );
+                  })
                   )}
                 </TableBody>
               </Table>
