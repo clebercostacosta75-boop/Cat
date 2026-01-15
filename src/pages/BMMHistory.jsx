@@ -51,9 +51,11 @@ export default function BMMHistoryPage() {
   const formatDateTime = (dateStr) => {
     if (!dateStr) return '-';
     try {
-      return new Date(dateStr).toLocaleString('pt-BR');
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return '-';
+      return date.toLocaleString('pt-BR');
     } catch {
-      return dateStr;
+      return '-';
     }
   };
 
@@ -263,15 +265,17 @@ export default function BMMHistoryPage() {
                           <TableCell className="text-center">
                             {record.history && record.history.length > 0 ? (
                               <div className="space-y-1">
-                                {record.history.map((event, idx) => (
+                                {record.history.slice(-3).map((event, idx) => (
                                   <div key={idx} className="text-xs text-gray-600">
                                     <Badge variant="outline" className="text-xs">
-                                      {event.action}
+                                      {event?.action || 'Ação'}
                                     </Badge>
-                                    <div className="text-[10px] text-gray-500 mt-0.5">
-                                      {formatDateTime(event.timestamp)}
-                                    </div>
-                                    {event.user_email && (
+                                    {event?.timestamp && (
+                                      <div className="text-[10px] text-gray-500 mt-0.5">
+                                        {formatDateTime(event.timestamp)}
+                                      </div>
+                                    )}
+                                    {event?.user_email && (
                                       <div className="text-[10px] text-gray-500">
                                         {event.user_email}
                                       </div>
@@ -280,7 +284,7 @@ export default function BMMHistoryPage() {
                                 ))}
                               </div>
                             ) : (
-                              <span className="text-xs text-gray-400">Sem histórico</span>
+                              <span className="text-xs text-gray-400">-</span>
                             )}
                           </TableCell>
                           <TableCell>
