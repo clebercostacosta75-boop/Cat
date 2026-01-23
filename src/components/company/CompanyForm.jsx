@@ -70,11 +70,17 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
   const handleBulkUploadSuccess = async () => {
     // Recarregar dados da empresa
     if (company?.id) {
-      const updatedCompany = await base44.entities.Company.get(company.id);
-      setFormData({
-        ...formData,
-        company_courses: updatedCompany.company_courses || []
-      });
+      try {
+        const updatedCompany = await base44.entities.Company.get(company.id);
+        setFormData(prev => ({
+          ...prev,
+          company_courses: updatedCompany.company_courses || []
+        }));
+        toast.success('Cursos atualizados com sucesso!');
+      } catch (error) {
+        console.error('Erro ao recarregar cursos:', error);
+        toast.error('Erro ao recarregar os cursos. Atualize a página.');
+      }
     }
   };
 
