@@ -46,20 +46,54 @@ export default function ScheduleForm({ schedule, onSubmit, onCancel }) {
     initialData: [],
   });
 
+  const { data: companies = [] } = useQuery({
+    queryKey: ['companies'],
+    queryFn: () => base44.entities.Company.list(),
+    initialData: [],
+  });
+
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Buscar cursos disponíveis da empresa selecionada
+  const getAvailableCoursesForCompany = () => {
+    const selectedCompany = companies.find(c => c.nome_fantasia === formData.company);
+    if (!selectedCompany || !selectedCompany.company_courses) {
+      return [];
+    }
+    return selectedCompany.company_courses;
+  };
+
+  const handleCompanySelect = (companyName) => {
+    setFormData(prev => ({
+      ...prev,
+      company: companyName,
+      training_name: "", // Reset course selection when company changes
+      hours: "",
+      standard_value: ""
+    }));
+  };
+
   const handleCourseSelect = (courseName) => {
-    const course = courses.find(c => c.name === courseName);
-    if (course) {
-      setFormData(prev => ({
-        ...prev,
-        training_name: courseName,
-        standard_value: course.standard_value || 0,
-        hours: course.duration_hours || prev.hours,
-        pedagogical_content: course.description || prev.pedagogical_content
-      }));
+    const selectedCompany = companies.find(c => c.nome_fantasia === formData.company);
+    
+    if (selectedCompany && selectedCompany.company_courses) {
+      // Buscar o curso na lista de cursos da empresa
+      const companyCourse = selectedCompany.company_courses.find(c => c.course_name === courseName);
+      
+      if (companyCourse) {
+        // Preencher automaticamente com dados do curso vinculado à empresa
+        const baseCourse = courses.find(c => c.name === courseName);
+        
+        setFormData(prev => ({
+          ...prev,
+          training_name: courseName,
+          hours: companyCourse.workload_hours || 0,
+          standard_value: companyCourse.specific_price || 0,
+          pedagogical_content: baseCourse?.description || prev.pedagogical_content
+        }));
+      }
     }
   };
 
@@ -93,6 +127,8 @@ export default function ScheduleForm({ schedule, onSubmit, onCancel }) {
     onSubmit(formData);
   };
 
+  const availableCompanyCourses = getAvailableCoursesForCompany();
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs defaultValue="basic" className="w-full">
@@ -107,26 +143,39 @@ export default function ScheduleForm({ schedule, onSubmit, onCancel }) {
         <TabsContent value="basic" className="space-y-4 mt-4">
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="training_name">Treinamento</Label>
-              <Select value={formData.training_name} onValueChange={handleCourseSelect}>
+              <Label htmlFor="company">Empresa *</Label>
+              <Select value={formData.company} onValueChange={handleCompanySelect}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o curso" />
+                  <SelectValue placeholder="Selecione a empresa" />
                 </SelectTrigger>
                 <SelectContent>
-                  {courses.map(course => (
-                    <SelectItem key={course.id} value={course.name}>
-                      {course.name}
+                  {companies.map(company => (
+                    <SelectItem key={company.id} value={company.nome_fantasia}>
+                      {company.nome_fantasia}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Input
-                id="training_name"
-                value={formData.training_name}
-                onChange={(e) => handleChange('training_name', e.target.value)}
-                placeholder="Ou digite o nome do treinamento"
-                className="mt-2"
-              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="training_name">Treinamento *</Label>
+              <Select 
+                value={formData.training_name} 
+                onValueChange={handleCourseSelect}
+                disabled={!formData.company}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={formData.company ? "Selecione o curso" : "Selecione uma empresa primeiro"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableCompanyCourses.map((course, idx) => (
+                    <SelectItem key={idx} value={course.course_name}>
+                      {course.course_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -143,16 +192,6 @@ export default function ScheduleForm({ schedule, onSubmit, onCancel }) {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="company">Empresa</Label>
-              <Input
-                id="company"
-                value={formData.company}
-                onChange={(e) => handleChange('company', e.target.value)}
-                placeholder="Nome da empresa"
-              />
             </div>
 
             <div className="space-y-2">
@@ -195,16 +234,14 @@ export default function ScheduleForm({ schedule, onSubmit, onCancel }) {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="hours">Carga Horária</Label>
-              <Input
-                id="hours"
-                type="number"
-                step="0.5"
-                value={formData.hours}
-                onChange={(e) => handleChange('hours', parseFloat(e.target.value))}
-                placeholder="Horas"
-              />
+            <div className="space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
+              <Label className="text-gray-700">Carga Horária (Automático)</Label>
+              <div className="text-2xl font-bold text-gray-900">
+                {formData.hours || 0}h
+              </div>
+              <p className="text-xs text-gray-500">
+                Preenchido automaticamente ao selecionar empresa e curso
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -334,16 +371,14 @@ export default function ScheduleForm({ schedule, onSubmit, onCancel }) {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="standard_value">Valor Padrão</Label>
-              <Input
-                id="standard_value"
-                type="number"
-                step="0.01"
-                value={formData.standard_value}
-                onChange={(e) => handleChange('standard_value', parseFloat(e.target.value))}
-                placeholder="Valor padrão do curso"
-              />
+            <div className="space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
+              <Label className="text-gray-700">Valor Padrão (Automático)</Label>
+              <div className="text-2xl font-bold text-gray-900">
+                R$ {(formData.standard_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </div>
+              <p className="text-xs text-gray-500">
+                Preenchido automaticamente ao selecionar empresa e curso
+              </p>
             </div>
 
             <div className="space-y-2">
