@@ -125,7 +125,7 @@ export default function CompanyCoursesForm({ companyCourses, courses, onChange }
                   <Input
                     type="number"
                     step="0.01"
-                    value={course.specific_price}
+                    value={course.specific_price ? parseFloat(course.specific_price).toFixed(2) : '0.00'}
                     onChange={(e) => handleCourseChange(index, 'specific_price', parseFloat(e.target.value) || 0)}
                     placeholder="Ex: 150.00"
                     required
