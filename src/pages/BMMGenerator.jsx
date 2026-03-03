@@ -97,22 +97,22 @@ export default function BMMGenerator() {
       const template = templates.find(t => t.id === selectedTemplate);
       const contractor = contractors.find(c => c.id === selectedContractor) || contractors[0];
 
-      // Mapear cursos com valores
-      const courseMap = courses.reduce((acc, course) => {
-        acc[course.name] = course;
-        return acc;
-      }, {});
-
-      // Calcular dados das turmas
+      // Calcular dados das turmas, priorizando specific_price da empresa
       const classesData = filteredClasses.map(classItem => {
-        const unitValue = classItem.unit_value || 0;
         const studentsCount = classItem.students_count || 1;
         const courseData = courses.find(c => c.id === classItem.training_id);
-        
+
+        // Buscar o valor específico definido para este curso na empresa
+        const companyCourse = company?.company_courses?.find(
+          cc => cc.course_id === classItem.training_id || cc.course_name === classItem.training_name
+        );
+        const unitValue = companyCourse?.specific_price || classItem.unit_value || 0;
+        const totalValue = unitValue * studentsCount;
+
         return {
           ...classItem,
           unit_value: unitValue,
-          total_value: classItem.total_value || (unitValue * studentsCount),
+          total_value: totalValue,
           course_data: courseData
         };
       });
