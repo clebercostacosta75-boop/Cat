@@ -1,0 +1,226 @@
+import React, { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Award, Search, Send, Eye, XCircle, Copy, CheckCircle, Clock, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
+import CertificateExporter from "@/components/certificates/CertificateExporter";
+
+const statusConfig = {
+  pending_signature: { label: "Aguardando Assinatura", color: "bg-yellow-100 text-yellow-800", icon: Clock },
+  signed: { label: "Assinado", color: "bg-blue-100 text-blue-800", icon: CheckCircle },
+  active: { label: "Ativo", color: "bg-green-100 text-green-800", icon: CheckCircle },
+  revoked: { label: "Revogado", color: "bg-red-100 text-red-800", icon: XCircle },
+};
+
+export default function Certificates() {
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const queryClient = useQueryClient();
+
+  const { data: certificates = [], isLoading } = useQuery({
+    queryKey: ["certificates"],
+    queryFn: () => base44.entities.Certificate.list("-created_date", 200),
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: (id) => base44.entities.Certificate.update(id, { status: "revoked" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["certificates"] });
+      toast.success("Certificado revogado.");
+    },
+  });
+
+  const sendWhatsAppMutation = useMutation({
+    mutationFn: (certificateId) =>
+      base44.functions.invoke("enviarCertificadoWhatsApp", { certificate_id: certificateId }),
+    onSuccess: (res) => {
+      if (res.data?.whatsapp_url) {
+        window.open(res.data.whatsapp_url, "_blank");
+      }
+      queryClient.invalidateQueries({ queryKey: ["certificates"] });
+      toast.success("Link de assinatura enviado via WhatsApp!");
+    },
+    onError: (err) => {
+      toast.error("Erro ao enviar WhatsApp: " + (err?.message || "Tente novamente"));
+    },
+  });
+
+  const copySignLink = (code) => {
+    const url = `${window.location.origin}/CertificateSign?code=${code}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link de assinatura copiado!");
+  };
+
+  const copyValidateLink = (code) => {
+    const url = `${window.location.origin}/CertificateValidate?code=${code}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link de validação copiado!");
+  };
+
+  const filtered = certificates.filter((c) => {
+    const matchSearch =
+      !search ||
+      c.student_name?.toLowerCase().includes(search.toLowerCase()) ||
+      c.course_name?.toLowerCase().includes(search.toLowerCase()) ||
+      c.certificate_code?.toLowerCase().includes(search.toLowerCase()) ||
+      c.student_cpf?.includes(search);
+    const matchStatus = statusFilter === "all" || c.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
+
+  const stats = {
+    total: certificates.length,
+    pending: certificates.filter((c) => c.status === "pending_signature").length,
+    signed: certificates.filter((c) => c.status === "signed" || c.status === "active").length,
+    revoked: certificates.filter((c) => c.status === "revoked").length,
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Award className="w-6 h-6" /> Certificados
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">Gestão de certificados de treinamentos NR</p>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: "Total", value: stats.total, color: "text-gray-900" },
+          { label: "Aguardando", value: stats.pending, color: "text-yellow-600" },
+          { label: "Assinados", value: stats.signed, color: "text-green-600" },
+          { label: "Revogados", value: stats.revoked, color: "text-red-600" },
+        ].map((s) => (
+          <Card key={s.label}>
+            <CardContent className="pt-4 pb-4">
+              <p className="text-sm text-gray-500">{s.label}</p>
+              <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            placeholder="Buscar por aluno, curso, CPF ou código..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {["all", "pending_signature", "signed", "active", "revoked"].map((s) => (
+            <Button
+              key={s}
+              variant={statusFilter === s ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter(s)}
+            >
+              {s === "all" ? "Todos" : statusConfig[s]?.label || s}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Table */}
+      {isLoading ? (
+        <div className="text-center py-12 text-gray-400">Carregando...</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-12 text-gray-400">Nenhum certificado encontrado.</div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((cert) => {
+            const sc = statusConfig[cert.status] || statusConfig.pending_signature;
+            const Icon = sc.icon;
+            return (
+              <Card key={cert.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="py-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-gray-900">{cert.student_name}</span>
+                        <Badge className={sc.color + " border-0"}>
+                          <Icon className="w-3 h-3 mr-1" />
+                          {sc.label}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        {cert.course_name}
+                        {cert.course_duration && ` • ${cert.course_duration}`}
+                        {cert.client_name && ` • ${cert.client_name}`}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        {cert.certificate_code && (
+                          <span className="font-mono">{cert.certificate_code}</span>
+                        )}
+                        {cert.student_cpf && <span className="ml-2">CPF: {cert.student_cpf}</span>}
+                        {cert.valid_until && <span className="ml-2">Válido até: {cert.valid_until}</span>}
+                      </div>
+                      {cert.whatsapp_sent && (
+                        <div className="text-xs text-green-600 mt-1">✓ WhatsApp enviado</div>
+                      )}
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {cert.status === "pending_signature" && cert.student_phone && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => sendWhatsAppMutation.mutate(cert.id)}
+                          disabled={sendWhatsAppMutation.isPending}
+                          className="text-green-700 border-green-300 hover:bg-green-50"
+                        >
+                          <Send className="w-3 h-3 mr-1" /> WhatsApp
+                        </Button>
+                      )}
+                      {cert.status === "pending_signature" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => copySignLink(cert.certificate_code)}
+                        >
+                          <Copy className="w-3 h-3 mr-1" /> Link Assinatura
+                        </Button>
+                      )}
+                      {cert.certificate_code && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => copyValidateLink(cert.certificate_code)}
+                        >
+                          <Eye className="w-3 h-3 mr-1" /> Link Validação
+                        </Button>
+                      )}
+                      <CertificateExporter certificate={cert} />
+                      {cert.status !== "revoked" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 border-red-200 hover:bg-red-50"
+                          onClick={() => {
+                            if (confirm("Revogar este certificado?")) revokeMutation.mutate(cert.id);
+                          }}
+                        >
+                          <XCircle className="w-3 h-3 mr-1" /> Revogar
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
