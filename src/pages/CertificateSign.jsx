@@ -6,6 +6,7 @@ import { Award, CheckCircle, XCircle, PenLine, Trash2, Download, Shield, AlertTr
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import CertificateDownloader from "@/components/certificates/CertificateDownloader";
 
 function formatDate(dateStr) {
   if (!dateStr) return "-";
@@ -370,8 +371,9 @@ export default function CertificateSign() {
              </div>
 
              <div className="flex flex-col gap-2 sm:gap-3">
+               <CertificateDownloader certificate={cert} model={null} />
                <Button
-                 className="w-full bg-emerald-600 hover:bg-emerald-700 flex items-center justify-center gap-2"
+                 className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-2"
                  onClick={() => {
                    navigator.clipboard.writeText(cert.certificate_code);
                    toast.success("Código copiado para a área de transferência!");
