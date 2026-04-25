@@ -114,13 +114,16 @@ export default function BMMEmailSender({ content, previewRef, onBack }) {
       const finalSubject = replacePlaceholders(subject);
       const finalBody = replacePlaceholders(body);
 
-      // Enviar email via integração
-      await base44.integrations.Core.SendEmail({
+      // Enviar email via função backend com credenciais UOL
+      const response = await base44.functions.invoke('sendBMMEmailUOL', {
         to: recipientEmail,
         subject: finalSubject,
-        body: finalBody,
-        from_name: 'CAT Treinamentos'
+        body: finalBody
       });
+
+      if (!response.data.success) {
+        throw new Error(response.data.error);
+      }
 
       // Registrar no histórico de BMM
       const bmmRecords = await base44.entities.BMMRecord.filter({
@@ -135,7 +138,7 @@ export default function BMMEmailSender({ content, previewRef, onBack }) {
           action: 'Enviado',
           timestamp: new Date().toISOString(),
           user_email: user?.email || 'Sistema',
-          details: `E-mail enviado para ${recipientEmail}`
+          details: `E-mail enviado para ${recipientEmail} via UOL`
         });
 
         await base44.entities.BMMRecord.update(bmmRecord.id, {
@@ -146,7 +149,7 @@ export default function BMMEmailSender({ content, previewRef, onBack }) {
         });
       }
 
-      toast.success(`E-mail enviado para ${recipientEmail}!`);
+      toast.success(`E-mail enviado com sucesso via sua conta UOL!`);
       
     } catch (error) {
       console.error('Erro ao enviar e-mail:', error);
