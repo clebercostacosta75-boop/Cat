@@ -85,6 +85,10 @@ export default function BMMPreview({ content }) {
     };
   }, []);
 
+  if (!content) return null;
+
+  const { company, contractor, period, classes, totals, template } = content;
+
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
