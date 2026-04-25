@@ -34,73 +34,94 @@ export function exportBMMPDF(content, signatureUrl = null) {
   }).join('');
 
   const html = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8"/>
-  <title>BMM - ${company?.nome_fantasia || ''} - ${period}</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    body { font-family: Arial, sans-serif; font-size: 10pt; color: #1c1c1c; background: white; }
+  <html lang="pt-BR">
+  <head>
+   <meta charset="UTF-8"/>
+   <title>BMM - ${company?.nome_fantasia || ''} - ${period}</title>
+   <style>
+     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+     body { 
+       font-family: Arial, sans-serif; 
+       font-size: 9.5pt; 
+       color: #1c1c1c; 
+       background: white;
+       margin: 0;
+       padding: 0;
+     }
 
-    @media print {
-      @page { size: A4 portrait; margin: 15mm; }
-    }
+     @media print {
+       @page { 
+         size: A4 portrait; 
+         margin: 15mm; 
+       }
+       body { 
+         margin: 0; 
+         padding: 0; 
+       }
+     }
 
-    .page { width: 100%; margin-bottom: 0; }
-    .page-break { page-break-after: always; }
+     .page { 
+       width: 794px;
+       max-width: 100%;
+       margin: 0 auto 0;
+       padding: 0;
+       page-break-inside: avoid;
+     }
 
-    h1 { font-size: 16pt; font-weight: bold; color: #065f46; }
-    h2 { font-size: 11pt; font-weight: bold; color: #1c1c1c; margin-bottom: 10px; }
+     h1 { font-size: 13.5pt; font-weight: bold; color: #065f46; margin: 0; }
+     h2 { font-size: 9.5pt; font-weight: bold; color: #1c1c1c; margin: 6px 0 4px 0; }
 
-    /* === PÁGINA 1: Cabeçalho + Dados do Cliente === */
-    .header-logos { display: flex; align-items: center; justify-content: space-between; padding-bottom: 16px; border-bottom: 3px solid #059669; margin-bottom: 20px; }
-    .header-logos img { height: 56px; object-fit: contain; }
-    .contractor-info { font-size: 9pt; color: #374151; }
-    .contractor-info strong { display: block; font-size: 10pt; color: #111827; }
-    .bmm-title { text-align: center; margin-bottom: 20px; }
-    .bmm-title h1 { margin-bottom: 4px; }
-    .bmm-title .period { font-size: 12pt; color: #374151; }
-    .bmm-title .contract { font-size: 9pt; color: #6b7280; margin-top: 4px; }
-    .client-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; }
-    .client-box h2 { color: #065f46; border-bottom: 1px solid #d1fae5; padding-bottom: 6px; margin-bottom: 12px; }
-    .client-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 9.5pt; }
-    .client-grid p { margin-bottom: 4px; }
+     /* === Cabeçalho + Dados do Cliente === */
+     .header-logos { display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; border-bottom: 2px solid #059669; margin-bottom: 8px; }
+     .header-logos img { height: 40px; object-fit: contain; }
+     .contractor-info { font-size: 7.5pt; color: #374151; }
+     .contractor-info strong { display: block; font-size: 8.5pt; color: #111827; }
+     .bmm-title { text-align: center; margin-bottom: 8px; }
+     .bmm-title h1 { margin-bottom: 2px; }
+     .bmm-title .period { font-size: 9pt; color: #374151; }
+     .bmm-title .contract { font-size: 7.5pt; color: #6b7280; margin-top: 2px; }
+     .client-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 3px; padding: 6px; margin-bottom: 8px; }
+     .client-box h2 { color: #065f46; border-bottom: 1px solid #d1fae5; padding-bottom: 2px; margin-bottom: 4px; }
+     .client-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 8pt; }
+     .client-grid p { margin-bottom: 1px; line-height: 1.3; }
 
-    /* === PÁGINA 2: Tabela + Cards === */
-    table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-bottom: 20px; }
-    thead tr { background-color: #059669; color: white; }
-    thead th { padding: 7px 8px; text-align: left; border: 1px solid #047857; }
-    tfoot tr { background-color: #d1fae5; font-weight: bold; }
-    tfoot td { padding: 6px 8px; border: 1px solid #a7f3d0; }
-    .summary-cards { display: flex; gap: 16px; margin-bottom: 20px; }
-    .summary-card { flex: 1; border-radius: 8px; padding: 16px; text-align: center; }
-    .card-green { background: #ecfdf5; }
-    .card-blue { background: #eff6ff; }
-    .card-amber { background: #fffbeb; }
-    .card-number { font-size: 24pt; font-weight: bold; }
-    .card-green .card-number { color: #059669; }
-    .card-blue .card-number { color: #2563eb; }
-    .card-amber .card-number { color: #d97706; font-size: 18pt; }
-    .card-label { font-size: 9pt; color: #6b7280; margin-top: 4px; }
+     /* === Tabela + Cards === */
+     table { width: 100%; border-collapse: collapse; font-size: 8pt; margin-bottom: 6px; }
+     thead tr { background-color: #059669; color: white; }
+     thead th { padding: 4px 4px; text-align: left; border: 1px solid #047857; font-weight: bold; }
+     tbody td { padding: 3px 4px; border: 1px solid #d1d5db; }
+     tfoot tr { background-color: #d1fae5; font-weight: bold; }
+     tfoot td { padding: 3px 4px; border: 1px solid #a7f3d0; }
+     .summary-cards { display: flex; gap: 8px; margin-bottom: 8px; }
+     .summary-card { flex: 1; border-radius: 4px; padding: 6px; text-align: center; page-break-inside: avoid; }
+     .card-green { background: #ecfdf5; }
+     .card-blue { background: #eff6ff; }
+     .card-amber { background: #fffbeb; }
+     .card-number { font-size: 14pt; font-weight: bold; line-height: 1; }
+     .card-green .card-number { color: #059669; }
+     .card-blue .card-number { color: #2563eb; }
+     .card-amber .card-number { color: #d97706; font-size: 11pt; }
+     .card-label { font-size: 7pt; color: #6b7280; margin-top: 2px; }
 
-    /* === PÁGINA 3: Assinaturas === */
-    .sig-page-title { text-align: center; margin-bottom: 30px; }
-    .sig-page-title h2 { font-size: 13pt; color: #065f46; }
-    .sig-row { display: flex; gap: 40px; justify-content: center; margin-bottom: 50px; }
-    .sig-block { text-align: center; min-width: 160px; }
-    .sig-line { border-top: 2px solid #374151; padding-top: 8px; margin-top: 60px; }
-    .sig-name { font-weight: bold; font-size: 10pt; color: #111827; }
-    .sig-role { font-size: 8.5pt; color: #6b7280; margin-top: 3px; }
-    .sig-company { font-size: 8pt; color: #9ca3af; margin-top: 2px; }
-    .sig-img { max-height: 48px; margin-bottom: -10px; }
-    .sig-stamp { background:#eff6ff; border:1px solid #bfdbfe; border-radius:4px; padding:6px 12px; font-size:8pt; color:#1d4ed8; display:inline-block; margin-bottom:8px; }
-    .doc-footer { text-align: center; font-size: 8pt; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 40px; }
-  </style>
-</head>
-<body>
+     /* === Assinaturas === */
+     .sig-page-title { text-align: center; margin-bottom: 8px; page-break-inside: avoid; }
+     .sig-page-title h2 { font-size: 10pt; color: #065f46; margin: 0 0 2px 0; }
+     .sig-page-title p { font-size: 7.5pt; color: #6b7280; margin: 0; }
+     .sig-row { display: flex; gap: 20px; justify-content: center; margin-bottom: 16px; page-break-inside: avoid; }
+     .sig-block { text-align: center; min-width: 140px; }
+     .sig-line { border-top: 1.5px solid #374151; padding-top: 2px; margin-top: 30px; }
+     .sig-name { font-weight: bold; font-size: 8.5pt; color: #111827; margin: 0; line-height: 1.2; }
+     .sig-role { font-size: 7pt; color: #6b7280; margin: 1px 0 0 0; }
+     .sig-company { font-size: 7pt; color: #9ca3af; margin: 0; }
+     .sig-img { max-height: 30px; margin-bottom: -4px; }
+     .sig-stamp { background:#eff6ff; border:1px solid #bfdbfe; border-radius:2px; padding:3px 6px; font-size:6.5pt; color:#1d4ed8; display:inline-block; margin-top:2px; }
+     .doc-footer { text-align: center; font-size: 6.5pt; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 6px; margin-top: 8px; page-break-inside: avoid; }
+   </style>
+  </head>
+  <body>
 
-<!-- ===== PÁGINA 1: Cabeçalho + Dados do Cliente ===== -->
-<div class="page page-break">
+<!-- ===== Cabeçalho + Dados do Cliente ===== -->
+<div class="page">
   <div class="header-logos">
     <div style="display:flex; align-items:center; gap:16px;">
       <img src="${contractorLogoUrl}" alt="Logo Contratada"/>
@@ -141,8 +162,8 @@ export function exportBMMPDF(content, signatureUrl = null) {
   </div>
 </div>
 
-<!-- ===== PÁGINA 2: Demonstrativo + Cards ===== -->
-<div class="page page-break">
+<!-- ===== Demonstrativo + Cards ===== -->
+<div class="page">
   <h2 style="margin-bottom:12px; color:#065f46; border-bottom:2px solid #d1fae5; padding-bottom:6px;">DEMONSTRATIVO DE TREINAMENTOS</h2>
 
   <table>
@@ -185,8 +206,8 @@ export function exportBMMPDF(content, signatureUrl = null) {
   </div>
 </div>
 
-<!-- ===== PÁGINA 3: Assinaturas ===== -->
-<div class="page">
+<!-- ===== Assinaturas ===== -->
+<div class="page" style="page-break-before: auto;">
   <div class="sig-page-title">
     <h2>DECLARAÇÃO E ASSINATURAS</h2>
     <p style="font-size:9pt; color:#6b7280; margin-top:8px;">
