@@ -1,0 +1,21 @@
+{
+  "name": "Client",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome da empresa/cliente"
+    },
+    "cnpj": {
+      "type": "string",
+      "description": "CNPJ da empresa"
+    },
+    "contact": {
+      "type": "string",
+      "description": "Contato principal (nome e email)"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
