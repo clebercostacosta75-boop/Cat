@@ -12,6 +12,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import CertificateSign from './pages/CertificateSign';
 import CertificateValidate from './pages/CertificateValidate';
+import CertificateEmissao from './pages/CertificateEmissao';
 import StudentPortal from './pages/StudentPortal';
 import AttendanceCall from './pages/AttendanceCall';
 import AttendanceConfirm from './pages/AttendanceConfirm';
@@ -60,6 +61,7 @@ const AuthenticatedApp = () => {
 
       {/* Rotas autenticadas com layout */}
       <Route path="/" element={<LayoutWrapper currentPageName={mainPageKey}><MainPage /></LayoutWrapper>} />
+      <Route path="/CertificateEmissao" element={<LayoutWrapper currentPageName="CertificateEmissao"><CertificateEmissao /></LayoutWrapper>} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route key={path} path={`/${path}`} element={<LayoutWrapper currentPageName={path}><Page /></LayoutWrapper>} />
       ))}
