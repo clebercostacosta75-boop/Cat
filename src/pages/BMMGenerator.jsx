@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import BMMPreview from "@/components/bmm/BMMPreview";
 import BMMEmailSender from "@/components/bmm/BMMEmailSender";
+import { exportBMMPDF } from "@/components/bmm/BMMExporter";
 
 export default function BMMGenerator() {
   const queryClient = useQueryClient();
@@ -149,8 +150,6 @@ export default function BMMGenerator() {
 
     try {
       const user = await base44.auth.me();
-      
-      // Salvar registro primeiro com histórico
       saveBMMRecordMutation.mutate({
         company_id: selectedCompany,
         company_name: generatedContent.company?.nome_fantasia || generatedContent.company?.razao_social,
@@ -170,10 +169,7 @@ export default function BMMGenerator() {
           }
         ]
       });
-
-      // Usar window.print() diretamente na janela atual para gerar PDF em A4 paisagem
-      window.print();
-      toast.success('Janela de impressão aberta. Configure como A4 Paisagem e selecione "Salvar como PDF".');
+      exportBMMPDF(generatedContent);
     } catch (error) {
       console.error('Erro ao exportar PDF:', error);
       toast.error('Erro ao exportar PDF');
