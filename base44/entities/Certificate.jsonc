@@ -2,79 +2,333 @@
   "name": "Certificate",
   "type": "object",
   "properties": {
+    "certificate_code": {
+      "type": "string",
+      "description": "C\u00f3digo \u00fanico de valida\u00e7\u00e3o"
+    },
+    "registration_number": {
+      "type": "string",
+      "description": "N\u00famero de registro (ID-XXXXX-XXXXX)"
+    },
     "student_name": {
       "type": "string",
       "description": "Nome completo do aluno"
+    },
+    "student_cpf": {
+      "type": "string",
+      "description": "CPF do aluno"
+    },
+    "student_phone": {
+      "type": "string",
+      "description": "Telefone/WhatsApp do aluno"
+    },
+    "student_renach": {
+      "type": "string",
+      "description": "N\u00famero do RENACH do aluno (opcional)"
+    },
+    "student_cnh_category": {
+      "type": "string",
+      "description": "Categoria da CNH do aluno (opcional)"
+    },
+    "student_detran_registration": {
+      "type": "string",
+      "description": "N\u00famero do Registro DETRAN/PA (opcional)"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "ID do cliente/empresa"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Nome do cliente/empresa"
+    },
+    "model_id": {
+      "type": "string",
+      "description": "ID do modelo de certificado"
     },
     "course_name": {
       "type": "string",
       "description": "Nome do curso"
     },
-    "course_id": {
+    "course_duration": {
       "type": "string",
-      "description": "ID do curso"
+      "description": "Carga hor\u00e1ria"
     },
-    "company_name": {
+    "course_modality": {
       "type": "string",
-      "description": "Nome da empresa"
+      "description": "Modalidade"
     },
-    "company_id": {
-      "type": "string",
-      "description": "ID da empresa"
-    },
-    "class_schedule_id": {
-      "type": "string",
-      "description": "ID da turma vinculada"
-    },
-    "completion_date": {
+    "start_date": {
       "type": "string",
       "format": "date",
-      "description": "Data de conclus\u00e3o do curso"
+      "description": "Data de in\u00edcio"
     },
-    "workload_hours": {
-      "type": "number",
-      "description": "Carga hor\u00e1ria do curso"
-    },
-    "location": {
+    "end_date": {
       "type": "string",
-      "description": "Local de realiza\u00e7\u00e3o"
+      "format": "date",
+      "description": "Data de t\u00e9rmino"
     },
-    "instructor_name": {
-      "type": "string",
-      "description": "Nome do instrutor"
-    },
-    "certificate_number": {
-      "type": "string",
-      "description": "N\u00famero \u00fanico do certificado"
-    },
-    "validity_months": {
-      "type": "number",
-      "description": "Validade em meses"
-    },
-    "expiration_date": {
+    "valid_until": {
       "type": "string",
       "format": "date",
       "description": "Data de vencimento do certificado"
     },
+    "validity_period_months": {
+      "type": "number",
+      "description": "Per\u00edodo de validade em meses"
+    },
+    "location_and_date": {
+      "type": "string",
+      "description": "Local e data de emiss\u00e3o"
+    },
+    "programmatic_content": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "module": {
+            "type": "string"
+          },
+          "hours": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "programmatic_content_formatting": {
+      "type": "object",
+      "description": "Formata\u00e7\u00e3o do conte\u00fado program\u00e1tico"
+    },
+    "show_programmatic_hours": {
+      "type": "boolean",
+      "default": true,
+      "description": "Mostrar carga hor\u00e1ria no conte\u00fado program\u00e1tico"
+    },
+    "technical_responsibles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "titles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "registration": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "front_background_url": {
+      "type": "string"
+    },
+    "back_background_url": {
+      "type": "string"
+    },
+    "front_background_position": {
+      "type": "object",
+      "properties": {
+        "top": {
+          "type": "number"
+        },
+        "right": {
+          "type": "number"
+        },
+        "bottom": {
+          "type": "number"
+        },
+        "left": {
+          "type": "number"
+        }
+      }
+    },
+    "back_background_position": {
+      "type": "object",
+      "properties": {
+        "top": {
+          "type": "number"
+        },
+        "right": {
+          "type": "number"
+        },
+        "bottom": {
+          "type": "number"
+        },
+        "left": {
+          "type": "number"
+        }
+      }
+    },
+    "registration_location": {
+      "type": "string",
+      "enum": [
+        "front",
+        "back"
+      ],
+      "default": "back"
+    },
+    "certificate_text": {
+      "type": "string"
+    },
+    "text_align": {
+      "type": "string",
+      "enum": [
+        "left",
+        "center",
+        "right",
+        "justify"
+      ],
+      "default": "justify"
+    },
+    "text_formatting": {
+      "type": "object",
+      "description": "Formata\u00e7\u00e3o do texto principal"
+    },
+    "page_width": {
+      "type": "number",
+      "default": 297
+    },
+    "page_height": {
+      "type": "number",
+      "default": 210
+    },
+    "front_title": {
+      "type": "string"
+    },
+    "front_title_formatting": {
+      "type": "object"
+    },
+    "front_subtitle": {
+      "type": "string"
+    },
+    "front_subtitle_formatting": {
+      "type": "object"
+    },
+    "front_certification_label": {
+      "type": "string"
+    },
+    "front_certification_label_formatting": {
+      "type": "object"
+    },
+    "student_name_formatting": {
+      "type": "object"
+    },
+    "front_location_date": {
+      "type": "string"
+    },
+    "front_location_date_formatting": {
+      "type": "object"
+    },
+    "front_signature_label": {
+      "type": "string"
+    },
+    "front_signature_label_formatting": {
+      "type": "object"
+    },
+    "front_footer_line1": {
+      "type": "string"
+    },
+    "front_footer_line1_formatting": {
+      "type": "object"
+    },
+    "front_footer_line2": {
+      "type": "string"
+    },
+    "front_footer_line2_formatting": {
+      "type": "object"
+    },
+    "back_header_text": {
+      "type": "string"
+    },
+    "back_header_text_formatting": {
+      "type": "object"
+    },
+    "back_modality_text": {
+      "type": "string"
+    },
+    "back_modality_text_formatting": {
+      "type": "object"
+    },
+    "back_course_name_formatting": {
+      "type": "object"
+    },
+    "back_content_title": {
+      "type": "string"
+    },
+    "back_content_title_formatting": {
+      "type": "object"
+    },
+    "back_responsibles_title": {
+      "type": "string"
+    },
+    "back_responsibles_title_formatting": {
+      "type": "object"
+    },
+    "back_footer_line1": {
+      "type": "string"
+    },
+    "back_footer_line1_formatting": {
+      "type": "object"
+    },
+    "back_footer_line2": {
+      "type": "string"
+    },
+    "back_footer_line2_formatting": {
+      "type": "object"
+    },
+    "issue_date": {
+      "type": "string",
+      "format": "date-time"
+    },
     "status": {
       "type": "string",
       "enum": [
-        "Ativo",
-        "Vencido",
-        "Cancelado"
+        "active",
+        "revoked",
+        "pending_signature",
+        "signed"
       ],
-      "default": "Ativo",
-      "description": "Status do certificado"
+      "default": "pending_signature"
     },
-    "notes": {
+    "signature_url": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es"
+      "description": "URL da assinatura digital do aluno"
+    },
+    "signed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora da assinatura"
+    },
+    "signed_ip": {
+      "type": "string",
+      "description": "IP do dispositivo que assinou"
+    },
+    "signed_device": {
+      "type": "string",
+      "description": "Informa\u00e7\u00f5es do dispositivo"
+    },
+    "whatsapp_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o link foi enviado via WhatsApp"
+    },
+    "whatsapp_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do envio do WhatsApp"
     }
   },
   "required": [
     "student_name",
-    "course_name",
-    "completion_date",
-    "workload_hours"
+    "student_cpf",
+    "course_name"
   ]
 }
