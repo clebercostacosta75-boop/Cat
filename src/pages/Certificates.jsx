@@ -12,6 +12,7 @@ import { Award, Plus, Printer, Search, Eye, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import CertificateExportButton, { exportCertificatePDF } from "@/components/certificates/CertificateExporter";
 
 export default function Certificates() {
   const queryClient = useQueryClient();
@@ -231,7 +232,7 @@ export default function Certificates() {
                     <Button size="icon" variant="outline" onClick={() => setPreviewCert(cert)} title="Visualizar">
                       <Eye className="w-4 h-4" />
                     </Button>
-                    <Button size="icon" variant="outline" onClick={() => handlePrint(cert)} title="Imprimir">
+                    <Button size="icon" variant="outline" onClick={() => exportCertificatePDF(cert)} title="Exportar PDF">
                       <Printer className="w-4 h-4" />
                     </Button>
                     <Button size="icon" variant="ghost" className="text-red-500 hover:bg-red-50" onClick={() => deleteMutation.mutate(cert.id)} title="Excluir">
@@ -321,10 +322,7 @@ export default function Certificates() {
               <DialogTitle>Pré-visualização do Certificado</DialogTitle>
             </DialogHeader>
             <div className="flex justify-end mb-2">
-              <Button onClick={() => handlePrint(previewCert)} className="bg-emerald-600 hover:bg-emerald-700">
-                <Printer className="w-4 h-4 mr-2" />
-                Imprimir / Salvar PDF
-              </Button>
+              <CertificateExportButton cert={previewCert} />
             </div>
             <div className="overflow-auto border rounded-lg" style={{ maxHeight: "70vh" }}>
               <CertificatePrintLayout cert={previewCert} formatDate={formatDatePtBR} />
