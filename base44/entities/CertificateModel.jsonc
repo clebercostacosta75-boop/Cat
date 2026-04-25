@@ -1,0 +1,366 @@
+{
+  "name": "CertificateModel",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome do modelo (ex: NR-33 Supervisor)"
+    },
+    "duration": {
+      "type": "string",
+      "description": "Carga hor\u00e1ria (ex: 40 Horas)"
+    },
+    "modality": {
+      "type": "string",
+      "description": "Modalidade (ex: Peri\u00f3dico, Inicial)"
+    },
+    "validity_period_months": {
+      "type": "number",
+      "default": 12,
+      "description": "Per\u00edodo de validade em meses (ex: 12 para 1 ano, 24 para 2 anos)"
+    },
+    "certificate_text": {
+      "type": "string",
+      "description": "Texto base do certificado com vari\u00e1veis (pode conter HTML)"
+    },
+    "certificate_text_template": {
+      "type": "string",
+      "description": "Tipo de template de texto (default, detran, custom)"
+    },
+    "text_formatting": {
+      "type": "object",
+      "properties": {
+        "fontFamily": {
+          "type": "string"
+        },
+        "fontSize": {
+          "type": "number"
+        },
+        "color": {
+          "type": "string"
+        },
+        "highlightColor": {
+          "type": "string"
+        },
+        "textAlign": {
+          "type": "string"
+        },
+        "lineHeight": {
+          "type": "number"
+        }
+      },
+      "description": "Formata\u00e7\u00e3o do texto principal"
+    },
+    "student_name_formatting": {
+      "type": "object",
+      "properties": {
+        "fontFamily": {
+          "type": "string"
+        },
+        "fontSize": {
+          "type": "number"
+        },
+        "color": {
+          "type": "string"
+        },
+        "bold": {
+          "type": "boolean"
+        },
+        "italic": {
+          "type": "boolean"
+        },
+        "underline": {
+          "type": "boolean"
+        },
+        "letterSpacing": {
+          "type": "number"
+        },
+        "marginTop": {
+          "type": "number"
+        },
+        "marginBottom": {
+          "type": "number"
+        },
+        "marginLeft": {
+          "type": "number"
+        },
+        "marginRight": {
+          "type": "number"
+        },
+        "textAlign": {
+          "type": "string"
+        }
+      },
+      "description": "Formata\u00e7\u00e3o do nome do aluno"
+    },
+    "programmatic_content": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "module": {
+            "type": "string"
+          },
+          "hours": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Conte\u00fado program\u00e1tico"
+    },
+    "programmatic_content_formatting": {
+      "type": "object",
+      "properties": {
+        "fontFamily": {
+          "type": "string"
+        },
+        "fontSize": {
+          "type": "number"
+        },
+        "color": {
+          "type": "string"
+        },
+        "bold": {
+          "type": "boolean"
+        },
+        "italic": {
+          "type": "boolean"
+        },
+        "underline": {
+          "type": "boolean"
+        },
+        "textAlign": {
+          "type": "string"
+        },
+        "textTransform": {
+          "type": "string"
+        },
+        "lineHeight": {
+          "type": "number"
+        },
+        "marginBottom": {
+          "type": "number"
+        },
+        "paddingLeft": {
+          "type": "number"
+        }
+      },
+      "description": "Formata\u00e7\u00e3o do conte\u00fado program\u00e1tico"
+    },
+    "show_programmatic_hours": {
+      "type": "boolean",
+      "default": true,
+      "description": "Mostrar carga hor\u00e1ria no conte\u00fado program\u00e1tico"
+    },
+    "technical_responsibles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "titles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "registration": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Respons\u00e1veis t\u00e9cnicos"
+    },
+    "front_background_url": {
+      "type": "string",
+      "description": "URL da imagem de fundo (frente)"
+    },
+    "back_background_url": {
+      "type": "string",
+      "description": "URL da imagem de fundo (verso)"
+    },
+    "front_background_position": {
+      "type": "object",
+      "properties": {
+        "top": {
+          "type": "number"
+        },
+        "right": {
+          "type": "number"
+        },
+        "bottom": {
+          "type": "number"
+        },
+        "left": {
+          "type": "number"
+        }
+      }
+    },
+    "back_background_position": {
+      "type": "object",
+      "properties": {
+        "top": {
+          "type": "number"
+        },
+        "right": {
+          "type": "number"
+        },
+        "bottom": {
+          "type": "number"
+        },
+        "left": {
+          "type": "number"
+        }
+      }
+    },
+    "registration_location": {
+      "type": "string",
+      "enum": [
+        "front",
+        "back"
+      ],
+      "default": "back",
+      "description": "Local do n\u00famero de registro"
+    },
+    "text_align": {
+      "type": "string",
+      "enum": [
+        "left",
+        "center",
+        "right",
+        "justify"
+      ],
+      "default": "justify",
+      "description": "Alinhamento do texto"
+    },
+    "page_width": {
+      "type": "number",
+      "default": 297,
+      "description": "Largura da p\u00e1gina em mm"
+    },
+    "page_height": {
+      "type": "number",
+      "default": 210,
+      "description": "Altura da p\u00e1gina em mm"
+    },
+    "front_title": {
+      "type": "string",
+      "default": "CERTIFICADO",
+      "description": "T\u00edtulo principal da frente"
+    },
+    "front_title_formatting": {
+      "type": "object",
+      "description": "Formata\u00e7\u00e3o do t\u00edtulo"
+    },
+    "front_subtitle": {
+      "type": "string",
+      "default": "CAPACITA\u00c7\u00c3O PROFISSIONAL",
+      "description": "Subt\u00edtulo da frente"
+    },
+    "front_subtitle_formatting": {
+      "type": "object",
+      "description": "Formata\u00e7\u00e3o do subt\u00edtulo"
+    },
+    "front_certification_label": {
+      "type": "string",
+      "default": "CERTIFICAMOS QUE",
+      "description": "Texto antes do nome do aluno"
+    },
+    "front_certification_label_formatting": {
+      "type": "object"
+    },
+    "front_location_date": {
+      "type": "string",
+      "default": "Barcarena/PA, [DATA_EMISSAO]",
+      "description": "Local e data de emiss\u00e3o"
+    },
+    "front_location_date_formatting": {
+      "type": "object"
+    },
+    "front_signature_label": {
+      "type": "string",
+      "default": "Assinatura do Treinando",
+      "description": "Texto da assinatura"
+    },
+    "front_signature_label_formatting": {
+      "type": "object"
+    },
+    "front_footer_line1": {
+      "type": "string",
+      "default": "eadcatcursos.com.br",
+      "description": "Rodap\u00e9 linha 1"
+    },
+    "front_footer_line1_formatting": {
+      "type": "object"
+    },
+    "front_footer_line2": {
+      "type": "string",
+      "default": "www.catcursos.com.br",
+      "description": "Rodap\u00e9 linha 2"
+    },
+    "front_footer_line2_formatting": {
+      "type": "object"
+    },
+    "back_header_text": {
+      "type": "string",
+      "default": "Este certificado possui registro interno para verifica\u00e7\u00e3o de autenticidade.",
+      "description": "Texto do cabe\u00e7alho do verso"
+    },
+    "back_header_text_formatting": {
+      "type": "object"
+    },
+    "back_modality_text": {
+      "type": "string"
+    },
+    "back_modality_text_formatting": {
+      "type": "object"
+    },
+    "back_course_name_formatting": {
+      "type": "object"
+    },
+    "back_content_title": {
+      "type": "string",
+      "default": "CONTE\u00daDO PROGRAM\u00c1TICO",
+      "description": "T\u00edtulo do conte\u00fado program\u00e1tico"
+    },
+    "back_content_title_formatting": {
+      "type": "object"
+    },
+    "back_responsibles_title": {
+      "type": "string",
+      "default": "AUTORIDADE E RESPONSABILIDADE T\u00c9CNICA",
+      "description": "T\u00edtulo dos respons\u00e1veis t\u00e9cnicos"
+    },
+    "back_responsibles_title_formatting": {
+      "type": "object"
+    },
+    "back_footer_line1": {
+      "type": "string",
+      "description": "Rodap\u00e9 verso linha 1"
+    },
+    "back_footer_line1_formatting": {
+      "type": "object"
+    },
+    "back_footer_line2": {
+      "type": "string",
+      "description": "Rodap\u00e9 verso linha 2"
+    },
+    "back_footer_line2_formatting": {
+      "type": "object"
+    },
+    "editor_canvas_data": {
+      "type": "object",
+      "description": "Dados do editor visual (elementos, canvas, backgrounds)"
+    }
+  },
+  "required": [
+    "name",
+    "duration",
+    "modality"
+  ]
+}
