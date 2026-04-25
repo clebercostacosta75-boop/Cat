@@ -1,0 +1,105 @@
+{
+  "name": "UserProfile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio (refer\u00eancia ao User)"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Nome do usu\u00e1rio"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "gestor_master",
+        "editor",
+        "cliente"
+      ],
+      "default": "cliente",
+      "description": "Perfil de acesso"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "blocked",
+        "pending_password_change"
+      ],
+      "default": "pending_password_change",
+      "description": "Status do usu\u00e1rio"
+    },
+    "company_permissions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "company_id": {
+            "type": "string"
+          },
+          "company_name": {
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "view",
+                "edit",
+                "manage_users"
+              ]
+            }
+          }
+        }
+      },
+      "description": "Permiss\u00f5es por empresa"
+    },
+    "initial_password": {
+      "type": "string",
+      "description": "Senha inicial gerada (apenas para envio)"
+    },
+    "password_changed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o usu\u00e1rio j\u00e1 trocou a senha"
+    },
+    "last_login": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u00daltimo acesso"
+    },
+    "credentials_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de envio das credenciais"
+    },
+    "credentials_sent_via": {
+      "type": "string",
+      "enum": [
+        "whatsapp",
+        "email",
+        "manual"
+      ],
+      "description": "Canal de envio das credenciais"
+    },
+    "credentials_sent_by": {
+      "type": "string",
+      "description": "Quem enviou as credenciais"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Telefone para contato/WhatsApp"
+    }
+  },
+  "required": [
+    "user_email",
+    "user_name",
+    "role"
+  ]
+}
