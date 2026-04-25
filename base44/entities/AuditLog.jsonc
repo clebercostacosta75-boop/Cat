@@ -1,0 +1,65 @@
+{
+  "name": "AuditLog",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio que realizou a a\u00e7\u00e3o"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Nome do usu\u00e1rio"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "login",
+        "logout",
+        "create",
+        "update",
+        "delete",
+        "view",
+        "export",
+        "send_credentials",
+        "block_user",
+        "unblock_user",
+        "change_password",
+        "sign",
+        "send_whatsapp"
+      ],
+      "description": "Tipo de a\u00e7\u00e3o"
+    },
+    "entity_type": {
+      "type": "string",
+      "description": "Tipo de entidade afetada (Certificate, User, Client, CertificateModel, etc)"
+    },
+    "entity_id": {
+      "type": "string",
+      "description": "ID da entidade afetada"
+    },
+    "entity_name": {
+      "type": "string",
+      "description": "Nome/descri\u00e7\u00e3o da entidade"
+    },
+    "details": {
+      "type": "string",
+      "description": "Detalhes adicionais da a\u00e7\u00e3o com data e hora"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "IP do usu\u00e1rio"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa relacionada"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Nome da empresa relacionada"
+    }
+  },
+  "required": [
+    "user_email",
+    "action"
+  ]
+}
