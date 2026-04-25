@@ -49,6 +49,7 @@
  */
 import AuditLog from './pages/AuditLog';
 import CertDesigner from './pages/CertDesigner';
+import CertificateAlerts from './pages/CertificateAlerts';
 import Certificates from './pages/Certificates.jsx';
 import BMMGenerator from './pages/BMMGenerator';
 import BMMHistory from './pages/BMMHistory';
@@ -80,6 +81,7 @@ import __Layout from './Layout.jsx';
 export const PAGES = {
     "AuditLog": AuditLog,
     "CertDesigner": CertDesigner,
+    "CertificateAlerts": CertificateAlerts,
     "Certificates": Certificates,
     "BMMGenerator": BMMGenerator,
     "BMMHistory": BMMHistory,

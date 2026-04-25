@@ -131,6 +131,12 @@ export default function Layout({ children }) {
         key: "Certificados"
       },
       {
+        title: "Alertas de Vencimento",
+        url: createPageUrl("CertificateAlerts"),
+        icon: Bell,
+        key: "Alertas de Vencimento"
+      },
+      {
         title: "Designer de Certificados",
         url: createPageUrl("CertDesigner"),
         icon: Award,
