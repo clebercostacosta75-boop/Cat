@@ -83,18 +83,8 @@ export default function BMMEmailSender({ content, previewRef, onBack }) {
   useEffect(() => {
     if (company && period && !subject) {
       setSubject(`BMM - ${company.nome_fantasia || company.razao_social} - ${period}`);
-      setBody(`
-        <p>Prezado(a),</p>
-        <p>Segue em anexo o Boletim Mensal de Medição (BMM) referente ao período de <strong>${period}</strong>.</p>
-        <p><strong>Resumo:</strong></p>
-        <ul>
-          <li>Total de Turmas: ${totals?.classes || 0}</li>
-          <li>Total de Alunos: ${totals?.students || 0}</li>
-          <li>Valor Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totals?.value || 0)}</li>
-        </ul>
-        <p>Qualquer dúvida, estamos à disposição.</p>
-        <p>Atenciosamente,<br/>Equipe CAT Treinamentos</p>
-      `);
+      // Corpo vazio para o usuário descrever - sem texto pré-definido
+      setBody('');
     }
 
     // Pré-selecionar email de faturamento
@@ -111,18 +101,20 @@ export default function BMMEmailSender({ content, previewRef, onBack }) {
       return;
     }
 
-    if (!subject || !body) {
+    if (!subject || !body || body.trim().replace(/<[^>]*>/g, '').length === 0) {
       toast.error('Preencha assunto e corpo do e-mail');
       return;
     }
 
     setIsSending(true);
     try {
+      const user = await base44.auth.me();
+      
       // Preparar corpo do email com placeholders substituídos
       const finalSubject = replacePlaceholders(subject);
       const finalBody = replacePlaceholders(body);
 
-      // Enviar email
+      // Enviar email via integração
       await base44.integrations.Core.SendEmail({
         to: recipientEmail,
         subject: finalSubject,
@@ -130,11 +122,35 @@ export default function BMMEmailSender({ content, previewRef, onBack }) {
         from_name: 'CAT Treinamentos'
       });
 
+      // Registrar no histórico de BMM
+      const bmmRecords = await base44.entities.BMMRecord.filter({
+        company_id: content?.company?.id,
+        period: content?.period
+      });
+      
+      if (bmmRecords.length > 0) {
+        const bmmRecord = bmmRecords[0];
+        const updatedHistory = bmmRecord.history || [];
+        updatedHistory.push({
+          action: 'Enviado',
+          timestamp: new Date().toISOString(),
+          user_email: user?.email || 'Sistema',
+          details: `E-mail enviado para ${recipientEmail}`
+        });
+
+        await base44.entities.BMMRecord.update(bmmRecord.id, {
+          status: 'Enviado',
+          sent_to: recipientEmail,
+          sent_at: new Date().toISOString(),
+          history: updatedHistory
+        });
+      }
+
       toast.success(`E-mail enviado para ${recipientEmail}!`);
       
     } catch (error) {
       console.error('Erro ao enviar e-mail:', error);
-      toast.error('Erro ao enviar e-mail');
+      toast.error('Erro ao enviar e-mail: ' + error.message);
     } finally {
       setIsSending(false);
     }
