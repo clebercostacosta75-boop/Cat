@@ -2,9 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Award, CheckCircle, XCircle, PenLine, Trash2, Download, Shield, AlertTriangle } from "lucide-react";
+import { Award, CheckCircle, XCircle, PenLine, Trash2, Download, Shield, AlertTriangle, Copy } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 function formatDate(dateStr) {
   if (!dateStr) return "-";
@@ -25,6 +26,7 @@ export default function CertificateSign() {
   const [cpfError, setCpfError] = useState("");
   const [signing, setSigning] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const canvasRef = useRef(null);
   const isDrawing = useRef(false);
@@ -215,14 +217,14 @@ export default function CertificateSign() {
                   {cert.course_duration && <p className="text-sm text-gray-500 mt-1">Carga horária: {cert.course_duration}</p>}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  {cert.start_date && <div><span className="text-gray-400 block">Início</span><span className="font-medium">{formatDate(cert.start_date)}</span></div>}
-                  {cert.end_date && <div><span className="text-gray-400 block">Término</span><span className="font-medium">{formatDate(cert.end_date)}</span></div>}
-                  {cert.client_name && <div><span className="text-gray-400 block">Empresa</span><span className="font-medium">{cert.client_name}</span></div>}
-                  {cert.instructor_name && <div><span className="text-gray-400 block">Instrutor</span><span className="font-medium">{cert.instructor_name}</span></div>}
-                  {cert.location_and_date && <div className="col-span-2"><span className="text-gray-400 block">Local</span><span className="font-medium">{cert.location_and_date}</span></div>}
-                  {cert.valid_until && <div><span className="text-gray-400 block">Válido até</span><span className="font-medium text-amber-600">{formatDate(cert.valid_until)}</span></div>}
-                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    {cert.start_date && <div><span className="text-gray-400 block text-xs">Início</span><span className="font-medium text-gray-900">{formatDate(cert.start_date)}</span></div>}
+                    {cert.end_date && <div><span className="text-gray-400 block text-xs">Término</span><span className="font-medium text-gray-900">{formatDate(cert.end_date)}</span></div>}
+                    {cert.client_name && <div><span className="text-gray-400 block text-xs">Empresa</span><span className="font-medium text-gray-900">{cert.client_name}</span></div>}
+                    {cert.instructor_name && <div><span className="text-gray-400 block text-xs">Instrutor</span><span className="font-medium text-gray-900">{cert.instructor_name}</span></div>}
+                    {cert.location_and_date && <div className="col-span-1 sm:col-span-2"><span className="text-gray-400 block text-xs">Local</span><span className="font-medium text-gray-900">{cert.location_and_date}</span></div>}
+                    {cert.valid_until && <div><span className="text-gray-400 block text-xs">Válido até</span><span className="font-medium text-amber-600">{formatDate(cert.valid_until)}</span></div>}
+                  </div>
 
                 {/* Programmatic content */}
                 {cert.programmatic_content?.length > 0 && (
@@ -261,13 +263,13 @@ export default function CertificateSign() {
 
             {/* Action buttons */}
             {cert.status !== "signed" && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-                <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 space-y-4">
+                <h3 className="font-semibold text-gray-800 flex items-center gap-2 text-sm sm:text-base">
                   <Shield className="w-4 h-4 text-emerald-600" />
                   Confirmação de Identidade
                 </h3>
                 <p className="text-sm text-gray-500">Para prosseguir com a assinatura, confirme seu CPF:</p>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <input
                     type="text"
                     className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
@@ -276,7 +278,7 @@ export default function CertificateSign() {
                     onChange={e => setCpfInput(e.target.value)}
                     maxLength={14}
                   />
-                  <Button onClick={handleConfirmIdentity} className="bg-emerald-600 hover:bg-emerald-700">
+                  <Button onClick={handleConfirmIdentity} className="bg-emerald-600 hover:bg-emerald-700 sm:w-auto w-full">
                     Confirmar
                   </Button>
                 </div>
@@ -287,85 +289,112 @@ export default function CertificateSign() {
         )}
 
         {/* Step: Sign */}
-        {step === "sign" && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
-                <PenLine className="w-5 h-5 text-emerald-600" />
-                Assinatura Digital
-              </h3>
-              <p className="text-sm text-gray-500 mb-4">
-                Desenhe sua assinatura no campo abaixo usando o dedo (celular) ou mouse (computador):
-              </p>
+         {step === "sign" && (
+           <div className="space-y-6">
+             <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-4 sm:p-6">
+               <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                 <PenLine className="w-5 h-5 text-emerald-600" />
+                 Assinatura Digital
+               </h3>
+               <p className="text-sm text-gray-500 mb-4">
+                 Desenhe sua assinatura no campo abaixo usando o dedo ou mouse:
+               </p>
 
-              <div className="border-2 border-dashed border-emerald-300 rounded-xl overflow-hidden bg-gray-50">
-                <canvas
-                  ref={canvasRef}
-                  width={600}
-                  height={180}
-                  className="w-full touch-none cursor-crosshair"
-                  style={{ display: "block", background: "#fff" }}
-                  onMouseDown={startDraw}
-                  onMouseMove={draw}
-                  onMouseUp={endDraw}
-                  onMouseLeave={endDraw}
-                  onTouchStart={startDraw}
-                  onTouchMove={draw}
-                  onTouchEnd={endDraw}
-                />
-              </div>
+               <div className="border-2 border-dashed border-emerald-300 rounded-xl overflow-hidden bg-gray-50">
+                 <canvas
+                   ref={canvasRef}
+                   width={600}
+                   height={180}
+                   className="w-full touch-none cursor-crosshair"
+                   style={{ display: "block", background: "#fff" }}
+                   onMouseDown={startDraw}
+                   onMouseMove={draw}
+                   onMouseUp={endDraw}
+                   onMouseLeave={endDraw}
+                   onTouchStart={startDraw}
+                   onTouchMove={draw}
+                   onTouchEnd={endDraw}
+                 />
+               </div>
 
-              <div className="flex items-center justify-between mt-3">
-                <p className="text-xs text-gray-400">
-                  {hasDrawn ? "✓ Assinatura registrada" : "Área em branco — desenhe sua assinatura"}
-                </p>
-                <Button variant="outline" size="sm" onClick={clearCanvas}>
-                  <Trash2 className="w-3 h-3 mr-1" />
-                  Limpar
-                </Button>
-              </div>
-            </div>
+               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-3 gap-2">
+                 <p className="text-xs text-gray-400">
+                   {hasDrawn ? "✓ Assinatura registrada" : "Área em branco — desenhe sua assinatura"}
+                 </p>
+                 <Button variant="outline" size="sm" onClick={clearCanvas} className="w-full sm:w-auto">
+                   <Trash2 className="w-3 h-3 mr-1" />
+                   Limpar
+                 </Button>
+               </div>
+             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700">
-              <AlertTriangle className="w-4 h-4 inline mr-2" />
-              Ao assinar, você confirma que as informações do certificado estão corretas. Esta ação não pode ser desfeita.
-            </div>
+             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700 flex gap-2">
+               <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+               <p>Ao assinar, você confirma que as informações do certificado estão corretas. Esta ação não pode ser desfeita.</p>
+             </div>
 
-            <div className="flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={() => setStep("view")}>Voltar</Button>
-              <Button
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                disabled={!hasDrawn || signing}
-                onClick={handleSign}
-              >
-                {signing ? (
-                  <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Assinando...</span>
-                ) : (
-                  <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4" />Assinar Certificado</span>
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
+             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+               <Button variant="outline" className="w-full sm:flex-1" onClick={() => setStep("view")}>Voltar</Button>
+               <Button
+                 className="w-full sm:flex-1 bg-emerald-600 hover:bg-emerald-700"
+                 disabled={!hasDrawn || signing}
+                 onClick={handleSign}
+               >
+                 {signing ? (
+                   <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Assinando...</span>
+                 ) : (
+                   <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4" />Assinar</span>
+                 )}
+               </Button>
+             </div>
+           </div>
+         )}
 
         {/* Step: Done */}
-        {step === "done" && (
-          <div className="text-center space-y-6">
-            <div className="bg-white rounded-2xl border border-emerald-200 shadow-lg p-10">
-              <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-10 h-10 text-emerald-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Certificado Assinado!</h2>
-              <p className="text-gray-500 mb-1">Seu certificado foi assinado digitalmente com sucesso.</p>
-              <p className="text-sm text-gray-400">Código: <strong>{cert.certificate_code}</strong></p>
-              <div className="mt-6 bg-emerald-50 rounded-xl p-4 text-sm text-emerald-700">
-                <Shield className="w-4 h-4 inline mr-2" />
-                Assinatura registrada em {new Date().toLocaleString("pt-BR")} • Dispositivo e dados de acesso armazenados com segurança.
-              </div>
-            </div>
-            <p className="text-xs text-gray-400">Você pode fechar esta janela. O certificado assinado ficará disponível no sistema.</p>
-          </div>
-        )}
+         {step === "done" && (
+           <div className="text-center space-y-4 sm:space-y-6">
+             <div className="bg-white rounded-2xl border border-emerald-200 shadow-lg p-6 sm:p-10">
+               <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                 <CheckCircle className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-600" />
+               </div>
+               <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">Certificado Assinado!</h2>
+               <p className="text-gray-500 text-sm mb-1">Seu certificado foi assinado digitalmente com sucesso.</p>
+               <div className="bg-blue-50 rounded-lg p-3 my-4 border border-blue-200">
+                 <p className="text-xs text-blue-600 mb-1 font-medium">Código de Validação:</p>
+                 <p className="font-mono text-sm font-bold text-blue-700 break-all">{cert.certificate_code}</p>
+               </div>
+               <div className="mt-4 sm:mt-6 bg-emerald-50 rounded-xl p-4 text-xs sm:text-sm text-emerald-700 border border-emerald-200">
+                 <Shield className="w-4 h-4 inline mr-2 flex-shrink-0" />
+                 <span>Assinatura registrada em {new Date().toLocaleString("pt-BR")} • Dados armazenados com segurança.</span>
+               </div>
+             </div>
+
+             <div className="flex flex-col gap-2 sm:gap-3">
+               <Button
+                 className="w-full bg-emerald-600 hover:bg-emerald-700 flex items-center justify-center gap-2"
+                 onClick={() => {
+                   navigator.clipboard.writeText(cert.certificate_code);
+                   toast.success("Código copiado para a área de transferência!");
+                 }}
+               >
+                 <Copy className="w-4 h-4" />
+                 Copiar Código de Validação
+               </Button>
+               <Button
+                 variant="outline"
+                 className="w-full flex items-center justify-center gap-2"
+                 onClick={() => {
+                   window.location.href = `/CertificateValidate?code=${cert.certificate_code}`;
+                 }}
+               >
+                 <CheckCircle className="w-4 h-4" />
+                 Verificar Autenticidade
+               </Button>
+             </div>
+
+             <p className="text-xs text-gray-400 mt-4">Você pode fechar esta janela. O certificado assinado ficará disponível no sistema.</p>
+           </div>
+         )}
       </div>
     </div>
   );

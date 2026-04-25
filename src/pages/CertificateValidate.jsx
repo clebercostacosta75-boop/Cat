@@ -61,38 +61,38 @@ export default function CertificateValidate() {
         </div>
 
         {/* Search box */}
-        <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6 mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Código do Certificado</label>
-          <div className="flex gap-3">
-            <input
-              type="text"
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
-              placeholder="Ex: CAT-2025-XXXXXXXX"
-              value={code}
-              onChange={e => setCode(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleSearch()}
-            />
-            <Button
-              onClick={() => handleSearch()}
-              className="bg-emerald-600 hover:bg-emerald-700"
-              disabled={loading}
-            >
-              {loading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Search className="w-4 h-4" />
-              )}
-            </Button>
-          </div>
-        </div>
+         <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-4 sm:p-6 mb-6">
+           <label className="block text-sm font-medium text-gray-700 mb-2">Código do Certificado</label>
+           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+             <input
+               type="text"
+               className="flex-1 border border-gray-300 rounded-lg px-3 sm:px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+               placeholder="Ex: CAT-2025-XXXXXXXX"
+               value={code}
+               onChange={e => setCode(e.target.value)}
+               onKeyDown={e => e.key === "Enter" && handleSearch()}
+             />
+             <Button
+               onClick={() => handleSearch()}
+               className="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto"
+               disabled={loading}
+             >
+               {loading ? (
+                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+               ) : (
+                 <Search className="w-4 h-4" />
+               )}
+             </Button>
+           </div>
+         </div>
 
         {/* Result */}
         {searched && !loading && (
           <>
             {!result ? (
-              <div className="bg-white rounded-2xl shadow border border-red-200 p-8 text-center">
-                <XCircle className="w-14 h-14 text-red-400 mx-auto mb-3" />
-                <h2 className="text-lg font-bold text-gray-800 mb-1">Certificado não encontrado</h2>
+              <div className="bg-white rounded-2xl shadow border border-red-200 p-6 sm:p-8 text-center">
+                <XCircle className="w-12 sm:w-14 h-12 sm:h-14 text-red-400 mx-auto mb-3" />
+                <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-1">Certificado não encontrado</h2>
                 <p className="text-gray-500 text-sm">O código informado não corresponde a nenhum certificado em nosso sistema.</p>
                 <Badge className="bg-red-100 text-red-700 mt-3">INVÁLIDO</Badge>
               </div>
@@ -118,15 +118,15 @@ export default function CertificateValidate() {
                   </div>
                 </div>
 
-                <div className="p-6 space-y-5">
+                <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
                   {/* Main info */}
                   <div className="text-center border-b pb-4">
                     <Award className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-                    <p className="text-xl font-bold text-gray-900">{result.student_name}</p>
-                    <p className="text-sm text-gray-500">CPF: {result.student_cpf}</p>
+                    <p className="text-lg sm:text-xl font-bold text-gray-900">{result.student_name}</p>
+                    <p className="text-xs sm:text-sm text-gray-500">CPF: {result.student_cpf}</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
                     <div className="col-span-2">
                       <span className="text-gray-400 block text-xs uppercase tracking-wider mb-1">Curso</span>
                       <span className="font-semibold text-emerald-700 text-base">{result.course_name}</span>
@@ -183,20 +183,20 @@ export default function CertificateValidate() {
                   {/* Signature info */}
                   {result.status === "signed" && (
                     <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm">
-                      <p className="font-semibold text-emerald-800 mb-1 flex items-center gap-1">
+                      <p className="font-semibold text-emerald-800 mb-2 flex items-center gap-1">
                         <Shield className="w-4 h-4" /> Assinatura Digital Verificada
                       </p>
-                      <p className="text-emerald-700">Assinado em: {result.signed_at ? format(new Date(result.signed_at), "dd/MM/yyyy 'às' HH:mm") : "-"}</p>
+                      <p className="text-emerald-700 text-xs sm:text-sm">Assinado em: {result.signed_at ? format(new Date(result.signed_at), "dd/MM/yyyy 'às' HH:mm") : "-"}</p>
                       {result.signature_url && (
-                        <img src={result.signature_url} alt="Assinatura" className="h-10 mt-2 object-contain" />
+                        <img src={result.signature_url} alt="Assinatura" className="h-8 sm:h-10 mt-3 object-contain mx-auto" />
                       )}
                     </div>
                   )}
-                </div>
+                  </div>
 
-                <div className="bg-gray-50 px-6 py-3 text-center">
+                  <div className="bg-gray-50 px-4 sm:px-6 py-3 text-center">
                   <p className="text-xs text-gray-400">Consulta realizada em {new Date().toLocaleString("pt-BR")} • CAT Cursos</p>
-                </div>
+                  </div>
               </div>
             )}
           </>
@@ -204,8 +204,8 @@ export default function CertificateValidate() {
 
         {!searched && (
           <div className="text-center py-10 text-gray-400">
-            <Award className="w-14 h-14 mx-auto mb-3 text-gray-200" />
-            <p className="text-sm">Digite o código e clique em pesquisar para validar o certificado.</p>
+            <Award className="w-12 sm:w-14 h-12 sm:h-14 mx-auto mb-3 text-gray-200" />
+            <p className="text-xs sm:text-sm px-4">Digite o código e clique em pesquisar para validar o certificado.</p>
           </div>
         )}
       </div>
