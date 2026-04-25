@@ -39,89 +39,80 @@ export function exportBMMPDF(content, signatureUrl = null) {
    <meta charset="UTF-8"/>
    <title>BMM - ${company?.nome_fantasia || ''} - ${period}</title>
    <style>
-     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-     body { 
-       font-family: Arial, sans-serif; 
-       font-size: 9.5pt; 
-       color: #1c1c1c; 
-       background: white;
-       margin: 0;
-       padding: 0;
-     }
-
+     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+     body { font-family: Arial, sans-serif; font-size: 11px; color: #333; background: white; margin: 0; padding: 0; }
+     
+     @page { size: A4; margin: 10mm 15mm; }
      @media print {
-       @page { 
-         size: A4 portrait; 
-         margin: 15mm; 
-       }
-       body { 
-         margin: 0; 
-         padding: 0; 
-       }
+       body { margin: 0; padding: 0; background: white; }
+       html, body { height: auto; min-height: auto; }
      }
 
-     .page { 
-       width: 794px;
-       max-width: 100%;
-       margin: 0 auto 0;
-       padding: 0;
-       page-break-inside: avoid;
-     }
-
-     h1 { font-size: 13.5pt; font-weight: bold; color: #065f46; margin: 0; }
-     h2 { font-size: 9.5pt; font-weight: bold; color: #1c1c1c; margin: 6px 0 4px 0; }
-
-     /* === Cabeçalho + Dados do Cliente === */
-     .header-logos { display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; border-bottom: 2px solid #059669; margin-bottom: 8px; }
-     .header-logos img { height: 40px; object-fit: contain; }
-     .contractor-info { font-size: 7.5pt; color: #374151; }
-     .contractor-info strong { display: block; font-size: 8.5pt; color: #111827; }
-     .bmm-title { text-align: center; margin-bottom: 8px; }
+     .container { width: 190mm; margin: 0 auto; padding: 10mm; }
+     section, .section, .page { margin-bottom: 8px !important; padding: 8px !important; page-break-inside: avoid; }
+     h1, h2, h3 { margin-bottom: 4px !important; line-height: 1.2; }
+     h1 { font-size: 13pt; font-weight: bold; color: #065f46; }
+     h2 { font-size: 10pt; font-weight: bold; color: #1c1c1c; }
+     h3 { font-size: 9pt; font-weight: bold; }
+     p { margin-bottom: 2px !important; line-height: 1.3 !important; }
+     
+     table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 6px; }
+     td, th { padding: 3px 5px !important; border: 1px solid #d1d5db; }
+     thead tr { background-color: #059669; color: white; }
+     thead th { border: 1px solid #047857; font-weight: bold; }
+     tfoot tr { background-color: #d1fae5; font-weight: bold; }
+     tfoot td { border: 1px solid #a7f3d0; }
+     
+     /* Header */
+     .header-logos { display: flex; align-items: center; justify-content: space-between; padding-bottom: 6px; border-bottom: 2px solid #059669; margin-bottom: 6px; }
+     .header-logos img { height: 35px; object-fit: contain; }
+     .contractor-info { font-size: 8pt; color: #374151; }
+     .contractor-info strong { display: block; font-size: 9pt; color: #111827; }
+     
+     /* Title section */
+     .bmm-title { text-align: center; margin-bottom: 6px; }
      .bmm-title h1 { margin-bottom: 2px; }
      .bmm-title .period { font-size: 9pt; color: #374151; }
-     .bmm-title .contract { font-size: 7.5pt; color: #6b7280; margin-top: 2px; }
-     .client-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 3px; padding: 6px; margin-bottom: 8px; }
-     .client-box h2 { color: #065f46; border-bottom: 1px solid #d1fae5; padding-bottom: 2px; margin-bottom: 4px; }
-     .client-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 8pt; }
-     .client-grid p { margin-bottom: 1px; line-height: 1.3; }
-
-     /* === Tabela + Cards === */
-     table { width: 100%; border-collapse: collapse; font-size: 8pt; margin-bottom: 6px; }
-     thead tr { background-color: #059669; color: white; }
-     thead th { padding: 4px 4px; text-align: left; border: 1px solid #047857; font-weight: bold; }
-     tbody td { padding: 3px 4px; border: 1px solid #d1d5db; }
-     tfoot tr { background-color: #d1fae5; font-weight: bold; }
-     tfoot td { padding: 3px 4px; border: 1px solid #a7f3d0; }
-     .summary-cards { display: flex; gap: 8px; margin-bottom: 8px; }
-     .summary-card { flex: 1; border-radius: 4px; padding: 6px; text-align: center; page-break-inside: avoid; }
+     .bmm-title .contract { font-size: 8pt; color: #6b7280; margin-top: 1px; }
+     
+     /* Client box */
+     .client-box { background: #f9fafb; border: 1px solid #e5e7eb; padding: 6px; margin-bottom: 6px; }
+     .client-box h2 { color: #065f46; border-bottom: 1px solid #d1fae5; padding-bottom: 2px; margin-bottom: 3px; }
+     .client-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 8pt; }
+     .client-grid p { margin-bottom: 1px; }
+     
+     /* Summary cards - COMPACT */
+     .summary-cards { display: flex; gap: 6px; margin-bottom: 6px; }
+     .summary-card { flex: 1; padding: 4px; text-align: center; border-radius: 2px; height: 45px; display: flex; flex-direction: column; justify-content: center; }
      .card-green { background: #ecfdf5; }
      .card-blue { background: #eff6ff; }
      .card-amber { background: #fffbeb; }
-     .card-number { font-size: 14pt; font-weight: bold; line-height: 1; }
+     .card-number { font-size: 12pt; font-weight: bold; line-height: 1; margin-bottom: 1px; }
      .card-green .card-number { color: #059669; }
      .card-blue .card-number { color: #2563eb; }
-     .card-amber .card-number { color: #d97706; font-size: 11pt; }
-     .card-label { font-size: 7pt; color: #6b7280; margin-top: 2px; }
-
-     /* === Assinaturas === */
-     .sig-page-title { text-align: center; margin-bottom: 8px; page-break-inside: avoid; }
-     .sig-page-title h2 { font-size: 10pt; color: #065f46; margin: 0 0 2px 0; }
-     .sig-page-title p { font-size: 7.5pt; color: #6b7280; margin: 0; }
-     .sig-row { display: flex; gap: 20px; justify-content: center; margin-bottom: 16px; page-break-inside: avoid; }
-     .sig-block { text-align: center; min-width: 140px; }
-     .sig-line { border-top: 1.5px solid #374151; padding-top: 2px; margin-top: 30px; }
-     .sig-name { font-weight: bold; font-size: 8.5pt; color: #111827; margin: 0; line-height: 1.2; }
+     .card-amber .card-number { color: #d97706; font-size: 10pt; }
+     .card-label { font-size: 7pt; color: #6b7280; line-height: 1.1; }
+     
+     /* Signatures */
+     .sig-page-title { text-align: center; margin-bottom: 6px; }
+     .sig-page-title h2 { margin: 0 0 2px 0; }
+     .sig-page-title p { font-size: 8pt; color: #6b7280; margin: 0; }
+     .sig-row { display: flex; gap: 16px; justify-content: center; margin-bottom: 12px; }
+     .sig-block { text-align: center; min-width: 120px; }
+     .sig-line { border-top: 1.5px solid #374151; padding-top: 2px; margin-top: 25px; }
+     .sig-name { font-weight: bold; font-size: 8pt; color: #111827; margin: 0; line-height: 1.2; }
      .sig-role { font-size: 7pt; color: #6b7280; margin: 1px 0 0 0; }
      .sig-company { font-size: 7pt; color: #9ca3af; margin: 0; }
-     .sig-img { max-height: 30px; margin-bottom: -4px; }
-     .sig-stamp { background:#eff6ff; border:1px solid #bfdbfe; border-radius:2px; padding:3px 6px; font-size:6.5pt; color:#1d4ed8; display:inline-block; margin-top:2px; }
-     .doc-footer { text-align: center; font-size: 6.5pt; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 6px; margin-top: 8px; page-break-inside: avoid; }
+     .sig-img { max-height: 25px; margin-bottom: -3px; }
+     
+     /* Footer */
+     .doc-footer { text-align: center; font-size: 7pt; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 4px; margin-top: 6px; }
    </style>
   </head>
   <body>
 
 <!-- ===== Cabeçalho + Dados do Cliente ===== -->
-<div class="page">
+<div class="container">
   <div class="header-logos">
     <div style="display:flex; align-items:center; gap:16px;">
       <img src="${contractorLogoUrl}" alt="Logo Contratada"/>
@@ -160,10 +151,9 @@ export function exportBMMPDF(content, signatureUrl = null) {
       </div>
     </div>
   </div>
-</div>
 
 <!-- ===== Demonstrativo + Cards ===== -->
-<div class="page">
+<div class="section">
   <h2 style="margin-bottom:12px; color:#065f46; border-bottom:2px solid #d1fae5; padding-bottom:6px;">DEMONSTRATIVO DE TREINAMENTOS</h2>
 
   <table>
@@ -204,10 +194,9 @@ export function exportBMMPDF(content, signatureUrl = null) {
       <div class="card-label">Valor Total do Período</div>
     </div>
   </div>
-</div>
 
 <!-- ===== Assinaturas ===== -->
-<div class="page" style="page-break-before: auto;">
+<div class="section">
   <div class="sig-page-title">
     <h2>DECLARAÇÃO E ASSINATURAS</h2>
     <p style="font-size:9pt; color:#6b7280; margin-top:8px;">
@@ -216,38 +205,25 @@ export function exportBMMPDF(content, signatureUrl = null) {
   </div>
 
   <div class="sig-row">
-    <div class="sig-block">
-      <div class="sig-line">
-        <div class="sig-name">${contractor?.company_name || 'CONTRATADA'}</div>
-        <div class="sig-role">CONTRATADA</div>
-      </div>
-    </div>
-    <div class="sig-block">
-      <div class="sig-line">
-        <div class="sig-name">${company?.nome_fantasia || company?.razao_social || 'CONTRATANTE'}</div>
-        <div class="sig-role">CONTRATANTE</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="sig-row">
-    <div class="sig-block">
-      <div class="sig-line">
-        <div class="sig-name">${company?.fiscal_name || '______________________________'}</div>
-        <div class="sig-role">FISCALIZAÇÃO</div>
-        ${company?.fiscal_role ? `<div class="sig-company">${company.fiscal_role}</div>` : ''}
-      </div>
-    </div>
-    <div class="sig-block">
-      ${signatureUrl ? `<img src="${signatureUrl}" class="sig-img" alt="Assinatura Digital"/>` : ''}
-      <div class="sig-line">
-        <div class="sig-name">${company?.contract_manager_name || '______________________________'}</div>
-        <div class="sig-role">GESTOR DO CONTRATO</div>
-        ${company?.contract_manager_role ? `<div class="sig-company">${company.contract_manager_role}</div>` : ''}
-        ${signatureUrl ? `<div class="sig-stamp">✔ Assinado digitalmente em ${new Date().toLocaleString('pt-BR')}</div>` : ''}
-      </div>
-    </div>
-  </div>
+     <div class="sig-block">
+       <div class="sig-line">
+         <p class="sig-name">${contractor?.company_name || 'CONTRATADA'}</p>
+         <p class="sig-role">CONTRATADA</p>
+       </div>
+     </div>
+     <div class="sig-block">
+       <div class="sig-line">
+         <p class="sig-name">${company?.nome_fantasia || company?.razao_social || 'CONTRATANTE'}</p>
+         <p class="sig-role">CONTRATANTE</p>
+       </div>
+     </div>
+     <div class="sig-block">
+       <div class="sig-line">
+         <p class="sig-name">${company?.fiscal_name || '________'}</p>
+         <p class="sig-role">FISCALIZAÇÃO</p>
+       </div>
+     </div>
+   </div>
 
   <div class="doc-footer">
     <p>Documento gerado em ${new Date().toLocaleString('pt-BR')} &nbsp;|&nbsp; Este documento é válido como comprovante de serviços prestados.</p>
