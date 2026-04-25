@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Clock, History, ChevronDown, ChevronUp } from "lucide-react";
+import { CheckCircle, XCircle, Clock, History, ChevronDown, ChevronUp, PenLine, Download } from "lucide-react";
 import { toast } from "sonner";
+import BMMSignatureModal from "@/components/bmm/BMMSignatureModal";
+import { exportBMMPDF } from "@/components/bmm/BMMExporter";
 
 const STATUS_CONFIG = {
   Rascunho: { color: "bg-gray-100 text-gray-700", label: "Rascunho" },
@@ -23,6 +25,8 @@ export default function BMMApprovalPanel({ record, userRole }) {
   const [showHistory, setShowHistory] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [signerName, setSignerName] = useState("");
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.BMMRecord.update(id, data),
@@ -53,6 +57,23 @@ export default function BMMApprovalPanel({ record, userRole }) {
       approved_at: new Date().toISOString(),
     });
     toast.success("BMM aprovado com sucesso!");
+  };
+
+  const handleOpenSignature = async () => {
+    const user = await base44.auth.me();
+    setSignerName(user?.full_name || user?.email || "Gestor");
+    setShowSignatureModal(true);
+  };
+
+  const handleSignatureConfirm = async (signatureDataUrl) => {
+    setShowSignatureModal(false);
+    const user = await base44.auth.me();
+    await addHistoryEvent("Confirmado", "BMM assinado e confirmado pelo gestor.", {
+      signature_url: signatureDataUrl,
+      approved_by: user?.email,
+      approved_at: new Date().toISOString(),
+    });
+    toast.success("BMM assinado e confirmado com sucesso!");
   };
 
   const handleSubmitForApproval = async () => {
@@ -130,6 +151,39 @@ export default function BMMApprovalPanel({ record, userRole }) {
           </>
         )}
 
+        {/* Exportar PDF com Assinatura — quando já confirmado */}
+        {record.status === "Confirmado" && record.content_snapshot && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-blue-700 border-blue-400 hover:bg-blue-50"
+            onClick={() => {
+              try {
+                const content = JSON.parse(record.content_snapshot);
+                exportBMMPDF(content, record.signature_url || null);
+              } catch {
+                toast.error("Snapshot do conteúdo não disponível.");
+              }
+            }}
+          >
+            <Download className="w-3 h-3 mr-1" />
+            PDF Assinado
+          </Button>
+        )}
+
+        {/* Assinar e Confirmar — disponível para gestores após aprovação */}
+        {isManager && record.status === "Aprovado" && (
+          <Button
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={handleOpenSignature}
+            disabled={updateMutation.isPending}
+          >
+            <PenLine className="w-3 h-3 mr-1" />
+            Assinar e Confirmar
+          </Button>
+        )}
+
         {/* Reabrir se rejeitado */}
         {record.status === "Rejeitado" && (
           <Button
@@ -176,6 +230,26 @@ export default function BMMApprovalPanel({ record, userRole }) {
           )}
         </div>
       )}
+
+      {/* Assinatura registrada */}
+      {record.status === "Confirmado" && record.signature_url && (
+        <div className="mt-1">
+          <p className="text-xs text-gray-500 mb-1">Assinatura do gestor:</p>
+          <img
+            src={record.signature_url}
+            alt="Assinatura"
+            className="h-10 border border-gray-200 rounded bg-white"
+          />
+        </div>
+      )}
+
+      {/* Modal de Assinatura */}
+      <BMMSignatureModal
+        open={showSignatureModal}
+        onOpenChange={setShowSignatureModal}
+        onConfirm={handleSignatureConfirm}
+        signerName={signerName}
+      />
 
       {/* Modal de Rejeição */}
       <Dialog open={showRejectModal} onOpenChange={setShowRejectModal}>

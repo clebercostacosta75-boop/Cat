@@ -1,4 +1,4 @@
-export function exportBMMPDF(content) {
+export function exportBMMPDF(content, signatureUrl = null) {
   if (!content) return;
 
   const { company, contractor, period, classes, totals } = content;
@@ -92,6 +92,8 @@ export function exportBMMPDF(content) {
     .sig-name { font-weight: bold; font-size: 10pt; color: #111827; }
     .sig-role { font-size: 8.5pt; color: #6b7280; margin-top: 3px; }
     .sig-company { font-size: 8pt; color: #9ca3af; margin-top: 2px; }
+    .sig-img { max-height: 48px; margin-bottom: -10px; }
+    .sig-stamp { background:#eff6ff; border:1px solid #bfdbfe; border-radius:4px; padding:6px 12px; font-size:8pt; color:#1d4ed8; display:inline-block; margin-bottom:8px; }
     .doc-footer { text-align: center; font-size: 8pt; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 40px; }
   </style>
 </head>
@@ -216,10 +218,12 @@ export function exportBMMPDF(content) {
       </div>
     </div>
     <div class="sig-block">
+      ${signatureUrl ? `<img src="${signatureUrl}" class="sig-img" alt="Assinatura Digital"/>` : ''}
       <div class="sig-line">
         <div class="sig-name">${company?.contract_manager_name || '______________________________'}</div>
         <div class="sig-role">GESTOR DO CONTRATO</div>
         ${company?.contract_manager_role ? `<div class="sig-company">${company.contract_manager_role}</div>` : ''}
+        ${signatureUrl ? `<div class="sig-stamp">✔ Assinado digitalmente em ${new Date().toLocaleString('pt-BR')}</div>` : ''}
       </div>
     </div>
   </div>

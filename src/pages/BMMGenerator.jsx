@@ -160,6 +160,7 @@ export default function BMMGenerator() {
         total_value: generatedContent.totals.value,
         total_classes: generatedContent.totals.classes,
         total_students: generatedContent.totals.students,
+        content_snapshot: JSON.stringify(generatedContent),
         history: [
           {
             action: 'Gerado',
