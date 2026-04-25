@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,15 +10,22 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   FileText, Search, Filter, Download, Eye, Mail, 
-  Calendar, Building2, CheckCircle, Clock, Send, History, TrendingUp, DollarSign, Users
+  Calendar, Building2, CheckCircle, Clock, Send, History, TrendingUp, DollarSign, Users,
+  XCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import BMMApprovalPanel from "@/components/bmm/BMMApprovalPanel";
 
 export default function BMMHistoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCompany, setFilterCompany] = useState("all");
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
+  }, []);
 
   const { data: bmmRecords = [], isLoading } = useQuery({
     queryKey: ['bmmRecords'],
@@ -60,17 +67,23 @@ export default function BMMHistoryPage() {
   };
 
   const statusColors = {
-    'Rascunho': 'bg-stone-100 text-stone-800',
-    'Gerado': 'bg-blue-100 text-blue-800',
-    'Enviado': 'bg-emerald-100 text-emerald-800',
-    'Confirmado': 'bg-green-100 text-green-800'
+    'Rascunho':  'bg-stone-100 text-stone-800',
+    'Pendente':  'bg-yellow-100 text-yellow-800',
+    'Aprovado':  'bg-emerald-100 text-emerald-800',
+    'Rejeitado': 'bg-red-100 text-red-800',
+    'Gerado':    'bg-blue-100 text-blue-800',
+    'Enviado':   'bg-purple-100 text-purple-800',
+    'Confirmado':'bg-green-100 text-green-800',
   };
 
   const statusIcons = {
-    'Rascunho': Clock,
-    'Gerado': FileText,
-    'Enviado': Send,
-    'Confirmado': CheckCircle
+    'Rascunho':  Clock,
+    'Pendente':  Clock,
+    'Aprovado':  CheckCircle,
+    'Rejeitado': XCircle,
+    'Gerado':    FileText,
+    'Enviado':   Send,
+    'Confirmado':CheckCircle,
   };
 
   const filteredRecords = bmmRecords.filter(record => {
@@ -171,6 +184,9 @@ export default function BMMHistoryPage() {
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="Rascunho">Rascunho</SelectItem>
+                    <SelectItem value="Pendente">Pendente</SelectItem>
+                    <SelectItem value="Aprovado">Aprovado</SelectItem>
+                    <SelectItem value="Rejeitado">Rejeitado</SelectItem>
                     <SelectItem value="Gerado">Gerado</SelectItem>
                     <SelectItem value="Enviado">Enviado</SelectItem>
                     <SelectItem value="Confirmado">Confirmado</SelectItem>
@@ -218,7 +234,7 @@ export default function BMMHistoryPage() {
                     <TableHead className="font-bold text-right text-black">💰 Valor</TableHead>
                     <TableHead className="font-bold text-center text-black">📊 Status</TableHead>
                     <TableHead className="font-bold text-black">🕒 Gerado em</TableHead>
-                    <TableHead className="font-bold text-center text-black">📋 Histórico</TableHead>
+                    <TableHead className="font-bold text-black">✅ Aprovação / Histórico</TableHead>
                     <TableHead className="font-bold text-center text-black">⚙️ Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -260,33 +276,11 @@ export default function BMMHistoryPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-sm text-gray-600">
-                            {formatDateTime(record.created_date)}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {record.history && record.history.length > 0 ? (
-                              <div className="space-y-1">
-                                {record.history.slice(-3).map((event, idx) => (
-                                  <div key={idx} className="text-xs text-gray-600">
-                                    <Badge variant="outline" className="text-xs">
-                                      {event?.action || 'Ação'}
-                                    </Badge>
-                                    {event?.timestamp && (
-                                      <div className="text-[10px] text-gray-500 mt-0.5">
-                                        {formatDateTime(event.timestamp)}
-                                      </div>
-                                    )}
-                                    {event?.user_email && (
-                                      <div className="text-[10px] text-gray-500">
-                                        {event.user_email}
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-gray-400">-</span>
-                            )}
-                          </TableCell>
+                             {formatDateTime(record.created_date)}
+                           </TableCell>
+                           <TableCell>
+                             <BMMApprovalPanel record={record} userRole={userRole} />
+                           </TableCell>
                           <TableCell>
                             <div className="flex items-center justify-center gap-2">
                               {record.pdf_url && (
