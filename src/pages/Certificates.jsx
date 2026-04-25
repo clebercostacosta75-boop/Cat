@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import CertificateExporter from "@/components/certificates/CertificateExporter";
 import CertificateEmissaoIndividual from "@/components/certificates/CertificateEmissaoIndividual";
 import CertificateEmissaoMassa from "@/components/certificates/CertificateEmissaoMassa";
+import CertificateValidation from "@/components/certificates/CertificateValidation";
 
 const statusConfig = {
   pending_signature: { label: "Aguardando Assinatura", color: "bg-yellow-100 text-yellow-800", icon: Clock },
@@ -126,15 +127,18 @@ export default function Certificates() {
 
       {/* Tabs principais */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-3 w-full max-w-lg">
+        <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="lista" className="gap-2">
             <Award className="w-4 h-4" /> Lista
           </TabsTrigger>
           <TabsTrigger value="individual" className="gap-2">
-            <PlusCircle className="w-4 h-4" /> Emissão Individual
+            <PlusCircle className="w-4 h-4" /> Individual
           </TabsTrigger>
           <TabsTrigger value="massa" className="gap-2">
-            <Users className="w-4 h-4" /> Emissão em Massa
+            <Users className="w-4 h-4" /> Massa
+          </TabsTrigger>
+          <TabsTrigger value="validar" className="gap-2">
+            <Search className="w-4 h-4" /> Validar
           </TabsTrigger>
         </TabsList>
 
@@ -263,6 +267,11 @@ export default function Certificates() {
         {/* Emissão em Massa */}
         <TabsContent value="massa" className="mt-4">
           <CertificateEmissaoMassa onSuccess={() => setActiveTab("lista")} />
+        </TabsContent>
+
+        {/* Validação */}
+        <TabsContent value="validar" className="mt-4">
+          <CertificateValidation />
         </TabsContent>
       </Tabs>
     </div>
