@@ -131,10 +131,10 @@ export default function Layout({ children }) {
         key: "Certificados"
       },
       {
-        title: "Certificados",
-        url: createPageUrl("Certificates"),
+        title: "Designer de Certificados",
+        url: createPageUrl("CertDesigner"),
         icon: Award,
-        key: "Certificados"
+        key: "Designer de Certificados"
       },
       {
         title: "Gerar BMM",

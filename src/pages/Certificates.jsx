@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Award, Search, Send, Eye, XCircle, Copy, CheckCircle, Clock, RotateCcw } from "lucide-react";
+import { Award, Search, Send, Eye, XCircle, Copy, CheckCircle, Clock, Settings } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 import CertificateExporter from "@/components/certificates/CertificateExporter";
 
 const statusConfig = {
@@ -25,6 +26,15 @@ export default function Certificates() {
     queryKey: ["certificates"],
     queryFn: () => base44.entities.Certificate.list("-created_date", 200),
   });
+
+  const { data: models = [] } = useQuery({
+    queryKey: ["certificateModels"],
+    queryFn: () => base44.entities.CertificateModel.list("-created_date", 100),
+  });
+
+  // Mapeia modelo pelo nome do curso para uso no exporter
+  const getModelForCert = (cert) =>
+    models.find(m => m.name === cert.course_name || m.id === cert.model_id) || null;
 
   const revokeMutation = useMutation({
     mutationFn: (id) => base44.entities.Certificate.update(id, { status: "revoked" }),
@@ -88,6 +98,11 @@ export default function Certificates() {
           </h1>
           <p className="text-gray-500 text-sm mt-1">Gestão de certificados de treinamentos NR</p>
         </div>
+        <Link to="/CertDesigner">
+          <Button variant="outline" size="sm" className="gap-2">
+            <Settings className="w-4 h-4" /> Editar Modelos
+          </Button>
+        </Link>
       </div>
 
       {/* Stats */}
@@ -200,7 +215,7 @@ export default function Certificates() {
                           <Eye className="w-3 h-3 mr-1" /> Link Validação
                         </Button>
                       )}
-                      <CertificateExporter certificate={cert} />
+                      <CertificateExporter certificate={cert} model={getModelForCert(cert)} />
                       {cert.status !== "revoked" && (
                         <Button
                           size="sm"
