@@ -9,12 +9,14 @@ import { Bell, AlertTriangle, Search, MessageCircle, RefreshCw, User, Building2,
 import { toast } from "sonner";
 
 export default function CertificateAlerts() {
-  const [daysAhead, setDaysAhead] = useState(30);
-  const [search, setSearch] = useState("");
-  const [alerts, setAlerts] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [sentStudents, setSentStudents] = useState(new Set());
-  const [sentHR, setSentHR] = useState(new Set());
+   const [daysAhead, setDaysAhead] = useState(30);
+   const [search, setSearch] = useState("");
+   const [alerts, setAlerts] = useState(null);
+   const [loading, setLoading] = useState(false);
+   const [sentStudents, setSentStudents] = useState(new Set());
+   const [sentHR, setSentHR] = useState(new Set());
+   const [emailLoading, setEmailLoading] = useState(null);
+   const [autoNotify, setAutoNotify] = useState(false);
 
   const runCheck = async (dry = false) => {
     setLoading(true);
@@ -33,6 +35,24 @@ export default function CertificateAlerts() {
       toast.error("Erro ao verificar vencimentos: " + e.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const sendEmailNotifications = async () => {
+    if (!alerts || alerts.count === 0) {
+      toast.warning("Nenhum certificado para notificar.");
+      return;
+    }
+    setEmailLoading(true);
+    try {
+      const res = await base44.functions.invoke("enviarNotificacoesCertificados", {
+        alerts: filteredAlerts,
+      });
+      toast.success(`${res.data.sent} notificação(ções) enviada(s) por e-mail!`);
+    } catch (e) {
+      toast.error("Erro ao enviar notificações: " + e.message);
+    } finally {
+      setEmailLoading(false);
     }
   };
 
@@ -64,9 +84,15 @@ export default function CertificateAlerts() {
   };
 
   const urgencyBadge = (days) => {
-    if (days <= 7) return { label: "Urgente", variant: "destructive" };
-    if (days <= 15) return { label: "Atenção", className: "bg-orange-500 text-white" };
-    return { label: `${days} dias`, className: "bg-yellow-500 text-white" };
+    if (days <= 7) return { label: "Urgente", variant: "destructive", risk: "critical" };
+    if (days <= 15) return { label: "Atenção", className: "bg-orange-500 text-white", risk: "high" };
+    return { label: `${days} dias`, className: "bg-yellow-500 text-white", risk: "medium" };
+  };
+
+  const getRiskIcon = (risk) => {
+    if (risk === "critical") return "🔴";
+    if (risk === "high") return "🟠";
+    return "🟡";
   };
 
   return (
@@ -123,42 +149,70 @@ export default function CertificateAlerts() {
       {/* Resultados */}
       {alerts && (
         <>
-          {/* Resumo */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* Resumo por risco */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="pt-3 pb-2">
+                <div className="text-2xl font-bold text-red-700">
+                  {filteredAlerts.filter(a => a.days_remaining <= 7).length}
+                </div>
+                <div className="text-xs text-red-600 font-medium">🔴 Crítico (≤7 dias)</div>
+              </CardContent>
+            </Card>
             <Card className="border-orange-200 bg-orange-50">
-              <CardContent className="pt-4 pb-3">
-                <div className="text-2xl font-bold text-orange-700">{alerts.count}</div>
-                <div className="text-sm text-orange-600">Certificados vencendo</div>
+              <CardContent className="pt-3 pb-2">
+                <div className="text-2xl font-bold text-orange-700">
+                  {filteredAlerts.filter(a => a.days_remaining > 7 && a.days_remaining <= 15).length}
+                </div>
+                <div className="text-xs text-orange-600 font-medium">🟠 Alto (8-15 dias)</div>
+              </CardContent>
+            </Card>
+            <Card className="border-yellow-200 bg-yellow-50">
+              <CardContent className="pt-3 pb-2">
+                <div className="text-2xl font-bold text-yellow-700">
+                  {filteredAlerts.filter(a => a.days_remaining > 15 && a.days_remaining <= 30).length}
+                </div>
+                <div className="text-xs text-yellow-600 font-medium">🟡 Médio (16-30 dias)</div>
               </CardContent>
             </Card>
             <Card className="border-blue-200 bg-blue-50">
-              <CardContent className="pt-4 pb-3">
+              <CardContent className="pt-3 pb-2">
                 <div className="text-2xl font-bold text-blue-700">
-                  {filteredAlerts.filter(a => a.student_whatsapp_url).length}
+                  {filteredAlerts.filter(a => a.days_remaining > 30).length}
                 </div>
-                <div className="text-sm text-blue-600">Com contato do aluno</div>
-              </CardContent>
-            </Card>
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="pt-4 pb-3">
-                <div className="text-2xl font-bold text-green-700">
-                  {filteredAlerts.filter(a => a.hr_whatsapp_url).length}
-                </div>
-                <div className="text-sm text-green-600">Com contato do RH</div>
+                <div className="text-xs text-blue-600 font-medium">🔵 Baixo (&gt;30 dias)</div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Busca */}
+          {/* Busca + Notificações automáticas */}
           {alerts.count > 0 && (
-            <div className="relative">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Filtrar por aluno, curso, empresa ou código..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="pl-9"
-              />
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Filtrar por aluno, curso, empresa ou código..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="pt-4 pb-4 flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+                  <div>
+                    <p className="font-medium text-blue-900 text-sm">📧 Enviar notificações por e-mail</p>
+                    <p className="text-xs text-blue-700">Notifique alunos e empresas sobre certificados vencendo</p>
+                  </div>
+                  <Button
+                    onClick={sendEmailNotifications}
+                    disabled={emailLoading || filteredAlerts.length === 0}
+                    className="gap-2 bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
+                  >
+                    {emailLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
+                    {emailLoading ? "Enviando..." : `Enviar E-mails (${filteredAlerts.length})`}
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           )}
 
@@ -180,12 +234,13 @@ export default function CertificateAlerts() {
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div className="flex-1 space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-lg">{getRiskIcon(ub.risk)}</span>
                           <span className="font-semibold text-gray-900">{alert.student_name}</span>
                           <Badge className={ub.className} variant={ub.variant}>
                             {ub.label}
                           </Badge>
-                          {alert.days_remaining <= 30 && (
-                            <AlertTriangle className="w-4 h-4 text-orange-500" />
+                          {alert.days_remaining <= 7 && (
+                            <AlertTriangle className="w-4 h-4 text-red-600 animate-pulse" />
                           )}
                         </div>
                         <div className="text-sm text-gray-600">📚 {alert.course_name}</div>
