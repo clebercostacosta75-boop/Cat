@@ -10,8 +10,6 @@ import { Award, Search, Send, Eye, XCircle, Copy, CheckCircle, Clock, Settings, 
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import CertificateExporter from "@/components/certificates/CertificateExporter";
-import CertificateEmissaoIndividual from "@/components/certificates/CertificateEmissaoIndividual";
-import CertificateEmissaoMassa from "@/components/certificates/CertificateEmissaoMassa";
 import CertificateValidation from "@/components/certificates/CertificateValidation";
 
 const statusConfig = {
@@ -101,11 +99,18 @@ export default function Certificates() {
           </h1>
           <p className="text-gray-500 text-sm mt-1">Gestão de certificados de treinamentos NR</p>
         </div>
-        <Link to="/CertDesigner">
-          <Button variant="outline" size="sm" className="gap-2">
-            <Settings className="w-4 h-4" /> Editar Modelos
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link to="/CertificateEmissao">
+            <Button variant="default" size="sm" className="gap-2">
+              <PlusCircle className="w-4 h-4" /> Emitir Certificado
+            </Button>
+          </Link>
+          <Link to="/CertDesigner">
+            <Button variant="outline" size="sm" className="gap-2">
+              <Settings className="w-4 h-4" /> Editar Modelos
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
@@ -127,15 +132,9 @@ export default function Certificates() {
 
       {/* Tabs principais */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 w-full">
+        <TabsList className="grid grid-cols-3 w-full max-w-lg">
           <TabsTrigger value="lista" className="gap-2">
             <Award className="w-4 h-4" /> Lista
-          </TabsTrigger>
-          <TabsTrigger value="individual" className="gap-2">
-            <PlusCircle className="w-4 h-4" /> Individual
-          </TabsTrigger>
-          <TabsTrigger value="massa" className="gap-2">
-            <Users className="w-4 h-4" /> Massa
           </TabsTrigger>
           <TabsTrigger value="validar" className="gap-2">
             <Search className="w-4 h-4" /> Validar
@@ -257,16 +256,6 @@ export default function Certificates() {
               })}
             </div>
           )}
-        </TabsContent>
-
-        {/* Emissão Individual */}
-        <TabsContent value="individual" className="mt-4">
-          <CertificateEmissaoIndividual onSuccess={() => setActiveTab("lista")} />
-        </TabsContent>
-
-        {/* Emissão em Massa */}
-        <TabsContent value="massa" className="mt-4">
-          <CertificateEmissaoMassa onSuccess={() => setActiveTab("lista")} />
         </TabsContent>
 
         {/* Validação */}
