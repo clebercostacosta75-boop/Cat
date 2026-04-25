@@ -13,6 +13,8 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import CertificateSign from './pages/CertificateSign';
 import CertificateValidate from './pages/CertificateValidate';
 import StudentPortal from './pages/StudentPortal';
+import AttendanceCall from './pages/AttendanceCall';
+import AttendanceConfirm from './pages/AttendanceConfirm';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -54,6 +56,7 @@ const AuthenticatedApp = () => {
       <Route path="/CertificateSign" element={<CertificateSign />} />
       <Route path="/CertificateValidate" element={<CertificateValidate />} />
       <Route path="/StudentPortal" element={<StudentPortal />} />
+      <Route path="/AttendanceConfirm" element={<AttendanceConfirm />} />
 
       {/* Rotas autenticadas com layout */}
       <Route path="/" element={<LayoutWrapper currentPageName={mainPageKey}><MainPage /></LayoutWrapper>} />

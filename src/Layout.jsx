@@ -143,6 +143,12 @@ export default function Layout({ children }) {
         key: "Alertas de Vencimento"
       },
       {
+        title: "Chamada Presencial",
+        url: createPageUrl("AttendanceCall"),
+        icon: Users,
+        key: "Chamada Presencial"
+      },
+      {
         title: "Designer de Certificados",
         url: createPageUrl("CertDesigner"),
         icon: Award,

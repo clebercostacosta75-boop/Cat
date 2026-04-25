@@ -49,6 +49,7 @@
  */
 import AuditLog from './pages/AuditLog';
 import FinancialDashboard from './pages/FinancialDashboard';
+import AttendanceCall from './pages/AttendanceCall';
 import CertDesigner from './pages/CertDesigner';
 import CertificateAlerts from './pages/CertificateAlerts';
 import Certificates from './pages/Certificates.jsx';
@@ -82,6 +83,7 @@ import __Layout from './Layout.jsx';
 export const PAGES = {
     "AuditLog": AuditLog,
     "FinancialDashboard": FinancialDashboard,
+    "AttendanceCall": AttendanceCall,
     "CertDesigner": CertDesigner,
     "CertificateAlerts": CertificateAlerts,
     "Certificates": Certificates,
