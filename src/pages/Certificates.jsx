@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Award, Search, Send, Eye, XCircle, Copy, CheckCircle, Clock, Settings } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Award, Search, Send, Eye, XCircle, Copy, CheckCircle, Clock, Settings, PlusCircle, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import CertificateExporter from "@/components/certificates/CertificateExporter";
+import CertificateEmissaoIndividual from "@/components/certificates/CertificateEmissaoIndividual";
+import CertificateEmissaoMassa from "@/components/certificates/CertificateEmissaoMassa";
 
 const statusConfig = {
   pending_signature: { label: "Aguardando Assinatura", color: "bg-yellow-100 text-yellow-800", icon: Clock },
@@ -20,6 +23,7 @@ const statusConfig = {
 export default function Certificates() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState("lista");
   const queryClient = useQueryClient();
 
   const { data: certificates = [], isLoading } = useQuery({
@@ -32,7 +36,6 @@ export default function Certificates() {
     queryFn: () => base44.entities.CertificateModel.list("-created_date", 100),
   });
 
-  // Mapeia modelo pelo nome do curso para uso no exporter
   const getModelForCert = (cert) =>
     models.find(m => m.name === cert.course_name || m.id === cert.model_id) || null;
 
@@ -48,9 +51,7 @@ export default function Certificates() {
     mutationFn: (certificateId) =>
       base44.functions.invoke("enviarCertificadoWhatsApp", { certificate_id: certificateId }),
     onSuccess: (res) => {
-      if (res.data?.whatsapp_url) {
-        window.open(res.data.whatsapp_url, "_blank");
-      }
+      if (res.data?.whatsapp_url) window.open(res.data.whatsapp_url, "_blank");
       queryClient.invalidateQueries({ queryKey: ["certificates"] });
       toast.success("Link de assinatura enviado via WhatsApp!");
     },
@@ -91,6 +92,7 @@ export default function Certificates() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -122,120 +124,147 @@ export default function Certificates() {
         ))}
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            placeholder="Buscar por aluno, curso, CPF ou código..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {["all", "pending_signature", "signed", "active", "revoked"].map((s) => (
-            <Button
-              key={s}
-              variant={statusFilter === s ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter(s)}
-            >
-              {s === "all" ? "Todos" : statusConfig[s]?.label || s}
-            </Button>
-          ))}
-        </div>
-      </div>
+      {/* Tabs principais */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid grid-cols-3 w-full max-w-lg">
+          <TabsTrigger value="lista" className="gap-2">
+            <Award className="w-4 h-4" /> Lista
+          </TabsTrigger>
+          <TabsTrigger value="individual" className="gap-2">
+            <PlusCircle className="w-4 h-4" /> Emissão Individual
+          </TabsTrigger>
+          <TabsTrigger value="massa" className="gap-2">
+            <Users className="w-4 h-4" /> Emissão em Massa
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Table */}
-      {isLoading ? (
-        <div className="text-center py-12 text-gray-400">Carregando...</div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">Nenhum certificado encontrado.</div>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map((cert) => {
-            const sc = statusConfig[cert.status] || statusConfig.pending_signature;
-            const Icon = sc.icon;
-            return (
-              <Card key={cert.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="py-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-gray-900">{cert.student_name}</span>
-                        <Badge className={sc.color + " border-0"}>
-                          <Icon className="w-3 h-3 mr-1" />
-                          {sc.label}
-                        </Badge>
+        {/* Lista de Certificados */}
+        <TabsContent value="lista" className="space-y-4 mt-4">
+          {/* Filters */}
+          <div className="flex flex-wrap gap-3 items-center">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Buscar por aluno, curso, CPF ou código..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {["all", "pending_signature", "signed", "active", "revoked"].map((s) => (
+                <Button
+                  key={s}
+                  variant={statusFilter === s ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter(s)}
+                >
+                  {s === "all" ? "Todos" : statusConfig[s]?.label || s}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="text-center py-12 text-gray-400">Carregando...</div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">Nenhum certificado encontrado.</div>
+          ) : (
+            <div className="space-y-3">
+              {filtered.map((cert) => {
+                const sc = statusConfig[cert.status] || statusConfig.pending_signature;
+                const Icon = sc.icon;
+                return (
+                  <Card key={cert.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="py-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-gray-900">{cert.student_name}</span>
+                            <Badge className={sc.color + " border-0"}>
+                              <Icon className="w-3 h-3 mr-1" />
+                              {sc.label}
+                            </Badge>
+                          </div>
+                          <div className="text-sm text-gray-500 mt-1">
+                            {cert.course_name}
+                            {cert.course_duration && ` • ${cert.course_duration}`}
+                            {cert.client_name && ` • ${cert.client_name}`}
+                          </div>
+                          <div className="text-xs text-gray-400 mt-1">
+                            {cert.certificate_code && (
+                              <span className="font-mono">{cert.certificate_code}</span>
+                            )}
+                            {cert.student_cpf && <span className="ml-2">CPF: {cert.student_cpf}</span>}
+                            {cert.valid_until && <span className="ml-2">Válido até: {cert.valid_until}</span>}
+                          </div>
+                          {cert.whatsapp_sent && (
+                            <div className="text-xs text-green-600 mt-1">✓ WhatsApp enviado</div>
+                          )}
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                          {cert.status === "pending_signature" && cert.student_phone && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => sendWhatsAppMutation.mutate(cert.id)}
+                              disabled={sendWhatsAppMutation.isPending}
+                              className="text-green-700 border-green-300 hover:bg-green-50"
+                            >
+                              <Send className="w-3 h-3 mr-1" /> WhatsApp
+                            </Button>
+                          )}
+                          {cert.status === "pending_signature" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => copySignLink(cert.certificate_code)}
+                            >
+                              <Copy className="w-3 h-3 mr-1" /> Link Assinatura
+                            </Button>
+                          )}
+                          {cert.certificate_code && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => copyValidateLink(cert.certificate_code)}
+                            >
+                              <Eye className="w-3 h-3 mr-1" /> Link Validação
+                            </Button>
+                          )}
+                          <CertificateExporter certificate={cert} model={getModelForCert(cert)} />
+                          {cert.status !== "revoked" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-600 border-red-200 hover:bg-red-50"
+                              onClick={() => {
+                                if (confirm("Revogar este certificado?")) revokeMutation.mutate(cert.id);
+                              }}
+                            >
+                              <XCircle className="w-3 h-3 mr-1" /> Revogar
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-500 mt-1">
-                        {cert.course_name}
-                        {cert.course_duration && ` • ${cert.course_duration}`}
-                        {cert.client_name && ` • ${cert.client_name}`}
-                      </div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        {cert.certificate_code && (
-                          <span className="font-mono">{cert.certificate_code}</span>
-                        )}
-                        {cert.student_cpf && <span className="ml-2">CPF: {cert.student_cpf}</span>}
-                        {cert.valid_until && <span className="ml-2">Válido até: {cert.valid_until}</span>}
-                      </div>
-                      {cert.whatsapp_sent && (
-                        <div className="text-xs text-green-600 mt-1">✓ WhatsApp enviado</div>
-                      )}
-                    </div>
-                    <div className="flex gap-2 flex-wrap">
-                      {cert.status === "pending_signature" && cert.student_phone && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => sendWhatsAppMutation.mutate(cert.id)}
-                          disabled={sendWhatsAppMutation.isPending}
-                          className="text-green-700 border-green-300 hover:bg-green-50"
-                        >
-                          <Send className="w-3 h-3 mr-1" /> WhatsApp
-                        </Button>
-                      )}
-                      {cert.status === "pending_signature" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => copySignLink(cert.certificate_code)}
-                        >
-                          <Copy className="w-3 h-3 mr-1" /> Link Assinatura
-                        </Button>
-                      )}
-                      {cert.certificate_code && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => copyValidateLink(cert.certificate_code)}
-                        >
-                          <Eye className="w-3 h-3 mr-1" /> Link Validação
-                        </Button>
-                      )}
-                      <CertificateExporter certificate={cert} model={getModelForCert(cert)} />
-                      {cert.status !== "revoked" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 border-red-200 hover:bg-red-50"
-                          onClick={() => {
-                            if (confirm("Revogar este certificado?")) revokeMutation.mutate(cert.id);
-                          }}
-                        >
-                          <XCircle className="w-3 h-3 mr-1" /> Revogar
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Emissão Individual */}
+        <TabsContent value="individual" className="mt-4">
+          <CertificateEmissaoIndividual onSuccess={() => setActiveTab("lista")} />
+        </TabsContent>
+
+        {/* Emissão em Massa */}
+        <TabsContent value="massa" className="mt-4">
+          <CertificateEmissaoMassa onSuccess={() => setActiveTab("lista")} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
