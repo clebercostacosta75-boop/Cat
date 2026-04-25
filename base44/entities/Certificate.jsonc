@@ -1,0 +1,80 @@
+{
+  "name": "Certificate",
+  "type": "object",
+  "properties": {
+    "student_name": {
+      "type": "string",
+      "description": "Nome completo do aluno"
+    },
+    "course_name": {
+      "type": "string",
+      "description": "Nome do curso"
+    },
+    "course_id": {
+      "type": "string",
+      "description": "ID do curso"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Nome da empresa"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "class_schedule_id": {
+      "type": "string",
+      "description": "ID da turma vinculada"
+    },
+    "completion_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de conclus\u00e3o do curso"
+    },
+    "workload_hours": {
+      "type": "number",
+      "description": "Carga hor\u00e1ria do curso"
+    },
+    "location": {
+      "type": "string",
+      "description": "Local de realiza\u00e7\u00e3o"
+    },
+    "instructor_name": {
+      "type": "string",
+      "description": "Nome do instrutor"
+    },
+    "certificate_number": {
+      "type": "string",
+      "description": "N\u00famero \u00fanico do certificado"
+    },
+    "validity_months": {
+      "type": "number",
+      "description": "Validade em meses"
+    },
+    "expiration_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de vencimento do certificado"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ativo",
+        "Vencido",
+        "Cancelado"
+      ],
+      "default": "Ativo",
+      "description": "Status do certificado"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "student_name",
+    "course_name",
+    "completion_date",
+    "workload_hours"
+  ]
+}

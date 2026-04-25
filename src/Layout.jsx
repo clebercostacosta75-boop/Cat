@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText, Building2, UserCog, Mail, History, Bell, DollarSign } from "lucide-react";
+import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText, Building2, UserCog, Mail, History, Bell, DollarSign, Award } from "lucide-react";
 import NotificationBell from "./components/notifications/NotificationBell";
 import {
   Sidebar,
@@ -123,6 +123,18 @@ export default function Layout({ children }) {
         url: createPageUrl("PaymentAutomation"),
         icon: DollarSign,
         key: "Automação de Pagamentos"
+      },
+      {
+        title: "Certificados",
+        url: createPageUrl("Certificates"),
+        icon: Award,
+        key: "Certificados"
+      },
+      {
+        title: "Certificados",
+        url: createPageUrl("Certificates"),
+        icon: Award,
+        key: "Certificados"
       },
       {
         title: "Gerar BMM",

@@ -2,10 +2,6 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 
 export default function BMMPreview({ content }) {
-  if (!content) return null;
-
-  const { company, contractor, period, classes, totals, template } = content;
-
   // Adicionar estilos de impressão A4 Paisagem
   React.useEffect(() => {
     const style = document.createElement('style');

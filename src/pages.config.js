@@ -48,6 +48,7 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import AuditLog from './pages/AuditLog';
+import Certificates from './pages/Certificates';
 import BMMGenerator from './pages/BMMGenerator';
 import BMMHistory from './pages/BMMHistory';
 import BMMTemplates from './pages/BMMTemplates';
@@ -77,6 +78,8 @@ import __Layout from './Layout.jsx';
 
 export const PAGES = {
     "AuditLog": AuditLog,
+    "Certificates": Certificates,
+    "Certificates": Certificates,
     "BMMGenerator": BMMGenerator,
     "BMMHistory": BMMHistory,
     "BMMTemplates": BMMTemplates,
