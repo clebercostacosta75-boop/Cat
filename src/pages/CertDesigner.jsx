@@ -290,6 +290,11 @@ export default function CertDesigner() {
 
                   {/* FRENTE */}
                   <TabsContent value="frente" className="space-y-4">
+                    <BackgroundUploader
+                      label="Imagem de Fundo (Frente)"
+                      value={form.front_background_url || ""}
+                      onChange={v => set("front_background_url", v)}
+                    />
                     <FieldGroup label="Título Principal">
                       <Input value={form.front_title} onChange={e => set("front_title", e.target.value)} />
                     </FieldGroup>
@@ -312,11 +317,6 @@ export default function CertDesigner() {
                     <FieldGroup label="Rodapé Linha 2">
                       <Input value={form.front_footer_line2} onChange={e => set("front_footer_line2", e.target.value)} />
                     </FieldGroup>
-                    <BackgroundUploader
-                      label="Imagem de Fundo (Frente)"
-                      value={form.front_background_url || ""}
-                      onChange={v => set("front_background_url", v)}
-                    />
                   </TabsContent>
 
                   {/* VERSO */}
