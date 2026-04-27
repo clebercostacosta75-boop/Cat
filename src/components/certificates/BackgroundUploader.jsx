@@ -39,29 +39,34 @@ export default function BackgroundUploader({ value, onChange, label }) {
       <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">{label}</p>
       
       {value ? (
-        <div className="relative border rounded-lg overflow-hidden">
-          <img
-            src={value}
-            alt="Fundo do certificado"
-            className="w-full h-32 object-cover"
-          />
-          <div className="absolute top-2 right-2 flex gap-1">
+        <div className="border rounded-lg overflow-hidden">
+          <div className="relative">
+            <img
+              src={value}
+              alt="Fundo do certificado"
+              className="w-full h-32 object-cover"
+            />
+            <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span className="text-white text-xs font-medium">Clique em "Trocar" para alterar</span>
+            </div>
+          </div>
+          <div className="flex gap-2 p-2 bg-gray-50">
             <Button
               size="sm"
               variant="outline"
-              className="bg-white h-7 px-2 text-xs"
+              className="flex-1 text-xs h-7"
               onClick={() => inputRef.current?.click()}
               disabled={uploading}
             >
-              <Upload className="w-3 h-3 mr-1" /> Trocar
+              <Upload className="w-3 h-3 mr-1" /> Trocar imagem
             </Button>
             <Button
               size="sm"
               variant="outline"
-              className="bg-white h-7 px-2 text-red-500 border-red-200"
+              className="flex-1 text-xs h-7 text-red-500 border-red-200 hover:bg-red-50"
               onClick={handleRemove}
             >
-              <X className="w-3 h-3" />
+              <X className="w-3 h-3 mr-1" /> Remover imagem
             </Button>
           </div>
         </div>
