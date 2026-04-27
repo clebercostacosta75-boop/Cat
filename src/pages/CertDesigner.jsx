@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Save, Trash2, Eye, Award, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import CertificatePreview from "@/components/certificates/CertificatePreview";
+import BackgroundUploader from "@/components/certificates/BackgroundUploader";
 
 const DEFAULT_MODEL = {
   name: "",
@@ -311,9 +312,11 @@ export default function CertDesigner() {
                     <FieldGroup label="Rodapé Linha 2">
                       <Input value={form.front_footer_line2} onChange={e => set("front_footer_line2", e.target.value)} />
                     </FieldGroup>
-                    <FieldGroup label="URL Fundo (Frente)">
-                      <Input value={form.front_background_url || ""} onChange={e => set("front_background_url", e.target.value)} placeholder="https://..." />
-                    </FieldGroup>
+                    <BackgroundUploader
+                      label="Imagem de Fundo (Frente)"
+                      value={form.front_background_url || ""}
+                      onChange={v => set("front_background_url", v)}
+                    />
                   </TabsContent>
 
                   {/* VERSO */}
@@ -333,9 +336,11 @@ export default function CertDesigner() {
                     <FieldGroup label="Rodapé Linha 2">
                       <Input value={form.back_footer_line2 || ""} onChange={e => set("back_footer_line2", e.target.value)} />
                     </FieldGroup>
-                    <FieldGroup label="URL Fundo (Verso)">
-                      <Input value={form.back_background_url || ""} onChange={e => set("back_background_url", e.target.value)} placeholder="https://..." />
-                    </FieldGroup>
+                    <BackgroundUploader
+                      label="Imagem de Fundo (Verso)"
+                      value={form.back_background_url || ""}
+                      onChange={v => set("back_background_url", v)}
+                    />
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
