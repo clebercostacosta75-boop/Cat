@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { logAction } from "@/components/audit/AuditLogger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -96,6 +97,19 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
       if (form.categoria_cnh) certData.categoria_cnh = form.categoria_cnh;
 
       const created = await base44.entities.Certificate.create(certData);
+
+      // Registrar auditoria
+      logAction("emissao_individual", "Certificate", created?.id, form.student_name, {
+        descricao: `Certificado emitido para ${form.student_name}`,
+        codigo: code,
+        curso: selectedModel?.name || "",
+        empresa: selectedCompany?.nome_fantasia || selectedCompany?.razao_social || "",
+        cpf: form.student_cpf,
+        data_inicio: form.start_date,
+        data_fim: form.end_date,
+        modelo_id: modelId,
+        modelo_nome: selectedModel?.name || "",
+      });
 
       // Enviar WhatsApp se solicitado e se tiver telefone
       if (sendWhatsApp && form.student_phone && created?.id) {

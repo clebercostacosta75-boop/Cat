@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { logAction } from "@/components/audit/AuditLogger";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -141,6 +142,18 @@ export default function CertificateEmissaoMassa({ onSuccess }) {
     const ok = newResults.filter(r => r.status === "success").length;
     const fail = newResults.filter(r => r.status === "error").length;
     toast.success(`${ok} certificados gerados.${fail > 0 ? ` ${fail} com erro.` : ""}`);
+
+    // Registrar auditoria da emissão em massa
+    if (ok > 0) {
+      logAction("emissao_massa", "Certificate", null, `Emissão em massa — ${selectedModel?.name || ""}`, {
+        descricao: `Emissão em massa: ${ok} certificados gerados${fail > 0 ? `, ${fail} com erro` : ""}`,
+        modelo: selectedModel?.name || "",
+        empresa: selectedCompany?.nome_fantasia || selectedCompany?.razao_social || "",
+        total_gerados: ok,
+        total_erros: fail,
+        alunos: newResults.filter(r => r.status === "success").map(r => r.name),
+      });
+    }
 
     if (ok > 0) onSuccess?.();
     setSaving(false);

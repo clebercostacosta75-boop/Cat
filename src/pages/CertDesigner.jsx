@@ -6,6 +6,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { logAction } from "@/components/audit/AuditLogger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -80,9 +81,15 @@ export default function CertDesigner() {
       selectedId
         ? base44.entities.CertificateModel.update(selectedId, data)
         : base44.entities.CertificateModel.create(data),
-    onSuccess: () => {
+    onSuccess: (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ["certificateModels"] });
       toast.success("Modelo salvo com sucesso!");
+      const action = selectedId ? "modelo_editado" : "modelo_criado";
+      logAction(action, "CertificateModel", selectedId || result?.id, variables.name, {
+        descricao: selectedId ? `Modelo "${variables.name}" editado` : `Modelo "${variables.name}" criado`,
+        duracao: variables.duration,
+        modalidade: variables.modality,
+      });
       if (!selectedId) {
         setCreating(false);
         setSelectedId(null);
@@ -94,12 +101,16 @@ export default function CertDesigner() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.CertificateModel.delete(id),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
+      const deletedModel = models.find(m => m.id === id);
       queryClient.invalidateQueries({ queryKey: ["certificateModels"] });
       setSelectedId(null);
       setForm(DEFAULT_MODEL);
       setCreating(false);
       toast.success("Modelo excluído.");
+      logAction("modelo_excluido", "CertificateModel", id, deletedModel?.name || id, {
+        descricao: `Modelo "${deletedModel?.name || id}" excluído`,
+      });
     },
   });
 
@@ -130,6 +141,9 @@ export default function CertDesigner() {
     delete copy.id;
     saveMutation.mutate(copy);
     toast.success("Modelo duplicado!");
+    logAction("modelo_duplicado", "CertificateModel", model.id, model.name, {
+      descricao: `Modelo "${model.name}" duplicado como "${model.name} (cópia)"`,
+    });
   };
 
   const handleSaveCanvas = (canvasData) => {

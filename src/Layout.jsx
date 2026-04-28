@@ -196,6 +196,12 @@ export default function Layout({ children }) {
         key: "Assinatura em Massa"
       },
       {
+        title: "Auditoria de Certificados",
+        url: "/CertificateAuditPanel",
+        icon: FileText,
+        key: "Auditoria de Certificados"
+      },
+      {
         title: "Gerar BMM",
         url: createPageUrl("BMMGenerator"),
         icon: FileText,
