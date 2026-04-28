@@ -197,7 +197,7 @@ export function buildCertificateHTMLFromModel(model, certData) {
     <div style="display:flex; justify-content:space-around; width:100%; margin-top:auto; padding-top:6mm;">
       ${responsibles.length > 0 ? responsibles.map(r => `
         <div style="text-align:center; min-width:55mm;">
-          ${cert.signature_url ? `<img src="${cert.signature_url}" style="height:30px; object-fit:contain; display:block; margin:0 auto 4px;" alt="Assinatura"/>` : ""}
+          ${r.signature_url ? `<img src="${r.signature_url}" style="height:35px; object-fit:contain; display:block; margin:0 auto 4px;" alt="Assinatura ${r.name}"/>` : `<div style="height:35px;"></div>`}
           <div style="border-top:1.5px solid #374151; padding-top:5px;">
             <p style="font-size:9pt; font-weight:bold;">${r.name || "___________________________"}</p>
             ${(r.titles || [r.title]).filter(Boolean).map(t => `<p style="font-size:8pt; color:#6b7280;">${t}</p>`).join("")}
@@ -212,7 +212,7 @@ export function buildCertificateHTMLFromModel(model, certData) {
           </div>
         </div>
         <div style="text-align:center; min-width:55mm;">
-          ${cert.signature_url ? `<img src="${cert.signature_url}" style="height:30px; object-fit:contain; display:block; margin:0 auto 4px;" alt="Assinatura Aluno"/>` : ""}
+          ${cert.signature_url ? `<img src="${cert.signature_url}" style="height:35px; object-fit:contain; display:block; margin:0 auto 4px;" alt="Assinatura Aluno"/>` : `<div style="height:35px;"></div>`}
           <div style="border-top:1.5px solid #374151; padding-top:5px;">
             <p style="font-size:9pt; font-weight:bold;">${cert.student_name}</p>
             <p style="font-size:8pt; color:#6b7280; ${toInline(buildStyle(frontSigLabelF))}">${sigLabel}</p>
