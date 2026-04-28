@@ -1,0 +1,58 @@
+{
+  "name": "ConfigNotificacoes",
+  "type": "object",
+  "properties": {
+    "chave": {
+      "type": "string",
+      "description": "Identificador \u00fanico desta configura\u00e7\u00e3o (ex: 'global')"
+    },
+    "email_ativo": {
+      "type": "boolean",
+      "default": true
+    },
+    "whatsapp_ativo": {
+      "type": "boolean",
+      "default": false
+    },
+    "sms_ativo": {
+      "type": "boolean",
+      "default": false
+    },
+    "twilio_ativo": {
+      "type": "boolean",
+      "default": false
+    },
+    "email_assunto_padrao": {
+      "type": "string",
+      "default": "Aviso: Certificado pr\u00f3ximo do vencimento"
+    },
+    "email_30dias": {
+      "type": "string",
+      "description": "Texto do e-mail enviado 30 dias antes do vencimento"
+    },
+    "email_15dias": {
+      "type": "string",
+      "description": "Texto do e-mail enviado 15 dias antes do vencimento"
+    },
+    "email_5dias": {
+      "type": "string",
+      "description": "Texto do e-mail enviado 5 dias antes do vencimento"
+    },
+    "email_assinatura": {
+      "type": "string",
+      "description": "Texto do e-mail de solicita\u00e7\u00e3o de assinatura digital"
+    },
+    "whatsapp_30dias": {
+      "type": "string"
+    },
+    "whatsapp_15dias": {
+      "type": "string"
+    },
+    "whatsapp_5dias": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "chave"
+  ]
+}
