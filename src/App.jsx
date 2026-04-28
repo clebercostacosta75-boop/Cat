@@ -20,6 +20,7 @@ import DigitalSignatures from './pages/DigitalSignatures';
 import AlertasConfig from './pages/AlertasConfig';
 import AgendaTreinamentos from './pages/AgendaTreinamentos';
 import ConfigNotificacoes from './pages/ConfigNotificacoes';
+import AdminDashboard from './pages/AdminDashboard';
 import LogNotificacoes from './pages/LogNotificacoes';
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -71,6 +72,7 @@ const AuthenticatedApp = () => {
       <Route path="/AlertasConfig" element={<LayoutWrapper currentPageName="AlertasConfig"><AlertasConfig /></LayoutWrapper>} />
       <Route path="/AgendaTreinamentos" element={<LayoutWrapper currentPageName="AgendaTreinamentos"><AgendaTreinamentos /></LayoutWrapper>} />
       <Route path="/ConfigNotificacoes" element={<LayoutWrapper currentPageName="ConfigNotificacoes"><ConfigNotificacoes /></LayoutWrapper>} />
+      <Route path="/AdminDashboard" element={<LayoutWrapper currentPageName="AdminDashboard"><AdminDashboard /></LayoutWrapper>} />
       <Route path="/LogNotificacoes" element={<LayoutWrapper currentPageName="LogNotificacoes"><LogNotificacoes /></LayoutWrapper>} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route key={path} path={`/${path}`} element={<LayoutWrapper currentPageName={path}><Page /></LayoutWrapper>} />

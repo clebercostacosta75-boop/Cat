@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText, Building2, UserCog, Mail, History, Bell, DollarSign, Award, TrendingUp, PenLine, Settings } from "lucide-react";
+import { LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText, Building2, UserCog, Mail, History, Bell, DollarSign, Award, TrendingUp, PenLine, Settings, AlertTriangle } from "lucide-react";
 import NotificationBell from "./components/notifications/NotificationBell";
 import {
   Sidebar,
@@ -57,6 +57,12 @@ export default function Layout({ children }) {
         url: createPageUrl("Dashboard"),
         icon: LayoutDashboard,
         key: "Dashboard"
+      },
+      {
+        title: "Dashboard Admin",
+        url: "/AdminDashboard",
+        icon: TrendingUp,
+        key: "Dashboard Admin"
       },
       {
         title: "Alertas de Reciclagem",
