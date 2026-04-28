@@ -1,141 +1,168 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-/**
- * Verifica certificados vencendo em EXATAMENTE N dias e envia e-mails
- * para o aluno e para a empresa, usando os templates configurados em ConfiguracaoAlertas.
- * Chamada pela automação agendada com payload: { days: 30 } | { days: 15 } | { days: 5 }
- */
+// TWILIO_ATIVO = false por padrão. Quando secrets forem preenchidos, mudar para true na ConfigNotificacoes.
+const TWILIO_ATIVO_DEFAULT = false;
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // Aceita chamada de automação agendada (sem user) ou chamada autenticada
+    let isAdmin = false;
+    try {
+      const user = await base44.auth.me();
+      isAdmin = user?.role === 'admin';
+    } catch (_) { /* automação agendada, sem usuário */ }
+
     const body = await req.json().catch(() => ({}));
-    const targetDays = body.days ?? 30;
+    const days = body?.days ?? body?.args?.days ?? 30;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Buscar config de notificações
+    const configs = await base44.asServiceRole.entities.ConfigNotificacoes.filter({ chave: 'global' });
+    const config = configs[0] || {};
+    const emailAtivo = config.email_ativo !== false; // default true
+    const twilioAtivo = config.twilio_ativo === true;
 
-    const targetDate = new Date(today);
-    targetDate.setDate(targetDate.getDate() + targetDays);
-    const targetDateStr = targetDate.toISOString().split('T')[0]; // YYYY-MM-DD
-
-    // Buscar configuração do alerta para esse período
-    const configs = await base44.asServiceRole.entities.ConfiguracaoAlertas.filter({ dias_antecedencia: targetDays });
-    const config = configs.find(c => c.ativo !== false);
-
-    if (!config) {
-      return Response.json({
-        success: true,
-        message: `Nenhuma configuração ativa para ${targetDays} dias. Nada enviado.`,
-        sent: 0,
-      });
+    if (!emailAtivo && !twilioAtivo) {
+      return Response.json({ success: false, message: 'Notificações desativadas na configuração.' });
     }
 
-    // Buscar certificados que vencem EXATAMENTE em targetDays dias
-    const allCerts = await base44.asServiceRole.entities.Certificate.list('-valid_until', 1000);
-    const expiring = allCerts.filter(cert => {
-      if (!cert.valid_until || cert.status === 'revoked') return false;
-      const validUntil = new Date(cert.valid_until + 'T00:00:00');
-      validUntil.setHours(0, 0, 0, 0);
-      const diffDays = Math.round((validUntil - today) / (1000 * 60 * 60 * 24));
-      return diffDays === targetDays;
-    });
+    // Calcular data alvo
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const alvoDate = new Date(hoje);
+    alvoDate.setDate(alvoDate.getDate() + Number(days));
+    const alvoStr = alvoDate.toISOString().split('T')[0];
 
-    if (expiring.length === 0) {
-      return Response.json({
-        success: true,
-        message: `Nenhum certificado vencendo em exatamente ${targetDays} dias.`,
-        sent: 0,
-      });
-    }
+    // Buscar certificados que vencem nessa data
+    const certs = await base44.asServiceRole.entities.Certificate.filter({ valid_until: alvoStr });
 
-    let sent = 0;
-    const errors = [];
+    let enviados = 0, erros = 0;
+    const evento = `${days}dias`;
 
-    for (const cert of expiring) {
-      const validUntilFormatted = new Date(cert.valid_until + 'T12:00:00').toLocaleDateString('pt-BR');
+    // Template de e-mail padrão ou customizado
+    const emailTemplates = {
+      30: config.email_30dias || 'Olá {nome_aluno}, seu certificado de <b>{curso}</b> na empresa <b>{empresa}</b> vence em <b>30 dias</b> ({data_vencimento}). Renove com antecedência!',
+      15: config.email_15dias || 'Atenção {nome_aluno}! Seu certificado de <b>{curso}</b> vence em <b>15 dias</b> ({data_vencimento}). Agende sua reciclagem.',
+      5:  config.email_5dias  || '⚠️ URGENTE, {nome_aluno}! Seu certificado de <b>{curso}</b> vence em <b>5 dias</b> ({data_vencimento}). Contate-nos imediatamente.',
+    };
+    const assunto = config.email_assunto_padrao || `⚠️ Certificado vence em ${days} dias`;
 
-      const replacer = (template) =>
-        (template || '')
-          .replace(/\{nome_aluno\}/g, cert.student_name || '')
-          .replace(/\{nome_treinamento\}/g, cert.course_name || '')
-          .replace(/\{data_vencimento\}/g, validUntilFormatted)
-          .replace(/\{empresa\}/g, cert.client_name || '')
-          .replace(/\{dias_restantes\}/g, String(targetDays));
+    for (const cert of certs) {
+      const vars = {
+        '{nome_aluno}': cert.student_name || '',
+        '{empresa}': cert.client_name || '',
+        '{curso}': cert.course_name || '',
+        '{data_vencimento}': cert.valid_until ? cert.valid_until.split('-').reverse().join('/') : '',
+        '{dias_restantes}': String(days),
+        '{link_assinatura}': '',
+      };
 
-      // E-mail para o ALUNO
-      const studentEmail = cert.student_email || null;
-      if (studentEmail && config.mensagem_aluno) {
+      const replaceVars = (text) => Object.entries(vars).reduce((t, [k, v]) => t.replaceAll(k, v), text || '');
+
+      // EMAIL
+      if (emailAtivo && cert.student_email) {
+        const corpo = `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+            <div style="background:#1a3a5c;color:white;padding:20px;border-radius:8px 8px 0 0;text-align:center;">
+              <h2 style="margin:0;">⚠️ Aviso de Vencimento de Certificado</h2>
+            </div>
+            <div style="background:#f9f9f9;padding:24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+              <p style="font-size:15px;color:#374151;">${replaceVars(emailTemplates[days] || emailTemplates[30])}</p>
+              <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0;">
+              <p style="font-size:12px;color:#9ca3af;">CAT Cursos e Treinamentos</p>
+            </div>
+          </div>`;
+
         try {
           await base44.asServiceRole.integrations.Core.SendEmail({
-            to: studentEmail,
-            subject: replacer(config.assunto_aluno) || `Certificado vencendo em ${targetDays} dias`,
-            body: replacer(config.mensagem_aluno),
+            to: cert.student_email,
+            subject: replaceVars(assunto),
+            body: corpo,
           });
-          sent++;
-        } catch (e) {
-          errors.push(`Aluno ${cert.student_name}: ${e.message}`);
+          await base44.asServiceRole.entities.LogNotificacoes.create({
+            aluno_nome: cert.student_name,
+            aluno_email: cert.student_email,
+            empresa_nome: cert.client_name,
+            curso_nome: cert.course_name,
+            certificado_id: cert.id,
+            tipo: 'email',
+            evento,
+            status: 'enviado',
+            data_envio: new Date().toISOString(),
+          });
+          enviados++;
+        } catch (err) {
+          await base44.asServiceRole.entities.LogNotificacoes.create({
+            aluno_nome: cert.student_name,
+            aluno_email: cert.student_email,
+            empresa_nome: cert.client_name,
+            curso_nome: cert.course_name,
+            certificado_id: cert.id,
+            tipo: 'email',
+            evento,
+            status: 'erro',
+            data_envio: new Date().toISOString(),
+            mensagem_erro: err.message,
+          });
+          erros++;
         }
       }
 
-      // E-mail para a EMPRESA
-      if (cert.client_id || cert.client_name) {
-        let companyEmail = null;
-        try {
-          let companies = [];
-          if (cert.client_id) {
-            companies = await base44.asServiceRole.entities.Company.filter({ id: cert.client_id });
-          }
-          if (companies.length === 0 && cert.client_name) {
-            const all = await base44.asServiceRole.entities.Company.list('-created_date', 500);
-            companies = all.filter(c =>
-              c.nome_fantasia === cert.client_name || c.razao_social === cert.client_name
-            );
-          }
-          if (companies.length > 0) {
-            companyEmail = companies[0].email_faturamento ||
-              companies[0].contacts?.find(c => c.email)?.email ||
-              null;
-          }
-        } catch { /* empresa não encontrada */ }
+      // WHATSAPP/SMS via Twilio (só executa se TWILIO_ATIVO = true)
+      if (twilioAtivo) {
+        const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
+        const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
+        const fromNumber = Deno.env.get('TWILIO_PHONE_NUMBER');
 
-        if (companyEmail && config.mensagem_empresa) {
+        if (accountSid && authToken && fromNumber && cert.student_phone) {
+          const waMsgTemplates = {
+            30: config.whatsapp_30dias || 'Olá {nome_aluno}, seu certificado de {curso} vence em 30 dias ({data_vencimento}). Renove com antecedência!',
+            15: config.whatsapp_15dias || 'Atenção {nome_aluno}! Certificado de {curso} vence em 15 dias ({data_vencimento}).',
+            5:  config.whatsapp_5dias  || '⚠️ URGENTE {nome_aluno}! Certificado de {curso} vence em 5 dias ({data_vencimento})!',
+          };
+          const msgBody = replaceVars(waMsgTemplates[days] || waMsgTemplates[30]);
+          const toWA = `whatsapp:${cert.student_phone}`;
+          const fromWA = `whatsapp:${fromNumber}`;
+
           try {
-            await base44.asServiceRole.integrations.Core.SendEmail({
-              to: companyEmail,
-              subject: replacer(config.assunto_empresa) || `Certificado de colaborador vencendo em ${targetDays} dias`,
-              body: replacer(config.mensagem_empresa),
+            const twilioRes = await fetch(
+              `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': 'Basic ' + btoa(`${accountSid}:${authToken}`),
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ From: fromWA, To: toWA, Body: msgBody }),
+              }
+            );
+            const twilioData = await twilioRes.json();
+            await base44.asServiceRole.entities.LogNotificacoes.create({
+              aluno_nome: cert.student_name,
+              aluno_email: cert.student_email,
+              empresa_nome: cert.client_name,
+              curso_nome: cert.course_name,
+              certificado_id: cert.id,
+              tipo: 'whatsapp',
+              evento,
+              status: twilioData.sid ? 'enviado' : 'erro',
+              data_envio: new Date().toISOString(),
+              mensagem_erro: twilioData.sid ? null : JSON.stringify(twilioData),
             });
-            sent++;
-          } catch (e) {
-            errors.push(`Empresa ${cert.client_name}: ${e.message}`);
+          } catch (err) {
+            await base44.asServiceRole.entities.LogNotificacoes.create({
+              aluno_nome: cert.student_name,
+              tipo: 'whatsapp', evento, status: 'erro',
+              data_envio: new Date().toISOString(), mensagem_erro: err.message,
+            });
           }
         }
       }
-
-      // Registrar no AuditLog
-      await base44.asServiceRole.entities.AuditLog.create({
-        user_email: 'sistema@catcursos.com.br',
-        user_name: 'Sistema Automático',
-        action: 'send_whatsapp',
-        entity_type: 'Certificate',
-        entity_id: cert.id,
-        entity_name: `${cert.student_name} — ${cert.course_name}`,
-        details: `Alerta de e-mail ${targetDays} dias enviado. Vencimento: ${validUntilFormatted}.`,
-        company_id: cert.client_id || '',
-        company_name: cert.client_name || '',
-      });
     }
 
-    return Response.json({
-      success: true,
-      message: `${sent} e-mail(s) enviado(s) para ${expiring.length} certificado(s) vencendo em ${targetDays} dias.`,
-      sent,
-      total_certs: expiring.length,
-      errors,
-    });
-
+    return Response.json({ success: true, days, total: certs.length, enviados, erros });
   } catch (error) {
-    console.error('Erro ao enviar alertas de e-mail:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

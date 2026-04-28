@@ -155,6 +155,18 @@ export default function Layout({ children }) {
         key: "Agenda de Treinamentos"
       },
       {
+        title: "Config. Notificações",
+        url: "/ConfigNotificacoes",
+        icon: Settings,
+        key: "Config. Notificações"
+      },
+      {
+        title: "Log de Notificações",
+        url: "/LogNotificacoes",
+        icon: FileText,
+        key: "Log de Notificações"
+      },
+      {
         title: "Chamada Presencial",
         url: createPageUrl("AttendanceCall"),
         icon: Users,
