@@ -21,6 +21,7 @@ import AgendaTreinamentos from './pages/AgendaTreinamentos';
 import ConfigNotificacoes from './pages/ConfigNotificacoes';
 import AdminDashboard from './pages/AdminDashboard';
 import LogNotificacoes from './pages/LogNotificacoes';
+import BulkSign from './pages/BulkSign';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -73,6 +74,7 @@ const AuthenticatedApp = () => {
       <Route path="/ConfigNotificacoes" element={<LayoutWrapper currentPageName="ConfigNotificacoes"><ConfigNotificacoes /></LayoutWrapper>} />
       <Route path="/AdminDashboard" element={<LayoutWrapper currentPageName="AdminDashboard"><AdminDashboard /></LayoutWrapper>} />
       <Route path="/LogNotificacoes" element={<LayoutWrapper currentPageName="LogNotificacoes"><LogNotificacoes /></LayoutWrapper>} />
+      <Route path="/BulkSign" element={<LayoutWrapper currentPageName="BulkSign"><BulkSign /></LayoutWrapper>} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route key={path} path={`/${path}`} element={<LayoutWrapper currentPageName={path}><Page /></LayoutWrapper>} />
       ))}

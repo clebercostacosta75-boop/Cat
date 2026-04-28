@@ -190,6 +190,12 @@ export default function Layout({ children }) {
         key: "Assinaturas Digitais"
       },
       {
+        title: "Assinatura em Massa",
+        url: "/BulkSign",
+        icon: PenLine,
+        key: "Assinatura em Massa"
+      },
+      {
         title: "Gerar BMM",
         url: createPageUrl("BMMGenerator"),
         icon: FileText,
