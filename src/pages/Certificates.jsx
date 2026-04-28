@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import CertificateExporter from "@/components/certificates/CertificateExporter";
 import CertificateValidation from "@/components/certificates/CertificateValidation";
+import CertificateQRCode from "@/components/certificates/CertificateQRCode";
 
 const statusConfig = {
   pending_signature: { label: "Aguardando Assinatura", color: "bg-yellow-100 text-yellow-800", icon: Clock },
@@ -181,7 +182,13 @@ export default function Certificates() {
                   <Card key={cert.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="py-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 flex gap-3 items-start">
+                          {cert.certificate_code && (
+                            <div className="flex-shrink-0 hidden sm:block">
+                              <CertificateQRCode certificateCode={cert.certificate_code} size={56} showLabel={false} />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-gray-900">{cert.student_name}</span>
                             <Badge className={sc.color + " border-0"}>
@@ -204,6 +211,7 @@ export default function Certificates() {
                           {cert.whatsapp_sent && (
                             <div className="text-xs text-green-600 mt-1">✓ WhatsApp enviado</div>
                           )}
+                          </div>
                         </div>
                         <div className="flex gap-2 flex-wrap">
                           {cert.status === "pending_signature" && cert.student_phone && (

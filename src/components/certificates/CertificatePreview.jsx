@@ -21,6 +21,12 @@ export const PREVIEW_CERT = {
   certificate_code: "CAT-2025-XXXXXXXX",
 };
 
+// Gera QR Code como SVG inline (sem dependências externas no HTML)
+function generateQRSvgUrl(text) {
+  // URL encode para usar API pública de QR (fallback simples e confiável para print)
+  return `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(text)}&format=svg&margin=2`;
+}
+
 function fmtDate(dateStr) {
   if (!dateStr) return "";
   try {
@@ -107,6 +113,12 @@ export function buildCertificateHTMLFromModel(model, certData) {
   const backFoot2 = m.back_footer_line2 || m.front_footer_line2 || "www.catcursos.com.br";
 
   const catLogoUrl = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png";
+
+  // QR Code URL apontando para validação pública
+  const validationUrl = certCode
+    ? `${typeof window !== "undefined" ? window.location.origin : "https://catcursos.com.br"}/CertificateValidate?code=${encodeURIComponent(certCode)}`
+    : null;
+  const qrSrc = validationUrl ? generateQRSvgUrl(validationUrl) : null;
 
   const bodyText1 = `concluiu com êxito o treinamento de <strong style="color:${highlightColor};">${cert.course_name || ""}</strong>, realizado no período de <strong>${fmtDate(cert.start_date)}</strong> a <strong>${fmtDate(cert.end_date)}</strong>, com carga horária total de <strong>${duration}</strong>, sendo considerado APTO para o desempenho seguro de suas atividades.`;
 
@@ -261,9 +273,16 @@ export function buildCertificateHTMLFromModel(model, certData) {
       </div>
 
       <!-- RODAPÉ DA FRENTE -->
-      <div style="margin-top:auto; padding-top:3mm; text-align:center; border-top:1px solid #e5e7eb;">
-        ${certCode ? `<p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${certCode}</p>` : ""}
-        <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${m.front_footer_line2 || "www.catcursos.com.br"}</p>
+      <div style="margin-top:auto; padding-top:3mm; border-top:1px solid #e5e7eb; display:flex; align-items:center; justify-content:space-between;">
+        <div style="text-align:left;">
+          ${certCode ? `<p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${certCode}</p>` : ""}
+          <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${m.front_footer_line2 || "www.catcursos.com.br"}</p>
+        </div>
+        ${qrSrc ? `
+        <div style="text-align:center;">
+          <img src="${qrSrc}" alt="QR Code" style="width:22mm; height:22mm; display:block;"/>
+          <p style="font-family:${font}; font-size:6pt; color:#9ca3af; margin-top:1px;">Validar autenticidade</p>
+        </div>` : ""}
       </div>
 
     </div>
@@ -355,10 +374,17 @@ export function buildCertificateHTMLFromModel(model, certData) {
 
       <!-- RODAPÉ DO VERSO -->
       <div style="margin-top:auto; padding-top:3mm; border-top:1px solid #e5e7eb;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:2mm;">
-          <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${certCode ? `Registro: ${certCode}` : ""}</p>
-          <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${backFoot1} · ${backFoot2}</p>
-          <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">Emitido em: ${emissaoDateStr}</p>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:4mm;">
+          <div style="flex:1;">
+            <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${certCode ? `Registro: ${certCode}` : ""}</p>
+            <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${backFoot1} · ${backFoot2}</p>
+            <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">Emitido em: ${emissaoDateStr}</p>
+          </div>
+          ${qrSrc ? `
+          <div style="text-align:center; flex-shrink:0;">
+            <img src="${qrSrc}" alt="QR Code" style="width:22mm; height:22mm; display:block;"/>
+            <p style="font-family:${font}; font-size:6pt; color:#9ca3af; margin-top:1px; text-align:center;">Validar autenticidade</p>
+          </div>` : ""}
         </div>
       </div>
 
