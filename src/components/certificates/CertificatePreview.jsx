@@ -44,6 +44,28 @@ function buildStyle(f = {}) {
   return s;
 }
 
+function buildFrontBody(m, cert, tf) {
+  const rawText = m.front_body_text || "concluiu com êxito o curso de [CURSO]\ncom carga horária de [CARGA], realizado na empresa [EMPRESA], em [LOCAL].";
+  const duration = cert.course_duration || cert.workload_hours || "";
+  const durationStr = duration ? `${duration}h` : "";
+
+  const resolved = rawText
+    .replace(/\[ALUNO\]/g, cert.student_name || "")
+    .replace(/\[CURSO\]/g, `<strong style="color:${tf.highlightColor || "#064e3b"};">${cert.course_name || ""}</strong>`)
+    .replace(/\[CARGA\]/g, `<strong>${durationStr}</strong>`)
+    .replace(/\[EMPRESA\]/g, cert.client_name ? `<strong>${cert.client_name}</strong>` : "")
+    .replace(/\[LOCAL\]/g, cert.location_and_date ? `<strong>${cert.location_and_date}</strong>` : "")
+    .replace(/\[DATA_INICIO\]/g, cert.start_date ? new Date(cert.start_date + "T12:00:00").toLocaleDateString("pt-BR") : "")
+    .replace(/\[DATA_FIM\]/g, cert.end_date ? new Date(cert.end_date + "T12:00:00").toLocaleDateString("pt-BR") : "");
+
+  const mainStyle = `font-family: ${tf.fontFamily || "Georgia, serif"}; font-size: ${tf.fontSize || 11}pt; color: ${tf.color || "#374151"}; text-align: ${tf.textAlign || "center"}; line-height: ${tf.lineHeight || 1.8};`;
+
+  return resolved
+    .split("\n")
+    .map(line => `<p style="${mainStyle}; max-width:140mm; margin:2mm auto;">${line}</p>`)
+    .join("");
+}
+
 export function buildCertificateHTMLFromModel(model, certData) {
   const cert = { ...PREVIEW_CERT, ...certData };
   const m = model || {};
@@ -164,15 +186,7 @@ export function buildCertificateHTMLFromModel(model, certData) {
     </div>
     ${cert.student_cpf ? `<p style="font-size:9pt; color:#6b7280; margin-bottom:4mm;">CPF: ${cert.student_cpf}</p>` : ""}
 
-    <p style="${mainTextStyle}">concluiu com êxito o curso de</p>
-    <p style="font-size:${(tf.fontSize || 11) + 3}pt; font-weight:bold; color:${tf.highlightColor || "#064e3b"}; margin: 4mm 0; font-family: ${tf.fontFamily || "Georgia, serif"};">
-      ${cert.course_name}
-    </p>
-    <p style="${mainTextStyle}; max-width:140mm; margin:0 auto;">
-      com carga horária de <strong>${cert.course_duration || cert.workload_hours || ""}${cert.course_duration || cert.workload_hours ? "h" : ""}</strong>
-      ${cert.client_name ? `, realizado na empresa <strong>${cert.client_name}</strong>` : ""}
-      ${cert.location_and_date ? `, em <strong>${cert.location_and_date}</strong>` : ""}.
-    </p>
+    ${buildFrontBody(m, cert, tf)}
 
     <!-- Local e data -->
     <p style="margin-top: 5mm; ${toInline({ ...buildStyle(frontLocDateF), fontFamily: frontLocDateF.fontFamily || tf.fontFamily || "Georgia, serif", fontSize: (frontLocDateF.fontSize || 9) + "pt" })}">

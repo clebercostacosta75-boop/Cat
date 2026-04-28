@@ -29,6 +29,7 @@ const DEFAULT_MODEL = {
   front_location_date: "Barcarena/PA, [DATA_EMISSAO]",
   front_footer_line1: "eadcatcursos.com.br",
   front_footer_line2: "www.catcursos.com.br",
+  front_body_text: "concluiu com êxito o curso de [CURSO]\ncom carga horária de [CARGA], realizado na empresa [EMPRESA], em [LOCAL].",
   back_header_text: "Este certificado possui registro interno para verificação de autenticidade.",
   back_content_title: "CONTEÚDO PROGRAMÁTICO",
   back_responsibles_title: "AUTORIDADE E RESPONSABILIDADE TÉCNICA",
@@ -316,6 +317,14 @@ export default function CertDesigner() {
                     </FieldGroup>
                     <FieldGroup label="Rodapé Linha 2">
                       <Input value={form.front_footer_line2} onChange={e => set("front_footer_line2", e.target.value)} />
+                    </FieldGroup>
+                    <FieldGroup label="Texto do Corpo (Frente)">
+                      <textarea
+                        className="w-full border border-input rounded-md px-3 py-2 text-sm min-h-[80px] resize-y bg-background"
+                        value={form.front_body_text || "concluiu com êxito o curso de [CURSO]\ncom carga horária de [CARGA], realizado na empresa [EMPRESA], em [LOCAL]."}
+                        onChange={e => set("front_body_text", e.target.value)}
+                      />
+                      <p className="text-xs text-gray-400">Variáveis: [ALUNO] [CURSO] [CARGA] [EMPRESA] [LOCAL] [DATA_INICIO] [DATA_FIM]</p>
                     </FieldGroup>
                   </TabsContent>
 

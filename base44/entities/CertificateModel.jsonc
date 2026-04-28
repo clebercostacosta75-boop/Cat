@@ -27,6 +27,10 @@
       "type": "string",
       "description": "Tipo de template de texto (default, detran, custom)"
     },
+    "front_body_text": {
+      "type": "string",
+      "description": "Texto do corpo da frente do certificado. Suporta vari\u00e1veis: [ALUNO] [CURSO] [CARGA] [EMPRESA] [LOCAL] [DATA_INICIO] [DATA_FIM]"
+    },
     "text_formatting": {
       "type": "object",
       "properties": {
