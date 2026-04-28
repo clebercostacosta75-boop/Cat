@@ -208,13 +208,8 @@ export function buildCertificateHTMLFromModel(model, certData) {
 
     <!-- 1. CABEÇALHO -->
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4mm;">
-      <!-- Selo 21 anos (esquerda) -->
-      <div style="width:22mm; text-align:center; flex-shrink:0;">
-        <div style="width:20mm; height:20mm; border-radius:50%; background:${highlightColor}; display:flex; flex-direction:column; align-items:center; justify-content:center; margin:0 auto;">
-          <span style="font-size:14pt; font-weight:900; color:#fff; line-height:1;">21</span>
-          <span style="font-size:5.5pt; font-weight:700; color:#fff; letter-spacing:0.5px; text-transform:uppercase; line-height:1.2;">Anos</span>
-        </div>
-      </div>
+      <!-- Espaço reservado (sem selo) -->
+      <div style="width:22mm; flex-shrink:0;"></div>
 
       <!-- Título central -->
       <div style="flex:1; text-align:center; padding:0 4mm;">
@@ -314,7 +309,7 @@ export function buildCertificateHTMLFromModel(model, certData) {
   <div class="cert-content" style="font-family:${fontFamily};">
 
     <!-- 1. CABEÇALHO DO VERSO: logo CAT (esq) + logo DETRAN (dir) -->
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4mm; padding-bottom:3mm; border-bottom:1.5px solid ${highlightColor}; opacity:0.9;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4mm; padding-bottom:3mm; border-bottom:1.5px solid #d1d5db;">
       <img src="${catLogoUrl}" alt="Logo CAT" style="height:14mm; width:auto; object-fit:contain;"/>
       <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/LogoDetran.png" 
            onerror="this.style.display='none'"
