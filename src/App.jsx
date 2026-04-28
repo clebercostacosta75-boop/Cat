@@ -14,7 +14,6 @@ import CertificateSign from './pages/CertificateSign';
 import CertificateValidate from './pages/CertificateValidate';
 import CertificateEmissao from './pages/CertificateEmissao';
 import StudentPortal from './pages/StudentPortal';
-import AttendanceCall from './pages/AttendanceCall';
 import AttendanceConfirm from './pages/AttendanceConfirm';
 import DigitalSignatures from './pages/DigitalSignatures';
 import AlertasConfig from './pages/AlertasConfig';
