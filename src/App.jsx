@@ -18,6 +18,7 @@ import AttendanceCall from './pages/AttendanceCall';
 import AttendanceConfirm from './pages/AttendanceConfirm';
 import DigitalSignatures from './pages/DigitalSignatures';
 import AlertasConfig from './pages/AlertasConfig';
+import AgendaTreinamentos from './pages/AgendaTreinamentos';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -66,6 +67,7 @@ const AuthenticatedApp = () => {
       <Route path="/CertificateEmissao" element={<LayoutWrapper currentPageName="CertificateEmissao"><CertificateEmissao /></LayoutWrapper>} />
       <Route path="/DigitalSignatures" element={<LayoutWrapper currentPageName="DigitalSignatures"><DigitalSignatures /></LayoutWrapper>} />
       <Route path="/AlertasConfig" element={<LayoutWrapper currentPageName="AlertasConfig"><AlertasConfig /></LayoutWrapper>} />
+      <Route path="/AgendaTreinamentos" element={<LayoutWrapper currentPageName="AgendaTreinamentos"><AgendaTreinamentos /></LayoutWrapper>} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route key={path} path={`/${path}`} element={<LayoutWrapper currentPageName={path}><Page /></LayoutWrapper>} />
       ))}

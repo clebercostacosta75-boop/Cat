@@ -1,0 +1,137 @@
+{
+  "name": "AgendaTreinamento",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo do treinamento agendado"
+    },
+    "curso_id": {
+      "type": "string",
+      "description": "ID do curso vinculado"
+    },
+    "curso_nome": {
+      "type": "string",
+      "description": "Nome do curso"
+    },
+    "empresa_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "empresa_nome": {
+      "type": "string",
+      "description": "Nome da empresa"
+    },
+    "instrutor_id": {
+      "type": "string",
+      "description": "ID do instrutor"
+    },
+    "instrutor_nome": {
+      "type": "string",
+      "description": "Nome do instrutor"
+    },
+    "data_inicio": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de in\u00edcio do treinamento"
+    },
+    "data_fim": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de t\u00e9rmino do treinamento"
+    },
+    "horario_inicio": {
+      "type": "string",
+      "description": "Hor\u00e1rio de in\u00edcio (ex: 08:00)"
+    },
+    "horario_fim": {
+      "type": "string",
+      "description": "Hor\u00e1rio de t\u00e9rmino (ex: 17:00)"
+    },
+    "local": {
+      "type": "string",
+      "description": "Local do treinamento"
+    },
+    "modalidade": {
+      "type": "string",
+      "enum": [
+        "Presencial",
+        "Online",
+        "H\u00edbrido"
+      ],
+      "default": "Presencial",
+      "description": "Modalidade do treinamento"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Agendado",
+        "Confirmado",
+        "Em Andamento",
+        "Conclu\u00eddo",
+        "Cancelado"
+      ],
+      "default": "Agendado",
+      "description": "Status do treinamento"
+    },
+    "vagas_total": {
+      "type": "number",
+      "description": "Total de vagas dispon\u00edveis"
+    },
+    "alunos_inscritos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "cpf": {
+            "type": "string"
+          },
+          "empresa": {
+            "type": "string"
+          },
+          "confirmacao_enviada": {
+            "type": "boolean",
+            "default": false
+          },
+          "confirmacao_enviada_em": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Lista de alunos inscritos"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es gerais"
+    },
+    "confirmacao_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se os e-mails de confirma\u00e7\u00e3o j\u00e1 foram disparados"
+    },
+    "confirmacao_enviada_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do disparo dos e-mails"
+    },
+    "link_online": {
+      "type": "string",
+      "description": "Link para treinamento online (se aplic\u00e1vel)"
+    },
+    "cor_calendario": {
+      "type": "string",
+      "description": "Cor para exibi\u00e7\u00e3o no calend\u00e1rio (hex)"
+    }
+  },
+  "required": [
+    "titulo",
+    "curso_nome",
+    "data_inicio"
+  ]
+}

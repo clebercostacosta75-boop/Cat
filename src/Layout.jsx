@@ -149,6 +149,12 @@ export default function Layout({ children }) {
         key: "Config. Alertas E-mail"
       },
       {
+        title: "Agenda de Treinamentos",
+        url: "/AgendaTreinamentos",
+        icon: Calendar,
+        key: "Agenda de Treinamentos"
+      },
+      {
         title: "Chamada Presencial",
         url: createPageUrl("AttendanceCall"),
         icon: Users,
