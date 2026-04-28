@@ -371,7 +371,7 @@ export default function CertificateSign() {
              </div>
 
              <div className="flex flex-col gap-2 sm:gap-3">
-               <CertificateDownloader certificate={cert} model={null} />
+               <CertificateDownloader certificate={cert} className="w-full" />
                <Button
                  className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-2"
                  onClick={() => {

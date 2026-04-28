@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Award, CheckCircle, XCircle, Search, Shield, AlertTriangle } from "lucide-react";
+import { Award, CheckCircle, XCircle, Search, Shield, AlertTriangle, Download } from "lucide-react";
+import CertificateDownloader from "@/components/certificates/CertificateDownloader";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -190,6 +191,16 @@ export default function CertificateValidate() {
                       {result.signature_url && (
                         <img src={result.signature_url} alt="Assinatura" className="h-8 sm:h-10 mt-3 object-contain mx-auto" />
                       )}
+                    </div>
+                  )}
+
+                  {/* Botão de download para certificados assinados */}
+                  {result.status === "signed" && (
+                    <div className="pt-2">
+                      <CertificateDownloader
+                        certificate={result}
+                        className="w-full"
+                      />
                     </div>
                   )}
                   </div>
