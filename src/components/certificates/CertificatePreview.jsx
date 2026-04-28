@@ -44,45 +44,29 @@ function buildStyle(f = {}) {
   return s;
 }
 
-function buildFrontBody(m, cert, tf) {
-  const defaultText = "concluiu com êxito o treinamento de [CURSO], realizado no\nperíodo de [DATA_INICIO] a [DATA_FIM], com carga horária total de [CARGA], sendo\nconsiderado APTO para o desempenho seguro de suas atividades.\n\nO treinamento foi desenvolvido em conformidade com as diretrizes normativas, atendendo\naos requisitos de segurança e saúde no trabalho aplicáveis.\n\nData de Emissão: [DATA_EMISSAO]";
-  const rawText = m.front_body_text || defaultText;
-  const duration = cert.course_duration || cert.workload_hours || "";
-  const durationStr = duration ? `${duration}` : "";
-  const emissaoDate = new Date().toLocaleDateString("pt-BR");
+const toInline = (styleObj) =>
+  Object.entries(styleObj)
+    .map(([k, v]) => `${k.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${v}`)
+    .join("; ");
 
-  const resolved = rawText
-    .replace(/\[ALUNO\]/g, cert.student_name || "")
-    .replace(/\[CURSO\]/g, `<strong style="color:${tf.highlightColor || "#064e3b"};">${cert.course_name || ""}</strong>`)
-    .replace(/\[CARGA\]/g, `<strong>${durationStr}</strong>`)
-    .replace(/\[EMPRESA\]/g, cert.client_name ? `<strong>${cert.client_name}</strong>` : "")
-    .replace(/\[LOCAL\]/g, cert.location_and_date ? `<strong>${cert.location_and_date}</strong>` : "")
-    .replace(/\[DATA_INICIO\]/g, cert.start_date ? new Date(cert.start_date + "T12:00:00").toLocaleDateString("pt-BR") : "")
-    .replace(/\[DATA_FIM\]/g, cert.end_date ? new Date(cert.end_date + "T12:00:00").toLocaleDateString("pt-BR") : "")
-    .replace(/\[DATA_EMISSAO\]/g, emissaoDate);
-
-  const mainStyle = `font-family: ${tf.fontFamily || "Georgia, serif"}; font-size: ${tf.fontSize || 11}pt; color: ${tf.color || "#374151"}; text-align: justify; line-height: ${tf.lineHeight || 1.8};`;
-
-  // Agrupa linhas consecutivas não-vazias em parágrafos, linhas vazias viram espaçamento
-  const lines = resolved.split("\n");
-  const paragraphs = [];
-  let current = [];
-
-  for (const line of lines) {
-    if (line.trim() === "") {
-      if (current.length > 0) {
-        paragraphs.push(current.join(" "));
-        current = [];
-      }
-    } else {
-      current.push(line.trim());
-    }
+function fmtDate(dateStr) {
+  if (!dateStr) return "";
+  try {
+    return new Date(dateStr + "T12:00:00").toLocaleDateString("pt-BR");
+  } catch {
+    return dateStr;
   }
-  if (current.length > 0) paragraphs.push(current.join(" "));
+}
 
-  return paragraphs
-    .map(p => `<p style="${mainStyle}; max-width:160mm; margin:0 auto 3mm; text-indent:6mm;">${p}</p>`)
-    .join("");
+function addMonths(dateStr, months) {
+  if (!dateStr || !months) return null;
+  try {
+    const d = new Date(dateStr + "T12:00:00");
+    d.setMonth(d.getMonth() + parseInt(months, 10));
+    return d.toISOString().split("T")[0];
+  } catch {
+    return null;
+  }
 }
 
 export function buildCertificateHTMLFromModel(model, certData) {
@@ -102,56 +86,82 @@ export function buildCertificateHTMLFromModel(model, certData) {
   const tf = m.text_formatting || {};
   const snf = m.student_name_formatting || {};
   const pcf = m.programmatic_content_formatting || {};
-  const frontTitleF = m.front_title_formatting || {};
-  const frontSubtitleF = m.front_subtitle_formatting || {};
-  const frontCertLabelF = m.front_certification_label_formatting || {};
-  const frontLocDateF = m.front_location_date_formatting || {};
-  const frontSigLabelF = m.front_signature_label_formatting || {};
-  const frontFoot1F = m.front_footer_line1_formatting || {};
-  const frontFoot2F = m.front_footer_line2_formatting || {};
-  const backHeaderF = m.back_header_text_formatting || {};
-  const backModalityF = m.back_modality_text_formatting || {};
-  const backCourseNameF = m.back_course_name_formatting || {};
-  const backContentTitleF = m.back_content_title_formatting || {};
-  const backResponsiblesTitleF = m.back_responsibles_title_formatting || {};
-  const backFoot1F = m.back_footer_line1_formatting || {};
-  const backFoot2F = m.back_footer_line2_formatting || {};
 
-  const frontTitle = m.front_title || "CERTIFICADO";
-  const frontSubtitle = m.front_subtitle || "CAPACITAÇÃO PROFISSIONAL";
-  const certLabel = m.front_certification_label || "CERTIFICAMOS QUE";
+  const fontFamily = tf.fontFamily || "Georgia, serif";
+  const highlightColor = tf.highlightColor || "#059669";
+  const textColor = tf.color || "#374151";
+  const darkColor = "#111827";
+
+  // Datas
+  const today = new Date();
+  const todayStr = today.toLocaleDateString("pt-BR");
+  const emissaoDateStr = cert.issue_date
+    ? new Date(cert.issue_date).toLocaleDateString("pt-BR")
+    : todayStr;
+
+  // Válido até: usar cert.valid_until ou calcular pela validade do modelo
+  const validityMonths = m.validity_period_months || null;
+  const issueDateForCalc = cert.issue_date
+    ? cert.issue_date.split("T")[0]
+    : today.toISOString().split("T")[0];
+
+  let validUntilStr = "";
+  if (cert.valid_until) {
+    validUntilStr = fmtDate(cert.valid_until);
+  } else if (validityMonths) {
+    const calc = addMonths(issueDateForCalc, validityMonths);
+    validUntilStr = calc ? fmtDate(calc) : "";
+  }
+
+  // Periodicidade em meses
+  const periodicidadeMeses = validityMonths || (cert.valid_until && cert.start_date
+    ? Math.round((new Date(cert.valid_until) - new Date(cert.start_date)) / (1000 * 60 * 60 * 24 * 30))
+    : null);
+
+  // Localidade e data
   const locDate = (m.front_location_date || "Barcarena/PA, [DATA_EMISSAO]")
-    .replace("[DATA_EMISSAO]", new Date().toLocaleDateString("pt-BR"));
-  const sigLabel = m.front_signature_label || "Assinatura do Treinando";
-  const footerLine1 = m.front_footer_line1 || "eadcatcursos.com.br";
-  const footerLine2 = m.front_footer_line2 || "www.catcursos.com.br";
-  const backHeader = m.back_header_text || "Este certificado possui registro interno para verificação de autenticidade.";
-  const backModality = m.back_modality_text || (cert.course_modality ? `Modalidade: ${cert.course_modality}` : "");
-  const backContentTitle = m.back_content_title || "CONTEÚDO PROGRAMÁTICO";
-  const backResponsiblesTitle = m.back_responsibles_title || "AUTORIDADE E RESPONSABILIDADE TÉCNICA";
-  const backFoot1 = m.back_footer_line1 || footerLine1;
-  const backFoot2 = m.back_footer_line2 || footerLine2;
+    .replace("[DATA_EMISSAO]", emissaoDateStr);
 
+  // Duração
+  const duration = cert.course_duration || cert.workload_hours || "";
+
+  // Assinatura do aluno
+  const signedAtStr = cert.signed_at
+    ? new Date(cert.signed_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+    : null;
+
+  // Conteúdo programático e responsáveis
   const responsibles = cert.technical_responsibles || m.technical_responsibles || [];
   const programmaticContent = cert.programmatic_content || m.programmatic_content || [];
   const showHours = (cert.show_programmatic_hours !== undefined ? cert.show_programmatic_hours : m.show_programmatic_hours) !== false;
 
-  const toInline = (styleObj) =>
-    Object.entries(styleObj)
-      .map(([k, v]) => `${k.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${v}`)
-      .join("; ");
+  // Código do certificado
+  const certCode = cert.certificate_code || "";
 
+  // Textos padrão
+  const backHeader = m.back_header_text || "Este certificado possui registro interno para verificação de autenticidade.";
+  const backModality = m.back_modality_text || (cert.course_modality ? `Modalidade: ${cert.course_modality}` : "");
+  const backContentTitle = m.back_content_title || "CONTEÚDO PROGRAMÁTICO";
+  const backResponsiblesTitle = m.back_responsibles_title || "AUTORIDADE E RESPONSABILIDADE TÉCNICA";
+  const backFoot1 = m.back_footer_line1 || m.front_footer_line1 || "eadcatcursos.com.br";
+  const backFoot2 = m.back_footer_line2 || m.front_footer_line2 || "www.catcursos.com.br";
+
+  // Logo CAT
+  const catLogoUrl = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/a775a991d_Designsemnome.png";
+
+  // Linhas do parágrafo corpo (texto justificado)
+  const bodyText1 = `concluiu com êxito o treinamento de <strong style="color:${highlightColor};">${cert.course_name || ""}</strong>, realizado no período de <strong>${fmtDate(cert.start_date)}</strong> a <strong>${fmtDate(cert.end_date)}</strong>, com carga horária total de <strong>${duration}</strong>, sendo considerado APTO para o desempenho seguro de suas atividades.`;
+
+  const bodyText2 = `O treinamento foi desenvolvido em conformidade com as diretrizes normativas, atendendo aos requisitos de segurança e saúde no trabalho aplicáveis.`;
+
+  // Tabela conteúdo programático
   const programmaticRows = programmaticContent
     .map(item => `
       <tr>
-        <td style="padding:4px 8px; border-bottom:1px solid #e5e7eb; ${toInline(buildStyle(pcf))}">${item.module || ""}</td>
-        ${showHours ? `<td style="padding:4px 8px; border-bottom:1px solid #e5e7eb; text-align:center; white-space:nowrap; ${toInline(buildStyle(pcf))}">${item.hours || ""}</td>` : ""}
+        <td style="padding:4px 8px; border-bottom:1px solid #e5e7eb; font-family:${fontFamily}; font-size:${pcf.fontSize || 8.5}pt; color:${textColor};">${item.module || ""}</td>
+        ${showHours ? `<td style="padding:4px 8px; border-bottom:1px solid #e5e7eb; text-align:center; white-space:nowrap; font-family:${fontFamily}; font-size:${pcf.fontSize || 8.5}pt; color:${textColor};">${item.hours || ""}</td>` : ""}
       </tr>
     `).join("");
-
-  const mainTextStyle = `font-family: ${tf.fontFamily || "Georgia, serif"}; font-size: ${tf.fontSize || 11}pt; color: ${tf.color || "#374151"}; text-align: ${tf.textAlign || "center"}; line-height: ${tf.lineHeight || 1.8};`;
-
-  const studentNameStyle = `font-size: ${snf.fontSize || 20}pt; font-weight: ${snf.bold !== false ? "bold" : "normal"}; font-style: ${snf.italic ? "italic" : "normal"}; text-decoration: ${snf.underline ? "underline" : "none"}; color: ${snf.color || "#111827"}; letter-spacing: ${snf.letterSpacing || 0}px; text-align: ${snf.textAlign || "center"}; margin-top: ${snf.marginTop || 4}mm; margin-bottom: ${snf.marginBottom || 4}mm; font-family: ${snf.fontFamily || tf.fontFamily || "Georgia, serif"};`;
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -171,141 +181,223 @@ export function buildCertificateHTMLFromModel(model, certData) {
       height: ${pageH}mm;
       position: relative;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
       margin: 0 auto 10mm;
     }
     .bg-layer { position: absolute; inset: 0; z-index: 1; }
-    .cert-content { position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12mm 15mm; }
+    .cert-content {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 8mm 14mm 8mm 14mm;
+      font-family: ${fontFamily};
+      color: ${textColor};
+    }
   </style>
 </head>
 <body>
 
-<!-- FRENTE -->
+<!-- ============================================================ -->
+<!-- FRENTE DO CERTIFICADO -->
+<!-- ============================================================ -->
 <div class="cert-page page-break">
   <div class="bg-layer" style="${frontBg}"></div>
-  <div class="cert-content" style="${mainTextStyle}">
+  <div class="cert-content">
 
-    <!-- Título -->
-    <h1 style="${toInline({ ...buildStyle(frontTitleF), fontFamily: frontTitleF.fontFamily || tf.fontFamily || "Georgia, serif", fontSize: (frontTitleF.fontSize || 28) + "pt", fontWeight: "bold", letterSpacing: "4px", textTransform: "uppercase", lineHeight: "1.1" })}">
-      ${frontTitle}
-    </h1>
-    <p style="${toInline({ ...buildStyle(frontSubtitleF), fontFamily: frontSubtitleF.fontFamily || tf.fontFamily || "Georgia, serif", fontSize: (frontSubtitleF.fontSize || 10) + "pt", letterSpacing: "3px", marginTop: "3px" })}">
-      ${frontSubtitle}
-    </p>
+    <!-- 1. CABEÇALHO -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4mm;">
+      <!-- Selo 21 anos (esquerda) -->
+      <div style="width:22mm; text-align:center; flex-shrink:0;">
+        <div style="width:20mm; height:20mm; border-radius:50%; background:${highlightColor}; display:flex; flex-direction:column; align-items:center; justify-content:center; margin:0 auto;">
+          <span style="font-size:14pt; font-weight:900; color:#fff; line-height:1;">21</span>
+          <span style="font-size:5.5pt; font-weight:700; color:#fff; letter-spacing:0.5px; text-transform:uppercase; line-height:1.2;">Anos</span>
+        </div>
+      </div>
 
-    <!-- Label certificamos -->
-    <p style="margin-top: 8mm; ${toInline({ ...buildStyle(frontCertLabelF), fontFamily: frontCertLabelF.fontFamily || tf.fontFamily || "Georgia, serif", fontSize: (frontCertLabelF.fontSize || 10) + "pt" })}">
-      ${certLabel}
-    </p>
+      <!-- Título central -->
+      <div style="flex:1; text-align:center; padding:0 4mm;">
+        <h1 style="font-family:${fontFamily}; font-size:28pt; font-weight:900; letter-spacing:5px; text-transform:uppercase; color:${snf.color || darkColor}; line-height:1;">
+          ${m.front_title || "CERTIFICADO"}
+        </h1>
+        <p style="font-family:${fontFamily}; font-size:9.5pt; letter-spacing:3px; text-transform:uppercase; color:${highlightColor}; margin-top:2px;">
+          ${m.front_subtitle || "CAPACITAÇÃO PROFISSIONAL"}
+        </p>
+      </div>
+
+      <!-- Logo CAT (direita) -->
+      <div style="width:22mm; text-align:right; flex-shrink:0;">
+        <img src="${catLogoUrl}" alt="Logo CAT" style="height:18mm; width:auto; object-fit:contain; display:inline-block;"/>
+      </div>
+    </div>
+
+    <!-- Linha divisória -->
+    <div style="height:1.5px; background:${highlightColor}; margin-bottom:4mm; opacity:0.5;"></div>
+
+    <!-- 2. CORPO -->
+    <div style="text-align:center; margin-bottom:3mm;">
+      <p style="font-family:${fontFamily}; font-size:9.5pt; color:${textColor}; letter-spacing:2px; text-transform:uppercase;">
+        ${m.front_certification_label || "CERTIFICAMOS QUE"}
+      </p>
+    </div>
 
     <!-- Nome do aluno -->
-    <div style="${studentNameStyle}; border-bottom: 2px solid ${snf.color || "#059669"}; padding-bottom: 3px; display: inline-block; min-width: 100mm;">
-      ${cert.student_name}
+    <div style="text-align:center; margin-bottom:1.5mm;">
+      <span style="font-family:${snf.fontFamily || fontFamily}; font-size:${snf.fontSize || 20}pt; font-weight:bold; color:${snf.color || darkColor}; letter-spacing:${snf.letterSpacing || 0}px; border-bottom:2px solid ${highlightColor}; padding-bottom:2px; display:inline-block;">
+        ${cert.student_name}
+      </span>
     </div>
-    ${cert.student_cpf ? `<p style="font-size:9pt; color:#6b7280; margin-bottom:4mm;">CPF nº ${cert.student_cpf}</p>` : ""}
 
-    ${buildFrontBody(m, cert, tf)}
+    <!-- CPF -->
+    ${cert.student_cpf ? `<p style="font-family:${fontFamily}; font-size:8.5pt; color:#6b7280; text-align:center; margin-bottom:4mm;">CPF nº ${cert.student_cpf}</p>` : `<div style="margin-bottom:4mm;"></div>`}
 
-    <!-- Local e data -->
-    <p style="margin-top: 5mm; ${toInline({ ...buildStyle(frontLocDateF), fontFamily: frontLocDateF.fontFamily || tf.fontFamily || "Georgia, serif", fontSize: (frontLocDateF.fontSize || 9) + "pt" })}">
+    <!-- Parágrafo 1 -->
+    <p style="font-family:${fontFamily}; font-size:${tf.fontSize || 10}pt; color:${textColor}; text-align:justify; line-height:${tf.lineHeight || 1.7}; margin-bottom:3mm; text-indent:6mm;">
+      ${bodyText1}
+    </p>
+
+    <!-- Parágrafo 2 -->
+    <p style="font-family:${fontFamily}; font-size:${tf.fontSize || 10}pt; color:${textColor}; text-align:justify; line-height:${tf.lineHeight || 1.7}; margin-bottom:4mm; text-indent:6mm;">
+      ${bodyText2}
+    </p>
+
+    <!-- 3. BLOCO DE DATAS -->
+    <div style="border:1.5px solid ${highlightColor}; border-radius:4px; background:rgba(5,150,105,0.05); padding:4mm 8mm; text-align:center; margin:0 auto 4mm; max-width:130mm;">
+      <div style="display:flex; justify-content:center; gap:12mm; flex-wrap:wrap;">
+        <div>
+          <p style="font-family:${fontFamily}; font-size:7.5pt; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:1px;">Data de Emissão</p>
+          <p style="font-family:${fontFamily}; font-size:11pt; font-weight:bold; color:${darkColor};">${emissaoDateStr}</p>
+        </div>
+        ${validUntilStr ? `
+        <div>
+          <p style="font-family:${fontFamily}; font-size:7.5pt; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:1px;">Válido até</p>
+          <p style="font-family:${fontFamily}; font-size:11pt; font-weight:bold; color:${highlightColor};">${validUntilStr}</p>
+        </div>` : ""}
+        ${periodicidadeMeses ? `
+        <div>
+          <p style="font-family:${fontFamily}; font-size:7.5pt; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:1px;">Periodicidade de Atualização</p>
+          <p style="font-family:${fontFamily}; font-size:11pt; font-weight:bold; color:${darkColor};">${periodicidadeMeses} meses</p>
+        </div>` : ""}
+      </div>
+    </div>
+
+    <!-- 4. LOCALIDADE -->
+    <p style="font-family:${fontFamily}; font-size:9pt; color:${textColor}; text-align:center; margin-bottom:4mm;">
       ${locDate}
     </p>
 
-    <!-- Assinaturas -->
-    <div style="display:flex; justify-content:space-around; width:100%; margin-top:auto; padding-top:6mm;">
-      ${responsibles.length > 0 ? responsibles.map(r => `
-        <div style="text-align:center; min-width:55mm;">
-          ${r.signature_url ? `<img src="${r.signature_url}" style="height:35px; object-fit:contain; display:block; margin:0 auto 4px;" alt="Assinatura ${r.name}"/>` : `<div style="height:35px;"></div>`}
-          <div style="border-top:1.5px solid #374151; padding-top:5px;">
-            <p style="font-size:9pt; font-weight:bold;">${r.name || "___________________________"}</p>
-            ${(r.titles || [r.title]).filter(Boolean).map(t => `<p style="font-size:8pt; color:#6b7280;">${t}</p>`).join("")}
-            ${r.registration ? `<p style="font-size:7.5pt; color:#9ca3af;">${r.registration}</p>` : ""}
-          </div>
-        </div>
-      `).join("") : `
-        <div style="text-align:center; min-width:55mm;">
-          <div style="border-top:1.5px solid #374151; padding-top:5px;">
-            <p style="font-size:9pt; font-weight:bold;">${cert.instructor_name || "___________________________"}</p>
-            <p style="font-size:8pt; color:#6b7280;">Instrutor(a)</p>
-          </div>
-        </div>
-        <div style="text-align:center; min-width:55mm;">
-          ${cert.signature_url ? `<img src="${cert.signature_url}" style="height:35px; object-fit:contain; display:block; margin:0 auto 4px;" alt="Assinatura Aluno"/>` : `<div style="height:35px;"></div>`}
-          <div style="border-top:1.5px solid #374151; padding-top:5px;">
-            <p style="font-size:9pt; font-weight:bold;">${cert.student_name}</p>
-            <p style="font-size:8pt; color:#6b7280; ${toInline(buildStyle(frontSigLabelF))}">${sigLabel}</p>
-          </div>
-        </div>
-      `}
+    <!-- 5. ASSINATURA DIGITAL DO ALUNO -->
+    <div style="border-top:1px solid #d1d5db; padding-top:4mm; text-align:center;">
+      ${cert.signature_url
+        ? `<img src="${cert.signature_url}" style="height:28px; object-fit:contain; display:block; margin:0 auto 3px;" alt="Assinatura do Aluno"/>`
+        : `<div style="height:28px;"></div>`}
+      <p style="font-family:${fontFamily}; font-size:9pt; font-weight:bold; color:${darkColor};">${cert.student_name}</p>
+      <p style="font-family:${fontFamily}; font-size:7.5pt; color:#6b7280; margin-top:1px;">${m.front_signature_label || "Assinatura do Treinando"}</p>
+      ${signedAtStr ? `<p style="font-family:${fontFamily}; font-size:7pt; color:#9ca3af; margin-top:1px;">Assinado digitalmente em: ${signedAtStr}</p>` : ""}
     </div>
 
-    <!-- Número do certificado -->
-    ${cert.certificate_code ? `<p style="font-size:8pt; color:#9ca3af; margin-top:3mm;">${cert.certificate_code}${cert.valid_until ? ` • Válido até ${cert.valid_until}` : ""}</p>` : ""}
-
-    <!-- Rodapé -->
-    <div style="position:absolute; bottom:8mm; width:100%; text-align:center;">
-      <p style="${toInline({ ...buildStyle(frontFoot1F), fontSize: (frontFoot1F.fontSize || 7.5) + "pt", color: frontFoot1F.color || "#9ca3af" })}">${footerLine1}</p>
-      ${footerLine2 ? `<p style="${toInline({ ...buildStyle(frontFoot2F), fontSize: (frontFoot2F.fontSize || 7) + "pt", color: frontFoot2F.color || "#9ca3af" })}">${footerLine2}</p>` : ""}
+    <!-- 6. RODAPÉ DA FRENTE -->
+    <div style="margin-top:auto; padding-top:3mm; text-align:center; border-top:1px solid #e5e7eb;">
+      ${certCode ? `<p style="font-family:${fontFamily}; font-size:7.5pt; color:#9ca3af;">${certCode}</p>` : ""}
+      <p style="font-family:${fontFamily}; font-size:7pt; color:#9ca3af;">${m.front_footer_line2 || "www.catcursos.com.br"}</p>
     </div>
+
   </div>
 </div>
 
-<!-- VERSO -->
+<!-- ============================================================ -->
+<!-- VERSO DO CERTIFICADO -->
+<!-- ============================================================ -->
 <div class="cert-page">
   <div class="bg-layer" style="${backBg}"></div>
-  <div class="cert-content" style="font-family: ${tf.fontFamily || "Arial, sans-serif"}; align-items: flex-start; justify-content: flex-start;">
+  <div class="cert-content" style="font-family:${fontFamily};">
 
-    ${backHeader ? `<p style="${toInline({ ...buildStyle(backHeaderF), fontSize: (backHeaderF.fontSize || 9) + "pt", color: backHeaderF.color || "#374151", marginBottom: "4mm" })}">${backHeader}</p>` : ""}
-    ${backModality ? `<p style="${toInline({ ...buildStyle(backModalityF), fontSize: (backModalityF.fontSize || 9) + "pt", color: backModalityF.color || "#6b7280", marginBottom: "3mm" })}">${backModality}</p>` : ""}
+    <!-- 1. CABEÇALHO DO VERSO: logo CAT (esq) + logo DETRAN (dir) -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4mm; padding-bottom:3mm; border-bottom:1.5px solid ${highlightColor}; opacity:0.9;">
+      <img src="${catLogoUrl}" alt="Logo CAT" style="height:14mm; width:auto; object-fit:contain;"/>
+      <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/LogoDetran.png" 
+           onerror="this.style.display='none'"
+           alt="DETRAN-PA" style="height:14mm; width:auto; object-fit:contain;"/>
+    </div>
 
-    <!-- Nome do curso -->
-    <p style="${toInline({ ...buildStyle(backCourseNameF), fontSize: (backCourseNameF.fontSize || 13) + "pt", fontWeight: "bold", color: backCourseNameF.color || "#064e3b", marginBottom: "5mm" })}">
+    <!-- 2. INFORMAÇÕES DE AUTENTICIDADE -->
+    <p style="font-family:${fontFamily}; font-size:8pt; color:#6b7280; margin-bottom:2mm;">${backHeader}</p>
+    ${backModality ? `<p style="font-family:${fontFamily}; font-size:8pt; color:#6b7280; margin-bottom:3mm;">${backModality}</p>` : ""}
+
+    <!-- 3. NOME DO TREINAMENTO -->
+    <p style="font-family:${fontFamily}; font-size:12pt; font-weight:bold; color:${highlightColor}; margin-bottom:4mm; text-transform:uppercase;">
       ${cert.course_name}
     </p>
 
-    <!-- Conteúdo programático -->
+    <!-- 4. CONTEÚDO PROGRAMÁTICO -->
     ${programmaticContent.length > 0 ? `
-      <p style="${toInline({ ...buildStyle(backContentTitleF), fontSize: (backContentTitleF.fontSize || 9) + "pt", fontWeight: "bold", color: backContentTitleF.color || "#374151", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "3mm" })}">${backContentTitle}</p>
-      <table style="width:100%; border-collapse:collapse; font-size:9pt; color:#374151; margin-bottom:6mm;">
+      <p style="font-family:${fontFamily}; font-size:8.5pt; font-weight:bold; color:${textColor}; text-transform:uppercase; letter-spacing:1px; margin-bottom:2mm;">${backContentTitle}</p>
+      <table style="width:100%; border-collapse:collapse; font-size:8.5pt; color:${textColor}; margin-bottom:10mm;">
         <thead>
-          <tr style="background: ${tf.highlightColor || "#059669"}; color:white;">
-            <th style="padding:5px 8px; text-align:left;">Módulo / Conteúdo</th>
-            ${showHours ? `<th style="padding:5px 8px; text-align:center; width:25mm;">Carga Horária</th>` : ""}
+          <tr style="background:${highlightColor}; color:#fff;">
+            <th style="padding:4px 8px; text-align:left; font-weight:600;">Módulo / Conteúdo</th>
+            ${showHours ? `<th style="padding:4px 8px; text-align:center; width:22mm; font-weight:600;">Carga Horária</th>` : ""}
           </tr>
         </thead>
         <tbody>${programmaticRows}</tbody>
       </table>
-    ` : ""}
+    ` : `<div style="margin-bottom:10mm;"></div>`}
 
-    <!-- Responsáveis técnicos -->
-    ${responsibles.length > 0 ? `
-      <p style="${toInline({ ...buildStyle(backResponsiblesTitleF), fontSize: (backResponsiblesTitleF.fontSize || 9) + "pt", fontWeight: "bold", color: backResponsiblesTitleF.color || "#374151", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "3mm" })}">${backResponsiblesTitle}</p>
-      <div style="display:flex; flex-wrap:wrap; gap:8mm;">
-        ${responsibles.map(r => `
-          <div style="min-width:55mm;">
+    <!-- 5. ESPAÇAMENTO + 6. AUTORIDADE E RESPONSABILIDADE TÉCNICA -->
+    <div style="margin-top:10mm;">
+      <p style="font-family:${fontFamily}; font-size:8.5pt; font-weight:bold; color:${textColor}; text-transform:uppercase; letter-spacing:1px; margin-bottom:3mm; padding-bottom:2mm; border-bottom:1.5px solid #d1d5db;">
+        ${backResponsiblesTitle}
+      </p>
+      <div style="display:flex; justify-content:space-around; width:100%; gap:4mm;">
+        ${responsibles.length > 0 ? responsibles.map(r => `
+          <div style="text-align:center; flex:1; min-width:50mm; max-width:80mm;">
+            ${r.signature_url ? `<img src="${r.signature_url}" style="height:28px; object-fit:contain; display:block; margin:0 auto 3px;" alt="Assinatura ${r.name}"/>` : `<div style="height:28px;"></div>`}
             <div style="border-top:1.5px solid #374151; padding-top:4px;">
-              <p style="font-size:9pt; font-weight:bold;">${r.name}</p>
-              ${(r.titles || [r.title]).filter(Boolean).map(t => `<p style="font-size:8pt; color:#6b7280;">${t}</p>`).join("")}
-              ${r.registration ? `<p style="font-size:7.5pt; color:#9ca3af;">${r.registration}</p>` : ""}
+              <p style="font-size:8.5pt; font-weight:bold; color:${darkColor};">${r.name || ""}</p>
+              ${(r.titles || [r.title]).filter(Boolean).map(t => `<p style="font-size:7.5pt; color:#6b7280;">${t}</p>`).join("")}
+              ${r.registration ? `<p style="font-size:7pt; color:#9ca3af;">${r.registration}</p>` : ""}
             </div>
           </div>
-        `).join("")}
+        `).join("") : `
+          <!-- Responsáveis padrão (fallback) -->
+          <div style="text-align:center; flex:1; min-width:50mm;">
+            <div style="height:28px;"></div>
+            <div style="border-top:1.5px solid #374151; padding-top:4px;">
+              <p style="font-size:8pt; font-weight:bold; color:${darkColor};">MILTON PINHEIRO DE ALMEIDA PINTO</p>
+              <p style="font-size:7.5pt; color:#6b7280;">Eng. Segurança no Trabalho</p>
+              <p style="font-size:7pt; color:#9ca3af;">CREA/PA 21237 D/PA</p>
+            </div>
+          </div>
+          <div style="text-align:center; flex:1; min-width:50mm;">
+            <div style="height:28px;"></div>
+            <div style="border-top:1.5px solid #374151; padding-top:4px;">
+              <p style="font-size:8pt; font-weight:bold; color:${darkColor};">CLEBER CORREA DA COSTA</p>
+              <p style="font-size:7.5pt; color:#6b7280;">Téc. Segurança do Trabalho/Pedagogo</p>
+              <p style="font-size:7pt; color:#9ca3af;">MEC: 428/2013 · BRIGIN 266574</p>
+            </div>
+          </div>
+          <div style="text-align:center; flex:1; min-width:50mm;">
+            <div style="height:28px;"></div>
+            <div style="border-top:1.5px solid #374151; padding-top:4px;">
+              <p style="font-size:8pt; font-weight:bold; color:${darkColor};">VIVIANE SOUZA NUNES</p>
+              <p style="font-size:7.5pt; color:#6b7280;">Bacharel Adm. Ciências Contábeis</p>
+              <p style="font-size:7pt; color:#9ca3af;">Nº 134/19</p>
+            </div>
+          </div>
+        `}
       </div>
-    ` : ""}
-
-    ${cert.certificate_code ? `
-      <div style="margin-top:auto; padding-top:6mm; width:100%;">
-        <p style="font-size:8pt; color:#9ca3af;">Registro: ${cert.certificate_code}</p>
-      </div>
-    ` : ""}
-
-    <!-- Rodapé verso -->
-    <div style="position:absolute; bottom:8mm; width:100%; text-align:center;">
-      <p style="${toInline({ ...buildStyle(backFoot1F), fontSize: (backFoot1F.fontSize || 7.5) + "pt", color: backFoot1F.color || "#9ca3af" })}">${backFoot1}</p>
-      ${backFoot2 ? `<p style="${toInline({ ...buildStyle(backFoot2F), fontSize: (backFoot2F.fontSize || 7) + "pt", color: backFoot2F.color || "#9ca3af" })}">${backFoot2}</p>` : ""}
-      <p style="font-size:7pt; color:#d1d5db; margin-top:2px;">Emitido em ${new Date().toLocaleDateString("pt-BR")}</p>
     </div>
+
+    <!-- 7. RODAPÉ DO VERSO -->
+    <div style="margin-top:auto; padding-top:3mm; border-top:1px solid #e5e7eb;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:2mm;">
+        <p style="font-family:${fontFamily}; font-size:7pt; color:#9ca3af;">${certCode ? `Registro: ${certCode}` : ""}</p>
+        <p style="font-family:${fontFamily}; font-size:7pt; color:#9ca3af;">${backFoot1} · ${backFoot2}</p>
+        <p style="font-family:${fontFamily}; font-size:7pt; color:#9ca3af;">Emitido em: ${emissaoDateStr}</p>
+      </div>
+    </div>
+
   </div>
 </div>
 
