@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Building2, Calendar, DollarSign, Mail, MessageCircle, Send, CheckCircle, Loader2, BookOpen, Clock, MapPin, TrendingUp, Users, BarChart3, PieChart, Bell, AlertOctagon } from "lucide-react";
+import CertificatesDashboard from "@/components/certificates/CertificatesDashboard";
 import { LineChart, Line, BarChart, Bar, PieChart as RePieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -494,6 +495,14 @@ function DashboardAdminMaster() {
           <p className="text-gray-600 text-sm mt-1">
             Visão completa de custos e desempenho
           </p>
+        </div>
+
+        {/* Painel de Certificados */}
+        <CertificatesDashboard />
+
+        {/* Divider */}
+        <div className="border-t border-gray-200 pt-2">
+          <h2 className="text-base font-semibold text-gray-700 mb-4">Dashboard Financeiro & Operacional</h2>
         </div>
 
         {/* Resumo Financeiro */}
