@@ -14,6 +14,10 @@
       "type": "string",
       "description": "CPF do aluno"
     },
+    "student_email": {
+      "type": "string",
+      "description": "E-mail do aluno para envio de alertas"
+    },
     "student_phone": {
       "type": "string",
       "description": "Telefone/WhatsApp do aluno"

@@ -1,0 +1,34 @@
+{
+  "name": "ConfiguracaoAlertas",
+  "type": "object",
+  "properties": {
+    "dias_antecedencia": {
+      "type": "number",
+      "description": "Quantos dias antes do vencimento este alerta dispara (ex: 30, 15, 5)"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se este alerta est\u00e1 ativo"
+    },
+    "assunto_aluno": {
+      "type": "string",
+      "description": "Assunto do e-mail enviado ao aluno"
+    },
+    "mensagem_aluno": {
+      "type": "string",
+      "description": "Corpo do e-mail enviado ao aluno. Vari\u00e1veis: {nome_aluno}, {nome_treinamento}, {data_vencimento}, {empresa}, {dias_restantes}"
+    },
+    "assunto_empresa": {
+      "type": "string",
+      "description": "Assunto do e-mail enviado \u00e0 empresa"
+    },
+    "mensagem_empresa": {
+      "type": "string",
+      "description": "Corpo do e-mail enviado \u00e0 empresa. Vari\u00e1veis: {nome_aluno}, {nome_treinamento}, {data_vencimento}, {empresa}, {dias_restantes}"
+    }
+  },
+  "required": [
+    "dias_antecedencia"
+  ]
+}
