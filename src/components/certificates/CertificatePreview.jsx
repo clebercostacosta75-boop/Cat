@@ -45,9 +45,11 @@ function buildStyle(f = {}) {
 }
 
 function buildFrontBody(m, cert, tf) {
-  const rawText = m.front_body_text || "concluiu com êxito o curso de [CURSO]\ncom carga horária de [CARGA], realizado na empresa [EMPRESA], em [LOCAL].";
+  const defaultText = "concluiu com êxito o treinamento de [CURSO], realizado no\nperíodo de [DATA_INICIO] a [DATA_FIM], com carga horária total de [CARGA], sendo\nconsiderado APTO para o desempenho seguro de suas atividades.\n\nO treinamento foi desenvolvido em conformidade com as diretrizes normativas, atendendo\naos requisitos de segurança e saúde no trabalho aplicáveis.\n\nData de Emissão: [DATA_EMISSAO]";
+  const rawText = m.front_body_text || defaultText;
   const duration = cert.course_duration || cert.workload_hours || "";
-  const durationStr = duration ? `${duration}h` : "";
+  const durationStr = duration ? `${duration}` : "";
+  const emissaoDate = new Date().toLocaleDateString("pt-BR");
 
   const resolved = rawText
     .replace(/\[ALUNO\]/g, cert.student_name || "")
@@ -56,13 +58,30 @@ function buildFrontBody(m, cert, tf) {
     .replace(/\[EMPRESA\]/g, cert.client_name ? `<strong>${cert.client_name}</strong>` : "")
     .replace(/\[LOCAL\]/g, cert.location_and_date ? `<strong>${cert.location_and_date}</strong>` : "")
     .replace(/\[DATA_INICIO\]/g, cert.start_date ? new Date(cert.start_date + "T12:00:00").toLocaleDateString("pt-BR") : "")
-    .replace(/\[DATA_FIM\]/g, cert.end_date ? new Date(cert.end_date + "T12:00:00").toLocaleDateString("pt-BR") : "");
+    .replace(/\[DATA_FIM\]/g, cert.end_date ? new Date(cert.end_date + "T12:00:00").toLocaleDateString("pt-BR") : "")
+    .replace(/\[DATA_EMISSAO\]/g, emissaoDate);
 
-  const mainStyle = `font-family: ${tf.fontFamily || "Georgia, serif"}; font-size: ${tf.fontSize || 11}pt; color: ${tf.color || "#374151"}; text-align: ${tf.textAlign || "center"}; line-height: ${tf.lineHeight || 1.8};`;
+  const mainStyle = `font-family: ${tf.fontFamily || "Georgia, serif"}; font-size: ${tf.fontSize || 11}pt; color: ${tf.color || "#374151"}; text-align: justify; line-height: ${tf.lineHeight || 1.8};`;
 
-  return resolved
-    .split("\n")
-    .map(line => `<p style="${mainStyle}; max-width:140mm; margin:2mm auto;">${line}</p>`)
+  // Agrupa linhas consecutivas não-vazias em parágrafos, linhas vazias viram espaçamento
+  const lines = resolved.split("\n");
+  const paragraphs = [];
+  let current = [];
+
+  for (const line of lines) {
+    if (line.trim() === "") {
+      if (current.length > 0) {
+        paragraphs.push(current.join(" "));
+        current = [];
+      }
+    } else {
+      current.push(line.trim());
+    }
+  }
+  if (current.length > 0) paragraphs.push(current.join(" "));
+
+  return paragraphs
+    .map(p => `<p style="${mainStyle}; max-width:160mm; margin:0 auto 3mm; text-indent:6mm;">${p}</p>`)
     .join("");
 }
 
@@ -184,7 +203,7 @@ export function buildCertificateHTMLFromModel(model, certData) {
     <div style="${studentNameStyle}; border-bottom: 2px solid ${snf.color || "#059669"}; padding-bottom: 3px; display: inline-block; min-width: 100mm;">
       ${cert.student_name}
     </div>
-    ${cert.student_cpf ? `<p style="font-size:9pt; color:#6b7280; margin-bottom:4mm;">CPF: ${cert.student_cpf}</p>` : ""}
+    ${cert.student_cpf ? `<p style="font-size:9pt; color:#6b7280; margin-bottom:4mm;">CPF nº ${cert.student_cpf}</p>` : ""}
 
     ${buildFrontBody(m, cert, tf)}
 

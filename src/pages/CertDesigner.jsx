@@ -29,7 +29,7 @@ const DEFAULT_MODEL = {
   front_location_date: "Barcarena/PA, [DATA_EMISSAO]",
   front_footer_line1: "eadcatcursos.com.br",
   front_footer_line2: "www.catcursos.com.br",
-  front_body_text: "concluiu com êxito o curso de [CURSO]\ncom carga horária de [CARGA], realizado na empresa [EMPRESA], em [LOCAL].",
+  front_body_text: "concluiu com êxito o treinamento de [CURSO], realizado no\nperíodo de [DATA_INICIO] a [DATA_FIM], com carga horária total de [CARGA], sendo\nconsiderado APTO para o desempenho seguro de suas atividades.\n\nO treinamento foi desenvolvido em conformidade com as diretrizes normativas, atendendo\naos requisitos de segurança e saúde no trabalho aplicáveis.\n\nData de Emissão: [DATA_EMISSAO]",
   back_header_text: "Este certificado possui registro interno para verificação de autenticidade.",
   back_content_title: "CONTEÚDO PROGRAMÁTICO",
   back_responsibles_title: "AUTORIDADE E RESPONSABILIDADE TÉCNICA",
@@ -363,7 +363,7 @@ export default function CertDesigner() {
                         value={form.front_body_text || "concluiu com êxito o curso de [CURSO]\ncom carga horária de [CARGA], realizado na empresa [EMPRESA], em [LOCAL]."}
                         onChange={e => set("front_body_text", e.target.value)}
                       />
-                      <p className="text-xs text-gray-400">Variáveis: [ALUNO] [CURSO] [CARGA] [EMPRESA] [LOCAL] [DATA_INICIO] [DATA_FIM]</p>
+                      <p className="text-xs text-gray-400">Variáveis: [ALUNO] [CURSO] [CARGA] [EMPRESA] [LOCAL] [DATA_INICIO] [DATA_FIM] [DATA_EMISSAO]</p>
                     </FieldGroup>
                   </TabsContent>
 
