@@ -199,10 +199,8 @@ export function buildCertificateHTMLFromModel(model, certData) {
           </p>
         </div>
 
-        <!-- Logo CAT (direita) -->
-        <div style="width:22mm; text-align:right; flex-shrink:0;">
-          <img src="${catLogoUrl}" alt="Logo CAT" style="height:18mm; width:auto; object-fit:contain; display:inline-block;"/>
-        </div>
+        <!-- Espaço reservado direita -->
+        <div style="width:22mm; flex-shrink:0;"></div>
       </div>
 
       <!-- Linha divisória -->
@@ -297,13 +295,8 @@ export function buildCertificateHTMLFromModel(model, certData) {
   <div class="cert-content">
     <div class="inner">
 
-      <!-- CABEÇALHO DO VERSO: logo CAT (esq) + logo DETRAN (dir) -->
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4mm; padding-bottom:3mm; border-bottom:1.5px solid #d1d5db;">
-        <img src="${catLogoUrl}" alt="Logo CAT" style="height:14mm; width:auto; object-fit:contain;"/>
-        <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6902814ded9d094643e33644/LogoDetran.png"
-             onerror="this.style.display='none'"
-             alt="DETRAN-PA" style="height:14mm; width:auto; object-fit:contain;"/>
-      </div>
+      <!-- CABEÇALHO DO VERSO: apenas linha divisória -->
+      <div style="margin-bottom:4mm; padding-bottom:3mm; border-bottom:1.5px solid #d1d5db;"></div>
 
       <!-- INFORMAÇÕES DE AUTENTICIDADE -->
       <p style="font-family:${font}; font-size:9pt; color:#6b7280; margin-bottom:2mm; line-height:1.5; text-align:justify;">${backHeader}</p>
