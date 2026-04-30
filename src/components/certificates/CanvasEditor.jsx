@@ -356,15 +356,18 @@ export default function CanvasEditor({ model, signatures = [], onSaveCanvas }) {
     const el = elements.find(el => el.id === id);
     if (!el || el.locked) return;
     e.preventDefault();
-    dragRef.current = { id, startX: e.clientX, startY: e.clientY, elX: el.x, elY: el.y };
+    const elW = el.w || 100;
+    const elH = el.h || 30;
+    dragRef.current = { id, startX: e.clientX, startY: e.clientY, elX: el.x, elY: el.y, elW, elH };
 
     const onMove = (ev) => {
       if (!dragRef.current) return;
-      const dx = (ev.clientX - dragRef.current.startX) / zoom;
-      const dy = (ev.clientY - dragRef.current.startY) / zoom;
-      const nx = Math.max(0, Math.min(CANVAS_W - (el.w || 100), snapToGrid(dragRef.current.elX + dx)));
-      const ny = Math.max(0, Math.min(CANVAS_H - (el.h || 30), snapToGrid(dragRef.current.elY + dy)));
-      setElements(prev => prev.map(e => e.id === dragRef.current.id ? { ...e, x: nx, y: ny } : e));
+      const { id: dragId, startX, startY, elX, elY, elW: w, elH: h } = dragRef.current;
+      const dx = (ev.clientX - startX) / zoom;
+      const dy = (ev.clientY - startY) / zoom;
+      const nx = Math.max(0, Math.min(CANVAS_W - w, snapToGrid(elX + dx)));
+      const ny = Math.max(0, Math.min(CANVAS_H - h, snapToGrid(elY + dy)));
+      setElements(prev => prev.map(e => e.id === dragId ? { ...e, x: nx, y: ny } : e));
     };
     const onUp = () => { dragRef.current = null; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
     window.addEventListener("mousemove", onMove);
@@ -380,7 +383,7 @@ export default function CanvasEditor({ model, signatures = [], onSaveCanvas }) {
 
     const onMove = (ev) => {
       if (!resizeRef.current) return;
-      const { dir: d, startX, startY, origX, origY, origW, origH } = resizeRef.current;
+      const { id: resizeId, dir: d, startX, startY, origX, origY, origW, origH } = resizeRef.current;
       const dx = (ev.clientX - startX) / zoom;
       const dy = (ev.clientY - startY) / zoom;
       let nx = origX, ny = origY, nw = origW, nh = origH;
@@ -388,7 +391,7 @@ export default function CanvasEditor({ model, signatures = [], onSaveCanvas }) {
       if (d.includes("s")) nh = Math.max(20, snapToGrid(origH + dy));
       if (d.includes("w")) { nw = Math.max(30, snapToGrid(origW - dx)); nx = snapToGrid(origX + dx); }
       if (d.includes("n")) { nh = Math.max(20, snapToGrid(origH - dy)); ny = snapToGrid(origY + dy); }
-      setElements(prev => prev.map(e => e.id === resizeRef.current.id ? { ...e, x: nx, y: ny, w: nw, h: nh } : e));
+      setElements(prev => prev.map(e => e.id === resizeId ? { ...e, x: nx, y: ny, w: nw, h: nh } : e));
     };
     const onUp = () => { resizeRef.current = null; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
     window.addEventListener("mousemove", onMove);
