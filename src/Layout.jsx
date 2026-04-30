@@ -63,12 +63,7 @@ export default function Layout({ children }) {
         icon: TrendingUp,
         key: "Dashboard Admin"
       },
-      {
-        title: "Alertas de Reciclagem",
-        url: createPageUrl("RecyclingAlerts"),
-        icon: Bell,
-        key: "Alertas de Reciclagem"
-      },
+
       {
         title: "Análise de Lucratividade",
         url: createPageUrl("ProfitabilityAnalysis"),
