@@ -182,7 +182,7 @@ export function buildCertificateHTMLFromModel(model, certData) {
 <div class="cert-page page-break">
   <div class="bg-layer" style="${frontBg}"></div>
   ${qrSrc ? `
-  <div style="position:absolute; left:8cm; bottom:8cm; z-index:10; text-align:center;">
+  <div style="position:absolute; left:1.5cm; bottom:1.5cm; z-index:10; text-align:center;">
     <img src="${qrSrc}" alt="QR Code" style="width:22mm; height:22mm; display:block;"/>
     <p style="font-family:Arial,sans-serif; font-size:6pt; color:#9ca3af; margin-top:1px;">Validar autenticidade</p>
   </div>` : ""}
@@ -293,7 +293,7 @@ export function buildCertificateHTMLFromModel(model, certData) {
 <div class="cert-page">
   <div class="bg-layer" style="${backBg}"></div>
   ${qrSrc ? `
-  <div style="position:absolute; left:8cm; bottom:8cm; z-index:10; text-align:center;">
+  <div style="position:absolute; left:1.5cm; bottom:1.5cm; z-index:10; text-align:center;">
     <img src="${qrSrc}" alt="QR Code" style="width:22mm; height:22mm; display:block;"/>
     <p style="font-family:Arial,sans-serif; font-size:6pt; color:#9ca3af; margin-top:1px;">Validar autenticidade</p>
   </div>` : ""}
