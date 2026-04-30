@@ -146,7 +146,8 @@ export default function CertDesigner() {
     });
   };
 
-  const handleSaveCanvas = (canvasData) => {
+  const handleSaveCanvas = ({ front, back, mode }) => {
+    const canvasData = { front, back };
     const updated = { ...form, editor_canvas_data: canvasData };
     setForm(updated);
     saveMutation.mutate(updated);
