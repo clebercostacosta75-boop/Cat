@@ -181,6 +181,11 @@ export function buildCertificateHTMLFromModel(model, certData) {
 <!-- ============================================================ -->
 <div class="cert-page page-break">
   <div class="bg-layer" style="${frontBg}"></div>
+  ${qrSrc ? `
+  <div style="position:absolute; left:8cm; bottom:8cm; z-index:10; text-align:center;">
+    <img src="${qrSrc}" alt="QR Code" style="width:22mm; height:22mm; display:block;"/>
+    <p style="font-family:Arial,sans-serif; font-size:6pt; color:#9ca3af; margin-top:1px;">Validar autenticidade</p>
+  </div>` : ""}
   <div class="cert-content">
     <div class="inner">
 
@@ -271,16 +276,11 @@ export function buildCertificateHTMLFromModel(model, certData) {
       </div>
 
       <!-- RODAPÉ DA FRENTE -->
-      <div style="margin-top:auto; padding-top:3mm; border-top:1px solid #e5e7eb; display:flex; align-items:center; justify-content:space-between;">
+      <div style="margin-top:auto; padding-top:3mm; border-top:1px solid #e5e7eb;">
         <div style="text-align:left;">
           ${certCode ? `<p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${certCode}</p>` : ""}
           <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${m.front_footer_line2 || "www.catcursos.com.br"}</p>
         </div>
-        ${qrSrc ? `
-        <div style="text-align:center;">
-          <img src="${qrSrc}" alt="QR Code" style="width:22mm; height:22mm; display:block;"/>
-          <p style="font-family:${font}; font-size:6pt; color:#9ca3af; margin-top:1px;">Validar autenticidade</p>
-        </div>` : ""}
       </div>
 
     </div>
@@ -292,6 +292,11 @@ export function buildCertificateHTMLFromModel(model, certData) {
 <!-- ============================================================ -->
 <div class="cert-page">
   <div class="bg-layer" style="${backBg}"></div>
+  ${qrSrc ? `
+  <div style="position:absolute; left:8cm; bottom:8cm; z-index:10; text-align:center;">
+    <img src="${qrSrc}" alt="QR Code" style="width:22mm; height:22mm; display:block;"/>
+    <p style="font-family:Arial,sans-serif; font-size:6pt; color:#9ca3af; margin-top:1px;">Validar autenticidade</p>
+  </div>` : ""}
   <div class="cert-content">
     <div class="inner">
 
@@ -367,17 +372,10 @@ export function buildCertificateHTMLFromModel(model, certData) {
 
       <!-- RODAPÉ DO VERSO -->
       <div style="margin-top:auto; padding-top:3mm; border-top:1px solid #e5e7eb;">
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:4mm;">
-          <div style="flex:1;">
-            <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${certCode ? `Registro: ${certCode}` : ""}</p>
-            <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${backFoot1} · ${backFoot2}</p>
-            <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">Emitido em: ${emissaoDateStr}</p>
-          </div>
-          ${qrSrc ? `
-          <div style="text-align:center; flex-shrink:0;">
-            <img src="${qrSrc}" alt="QR Code" style="width:22mm; height:22mm; display:block;"/>
-            <p style="font-family:${font}; font-size:6pt; color:#9ca3af; margin-top:1px; text-align:center;">Validar autenticidade</p>
-          </div>` : ""}
+        <div>
+          <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${certCode ? `Registro: ${certCode}` : ""}</p>
+          <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${backFoot1} · ${backFoot2}</p>
+          <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">Emitido em: ${emissaoDateStr}</p>
         </div>
       </div>
 
