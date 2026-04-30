@@ -190,12 +190,6 @@ export default function Layout({ children }) {
         key: "Assinaturas Digitais"
       },
       {
-        title: "Assinatura em Massa",
-        url: "/BulkSign",
-        icon: PenLine,
-        key: "Assinatura em Massa"
-      },
-      {
         title: "Auditoria de Certificados",
         url: "/CertificateAuditPanel",
         icon: FileText,
