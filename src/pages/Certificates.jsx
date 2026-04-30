@@ -3,10 +3,10 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Award, Search, Send, Eye, XCircle, Copy, CheckCircle, Clock, Settings, PlusCircle, CheckSquare, Square } from "lucide-react";
+import { Award, Search, Send, Eye, XCircle, Copy, CheckCircle, Clock, Settings, PlusCircle, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import CertificateExporter from "@/components/certificates/CertificateExporter";
@@ -14,6 +14,8 @@ import CertificateValidation from "@/components/certificates/CertificateValidati
 import CertificateQRCode from "@/components/certificates/CertificateQRCode";
 import BulkCertificateExporter from "@/components/certificates/BulkCertificateExporter";
 import { Checkbox } from "@/components/ui/checkbox";
+import CertificateEmissaoIndividual from "@/components/certificates/CertificateEmissaoIndividual";
+import CertificateEmissaoMassa from "@/components/certificates/CertificateEmissaoMassa";
 
 const statusConfig = {
   pending_signature: { label: "Aguardando Assinatura", color: "bg-yellow-100 text-yellow-800", icon: Clock },
@@ -123,11 +125,6 @@ export default function Certificates() {
           <p className="text-gray-500 text-sm mt-1">Gestão de certificados de treinamentos NR</p>
         </div>
         <div className="flex gap-2">
-          <Link to="/CertificateEmissao">
-            <Button variant="default" size="sm" className="gap-2">
-              <PlusCircle className="w-4 h-4" /> Emitir Certificado
-            </Button>
-          </Link>
           <Link to="/CertDesigner">
             <Button variant="outline" size="sm" className="gap-2">
               <Settings className="w-4 h-4" /> Editar Modelos
@@ -155,9 +152,15 @@ export default function Certificates() {
 
       {/* Tabs principais */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-3 w-full max-w-lg">
+        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
           <TabsTrigger value="lista" className="gap-2">
             <Award className="w-4 h-4" /> Lista
+          </TabsTrigger>
+          <TabsTrigger value="emitir" className="gap-2">
+            <PlusCircle className="w-4 h-4" /> Emitir
+          </TabsTrigger>
+          <TabsTrigger value="massa" className="gap-2">
+            <Users className="w-4 h-4" /> Em Massa
           </TabsTrigger>
           <TabsTrigger value="validar" className="gap-2">
             <Search className="w-4 h-4" /> Validar
@@ -336,6 +339,36 @@ export default function Certificates() {
               })}
             </div>
           )}
+        </TabsContent>
+
+        {/* Emissão Individual */}
+        <TabsContent value="emitir" className="mt-4">
+          <div className="max-w-3xl mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Emitir Certificado Individual</CardTitle>
+                <p className="text-sm text-gray-500 mt-2">Preencha os dados para gerar um novo certificado</p>
+              </CardHeader>
+              <CardContent>
+                <CertificateEmissaoIndividual onSuccess={() => setActiveTab("lista")} />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Emissão em Massa */}
+        <TabsContent value="massa" className="mt-4">
+          <div className="max-w-3xl mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Emissão em Massa</CardTitle>
+                <p className="text-sm text-gray-500 mt-2">Cole os dados da planilha para gerar múltiplos certificados</p>
+              </CardHeader>
+              <CardContent>
+                <CertificateEmissaoMassa onSuccess={() => setActiveTab("lista")} />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Validação */}

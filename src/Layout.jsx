@@ -143,12 +143,6 @@ export default function Layout({ children }) {
         key: "Alertas de Vencimento"
       },
       {
-        title: "Config. Alertas E-mail",
-        url: "/AlertasConfig",
-        icon: Settings,
-        key: "Config. Alertas E-mail"
-      },
-      {
         title: "Agenda de Treinamentos",
         url: "/AgendaTreinamentos",
         icon: Calendar,
