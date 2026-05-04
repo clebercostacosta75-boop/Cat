@@ -6,6 +6,10 @@
       "type": "string",
       "description": "C\u00f3digo \u00fanico de valida\u00e7\u00e3o (ex: CAT-2025-XXXXXXXX)"
     },
+    "student_id": {
+      "type": "string",
+      "description": "ID do aluno vinculado (refer\u00eancia \u00e0 entidade Student)"
+    },
     "student_name": {
       "type": "string",
       "description": "Nome completo do aluno"
@@ -21,6 +25,10 @@
     "student_phone": {
       "type": "string",
       "description": "Telefone/WhatsApp do aluno"
+    },
+    "course_id": {
+      "type": "string",
+      "description": "ID do curso realizado (refer\u00eancia \u00e0 entidade Course)"
     },
     "course_name": {
       "type": "string",
@@ -106,6 +114,10 @@
       "type": "string",
       "description": "ID da turma vinculada"
     },
+    "enrollment_id": {
+      "type": "string",
+      "description": "ID da matr\u00edcula (StudentCourseEnrollment)"
+    },
     "issue_date": {
       "type": "string",
       "format": "date-time",
@@ -117,14 +129,15 @@
         "pending_signature",
         "signed",
         "active",
-        "revoked"
+        "revoked",
+        "expired"
       ],
       "default": "pending_signature",
       "description": "Status do certificado"
     },
     "signature_url": {
       "type": "string",
-      "description": "URL da assinatura digital do aluno (base64 image)"
+      "description": "URL da assinatura digital do aluno"
     },
     "signed_at": {
       "type": "string",
@@ -158,6 +171,38 @@
     "show_programmatic_hours": {
       "type": "boolean",
       "default": true
+    },
+    "revocation_reason": {
+      "type": "string",
+      "description": "Motivo obrigat\u00f3rio da revoga\u00e7\u00e3o"
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora da revoga\u00e7\u00e3o"
+    },
+    "revoked_by": {
+      "type": "string",
+      "description": "E-mail do respons\u00e1vel que revogou"
+    },
+    "version": {
+      "type": "number",
+      "default": 1,
+      "description": "Vers\u00e3o do certificado (para reemiss\u00f5es)"
+    },
+    "reissued_from_id": {
+      "type": "string",
+      "description": "ID do certificado original em caso de reemiss\u00e3o"
+    },
+    "signature_link_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora de expira\u00e7\u00e3o do link de assinatura (7 dias)"
+    },
+    "signature_reminder_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do reenvio autom\u00e1tico do link (48h)"
     }
   },
   "required": [

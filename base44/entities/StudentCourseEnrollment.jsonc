@@ -1,0 +1,126 @@
+{
+  "name": "StudentCourseEnrollment",
+  "type": "object",
+  "properties": {
+    "student_id": {
+      "type": "string",
+      "description": "ID do aluno (refer\u00eancia \u00e0 entidade Student)"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "Nome do aluno (desnormalizado para consultas)"
+    },
+    "student_cpf": {
+      "type": "string",
+      "description": "CPF do aluno"
+    },
+    "student_email": {
+      "type": "string",
+      "description": "E-mail do aluno"
+    },
+    "student_phone": {
+      "type": "string",
+      "description": "WhatsApp do aluno"
+    },
+    "course_id": {
+      "type": "string",
+      "description": "ID do curso (refer\u00eancia \u00e0 entidade Course)"
+    },
+    "course_name": {
+      "type": "string",
+      "description": "Nome do curso (desnormalizado)"
+    },
+    "course_duration": {
+      "type": "string",
+      "description": "Carga hor\u00e1ria do curso (ex: 8h)"
+    },
+    "validity_months": {
+      "type": "number",
+      "description": "Validade em meses (vinda do modelo de certificado ou curso)"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa contratante (refer\u00eancia \u00e0 entidade Company)"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Nome da empresa contratante"
+    },
+    "instructor_id": {
+      "type": "string",
+      "description": "ID do instrutor respons\u00e1vel"
+    },
+    "instructor_name": {
+      "type": "string",
+      "description": "Nome do instrutor respons\u00e1vel"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de in\u00edcio do curso"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de t\u00e9rmino do curso"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de vencimento calculada automaticamente (end_date + validity_months)"
+    },
+    "certificate_model_id": {
+      "type": "string",
+      "description": "ID do modelo de certificado utilizado"
+    },
+    "certificate_model_name": {
+      "type": "string",
+      "description": "Nome do modelo de certificado"
+    },
+    "certificate_id": {
+      "type": "string",
+      "description": "ID do certificado gerado (ap\u00f3s autoriza\u00e7\u00e3o)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Aguardando Autoriza\u00e7\u00e3o",
+        "Autorizado",
+        "Certificado Gerado",
+        "Assinado",
+        "Vencido",
+        "Revogado"
+      ],
+      "default": "Aguardando Autoriza\u00e7\u00e3o",
+      "description": "Status da matr\u00edcula/certificado"
+    },
+    "authorized_by": {
+      "type": "string",
+      "description": "E-mail do respons\u00e1vel que autorizou"
+    },
+    "authorized_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora da autoriza\u00e7\u00e3o"
+    },
+    "class_schedule_id": {
+      "type": "string",
+      "description": "ID da turma vinculada (opcional)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "student_id",
+    "student_name",
+    "student_cpf",
+    "course_id",
+    "course_name",
+    "company_id",
+    "company_name",
+    "start_date",
+    "end_date"
+  ]
+}
