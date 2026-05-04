@@ -52,6 +52,14 @@ export default function Certificates() {
     },
   });
 
+  const unrevokeMutation = useMutation({
+    mutationFn: (id) => base44.entities.Certificate.update(id, { status: "active" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["certificates"] });
+      toast.success("Revogação desfeita. Certificado reativado.");
+    },
+  });
+
   const sendWhatsAppMutation = useMutation({
     mutationFn: (certificateId) =>
       base44.functions.invoke("enviarCertificadoWhatsApp", { certificate_id: certificateId }),
@@ -319,7 +327,18 @@ export default function Certificates() {
                             </Button>
                           )}
                           <CertificateExporter certificate={cert} model={getModelForCert(cert)} />
-                          {cert.status !== "revoked" && (
+                          {cert.status === "revoked" ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-green-600 border-green-200 hover:bg-green-50"
+                              onClick={() => {
+                                if (confirm("Desfazer a revogação deste certificado?")) unrevokeMutation.mutate(cert.id);
+                              }}
+                            >
+                              <CheckCircle className="w-3 h-3 mr-1" /> Desfazer Revogação
+                            </Button>
+                          ) : (
                             <Button
                               size="sm"
                               variant="outline"
