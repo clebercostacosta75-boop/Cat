@@ -27,6 +27,8 @@ export default function CertificateControlPanel() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [revokeTarget, setRevokeTarget] = useState(null);
   const [selected, setSelected] = useState([]);
+  const [editSignDateTarget, setEditSignDateTarget] = useState(null);
+  const [editSignDateValue, setEditSignDateValue] = useState("");
   const queryClient = useQueryClient();
 
   const { data: enrollments = [], isLoading: loadingEnr } = useQuery({
@@ -188,6 +190,27 @@ export default function CertificateControlPanel() {
     }
     toast.success("Certificado revogado.");
     setRevokeTarget(null);
+  };
+
+  // Editar data de assinatura manualmente
+  const handleEditSignDate = (cert) => {
+    setEditSignDateTarget(cert);
+    // Inicializa com a data atual no formato datetime-local
+    const current = cert.signed_at ? new Date(cert.signed_at) : new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    const localStr = `${current.getFullYear()}-${pad(current.getMonth()+1)}-${pad(current.getDate())}T${pad(current.getHours())}:${pad(current.getMinutes())}`;
+    setEditSignDateValue(localStr);
+  };
+
+  const handleSaveSignDate = async () => {
+    if (!editSignDateTarget || !editSignDateValue) return;
+    await updateCertificate.mutateAsync({
+      id: editSignDateTarget.id,
+      data: { signed_at: new Date(editSignDateValue).toISOString() }
+    });
+    toast.success("Data de assinatura atualizada!");
+    setEditSignDateTarget(null);
+    setEditSignDateValue("");
   };
 
   // Revalidar certificado revogado
@@ -396,6 +419,12 @@ export default function CertificateControlPanel() {
                           <Send className="w-3 h-3 mr-1" /> Reenviar
                         </Button>
                       )}
+                      {cert.status === "signed" && (
+                        <Button size="sm" variant="outline" className="h-7 text-xs text-purple-600 border-purple-200 hover:bg-purple-50"
+                          onClick={() => handleEditSignDate(cert)}>
+                          <Clock className="w-3 h-3 mr-1" /> Data Assinatura
+                        </Button>
+                      )}
                       {cert.status !== "revoked" && (
                         <Button size="sm" variant="outline" className="h-7 text-xs text-red-600 border-red-200 hover:bg-red-50"
                           onClick={() => setRevokeTarget(cert)}>
@@ -416,6 +445,36 @@ export default function CertificateControlPanel() {
           </tbody>
         </table>
       </div>
+
+      {/* Dialog editar data assinatura */}
+      {editSignDateTarget && (
+        <Dialog open onOpenChange={() => setEditSignDateTarget(null)}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Editar Data de Assinatura</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Aluno: <span className="font-medium text-gray-800">{editSignDateTarget.student_name}</span></p>
+                <p className="text-sm text-gray-500 mb-3">Curso: <span className="font-medium text-gray-800">{editSignDateTarget.course_name}</span></p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nova data e hora da assinatura</label>
+                <input
+                  type="datetime-local"
+                  className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  value={editSignDateValue}
+                  onChange={e => setEditSignDateValue(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setEditSignDateTarget(null)}>Cancelar</Button>
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white" onClick={handleSaveSignDate}>
+                  Salvar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Dialog revogar */}
       <RevocationDialog
