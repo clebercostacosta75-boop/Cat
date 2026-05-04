@@ -131,10 +131,10 @@ export default function Layout({ children }) {
         key: "Automação de Pagamentos"
       },
       {
-        title: "Certificados",
-        url: createPageUrl("Certificates"),
+        title: "Certificações",
+        url: "/Certificacoes",
         icon: Award,
-        key: "Certificados"
+        key: "Certificações"
       },
       {
         title: "Alertas de Vencimento",

@@ -1,0 +1,55 @@
+{
+  "name": "Student",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Nome completo do aluno"
+    },
+    "cpf": {
+      "type": "string",
+      "description": "CPF do aluno"
+    },
+    "email": {
+      "type": "string",
+      "description": "E-mail do aluno"
+    },
+    "whatsapp": {
+      "type": "string",
+      "description": "WhatsApp do aluno (com DDD)"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa vinculada"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Nome da empresa vinculada"
+    },
+    "course_id": {
+      "type": "string",
+      "description": "ID do curso principal"
+    },
+    "course_name": {
+      "type": "string",
+      "description": "Nome do curso principal"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ativo",
+        "Inativo"
+      ],
+      "default": "Ativo",
+      "description": "Status do aluno"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "full_name",
+    "cpf"
+  ]
+}
