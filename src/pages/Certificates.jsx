@@ -327,29 +327,28 @@ export default function Certificates() {
                             </Button>
                           )}
                           <CertificateExporter certificate={cert} model={getModelForCert(cert)} />
-                          {cert.status === "revoked" ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-green-600 border-green-200 hover:bg-green-50"
-                              onClick={() => {
-                                if (confirm("Desfazer a revogação deste certificado?")) unrevokeMutation.mutate(cert.id);
-                              }}
-                            >
-                              <CheckCircle className="w-3 h-3 mr-1" /> Desfazer Revogação
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-red-600 border-red-200 hover:bg-red-50"
-                              onClick={() => {
-                                if (confirm("Revogar este certificado?")) revokeMutation.mutate(cert.id);
-                              }}
-                            >
-                              <XCircle className="w-3 h-3 mr-1" /> Revogar
-                            </Button>
-                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                            onClick={() => {
+                              if (confirm("Revogar este certificado?")) revokeMutation.mutate(cert.id);
+                            }}
+                            disabled={cert.status === "revoked"}
+                          >
+                            <XCircle className="w-3 h-3 mr-1" /> Revogar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-green-600 border-green-200 hover:bg-green-50"
+                            onClick={() => {
+                              if (confirm("Desfazer a revogação deste certificado?")) unrevokeMutation.mutate(cert.id);
+                            }}
+                            disabled={cert.status !== "revoked"}
+                          >
+                            <CheckCircle className="w-3 h-3 mr-1" /> Desfazer Revogação
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
