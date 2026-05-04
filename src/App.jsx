@@ -24,6 +24,12 @@ import LogNotificacoes from './pages/LogNotificacoes';
 import CertificateAuditPanel from './pages/CertificateAuditPanel';
 import Certificacoes from './pages/Certificacoes';
 import CompanyPortal from './pages/CompanyPortal';
+import DashboardOperacional from './pages/DashboardOperacional';
+import DashboardFinanceiro from './pages/DashboardFinanceiro';
+import DashboardCertificacao from './pages/DashboardCertificacao';
+import DashboardMaster from './pages/DashboardMaster';
+import DashboardInstrutor from './pages/DashboardInstrutor';
+import AcessoNegado from './pages/AcessoNegado';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -67,6 +73,7 @@ const AuthenticatedApp = () => {
       <Route path="/StudentPortal" element={<StudentPortal />} />
       <Route path="/AttendanceConfirm" element={<AttendanceConfirm />} />
       <Route path="/CompanyPortal" element={<CompanyPortal />} />
+      <Route path="/AcessoNegado" element={<AcessoNegado />} />
 
       {/* Rotas autenticadas com layout */}
       <Route path="/" element={<LayoutWrapper currentPageName={mainPageKey}><MainPage /></LayoutWrapper>} />

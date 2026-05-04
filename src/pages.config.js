@@ -62,7 +62,7 @@ import Companies from './pages/Companies';
 import Contractors from './pages/Contractors';
 import CourseCategories from './pages/CourseCategories';
 import Courses from './pages/Courses';
-import Dashboard from './pages/Dashboard';
+import Dashboard from './pages/Dashboard.jsx';
 import EmailTemplates from './pages/EmailTemplates';
 import Home from './pages/Home';
 import Import from './pages/Import';
