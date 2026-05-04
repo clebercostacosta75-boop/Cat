@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Award, PenLine, Shield, Palette, Users, BookOpen } from "lucide-react";
+import { Award, PenLine, Shield, Palette, Users, BookOpen, ClipboardList } from "lucide-react";
 
 // Importa os conteúdos de cada sub-aba
 import Certificates from "./Certificates";
@@ -9,6 +9,7 @@ import CertificateAuditPanel from "./CertificateAuditPanel";
 import CertDesigner from "./CertDesigner";
 import StudentList from "@/components/students/StudentList";
 import EnrollmentList from "@/components/enrollment/EnrollmentList";
+import CertificateControlPanel from "@/components/certificates/CertificateControlPanel";
 
 export default function Certificacoes() {
   const [activeTab, setActiveTab] = useState("certificados");
@@ -34,6 +35,9 @@ export default function Certificacoes() {
           <TabsTrigger value="alunos" className="flex items-center gap-1.5 text-xs">
             <Users className="w-3.5 h-3.5" /> Cadastro de Alunos
           </TabsTrigger>
+          <TabsTrigger value="controle" className="flex items-center gap-1.5 text-xs">
+            <ClipboardList className="w-3.5 h-3.5" /> Controle de Certificados
+          </TabsTrigger>
           <TabsTrigger value="realizacoes" className="flex items-center gap-1.5 text-xs">
             <BookOpen className="w-3.5 h-3.5" /> Realização de Cursos
           </TabsTrigger>
@@ -54,6 +58,10 @@ export default function Certificacoes() {
 
         <TabsContent value="alunos" className="mt-4">
           <StudentList />
+        </TabsContent>
+
+        <TabsContent value="controle" className="mt-4">
+          <CertificateControlPanel />
         </TabsContent>
 
         <TabsContent value="realizacoes" className="mt-4">
