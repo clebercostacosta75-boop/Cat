@@ -23,6 +23,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import LogNotificacoes from './pages/LogNotificacoes';
 import CertificateAuditPanel from './pages/CertificateAuditPanel';
 import Certificacoes from './pages/Certificacoes';
+import CompanyPortal from './pages/CompanyPortal';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -65,6 +66,7 @@ const AuthenticatedApp = () => {
       <Route path="/CertificateValidate" element={<CertificateValidate />} />
       <Route path="/StudentPortal" element={<StudentPortal />} />
       <Route path="/AttendanceConfirm" element={<AttendanceConfirm />} />
+      <Route path="/CompanyPortal" element={<CompanyPortal />} />
 
       {/* Rotas autenticadas com layout */}
       <Route path="/" element={<LayoutWrapper currentPageName={mainPageKey}><MainPage /></LayoutWrapper>} />
