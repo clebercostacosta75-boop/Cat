@@ -14,6 +14,9 @@ import { createPageUrl } from "@/utils";
 import { logAction } from "@/components/audit/AuditLogger";
 import ClassCard from "@/components/instructor/ClassCard";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import CompanyPortalView from "@/components/dashboard/CompanyPortalView";
+import BIAdvanced from "@/components/dashboard/BIAdvanced";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -67,7 +70,38 @@ export default function Dashboard() {
   }
 
   // Admin Master e Financeiro
-  return <DashboardAdminMaster />;
+  return <DashboardAdminMasterTabs />;
+}
+
+// ===== WRAPPER COM ABAS =====
+function DashboardAdminMasterTabs() {
+  const [activeTab, setActiveTab] = useState("dashboard");
+  return (
+    <div className="p-6 space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="flex flex-wrap gap-1 h-auto bg-gray-100 p-1 rounded-lg mb-4">
+          <TabsTrigger value="dashboard" className="flex items-center gap-1.5 text-xs">
+            <BarChart3 className="w-3.5 h-3.5" /> Analytics & Custos
+          </TabsTrigger>
+          <TabsTrigger value="bi" className="flex items-center gap-1.5 text-xs">
+            <TrendingUp className="w-3.5 h-3.5" /> BI Avançado
+          </TabsTrigger>
+          <TabsTrigger value="portal" className="flex items-center gap-1.5 text-xs">
+            <Building2 className="w-3.5 h-3.5" /> Portal da Empresa
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="dashboard">
+          <DashboardAdminMaster />
+        </TabsContent>
+        <TabsContent value="bi">
+          <BIAdvanced />
+        </TabsContent>
+        <TabsContent value="portal">
+          <CompanyPortalView />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 }
 
 // ===== DASHBOARD ADMIN MASTER E FINANCEIRO =====
@@ -485,7 +519,7 @@ function DashboardAdminMaster() {
   }
 
   return (
-    <div className="p-8">
+    <div className="">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Cabeçalho */}
         <div className="mb-6">
