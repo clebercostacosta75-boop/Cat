@@ -167,7 +167,25 @@ function NovaCobrancaModal({ student, onClose, onCreated }) {
       const charge = chargeRes.data.charge;
       if (charge.errors) throw new Error(charge.errors[0]?.description || "Erro ao criar cobrança.");
 
-      toast.success("Cobrança criada com sucesso!");
+      // 3. Enviar notificação por e-mail e WhatsApp
+      try {
+        await base44.functions.invoke("enviarBoletoAsaas", {
+          action: "sendBoletoNotification",
+          charge: {
+            studentEmail: student.email || "",
+            studentPhone: student.whatsapp || "",
+            studentName: student.full_name,
+            chargeValue: form.value,
+            chargeId: charge.id,
+            dueDate: form.dueDate,
+          },
+          billingType: form.billingType,
+        });
+      } catch (notifErr) {
+        console.warn("Aviso: Notificação não enviada:", notifErr.message);
+      }
+
+      toast.success("Cobrança criada e notificação enviada!");
       onCreated(charge);
       onClose();
     } catch (err) {

@@ -449,15 +449,8 @@ function MatriculasCursos() {
 
             <div className="border-t pt-3">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1"><CreditCard className="w-3 h-3" /> Pagamento</p>
+              <p className="text-xs text-gray-500 mb-3">O valor do curso será definido na geração do boleto/cobrança.</p>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Valor do Curso (R$)</Label>
-                  <Input
-                    type="number" min="0" step="0.01" placeholder="0,00"
-                    value={form.unit_value}
-                    onChange={e => setForm({ ...form, unit_value: e.target.value ? parseFloat(e.target.value) : "" })}
-                  />
-                </div>
                 <div>
                   <Label>Status Pagamento</Label>
                   <Select value={form.status_pagamento} onValueChange={v => setForm({ ...form, status_pagamento: v })}>
@@ -488,10 +481,6 @@ function MatriculasCursos() {
                       <SelectItem value="Transferência Bancária">Transferência Bancária</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div>
-                  <Label>Vencimento Pagamento</Label>
-                  <Input type="date" value={form.data_vencimento_pagamento} onChange={e => setForm({ ...form, data_vencimento_pagamento: e.target.value })} />
                 </div>
               </div>
             </div>
