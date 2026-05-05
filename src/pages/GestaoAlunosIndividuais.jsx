@@ -11,9 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Users, UserPlus, BookOpen, DollarSign, Shield, Search, Edit, Trash2,
-  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard
+  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, QrCode
 } from "lucide-react";
 import { toast } from "sonner";
+import PagamentosAsaas from "@/components/alunos/PagamentosAsaas";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -301,6 +302,7 @@ function MatriculasCursos() {
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_ENROLLMENT);
+  const [paymentModal, setPaymentModal] = useState(null); // enrollment selecionado
 
   const { data: enrollments = [], isLoading } = useQuery({
     queryKey: ["enrollments-pf"],
@@ -735,7 +737,7 @@ export default function GestaoAlunosIndividuais() {
         </div>
 
         <Tabs defaultValue="cadastro">
-          <TabsList className="grid w-full grid-cols-4 mb-6 bg-gray-100 p-1 h-auto">
+          <TabsList className="grid w-full grid-cols-5 mb-6 bg-gray-100 p-1 h-auto">
             <TabsTrigger value="cadastro" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Cadastro</span>
@@ -752,12 +754,17 @@ export default function GestaoAlunosIndividuais() {
               <Shield className="w-4 h-4" />
               <span className="hidden sm:inline">Acesso ao Portal</span>
             </TabsTrigger>
+            <TabsTrigger value="pagamentos" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
+              <CreditCard className="w-4 h-4" />
+              <span className="hidden sm:inline">Pagamentos Asaas</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="cadastro"><AlunosCadastro /></TabsContent>
           <TabsContent value="matriculas"><MatriculasCursos /></TabsContent>
           <TabsContent value="financeiro"><FinanceiroAlunos /></TabsContent>
           <TabsContent value="acesso"><AcessoPortal /></TabsContent>
+          <TabsContent value="pagamentos"><PagamentosAsaas /></TabsContent>
         </Tabs>
       </div>
     </div>
