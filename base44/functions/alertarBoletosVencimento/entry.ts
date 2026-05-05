@@ -184,9 +184,14 @@ Deno.serve(async (req) => {
       overdueAlertas: overdueCharges.length,
       emailsSent,
       errors,
+      timestamp: new Date().toISOString(),
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[alertarBoletosVencimento] Erro:', error);
+    return Response.json({ 
+      error: error.message,
+      timestamp: new Date().toISOString()
+    }, { status: 500 });
   }
 });

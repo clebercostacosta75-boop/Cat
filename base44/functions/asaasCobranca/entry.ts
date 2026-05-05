@@ -3,10 +3,37 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 const ASAAS_BASE_URL = "https://api.asaas.com/v3";
 const API_KEY = Deno.env.get("ASAAS_API_KEY");
 
+if (!API_KEY) {
+  throw new Error("ASAAS_API_KEY não configurada");
+}
+
 const asaasHeaders = {
   "Content-Type": "application/json",
   "access_token": API_KEY,
 };
+
+async function getOrCreateCustomer(cpf, name, email, phone) {
+  const searchRes = await fetch(`${ASAAS_BASE_URL}/customers?cpfCnpj=${cpf.replace(/\D/g, "")}`, {
+    headers: asaasHeaders,
+  });
+  const searchData = await searchRes.json();
+
+  if (searchData.data && searchData.data.length > 0) {
+    return searchData.data[0];
+  }
+
+  const createRes = await fetch(`${ASAAS_BASE_URL}/customers`, {
+    method: "POST",
+    headers: asaasHeaders,
+    body: JSON.stringify({
+      name,
+      cpfCnpj: cpf.replace(/\D/g, ""),
+      email: email || undefined,
+      mobilePhone: phone ? phone.replace(/\D/g, "") : undefined,
+    }),
+  });
+  return await createRes.json();
+}
 
 Deno.serve(async (req) => {
   try {
@@ -115,6 +142,10 @@ Deno.serve(async (req) => {
 
     return Response.json({ error: "Ação não reconhecida" }, { status: 400 });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[asaasCobranca] Erro:', error);
+    return Response.json({ 
+      error: error.message,
+      timestamp: new Date().toISOString()
+    }, { status: 500 });
   }
 });

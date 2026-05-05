@@ -113,6 +113,7 @@ export const AuthProvider = ({ children }) => {
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
+    setAuthError(null); // Limpa erros ao fazer logout
     
     if (shouldRedirect) {
       // Use the SDK's logout method which handles token cleanup and redirect
