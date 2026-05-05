@@ -32,6 +32,8 @@ import DashboardInstrutor from './pages/DashboardInstrutor';
 import AcessoNegado from './pages/AcessoNegado';
 import ProposalEntry from './pages/ProposalEntry';
 import DashboardComercial from './pages/DashboardComercial.jsx';
+import GestaoBMM from './pages/GestaoBMM.jsx';
+import GestaoAlunosIndividuais from './pages/GestaoAlunosIndividuais.jsx';
 import GestaoLeads from './pages/GestaoLeads.jsx';
 import ContasSociais from './pages/ContasSociais.jsx';
 import BaseConhecimento from './pages/BaseConhecimento.jsx';
@@ -86,6 +88,8 @@ const AuthenticatedApp = () => {
       <Route path="/BaseConhecimento" element={<LayoutWrapper currentPageName="BaseConhecimento"><BaseConhecimento /></LayoutWrapper>} />
       <Route path="/CaixaEntrada" element={<LayoutWrapper currentPageName="CaixaEntrada"><CaixaEntrada /></LayoutWrapper>} />
       <Route path="/ProposalEntry" element={<LayoutWrapper currentPageName="ProposalEntry"><ProposalEntry /></LayoutWrapper>} />
+      <Route path="/GestaoBMM" element={<LayoutWrapper currentPageName="GestaoBMM"><GestaoBMM /></LayoutWrapper>} />
+      <Route path="/GestaoAlunosIndividuais" element={<LayoutWrapper currentPageName="GestaoAlunosIndividuais"><GestaoAlunosIndividuais /></LayoutWrapper>} />
 
       {/* Rotas autenticadas com layout */}
       <Route path="/" element={<LayoutWrapper currentPageName={mainPageKey}><MainPage /></LayoutWrapper>} />
