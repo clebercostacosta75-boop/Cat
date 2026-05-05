@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import {
   LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText,
   Building2, UserCog, Mail, History, Bell, DollarSign, Award, TrendingUp,
-  PenLine, Settings, AlertTriangle
+  PenLine, Settings, AlertTriangle, Target, Instagram, MessageSquare
 } from "lucide-react";
 import NotificationBell from "./components/notifications/NotificationBell";
 import {
@@ -46,6 +46,9 @@ const ALL_ITEMS = [
   { title: "Usuários", url: createPageUrl("Users"), icon: UserCog, key: "Usuários" },
   { title: "Log de Auditoria", url: createPageUrl("AuditLog"), icon: FileText, key: "Log de Auditoria" },
   { title: "Dashboard Admin", url: "/AdminDashboard", icon: TrendingUp, key: "Dashboard Admin" },
+  { title: "Dashboard Comercial", url: "/DashboardComercial", icon: Target, key: "Dashboard Comercial" },
+  { title: "Gestão de Leads", url: "/GestaoLeads", icon: Users, key: "Gestão de Leads" },
+  { title: "Contas Sociais", url: "/ContasSociais", icon: Instagram, key: "Contas Sociais" },
 ];
 
 // ── Chaves permitidas por perfil ───────────────────────────────────────────────
@@ -57,6 +60,7 @@ const ROLE_MENUS = {
     "Entrada de Propostas", "Gerar BMM", "Histórico BMM", "Instrutores", "Empresas", "Contratadas",
     "Cursos", "Importar Excel", "Central de Comunicação",
     "Config. Notificações", "Log de Notificações",
+    "Dashboard Comercial", "Gestão de Leads", "Contas Sociais",
   ],
   Financeiro: [
     "Dashboard", "Controle Financeiro Instrutor", "Automação de Pagamentos",
