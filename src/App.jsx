@@ -1,4 +1,6 @@
 import './App.css'
+import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -38,6 +40,8 @@ import GestaoLeads from './pages/GestaoLeads.jsx';
 import ContasSociais from './pages/ContasSociais.jsx';
 import BaseConhecimento from './pages/BaseConhecimento.jsx';
 import CaixaEntrada from './pages/CaixaEntrada.jsx';
+import ConsentForm from './pages/ConsentForm.jsx';
+import PrivacyPolicy from './pages/PrivacyPolicy.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -51,9 +55,27 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [needsConsent, setNeedsConsent] = useState(false);
+
+  useEffect(() => {
+    const checkConsent = async () => {
+      try {
+        const user = await base44.auth.me();
+        if (!user) return;
+        const profiles = await base44.entities.UserProfile.filter({ user_email: user.email });
+        if (profiles.length === 0 || !profiles[0].consent_accepted_at) {
+          setNeedsConsent(true);
+        }
+      } catch {}
+      setConsentChecked(true);
+    };
+    if (isAuthenticated) checkConsent();
+    else setConsentChecked(true);
+  }, [isAuthenticated]);
 
   // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  if (isLoadingPublicSettings || isLoadingAuth || !consentChecked) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
@@ -72,6 +94,11 @@ const AuthenticatedApp = () => {
     }
   }
 
+  // Gate de consentimento LGPD
+  if (needsConsent) {
+    return <ConsentForm onConsented={() => setNeedsConsent(false)} />;
+  }
+
   // Render the main app
   return (
     <Routes>
@@ -82,6 +109,7 @@ const AuthenticatedApp = () => {
       <Route path="/AttendanceConfirm" element={<AttendanceConfirm />} />
       <Route path="/CompanyPortal" element={<CompanyPortal />} />
       <Route path="/AcessoNegado" element={<AcessoNegado />} />
+      <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
       <Route path="/DashboardComercial" element={<LayoutWrapper currentPageName="DashboardComercial"><DashboardComercial /></LayoutWrapper>} />
       <Route path="/GestaoLeads" element={<LayoutWrapper currentPageName="GestaoLeads"><GestaoLeads /></LayoutWrapper>} />
       <Route path="/ContasSociais" element={<LayoutWrapper currentPageName="ContasSociais"><ContasSociais /></LayoutWrapper>} />

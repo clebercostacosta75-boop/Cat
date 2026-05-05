@@ -95,6 +95,19 @@
     "phone": {
       "type": "string",
       "description": "Telefone para contato/WhatsApp"
+    },
+    "consent_accepted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora do aceite do termo de consentimento LGPD"
+    },
+    "consent_ip_address": {
+      "type": "string",
+      "description": "Endere\u00e7o IP de onde o consentimento foi dado"
+    },
+    "consent_term_version": {
+      "type": "string",
+      "description": "Vers\u00e3o do termo de consentimento aceito (ex: v1.0)"
     }
   },
   "required": [
