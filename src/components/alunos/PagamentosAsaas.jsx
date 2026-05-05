@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search, CreditCard, QrCode, FileText, Plus, ExternalLink,
-  Copy, CheckCircle, Loader2, DollarSign, User
+  Copy, CheckCircle, Loader2, DollarSign, User, XCircle, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -250,6 +250,7 @@ export default function PagamentosAsaas() {
   const [showNovaCobranca, setShowNovaCobranca] = useState(false);
   const [pixModal, setPixModal] = useState(null);
   const [boletoModal, setBoletoModal] = useState(null);
+  const [cancellingId, setCancellingId] = useState(null);
 
   const { data: students = [] } = useQuery({
     queryKey: ["students-pf"],
@@ -291,6 +292,19 @@ export default function PagamentosAsaas() {
 
   const handleCreated = (charge) => {
     setCharges(prev => [charge, ...prev]);
+  };
+
+  const handleCancel = async (charge) => {
+    if (!confirm(`Cancelar cobrança de R$ ${parseFloat(charge.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}? Isso também cancelará no Asaas.`)) return;
+    setCancellingId(charge.id);
+    try {
+      await base44.functions.invoke("asaasCobranca", { action: "cancelCharge", paymentId: charge.id });
+      toast.success("Cobrança cancelada com sucesso no Asaas!");
+      setCharges(prev => prev.map(c => c.id === charge.id ? { ...c, status: "CANCELED" } : c));
+    } catch {
+      toast.error("Erro ao cancelar a cobrança.");
+    }
+    setCancellingId(null);
   };
 
   return (
@@ -379,7 +393,7 @@ export default function PagamentosAsaas() {
                             </div>
                             <div className="flex flex-col items-end gap-2">
                               <Badge className={st.color}>{st.label}</Badge>
-                              <div className="flex gap-1">
+                              <div className="flex flex-wrap gap-1 justify-end">
                                 {c.billingType === "PIX" && c.status === "PENDING" && (
                                   <Button size="sm" variant="outline" className="text-xs h-7 px-2 gap-1" onClick={() => setPixModal(c)}>
                                     <QrCode className="w-3 h-3" /> Pix
@@ -395,6 +409,24 @@ export default function PagamentosAsaas() {
                                     <ExternalLink className="w-3 h-3" /> Link
                                   </Button>
                                 )}
+                                {["PENDING", "OVERDUE"].includes(c.status) && (
+                                  <Button
+                                    size="sm" variant="outline"
+                                    className="text-xs h-7 px-2 gap-1 border-red-300 text-red-600 hover:bg-red-50"
+                                    onClick={() => handleCancel(c)}
+                                    disabled={cancellingId === c.id}
+                                  >
+                                    {cancellingId === c.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />}
+                                    Cancelar
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm" variant="outline"
+                                  className="text-xs h-7 px-2 gap-1 border-blue-300 text-blue-600 hover:bg-blue-50"
+                                  onClick={() => setShowNovaCobranca(true)}
+                                >
+                                  <RefreshCw className="w-3 h-3" /> Nova
+                                </Button>
                               </div>
                             </div>
                           </div>

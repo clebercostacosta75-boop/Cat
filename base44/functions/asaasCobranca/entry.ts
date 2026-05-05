@@ -102,6 +102,17 @@ Deno.serve(async (req) => {
       return Response.json({ boleto: data });
     }
 
+    // ── Cancelar cobrança ─────────────────────────────────────────────────────
+    if (action === "cancelCharge") {
+      const { paymentId } = params;
+      const res = await fetch(`${ASAAS_BASE_URL}/payments/${paymentId}/cancel`, {
+        method: "POST",
+        headers: asaasHeaders,
+      });
+      const data = await res.json();
+      return Response.json({ result: data });
+    }
+
     return Response.json({ error: "Ação não reconhecida" }, { status: 400 });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
