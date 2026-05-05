@@ -1,0 +1,123 @@
+{
+  "name": "KnowledgeBaseEntry",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo do item (ex: 'NR-35 - Trabalho em Altura')"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Curso",
+        "Treinamento",
+        "Pre\u00e7o",
+        "Localiza\u00e7\u00e3o",
+        "Calend\u00e1rio",
+        "Pol\u00edtica",
+        "FAQ",
+        "Processo de Matr\u00edcula",
+        "Documenta\u00e7\u00e3o",
+        "Outros"
+      ],
+      "description": "Categoria do conhecimento"
+    },
+    "content": {
+      "type": "string",
+      "description": "Conte\u00fado completo do item \u2014 o texto que a IA usar\u00e1 para responder"
+    },
+    "course_id": {
+      "type": "string",
+      "description": "ID do curso vinculado (se aplic\u00e1vel)"
+    },
+    "course_name": {
+      "type": "string",
+      "description": "Nome do curso vinculado (desnormalizado)"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Palavras-chave para facilitar a busca pela IA (ex: ['nr35', 'altura', 'trabalho em altura'])"
+    },
+    "target_audience": {
+      "type": "string",
+      "enum": [
+        "Pessoa F\u00edsica",
+        "Pessoa Jur\u00eddica",
+        "Ambos"
+      ],
+      "default": "Ambos",
+      "description": "P\u00fablico-alvo desta informa\u00e7\u00e3o"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se este item est\u00e1 ativo e dispon\u00edvel para a IA usar"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de validade da informa\u00e7\u00e3o (ex: data de encerramento de uma turma)"
+    },
+    "price_info": {
+      "type": "object",
+      "properties": {
+        "price_pf": {
+          "type": "number",
+          "description": "Pre\u00e7o para Pessoa F\u00edsica"
+        },
+        "price_pj": {
+          "type": "number",
+          "description": "Pre\u00e7o para Pessoa Jur\u00eddica (por aluno)"
+        },
+        "price_notes": {
+          "type": "string",
+          "description": "Observa\u00e7\u00f5es sobre o pre\u00e7o (ex: 'desconto para grupos acima de 10 alunos')"
+        }
+      },
+      "description": "Informa\u00e7\u00f5es de pre\u00e7o (para categoria Pre\u00e7o ou Curso)"
+    },
+    "schedule_info": {
+      "type": "object",
+      "properties": {
+        "next_dates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Pr\u00f3ximas datas dispon\u00edveis"
+        },
+        "duration": {
+          "type": "string",
+          "description": "Dura\u00e7\u00e3o do curso/treinamento (ex: '8 horas', '2 dias')"
+        },
+        "modality": {
+          "type": "string",
+          "enum": [
+            "Presencial",
+            "Online",
+            "H\u00edbrido"
+          ],
+          "description": "Modalidade"
+        },
+        "location": {
+          "type": "string",
+          "description": "Local de realiza\u00e7\u00e3o"
+        }
+      },
+      "description": "Informa\u00e7\u00f5es de agenda/calend\u00e1rio"
+    },
+    "priority": {
+      "type": "number",
+      "default": 5,
+      "description": "Prioridade do item na busca (1=mais alta, 10=mais baixa)"
+    }
+  },
+  "required": [
+    "title",
+    "category",
+    "content"
+  ]
+}

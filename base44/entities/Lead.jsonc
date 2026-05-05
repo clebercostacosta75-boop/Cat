@@ -1,0 +1,146 @@
+{
+  "name": "Lead",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome completo do lead"
+    },
+    "email": {
+      "type": "string",
+      "description": "E-mail do lead"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Telefone/WhatsApp do lead"
+    },
+    "cpf_cnpj": {
+      "type": "string",
+      "description": "CPF (Pessoa F\u00edsica) ou CNPJ (Pessoa Jur\u00eddica)"
+    },
+    "lead_type": {
+      "type": "string",
+      "enum": [
+        "Pessoa F\u00edsica",
+        "Pessoa Jur\u00eddica"
+      ],
+      "default": "Pessoa F\u00edsica",
+      "description": "Tipo do lead"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Nome da empresa (para leads PJ)"
+    },
+    "origin_channel": {
+      "type": "string",
+      "enum": [
+        "Instagram",
+        "Facebook",
+        "WhatsApp",
+        "LinkedIn",
+        "TikTok",
+        "Site",
+        "Indica\u00e7\u00e3o",
+        "Telefone",
+        "E-mail",
+        "Outro"
+      ],
+      "description": "Canal de origem do lead"
+    },
+    "origin_account": {
+      "type": "string",
+      "description": "ID da conta de origem (refer\u00eancia \u00e0 SocialAccount)"
+    },
+    "origin_account_name": {
+      "type": "string",
+      "description": "Nome amig\u00e1vel da conta de origem (ex: @catcursos_oficial)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Novo",
+        "Em Atendimento",
+        "Qualificado",
+        "Proposta Enviada",
+        "Matriculado",
+        "Perdido",
+        "Sem Interesse"
+      ],
+      "default": "Novo",
+      "description": "Status atual do lead no funil"
+    },
+    "interest_course": {
+      "type": "string",
+      "description": "Curso de interesse mencionado pelo lead"
+    },
+    "interest_course_id": {
+      "type": "string",
+      "description": "ID do curso de interesse (refer\u00eancia \u00e0 entidade Course)"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "E-mail do atendente respons\u00e1vel"
+    },
+    "assigned_to_name": {
+      "type": "string",
+      "description": "Nome do atendente respons\u00e1vel"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "Alta",
+        "M\u00e9dia",
+        "Baixa"
+      ],
+      "default": "M\u00e9dia",
+      "description": "Prioridade do lead"
+    },
+    "ai_handled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o atendimento est\u00e1 sendo feito pela IA"
+    },
+    "transferred_to_human": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o lead foi transferido para atendimento humano"
+    },
+    "transferred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da transfer\u00eancia para humano"
+    },
+    "transfer_reason": {
+      "type": "string",
+      "description": "Motivo da transfer\u00eancia para humano"
+    },
+    "last_contact_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do \u00faltimo contato"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es manuais do atendente"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags para categoriza\u00e7\u00e3o do lead"
+    },
+    "city": {
+      "type": "string",
+      "description": "Cidade do lead"
+    },
+    "state": {
+      "type": "string",
+      "description": "Estado do lead"
+    }
+  },
+  "required": [
+    "name",
+    "origin_channel"
+  ]
+}

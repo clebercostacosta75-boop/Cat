@@ -1,0 +1,93 @@
+{
+  "name": "SocialAccount",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome amig\u00e1vel da conta (ex: 'CAT Cursos Oficial')"
+    },
+    "username": {
+      "type": "string",
+      "description": "Username/handle da conta (ex: '@catcursos_oficial')"
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "Instagram",
+        "Facebook",
+        "WhatsApp Business",
+        "LinkedIn",
+        "TikTok",
+        "YouTube"
+      ],
+      "description": "Plataforma da conta"
+    },
+    "account_number": {
+      "type": "number",
+      "description": "N\u00famero identificador da conta (1, 2 ou 3 \u2014 para distinguir as m\u00faltiplas contas da mesma plataforma)"
+    },
+    "external_account_id": {
+      "type": "string",
+      "description": "ID externo da conta na plataforma (ex: Page ID do Facebook, Business Account ID do Instagram)"
+    },
+    "purpose": {
+      "type": "string",
+      "description": "Finalidade/foco desta conta (ex: 'Cursos NR', 'Atendimento Geral', 'Promo\u00e7\u00f5es')"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ativa",
+        "Inativa",
+        "Pendente Conex\u00e3o",
+        "Erro de Conex\u00e3o"
+      ],
+      "default": "Pendente Conex\u00e3o",
+      "description": "Status da conex\u00e3o da conta"
+    },
+    "is_primary": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se \u00e9 a conta principal da plataforma"
+    },
+    "webhook_url": {
+      "type": "string",
+      "description": "URL do webhook configurado para esta conta receber eventos"
+    },
+    "access_token_secret_key": {
+      "type": "string",
+      "description": "Nome do segredo (secret) que armazena o access token desta conta (ex: 'INSTAGRAM_TOKEN_1')"
+    },
+    "last_connected_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da \u00faltima conex\u00e3o bem-sucedida"
+    },
+    "profile_picture_url": {
+      "type": "string",
+      "description": "URL da foto de perfil da conta"
+    },
+    "follower_count": {
+      "type": "number",
+      "description": "N\u00famero de seguidores (para refer\u00eancia)"
+    },
+    "assigned_agent": {
+      "type": "string",
+      "description": "E-mail do agente humano respons\u00e1vel por esta conta"
+    },
+    "auto_reply_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se a IA deve responder automaticamente pelas mensagens desta conta"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es sobre esta conta"
+    }
+  },
+  "required": [
+    "name",
+    "platform",
+    "account_number"
+  ]
+}
