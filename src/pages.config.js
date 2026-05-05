@@ -62,7 +62,6 @@ import Companies from './pages/Companies';
 import Contractors from './pages/Contractors';
 import CourseCategories from './pages/CourseCategories';
 import Courses from './pages/Courses';
-import Dashboard from './pages/Dashboard.jsx';
 import EmailTemplates from './pages/EmailTemplates';
 import Home from './pages/Home';
 import Import from './pages/Import';
@@ -96,7 +95,6 @@ export const PAGES = {
     "Contractors": Contractors,
     "CourseCategories": CourseCategories,
     "Courses": Courses,
-    "Dashboard": Dashboard,
     "EmailTemplates": EmailTemplates,
     "Home": Home,
     "Import": Import,
