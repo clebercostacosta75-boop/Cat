@@ -49,6 +49,7 @@ const ALL_ITEMS = [
   { title: "Caixa de Entrada", url: "/CaixaEntrada", icon: MessageSquare, key: "Caixa de Entrada" },
   { title: "Base de Conhecimento", url: "/BaseConhecimento", icon: BookOpen, key: "Base de Conhecimento" },
   { title: "Contas Sociais", url: "/ContasSociais", icon: Instagram, key: "Contas Sociais" },
+  { title: "Dashboard de Relatórios", url: "/Analytics", icon: BarChart3, key: "Analytics" },
 ];
 
 // ── Chaves permitidas por perfil ───────────────────────────────────────────────
@@ -61,10 +62,10 @@ const ROLE_MENUS = {
     "Cursos", "Importar Excel", "Central de Comunicação",
     "Config. Notificações", "Log de Notificações",
     "Alunos Individuais (PF)",
-    "Dashboard Comercial", "Gestão de Leads", "Caixa de Entrada", "Base de Conhecimento", "Contas Sociais",
+    "Dashboard Comercial", "Gestão de Leads", "Caixa de Entrada", "Base de Conhecimento", "Contas Sociais", "Analytics",
   ],
   Financeiro: [
-    "Dashboard", "Dashboard Financeiro",
+    "Dashboard", "Dashboard Financeiro", "Analytics",
   ],
   Certificacao: [
     "Dashboard", "Certificações", "Alertas de Vencimento", "Designer de Certificados",
