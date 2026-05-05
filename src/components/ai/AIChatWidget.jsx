@@ -3,10 +3,7 @@ import { useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  MessageSquare, X, Send, Minimize2,
-  Bot, User, Loader2, Paperclip
-} from "lucide-react";
+import { X, Send, Minimize2, Bot, User, Loader2, Paperclip } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 const PAGE_CONTEXT_MAP = {
@@ -39,7 +36,6 @@ const PUBLIC_ROUTES = ["/CertificateSign", "/CertificateValidate", "/StudentPort
 
 function MessageBubble({ message }) {
   const isUser = message.role === "user";
-
   return (
     <div className={`flex gap-2 mb-3 ${isUser ? "justify-end" : "justify-start"}`}>
       {!isUser && (
@@ -47,13 +43,7 @@ function MessageBubble({ message }) {
           <Bot className="w-4 h-4 text-white" />
         </div>
       )}
-      <div
-        className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
-          isUser
-            ? "bg-gray-900 text-white rounded-br-sm"
-            : "bg-gray-100 text-gray-900 rounded-bl-sm"
-        }`}
-      >
+      <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${isUser ? "bg-gray-900 text-white rounded-br-sm" : "bg-gray-100 text-gray-900 rounded-bl-sm"}`}>
         {isUser ? (
           <p className="whitespace-pre-wrap">{message.content}</p>
         ) : (
@@ -73,8 +63,7 @@ function MessageBubble({ message }) {
         )}
         {message.tool_calls?.length > 0 && (
           <div className="mt-1 flex items-center gap-1 text-xs text-gray-500">
-            <Loader2 className="w-3 h-3 animate-spin" />
-            Consultando dados...
+            <Loader2 className="w-3 h-3 animate-spin" /> Consultando dados...
           </div>
         )}
       </div>
@@ -103,10 +92,7 @@ export default function AIChatWidget() {
   const fileInputRef = useRef(null);
   const unsubscribeRef = useRef(null);
 
-  const currentPageName = PAGE_CONTEXT_MAP[location.pathname] || location.pathname;
-  const isPublicRoute = PUBLIC_ROUTES.includes(location.pathname);
-
-  // Todos os hooks devem ser chamados antes de qualquer return condicional
+  // Todos os hooks ANTES de qualquer return condicional
   useEffect(() => {
     base44.auth.me().then(u => setUser(u)).catch(() => {});
   }, []);
@@ -121,22 +107,16 @@ export default function AIChatWidget() {
 
   useEffect(() => {
     if (!isOpen || isMinimized) {
-      const assistantMsgs = messages.filter(m => m.role === "assistant");
-      if (assistantMsgs.length > 0) setUnreadCount(prev => prev + 1);
+      if (messages.filter(m => m.role === "assistant").length > 0) {
+        setUnreadCount(prev => prev + 1);
+      }
     }
   }, [messages.length]);
 
-  // Return condicional APÓS todos os hooks
-  if (isPublicRoute) return null;
+  const currentPageName = PAGE_CONTEXT_MAP[location.pathname] || location.pathname;
 
-  const openChat = async () => {
-    setIsOpen(true);
-    setIsMinimized(false);
-    setUnreadCount(0);
-    if (!conversation) {
-      await initConversation();
-    }
-  };
+  // Return condicional DEPOIS de todos os hooks
+  if (PUBLIC_ROUTES.includes(location.pathname)) return null;
 
   const initConversation = async () => {
     try {
@@ -148,17 +128,14 @@ export default function AIChatWidget() {
       const userRole = user?.role || user?.custom_role || "usuário";
       const welcomeMsg = {
         role: "user",
-        content: `[CONTEXTO INTERNO]\nUsuário: ${user?.full_name || "Usuário"}\nRole: ${userRole}\nTela atual: ${currentPageName}\n[FIM DO CONTEXTO]\n\nOlá!`
+        content: `[CONTEXTO INTERNO]\nUsuário: ${user?.full_name || "Usuário"}\nRole: ${userRole}\nTela atual: ${currentPageName}\nHorário: ${new Date().toLocaleString("pt-BR")}\n[FIM DO CONTEXTO]\n\nOlá! Preciso de ajuda.`
       };
 
       const updatedConv = await base44.agents.addMessage(conv, welcomeMsg);
 
       if (unsubscribeRef.current) unsubscribeRef.current();
       const unsub = base44.agents.subscribeToConversation(updatedConv.id, (data) => {
-        setMessages(data.messages.filter(m => {
-          if (m.role === "user" && m.content?.includes("[CONTEXTO INTERNO]")) return false;
-          return true;
-        }));
+        setMessages(data.messages.filter(m => !(m.role === "user" && m.content?.includes("[CONTEXTO INTERNO]"))));
       });
       unsubscribeRef.current = unsub;
       setConversation(updatedConv);
@@ -167,14 +144,19 @@ export default function AIChatWidget() {
     }
   };
 
+  const openChat = async () => {
+    setIsOpen(true);
+    setIsMinimized(false);
+    setUnreadCount(0);
+    if (!conversation) await initConversation();
+  };
+
   const handleSend = async () => {
     if (!input.trim() && !fileUrl) return;
     if (!conversation) return;
-
     const userInput = input.trim();
     setInput("");
     setIsLoading(true);
-
     try {
       const msg = {
         role: "user",
@@ -198,55 +180,37 @@ export default function AIChatWidget() {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setFileUrl(file_url);
     } catch (err) {
-      console.error("Erro ao fazer upload:", err);
+      console.error("Erro no upload:", err);
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
   const lastMessages = messages.slice(-50);
-  const isStreaming = lastMessages.length > 0 && lastMessages[lastMessages.length - 1]?.role === "user";
+  const isStreaming = isLoading || (messages.length > 0 && messages[messages.length - 1]?.role === "user");
 
   if (!isOpen) {
     return (
-      <button
-        onClick={openChat}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gray-900 hover:bg-gray-800 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-110 group"
-        title="Central de Inteligência CAT"
-      >
+      <button onClick={openChat} className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gray-900 hover:bg-gray-800 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-110 group" title="Central de Inteligência CAT">
         <Bot className="w-6 h-6" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
-            {unreadCount}
-          </span>
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">{unreadCount}</span>
         )}
-        <span className="absolute right-16 bg-gray-900 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-          CAT IA — Preciso de Ajuda
-        </span>
+        <span className="absolute right-16 bg-gray-900 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">CAT IA — Preciso de Ajuda</span>
       </button>
     );
   }
 
   if (isMinimized) {
     return (
-      <button
-        onClick={() => { setIsMinimized(false); setUnreadCount(0); }}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-gray-900 text-white px-4 py-3 rounded-full shadow-2xl hover:bg-gray-800 transition-all"
-      >
+      <button onClick={() => { setIsMinimized(false); setUnreadCount(0); }} className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-gray-900 text-white px-4 py-3 rounded-full shadow-2xl hover:bg-gray-800 transition-all">
         <Bot className="w-5 h-5" />
         <span className="text-sm font-medium">CAT IA</span>
-        {unreadCount > 0 && (
-          <span className="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
-            {unreadCount}
-          </span>
-        )}
+        {unreadCount > 0 && <span className="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">{unreadCount}</span>}
       </button>
     );
   }
@@ -261,7 +225,7 @@ export default function AIChatWidget() {
           </div>
           <div>
             <p className="text-sm font-semibold">CAT IA</p>
-            <p className="text-xs text-gray-400 truncate max-w-[160px]">{currentPageName}</p>
+            <p className="text-xs text-gray-400">{currentPageName}</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -283,17 +247,13 @@ export default function AIChatWidget() {
             <p className="text-xs text-gray-500 mt-1">Estou aqui para apoiar todas as suas operações. Como posso ajudar?</p>
             <div className="mt-4 space-y-2">
               {["Como gerar um certificado?", "Como cadastrar um novo aluno?", "Como funciona o BMM?"].map(q => (
-                <button key={q} onClick={() => setInput(q)} className="block w-full text-left text-xs bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-gray-700 transition-colors">
-                  {q}
-                </button>
+                <button key={q} onClick={() => setInput(q)} className="block w-full text-left text-xs bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-gray-700 transition-colors">{q}</button>
               ))}
             </div>
           </div>
         )}
-        {lastMessages.map((msg, idx) => (
-          <MessageBubble key={idx} message={msg} />
-        ))}
-        {isStreaming && (
+        {lastMessages.map((msg, idx) => <MessageBubble key={idx} message={msg} />)}
+        {isStreaming && lastMessages[lastMessages.length - 1]?.role === "user" && (
           <div className="flex gap-2 mb-3">
             <div className="w-7 h-7 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0">
               <Bot className="w-4 h-4 text-white" />
@@ -310,7 +270,6 @@ export default function AIChatWidget() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* File preview */}
       {fileUrl && (
         <div className="px-3 py-2 bg-blue-50 border-t border-blue-100 flex items-center justify-between">
           <span className="text-xs text-blue-700">📎 Imagem anexada</span>
@@ -321,28 +280,11 @@ export default function AIChatWidget() {
       {/* Input */}
       <div className="border-t border-gray-100 p-3 flex gap-2 flex-shrink-0 bg-white">
         <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
-          title="Anexar imagem"
-        >
+        <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0" title="Anexar imagem">
           {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
         </button>
-        <Input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Digite sua dúvida..."
-          className="text-sm flex-1 border-gray-200"
-          disabled={isLoading}
-        />
-        <Button
-          onClick={handleSend}
-          disabled={isLoading || (!input.trim() && !fileUrl)}
-          size="sm"
-          className="bg-gray-900 hover:bg-gray-800 px-3 flex-shrink-0"
-        >
+        <Input value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Digite sua dúvida..." className="text-sm flex-1 border-gray-200" disabled={isLoading} />
+        <Button onClick={handleSend} disabled={isLoading || (!input.trim() && !fileUrl)} size="sm" className="bg-gray-900 hover:bg-gray-800 px-3 flex-shrink-0">
           <Send className="w-4 h-4" />
         </Button>
       </div>
