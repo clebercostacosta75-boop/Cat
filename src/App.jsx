@@ -86,6 +86,11 @@ const AuthenticatedApp = () => {
       <Route path="/LogNotificacoes" element={<LayoutWrapper currentPageName="LogNotificacoes"><LogNotificacoes /></LayoutWrapper>} />
       <Route path="/CertificateAuditPanel" element={<LayoutWrapper currentPageName="CertificateAuditPanel"><CertificateAuditPanel /></LayoutWrapper>} />
       <Route path="/Certificacoes" element={<LayoutWrapper currentPageName="Certificacoes"><Certificacoes /></LayoutWrapper>} />
+      <Route path="/DashboardMaster" element={<LayoutWrapper currentPageName="DashboardMaster"><DashboardMaster /></LayoutWrapper>} />
+      <Route path="/DashboardOperacional" element={<LayoutWrapper currentPageName="DashboardOperacional"><DashboardOperacional /></LayoutWrapper>} />
+      <Route path="/DashboardFinanceiro" element={<LayoutWrapper currentPageName="DashboardFinanceiro"><DashboardFinanceiro /></LayoutWrapper>} />
+      <Route path="/DashboardCertificacao" element={<LayoutWrapper currentPageName="DashboardCertificacao"><DashboardCertificacao /></LayoutWrapper>} />
+      <Route path="/DashboardInstrutor" element={<LayoutWrapper currentPageName="DashboardInstrutor"><DashboardInstrutor /></LayoutWrapper>} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route key={path} path={`/${path}`} element={<LayoutWrapper currentPageName={path}><Page /></LayoutWrapper>} />
       ))}
