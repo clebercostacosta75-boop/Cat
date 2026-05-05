@@ -157,7 +157,8 @@ function MatriculasCursos() {
   const [form, setForm] = useState({
     student_id: "", student_name: "", student_cpf: "", student_email: "", student_phone: "",
     course_id: "", course_name: "", company_id: "individual", company_name: "Individual (PF)",
-    start_date: "", end_date: "", status: "Aguardando Autorização", notes: ""
+    start_date: "", end_date: "", status: "Aguardando Autorização", notes: "",
+    unit_value: ""
   });
 
   const { data: enrollments = [], isLoading } = useQuery({
@@ -232,6 +233,13 @@ function MatriculasCursos() {
                     <p className="font-semibold text-gray-900">{e.student_name}</p>
                     <p className="text-sm text-gray-500">{e.course_name}</p>
                     <p className="text-xs text-gray-400">{e.start_date} → {e.end_date}</p>
+                    {e.unit_value ? (
+                      <p className="text-xs font-semibold text-green-700 mt-0.5">
+                        R$ {parseFloat(e.unit_value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-400 mt-0.5">Sem valor cadastrado</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge className={statusColors[e.status] || "bg-gray-100 text-gray-800"}>{e.status}</Badge>
@@ -274,6 +282,17 @@ function MatriculasCursos() {
               <div><Label>Data Início *</Label><Input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} /></div>
               <div><Label>Data Fim *</Label><Input type="date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} /></div>
             </div>
+            <div>
+              <Label>Valor do Curso (R$)</Label>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0,00"
+                value={form.unit_value}
+                onChange={e => setForm({ ...form, unit_value: e.target.value ? parseFloat(e.target.value) : "" })}
+              />
+            </div>
             <div><Label>Observações</Label><Input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
@@ -297,10 +316,14 @@ function FinanceiroAlunos() {
   const total = enrollments.length;
   const autorizados = enrollments.filter(e => ["Autorizado", "Certificado Gerado", "Assinado"].includes(e.status)).length;
   const aguardando = enrollments.filter(e => e.status === "Aguardando Autorização").length;
+  const totalReceita = enrollments.reduce((acc, e) => acc + (parseFloat(e.unit_value) || 0), 0);
+  const receitaAutorizada = enrollments
+    .filter(e => ["Autorizado", "Certificado Gerado", "Assinado"].includes(e.status))
+    .reduce((acc, e) => acc + (parseFloat(e.unit_value) || 0), 0);
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border border-gray-200">
           <CardContent className="p-4">
             <BookOpen className="w-6 h-6 text-blue-600 mb-2" />
@@ -313,6 +336,15 @@ function FinanceiroAlunos() {
             <CheckCircle className="w-6 h-6 text-green-600 mb-2" />
             <p className="text-2xl font-bold text-black">{autorizados}</p>
             <p className="text-sm text-gray-600">Autorizadas / Concluídas</p>
+          </CardContent>
+        </Card>
+        <Card className="border border-gray-200">
+          <CardContent className="p-4">
+            <DollarSign className="w-6 h-6 text-emerald-600 mb-2" />
+            <p className="text-2xl font-bold text-black">
+              R$ {totalReceita.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </p>
+            <p className="text-sm text-gray-600">Receita Total</p>
           </CardContent>
         </Card>
         <Card className="border border-gray-200">
@@ -341,10 +373,16 @@ function FinanceiroAlunos() {
                   <div>
                     <p className="font-semibold text-gray-900">{e.student_name}</p>
                     <p className="text-sm text-gray-500">{e.course_name}</p>
+                    <p className="text-xs text-gray-400">{e.start_date} → {e.end_date}</p>
                   </div>
-                  <Badge className={e.status === "Aguardando Autorização" ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800"}>
-                    {e.status}
-                  </Badge>
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-sm text-gray-900">
+                      {e.unit_value ? `R$ ${parseFloat(e.unit_value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : <span className="text-gray-400 font-normal">Sem valor</span>}
+                    </span>
+                    <Badge className={e.status === "Aguardando Autorização" ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800"}>
+                      {e.status}
+                    </Badge>
+                  </div>
                 </div>
               ))}
             </div>
