@@ -21,6 +21,7 @@ const ALL_ITEMS = [
   { title: "Cronograma", url: createPageUrl("Schedule"), icon: Calendar, key: "Cronograma" },
   { title: "Agenda de Treinamentos", url: "/AgendaTreinamentos", icon: Calendar, key: "Agenda de Treinamentos" },
   { title: "Chamada Presencial", url: createPageUrl("AttendanceCall"), icon: Users, key: "Chamada Presencial" },
+  { title: "Entrada de Propostas", url: "/ProposalEntry", icon: Upload, key: "Entrada de Propostas" },
   { title: "Gerar BMM", url: createPageUrl("BMMGenerator"), icon: FileText, key: "Gerar BMM" },
   { title: "Histórico BMM", url: createPageUrl("BMMHistory"), icon: History, key: "Histórico BMM" },
   { title: "Instrutores", url: createPageUrl("Instructors"), icon: Users, key: "Instrutores" },
@@ -53,7 +54,7 @@ const ROLE_MENUS = {
   "Administrador Master": null,
   Operacional: [
     "Dashboard", "Agenda de Treinamentos", "Cronograma", "Chamada Presencial",
-    "Gerar BMM", "Histórico BMM", "Instrutores", "Empresas", "Contratadas",
+    "Entrada de Propostas", "Gerar BMM", "Histórico BMM", "Instrutores", "Empresas", "Contratadas",
     "Cursos", "Importar Excel", "Central de Comunicação",
     "Config. Notificações", "Log de Notificações",
   ],

@@ -30,6 +30,7 @@ import DashboardCertificacao from './pages/DashboardCertificacao';
 import DashboardMaster from './pages/DashboardMaster';
 import DashboardInstrutor from './pages/DashboardInstrutor';
 import AcessoNegado from './pages/AcessoNegado';
+import ProposalEntry from './pages/ProposalEntry';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -74,6 +75,7 @@ const AuthenticatedApp = () => {
       <Route path="/AttendanceConfirm" element={<AttendanceConfirm />} />
       <Route path="/CompanyPortal" element={<CompanyPortal />} />
       <Route path="/AcessoNegado" element={<AcessoNegado />} />
+      <Route path="/ProposalEntry" element={<LayoutWrapper currentPageName="ProposalEntry"><ProposalEntry /></LayoutWrapper>} />
 
       {/* Rotas autenticadas com layout */}
       <Route path="/" element={<LayoutWrapper currentPageName={mainPageKey}><MainPage /></LayoutWrapper>} />
