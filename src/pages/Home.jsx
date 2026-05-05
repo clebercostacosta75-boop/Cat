@@ -15,35 +15,20 @@ export default function Home() {
 
       try {
         if (isAuthenticated && user) {
-          setRedirecting(true);
-          
-          // Detecta perfil do usuário e redireciona
-          const userEmail = user.email;
-          
-          // Busca perfil do usuário
-          const profiles = await base44.entities.UserProfile.filter({ 
-            user_email: userEmail 
-          });
+           setRedirecting(true);
 
-          if (profiles.length > 0) {
-            const profile = profiles[0];
-            const role = profile.role || user.role;
+           // Detecta perfil do usuário e redireciona
+           const userRole = user.role || 'user';
 
-            // Redireciona de acordo com o perfil
-            const redirects = {
-              'gestor_master': '/DashboardMaster',
-              'Administrador Master': '/DashboardMaster',
-              'admin': '/AdminDashboard',
-              'editor': '/Dashboard',
-              'cliente': '/StudentPortal'
-            };
+           // Redireciona de acordo com o role (prefere role nativo do user)
+           const redirects = {
+             'admin': '/DashboardMaster',
+             'Administrador Master': '/DashboardMaster',
+             'gestor_master': '/DashboardMaster'
+           };
 
-            const redirectPath = redirects[role] || '/Dashboard';
-            navigate(redirectPath);
-          } else {
-            // Se não tem perfil, vai para dashboard padrão
-            navigate('/Dashboard');
-          }
+           const redirectPath = redirects[userRole] || '/Dashboard';
+           navigate(redirectPath);
         } else {
           // Não autenticado, redireciona para StudentPortal (público)
           navigate('/StudentPortal');
