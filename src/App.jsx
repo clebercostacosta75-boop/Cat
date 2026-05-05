@@ -31,6 +31,11 @@ import DashboardMaster from './pages/DashboardMaster';
 import DashboardInstrutor from './pages/DashboardInstrutor';
 import AcessoNegado from './pages/AcessoNegado';
 import ProposalEntry from './pages/ProposalEntry';
+import DashboardComercial from './pages/DashboardComercial.jsx';
+import GestaoLeads from './pages/GestaoLeads.jsx';
+import ContasSociais from './pages/ContasSociais.jsx';
+import BaseConhecimento from './pages/BaseConhecimento.jsx';
+import CaixaEntrada from './pages/CaixaEntrada.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -75,6 +80,11 @@ const AuthenticatedApp = () => {
       <Route path="/AttendanceConfirm" element={<AttendanceConfirm />} />
       <Route path="/CompanyPortal" element={<CompanyPortal />} />
       <Route path="/AcessoNegado" element={<AcessoNegado />} />
+      <Route path="/DashboardComercial" element={<LayoutWrapper currentPageName="DashboardComercial"><DashboardComercial /></LayoutWrapper>} />
+      <Route path="/GestaoLeads" element={<LayoutWrapper currentPageName="GestaoLeads"><GestaoLeads /></LayoutWrapper>} />
+      <Route path="/ContasSociais" element={<LayoutWrapper currentPageName="ContasSociais"><ContasSociais /></LayoutWrapper>} />
+      <Route path="/BaseConhecimento" element={<LayoutWrapper currentPageName="BaseConhecimento"><BaseConhecimento /></LayoutWrapper>} />
+      <Route path="/CaixaEntrada" element={<LayoutWrapper currentPageName="CaixaEntrada"><CaixaEntrada /></LayoutWrapper>} />
       <Route path="/ProposalEntry" element={<LayoutWrapper currentPageName="ProposalEntry"><ProposalEntry /></LayoutWrapper>} />
 
       {/* Rotas autenticadas com layout */}

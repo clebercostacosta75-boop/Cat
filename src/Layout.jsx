@@ -7,6 +7,7 @@ import {
   Building2, UserCog, Mail, History, Bell, DollarSign, Award, TrendingUp,
   PenLine, Settings, AlertTriangle, Target, Instagram, MessageSquare
 } from "lucide-react";
+
 import NotificationBell from "./components/notifications/NotificationBell";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -48,6 +49,8 @@ const ALL_ITEMS = [
   { title: "Dashboard Admin", url: "/AdminDashboard", icon: TrendingUp, key: "Dashboard Admin" },
   { title: "Dashboard Comercial", url: "/DashboardComercial", icon: Target, key: "Dashboard Comercial" },
   { title: "Gestão de Leads", url: "/GestaoLeads", icon: Users, key: "Gestão de Leads" },
+  { title: "Caixa de Entrada", url: "/CaixaEntrada", icon: MessageSquare, key: "Caixa de Entrada" },
+  { title: "Base de Conhecimento", url: "/BaseConhecimento", icon: BookOpen, key: "Base de Conhecimento" },
   { title: "Contas Sociais", url: "/ContasSociais", icon: Instagram, key: "Contas Sociais" },
 ];
 
@@ -60,7 +63,7 @@ const ROLE_MENUS = {
     "Entrada de Propostas", "Gerar BMM", "Histórico BMM", "Instrutores", "Empresas", "Contratadas",
     "Cursos", "Importar Excel", "Central de Comunicação",
     "Config. Notificações", "Log de Notificações",
-    "Dashboard Comercial", "Gestão de Leads", "Contas Sociais",
+    "Dashboard Comercial", "Gestão de Leads", "Caixa de Entrada", "Base de Conhecimento", "Contas Sociais",
   ],
   Financeiro: [
     "Dashboard", "Controle Financeiro Instrutor", "Automação de Pagamentos",
