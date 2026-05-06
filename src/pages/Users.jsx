@@ -59,6 +59,12 @@ export default function UsersPage() {
   const [editIsWhatsApp, setEditIsWhatsApp] = useState(false);
   const [editPermissions, setEditPermissions] = useState([]);
   const [showNewUserDialog, setShowNewUserDialog] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserPhone, setNewUserPhone] = useState("");
+  const [newUserRole, setNewUserRole] = useState("user");
+  const [newUserPermissions, setNewUserPermissions] = useState([]);
+  const [inviteSending, setInviteSending] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const queryClient = useQueryClient();
 
@@ -164,6 +170,55 @@ export default function UsersPage() {
         permissions: editPermissions
       } 
     });
+  };
+
+  const handleInviteUser = async () => {
+    if (!newUserEmail) { toast.error("Informe o e-mail do usuário"); return; }
+    setInviteSending(true);
+    try {
+      // 1. Convidar o usuário via Base44
+      await base44.users.inviteUser(newUserEmail, "user");
+
+      // 2. Se tem telefone, enviar WhatsApp com dados de acesso
+      if (newUserPhone) {
+        const phone = newUserPhone.replace(/\D/g, '');
+        const msg = `🔐 *Bem-vindo ao Sistema CAT Cursos!*\n\n` +
+          `Olá *${newUserName || newUserEmail}*! 👋\n\n` +
+          `Você recebeu um convite de acesso ao Sistema de Treinamento CAT.\n\n` +
+          `📧 *E-mail de acesso:* ${newUserEmail}\n` +
+          `🔑 *Perfil:* ${roles.find(r => r.value === newUserRole)?.shortLabel || newUserRole}\n\n` +
+          `📩 Verifique sua caixa de entrada para o link de confirmação e criação de senha.\n\n` +
+          `Em caso de dúvidas, entre em contato com o administrador.`;
+
+        await base44.functions.invoke('enviarNotificacaoWhatsApp', {
+          recipient_type: 'custom',
+          recipient_phone: phone,
+          recipient_name: newUserName || newUserEmail,
+          message_type: 'custom',
+          message_body: msg,
+        });
+      }
+
+      // 3. Salvar perfil/permissões no UserProfile
+      if (newUserRole !== 'user' || newUserPermissions.length > 0) {
+        await base44.entities.UserProfile.create({
+          user_email: newUserEmail,
+          user_name: newUserName || newUserEmail,
+          role: 'cliente',
+          phone: newUserPhone,
+          status: 'pending_password_change',
+        });
+      }
+
+      toast.success(`✅ Convite enviado para ${newUserEmail}!${newUserPhone ? ' WhatsApp também foi enviado.' : ''}`);
+      setShowNewUserDialog(false);
+      setNewUserEmail(""); setNewUserName(""); setNewUserPhone(""); setNewUserRole("user"); setNewUserPermissions([]);
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    } catch (error) {
+      toast.error("❌ Erro ao convidar usuário", { description: error.message });
+    } finally {
+      setInviteSending(false);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -580,32 +635,62 @@ export default function UsersPage() {
 
         {/* Dialog Novo Usuário */}
         <Dialog open={showNewUserDialog} onOpenChange={setShowNewUserDialog}>
-          <DialogContent>
+          <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold">ℹ️ Como Adicionar Usuários</DialogTitle>
+              <DialogTitle className="text-xl font-bold">➕ Convidar Novo Usuário</DialogTitle>
               <DialogDescription>
-                Usuários devem ser convidados através do sistema Base44
+                Preencha os dados do usuário. Um convite será enviado por e-mail e, se informado, também via WhatsApp.
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-stone-700 mb-3">
-                  <strong>Para adicionar novos usuários ao sistema:</strong>
-                </p>
-                <ol className="text-sm text-stone-600 space-y-2 list-decimal list-inside">
-                  <li>Acesse as <strong>configurações do app</strong> no painel Base44</li>
-                  <li>Vá em <strong>"Usuários"</strong> ou <strong>"Convidar Usuário"</strong></li>
-                  <li>Digite o email do usuário e envie o convite</li>
-                  <li>Após o usuário aceitar o convite, você poderá definir permissões aqui</li>
-                </ol>
+              <div className="space-y-2">
+                <Label>Nome completo</Label>
+                <Input
+                  placeholder="Ex: João da Silva"
+                  value={newUserName}
+                  onChange={e => setNewUserName(e.target.value)}
+                />
               </div>
-              <p className="text-xs text-stone-500 italic">
-                💡 Os usuários convidados aparecerão automaticamente nesta lista após aceitarem o convite.
-              </p>
+              <div className="space-y-2">
+                <Label>E-mail <span className="text-red-500">*</span></Label>
+                <Input
+                  type="email"
+                  placeholder="email@empresa.com"
+                  value={newUserEmail}
+                  onChange={e => setNewUserEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1">
+                  <Phone className="w-3 h-3" /> WhatsApp <span className="text-gray-400 text-xs">(opcional)</span>
+                </Label>
+                <Input
+                  placeholder="(91) 99999-9999"
+                  value={newUserPhone}
+                  onChange={e => setNewUserPhone(formatPhoneNumber(e.target.value))}
+                />
+                <p className="text-xs text-gray-500">Se preenchido, os dados de acesso serão enviados via WhatsApp.</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Perfil de acesso</Label>
+                <Select value={newUserRole} onValueChange={setNewUserRole}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map(role => (
+                      <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <DialogFooter>
-              <Button onClick={() => setShowNewUserDialog(false)}>
-                Entendi
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setShowNewUserDialog(false)} disabled={inviteSending}>
+                Cancelar
+              </Button>
+              <Button onClick={handleInviteUser} disabled={inviteSending || !newUserEmail} className="bg-gray-900 hover:bg-gray-800">
+                {inviteSending ? "Enviando..." : "Enviar Convite"}
               </Button>
             </DialogFooter>
           </DialogContent>
