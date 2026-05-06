@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserCog, Plus, Search, Shield, Edit, Lock, Unlock, Mail, Phone, X, Check, Send } from "lucide-react";
+import { UserCog, Plus, Search, Shield, Edit, Lock, Unlock, Mail, Phone, X, Check, Send, CheckCircle, Clock } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
 const ROLE_OPTIONS = [
@@ -151,6 +153,24 @@ export default function UsersPage() {
     loadProfiles();
   }, []);
 
+  const sendInviteAndRecord = async (email, profileId, role) => {
+    try {
+      const res = await base44.functions.invoke("convidarUsuario", {
+        email,
+        role: role || "user",
+      });
+      const success = res.data?.success || res.data?.already_exists;
+      await base44.entities.UserProfile.update(profileId, {
+        credentials_sent_at: new Date().toISOString(),
+        credentials_sent_via: "email",
+        credentials_sent_by: "sistema",
+      });
+      return success;
+    } catch {
+      return false;
+    }
+  };
+
   const handleSave = async (formData) => {
     setSaving(true);
     try {
@@ -158,8 +178,15 @@ export default function UsersPage() {
         await base44.entities.UserProfile.update(editingProfile.id, formData);
         toast.success("Usuário atualizado com sucesso!");
       } else {
-        await base44.entities.UserProfile.create(formData);
-        toast.success("Usuário criado com sucesso!");
+        // Cria o perfil primeiro
+        const created = await base44.entities.UserProfile.create(formData);
+        // Envia convite por e-mail automaticamente e registra
+        const sent = await sendInviteAndRecord(formData.user_email, created.id, formData.role);
+        if (sent) {
+          toast.success(`Usuário criado! Convite enviado para ${formData.user_email}`);
+        } else {
+          toast.warning("Usuário criado, mas houve um problema ao enviar o convite. Use o botão de reenvio.");
+        }
       }
       setShowForm(false);
       setEditingProfile(null);
@@ -188,14 +215,12 @@ export default function UsersPage() {
 
   const handleResendInvite = async (profile) => {
     try {
-      const res = await base44.functions.invoke("convidarUsuario", {
-        email: profile.user_email,
-        role: "user",
-      });
-      if (res.data?.already_exists || res.data?.success) {
-        toast.success(`Convite reenviado para ${profile.user_email}`);
+      const sent = await sendInviteAndRecord(profile.user_email, profile.id, profile.role);
+      if (sent) {
+        toast.success(`Convite reenviado para ${profile.user_email} ✓`);
+        await loadProfiles();
       } else {
-        toast.error(res.data?.message || "Erro ao reenviar convite");
+        toast.error("Erro ao reenviar convite");
       }
     } catch {
       toast.error("Erro ao reenviar convite");
@@ -303,6 +328,18 @@ export default function UsersPage() {
                         <div className="flex items-center gap-1 text-xs text-gray-500">
                           <Phone className="w-3 h-3" />
                           <span>{profile.phone}</span>
+                        </div>
+                      )}
+                      {/* Status do envio do convite */}
+                      {profile.credentials_sent_at ? (
+                        <div className="flex items-center gap-1 text-xs text-green-600 mt-0.5">
+                          <CheckCircle className="w-3 h-3" />
+                          <span>Convite enviado em {format(new Date(profile.credentials_sent_at), "dd/MM/yy HH:mm", { locale: ptBR })}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 text-xs text-orange-500 mt-0.5">
+                          <Clock className="w-3 h-3" />
+                          <span>Convite não enviado ainda</span>
                         </div>
                       )}
                     </div>
