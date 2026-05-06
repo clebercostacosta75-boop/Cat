@@ -187,7 +187,7 @@ export default function UsersPage() {
         return;
       }
 
-      // 2. Se tem telefone, enviar WhatsApp via Twilio (envio automático pelo backend)
+      // 2. Se tem telefone, enviar WhatsApp via API oficial do WhatsApp Business (Meta)
       if (newUserPhone) {
         const perfil = roles.find(r => r.value === newUserRole)?.label || newUserRole;
         const msg = `🔐 *Bem-vindo ao Sistema CAT Cursos!*\n\n` +
@@ -210,7 +210,7 @@ export default function UsersPage() {
         } catch (waErr) {
           // WhatsApp falhou mas convite por e-mail já foi enviado
           toast.success(`✅ Convite enviado para ${newUserEmail}!`);
-          toast.warning("⚠️ WhatsApp não enviado", { description: "Verifique se o Twilio está configurado ou se o número está correto." });
+          toast.warning("⚠️ WhatsApp não enviado", { description: "Verifique se o número está correto ou tente novamente." });
         }
       } else {
         toast.success(`✅ Convite enviado para ${newUserEmail}!`);
