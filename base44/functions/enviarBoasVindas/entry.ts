@@ -1,5 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import nodemailer from 'npm:nodemailer@6.9.10';
 
 function buildEmailHtml(userName, userEmail, senha) {
   const appUrl = 'https://app.base44.com';
@@ -137,12 +136,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'user_email, user_name e senha_temporaria são obrigatórios' }, { status: 400 });
     }
 
-    const smtpEmail = Deno.env.get('UOL_SMTP_EMAIL');
-    const smtpPassword = Deno.env.get('UOL_SMTP_PASSWORD');
-    if (!smtpEmail || !smtpPassword) {
-      return Response.json({ error: 'Credenciais SMTP não configuradas (UOL_SMTP_EMAIL / UOL_SMTP_PASSWORD)' }, { status: 500 });
-    }
-
     // Salva a senha temporária no perfil do usuário
     const profiles = await base44.asServiceRole.entities.UserProfile.filter({ user_email });
     if (profiles.length > 0) {
@@ -155,28 +148,26 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Envia e-mail via SMTP UOL
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.uol.com.br',
-      port: 587,
-      secure: false,
-      auth: { user: smtpEmail, pass: smtpPassword },
-    });
-
-    await transporter.sendMail({
-      from: `"CAT Gestão de Cursos" <${smtpEmail}>`,
+    // Envia e-mail via integração nativa SendEmail
+    const emailBody = buildEmailHtml(user_name, user_email, senha_temporaria);
+    const result = await base44.integrations.Core.SendEmail({
       to: user_email,
       subject: 'Bem-vindo(a) ao CAT Gestão de Cursos - Suas credenciais de acesso',
-      html: buildEmailHtml(user_name, user_email, senha_temporaria),
+      body: emailBody,
+      from_name: 'CAT Gestão de Cursos',
     });
 
     return Response.json({
       success: true,
-      message: `E-mail de boas-vindas com credenciais enviado para ${user_email}`,
+      message: `E-mail de boas-vindas enviado para ${user_email}`,
       email_enviado: true,
     });
 
   } catch (error) {
-    return Response.json({ error: 'Erro ao enviar boas-vindas', details: error.message }, { status: 500 });
+    console.error('Erro ao enviar boas-vindas:', error);
+    return Response.json({ 
+      error: 'Erro ao enviar e-mail', 
+      details: error.message 
+    }, { status: 500 });
   }
 });
