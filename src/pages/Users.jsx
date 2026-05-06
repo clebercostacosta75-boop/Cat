@@ -420,7 +420,7 @@ export default function UsersPage() {
                           </TableCell>
                           <TableCell>
                             {isEditing && editRole !== 'Administrador Master' && editRole !== 'admin' ? (
-                              <div className="space-y-3 max-w-sm">
+                             <div className="space-y-3 max-w-lg w-full">
                                 <div className="bg-gradient-to-br from-purple-600 to-purple-700 text-white px-4 py-3 rounded-lg shadow-md">
                                   <p className="text-sm font-bold flex items-center gap-2">
                                     <Lock className="w-4 h-4" />
@@ -430,7 +430,7 @@ export default function UsersPage() {
                                     Marque as funcionalidades que este usuário poderá acessar
                                   </p>
                                 </div>
-                                <div className="grid grid-cols-1 gap-2.5 max-h-64 overflow-y-auto p-4 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border-2 border-purple-300 shadow-inner">
+                                <div className="grid grid-cols-1 gap-2.5 max-h-96 overflow-y-auto p-4 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border-2 border-purple-300 shadow-inner">
                                   {availablePermissions.map(permission => (
                                     <label
                                       key={permission}
