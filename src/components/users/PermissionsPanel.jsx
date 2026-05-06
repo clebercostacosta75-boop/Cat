@@ -62,11 +62,18 @@ function PermissionEditor({ profile, onSaved }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await base44.entities.UserProfile.update(profile.id, {
-        permissions: Array.from(selected),
+      const perms = Array.from(selected);
+      const res = await base44.functions.invoke("atualizarPermissoesUsuario", {
+        user_email: profile.user_email,
+        profile_id: profile.id,
+        permissions: perms,
       });
-      toast.success(`Permissões de ${profile.user_name} salvas!`);
-      onSaved();
+      if (res.data?.success) {
+        toast.success(`Permissões de ${profile.user_name} salvas! O usuário verá as alterações no próximo acesso.`);
+        onSaved();
+      } else {
+        toast.error(res.data?.error || "Erro ao salvar permissões");
+      }
     } catch {
       toast.error("Erro ao salvar permissões");
     } finally {
