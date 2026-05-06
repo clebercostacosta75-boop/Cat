@@ -4,8 +4,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const ROLE_HIERARCHY = {
   'Administrador Master': 3,
+  'admin': 3,
+  'Operacional': 2,
   'Financeiro': 2,
   'Coordenador de Operações': 2,
+  'Certificação': 2,
+  'Certificacao': 2,
+  'Atendimento': 2,
   'Instrutor': 1,
   'user': 1,
   'Bloqueado': 0
@@ -280,11 +285,12 @@ export default function UsersPage() {
 
   const roles = [
     { value: 'Administrador Master', label: '👑 Administrador Master', shortLabel: 'Gestor Master', color: 'bg-purple-100 text-purple-800 border-purple-200', iconBg: 'bg-purple-100', iconColor: 'text-purple-600' },
-    { value: 'Financeiro', label: '💰 Financeiro', shortLabel: 'Editor/Operador', color: 'bg-blue-100 text-blue-800 border-blue-200', iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
+    { value: 'Operacional', label: '🔧 Operacional', shortLabel: 'Operacional', color: 'bg-indigo-100 text-indigo-800 border-indigo-200', iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600' },
+    { value: 'Financeiro', label: '💰 Financeiro', shortLabel: 'Financeiro', color: 'bg-blue-100 text-blue-800 border-blue-200', iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
     { value: 'Coordenador de Operações', label: '⚙️ Coordenador de Operações', shortLabel: 'Coordenador', color: 'bg-green-100 text-green-800 border-green-200', iconBg: 'bg-green-100', iconColor: 'text-green-600' },
     { value: 'Certificação', label: '🏆 Certificação', shortLabel: 'Certificação', color: 'bg-teal-100 text-teal-800 border-teal-200', iconBg: 'bg-teal-100', iconColor: 'text-teal-600' },
     { value: 'Atendimento', label: '🎧 Atendimento', shortLabel: 'Atendimento', color: 'bg-orange-100 text-orange-800 border-orange-200', iconBg: 'bg-orange-100', iconColor: 'text-orange-600' },
-    { value: 'Instrutor', label: '👨‍🏫 Instrutor', shortLabel: 'Cliente/Viewer', color: 'bg-amber-100 text-amber-800 border-amber-200', iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
+    { value: 'Instrutor', label: '👨‍🏫 Instrutor', shortLabel: 'Instrutor', color: 'bg-amber-100 text-amber-800 border-amber-200', iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
     { value: 'Bloqueado', label: '🔒 Bloqueado', shortLabel: 'Bloqueados', color: 'bg-red-100 text-red-800 border-red-200', iconBg: 'bg-red-100', iconColor: 'text-red-600' },
     { value: 'user', label: '👤 Usuário', shortLabel: 'Usuário', color: 'bg-stone-100 text-stone-800 border-stone-200', iconBg: 'bg-stone-100', iconColor: 'text-stone-600' },
   ];

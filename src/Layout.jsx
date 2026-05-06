@@ -49,8 +49,29 @@ const ALL_ITEMS = [
   { title: "Caixa de Entrada", url: "/CaixaEntrada", icon: MessageSquare, key: "Caixa de Entrada" },
   { title: "Base de Conhecimento", url: "/BaseConhecimento", icon: BookOpen, key: "Base de Conhecimento" },
   { title: "Contas Sociais", url: "/ContasSociais", icon: Instagram, key: "Contas Sociais" },
-  { title: "Dashboard de Relatórios", url: "/Analytics", icon: BarChart3, key: "Analytics" },
+  { title: "Dashboard de Relatórios", url: "/Analytics", icon: BarChart3, key: "Dashboard de Relatórios" },
 ];
+
+// ── Mapeamento de permissões legadas para permissões atuais ──
+const LEGACY_PERMISSION_MAP = {
+  "Gerar BMM": "Gestão de BMM",
+  "Histórico BMM": "Gestão de BMM",
+  "Relatórios": "Dashboard de Relatórios",
+  "Alertas de Reciclagem": "Alertas de Vencimento",
+  "Análise de Lucratividade": "Dashboard Financeiro",
+  "Analytics": "Dashboard de Relatórios",
+};
+
+// Função para normalizar permissões (converte legadas para atuais)
+const normalizePermissions = (permissions) => {
+  if (!permissions) return null;
+  const normalized = new Set();
+  permissions.forEach(p => {
+    const mapped = LEGACY_PERMISSION_MAP[p] || p;
+    normalized.add(mapped);
+  });
+  return Array.from(normalized);
+};
 
 // ── Chaves permitidas por perfil (fallback quando não há permissões customizadas) ──
 const ROLE_MENUS = {
@@ -117,8 +138,8 @@ export default function Layout({ children }) {
           if (insts.length > 0) { setUserRole("Instrutor"); setUserPermissions([]); return; }
         }
         setUserRole(u.custom_role || u.role || "user");
-        // Permissões customizadas salvas no campo permissions do usuário
-        setUserPermissions(u.permissions || null);
+        // Permissões customizadas salvas no campo permissions do usuário (normalizadas)
+        setUserPermissions(normalizePermissions(u.permissions));
       } catch { /* silent */ }
     };
     load();
