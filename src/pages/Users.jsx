@@ -176,42 +176,28 @@ export default function UsersPage() {
     if (!newUserEmail) { toast.error("Informe o e-mail do usuário"); return; }
     setInviteSending(true);
     try {
-      // 1. Convidar o usuário via Base44
+      // 1. Convidar o usuário via Base44 (envia e-mail de convite)
       await base44.users.inviteUser(newUserEmail, "user");
 
-      // 2. Se tem telefone, enviar WhatsApp com dados de acesso
+      toast.success(`✅ Convite enviado para ${newUserEmail}!`);
+      setShowNewUserDialog(false);
+
+      // 2. Se tem telefone, abrir WhatsApp com mensagem pré-preenchida
       if (newUserPhone) {
         const phone = newUserPhone.replace(/\D/g, '');
+        const phoneWithCountry = phone.startsWith('55') ? phone : '55' + phone;
         const msg = `🔐 *Bem-vindo ao Sistema CAT Cursos!*\n\n` +
           `Olá *${newUserName || newUserEmail}*! 👋\n\n` +
           `Você recebeu um convite de acesso ao Sistema de Treinamento CAT.\n\n` +
           `📧 *E-mail de acesso:* ${newUserEmail}\n` +
-          `🔑 *Perfil:* ${roles.find(r => r.value === newUserRole)?.shortLabel || newUserRole}\n\n` +
-          `📩 Verifique sua caixa de entrada para o link de confirmação e criação de senha.\n\n` +
+          `🔑 *Perfil:* ${roles.find(r => r.value === newUserRole)?.label || newUserRole}\n\n` +
+          `📩 Verifique sua caixa de entrada (e o spam) para o link de confirmação e criação de senha.\n\n` +
           `Em caso de dúvidas, entre em contato com o administrador.`;
 
-        await base44.functions.invoke('enviarNotificacaoWhatsApp', {
-          recipient_type: 'custom',
-          recipient_phone: phone,
-          recipient_name: newUserName || newUserEmail,
-          message_type: 'custom',
-          message_body: msg,
-        });
+        const whatsappUrl = `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(msg)}`;
+        window.open(whatsappUrl, '_blank');
       }
 
-      // 3. Salvar perfil/permissões no UserProfile
-      if (newUserRole !== 'user' || newUserPermissions.length > 0) {
-        await base44.entities.UserProfile.create({
-          user_email: newUserEmail,
-          user_name: newUserName || newUserEmail,
-          role: 'cliente',
-          phone: newUserPhone,
-          status: 'pending_password_change',
-        });
-      }
-
-      toast.success(`✅ Convite enviado para ${newUserEmail}!${newUserPhone ? ' WhatsApp também foi enviado.' : ''}`);
-      setShowNewUserDialog(false);
       setNewUserEmail(""); setNewUserName(""); setNewUserPhone(""); setNewUserRole("user"); setNewUserPermissions([]);
       queryClient.invalidateQueries({ queryKey: ['users'] });
     } catch (error) {
