@@ -17,10 +17,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'user_email e profile_id são obrigatórios' }, { status: 400 });
     }
 
-    // 1. Atualiza a entidade UserProfile
+    // 1. Salva no UserProfile (fonte principal para carregamento na tela de permissões)
     await base44.asServiceRole.entities.UserProfile.update(profile_id, { permissions });
 
-    // 2. Busca o usuário na entidade User pelo email e atualiza o campo permissions
+    // 2. Salva no User da plataforma (usado pelo Layout para montar o menu)
     const users = await base44.asServiceRole.entities.User.filter({ email: user_email });
     if (users.length > 0) {
       await base44.asServiceRole.entities.User.update(users[0].id, { permissions });

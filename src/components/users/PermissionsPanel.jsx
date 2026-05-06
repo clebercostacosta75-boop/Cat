@@ -1,50 +1,61 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Check, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-const ALL_PERMISSIONS = [
-  "Dashboard",
-  "Cronograma",
-  "Agenda de Treinamentos",
-  "Chamada Presencial",
-  "Entrada de Propostas",
-  "Gestão de BMM",
-  "Instrutores",
-  "Empresas",
-  "Contratadas",
-  "Cursos",
-  "Importar Excel",
-  "Dashboard Financeiro",
-  "Alunos Individuais (PF)",
-  "Certificações",
-  "Alertas de Vencimento",
-  "Designer de Certificados",
-  "Assinaturas Digitais",
-  "Auditoria de Certificados",
-  "Config. Notificações",
-  "Log de Notificações",
-  "Modelos E-mail",
-  "Central de Comunicação",
-  "Usuários",
-  "Log de Auditoria",
-  "Log de Acesso",
-  "Dashboard Admin",
-  "Dashboard Comercial",
-  "Gestão de Leads",
-  "Caixa de Entrada",
-  "Base de Conhecimento",
-  "Contas Sociais",
-  "Dashboard de Relatórios",
+// Grupos de permissões organizados por categoria
+const PERMISSION_GROUPS = [
+  {
+    label: "Geral",
+    color: "bg-gray-100 text-gray-700",
+    items: ["Dashboard", "Agenda de Treinamentos", "Cronograma", "Chamada Presencial"],
+  },
+  {
+    label: "Operacional",
+    color: "bg-blue-100 text-blue-700",
+    items: ["Entrada de Propostas", "Gestão de BMM", "Instrutores", "Empresas", "Contratadas", "Cursos", "Importar Excel", "Alunos Individuais (PF)"],
+  },
+  {
+    label: "Financeiro",
+    color: "bg-green-100 text-green-700",
+    items: ["Dashboard Financeiro"],
+  },
+  {
+    label: "Certificações",
+    color: "bg-yellow-100 text-yellow-700",
+    items: ["Certificações", "Alertas de Vencimento", "Designer de Certificados", "Assinaturas Digitais", "Auditoria de Certificados"],
+  },
+  {
+    label: "Comercial / Atendimento",
+    color: "bg-purple-100 text-purple-700",
+    items: ["Dashboard Comercial", "Gestão de Leads", "Caixa de Entrada", "Base de Conhecimento", "Contas Sociais"],
+  },
+  {
+    label: "Comunicação",
+    color: "bg-pink-100 text-pink-700",
+    items: ["Modelos E-mail", "Central de Comunicação", "Config. Notificações", "Log de Notificações"],
+  },
+  {
+    label: "Relatórios",
+    color: "bg-indigo-100 text-indigo-700",
+    items: ["Dashboard de Relatórios", "Dashboard Admin"],
+  },
+  {
+    label: "Administração",
+    color: "bg-red-100 text-red-700",
+    items: ["Usuários", "Log de Auditoria", "Log de Acesso"],
+  },
 ];
 
+const ALL_PERMISSIONS = PERMISSION_GROUPS.flatMap(g => g.items);
+
 function PermissionEditor({ profile, onSaved }) {
-  const current = profile.permissions || [];
-  const [selected, setSelected] = useState(new Set(current));
+  // Carrega permissões salvas no UserProfile
+  const [selected, setSelected] = useState(new Set(profile.permissions || []));
   const [saving, setSaving] = useState(false);
 
   const toggle = (perm) => {
@@ -52,6 +63,15 @@ function PermissionEditor({ profile, onSaved }) {
       const next = new Set(prev);
       if (next.has(perm)) next.delete(perm);
       else next.add(perm);
+      return next;
+    });
+  };
+
+  const toggleGroup = (items) => {
+    const allSelected = items.every(i => selected.has(i));
+    setSelected(prev => {
+      const next = new Set(prev);
+      items.forEach(i => allSelected ? next.delete(i) : next.add(i));
       return next;
     });
   };
@@ -69,7 +89,9 @@ function PermissionEditor({ profile, onSaved }) {
         permissions: perms,
       });
       if (res.data?.success) {
-        toast.success(`Permissões de ${profile.user_name} salvas! O usuário verá as alterações no próximo acesso.`);
+        toast.success(`Permissões de ${profile.user_name} salvas com sucesso! O menu será atualizado automaticamente.`);
+        // Dispara evento para o Layout atualizar o menu imediatamente
+        window.dispatchEvent(new Event("permissions-updated"));
         onSaved();
       } else {
         toast.error(res.data?.error || "Erro ao salvar permissões");
@@ -82,34 +104,62 @@ function PermissionEditor({ profile, onSaved }) {
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex gap-2">
+    <div className="space-y-4 pt-3">
+      {/* Controles globais */}
+      <div className="flex items-center gap-2 flex-wrap">
         <Button size="sm" variant="outline" onClick={selectAll}>Selecionar Tudo</Button>
         <Button size="sm" variant="outline" onClick={clearAll}>Limpar Tudo</Button>
-        <span className="ml-auto text-sm text-gray-500 self-center">{selected.size} de {ALL_PERMISSIONS.length} selecionados</span>
+        <span className="ml-auto text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded px-2 py-0.5">
+          {selected.size} / {ALL_PERMISSIONS.length} permissões selecionadas
+        </span>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-        {ALL_PERMISSIONS.map(perm => (
-          <label
-            key={perm}
-            className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-colors text-sm ${
-              selected.has(perm)
-                ? "bg-blue-50 border-blue-400 text-blue-800"
-                : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-            }`}
-          >
-            <input
-              type="checkbox"
-              checked={selected.has(perm)}
-              onChange={() => toggle(perm)}
-              className="w-4 h-4 accent-blue-600"
-            />
-            {perm}
-          </label>
-        ))}
-      </div>
-      <div className="flex justify-end pt-2">
-        <Button onClick={handleSave} disabled={saving}>
+
+      {/* Grupos */}
+      {PERMISSION_GROUPS.map(group => {
+        const groupSelected = group.items.filter(i => selected.has(i)).length;
+        const allGroupSelected = groupSelected === group.items.length;
+        return (
+          <div key={group.label} className="border rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b">
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded ${group.color}`}>{group.label}</span>
+                <span className="text-xs text-gray-400">{groupSelected}/{group.items.length}</span>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-xs h-6 px-2"
+                onClick={() => toggleGroup(group.items)}
+              >
+                {allGroupSelected ? "Desmarcar grupo" : "Marcar grupo"}
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3">
+              {group.items.map(perm => (
+                <label
+                  key={perm}
+                  className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-colors text-sm ${
+                    selected.has(perm)
+                      ? "bg-blue-50 border-blue-400 text-blue-800"
+                      : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected.has(perm)}
+                    onChange={() => toggle(perm)}
+                    className="w-4 h-4 accent-blue-600"
+                  />
+                  {perm}
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+
+      <div className="flex justify-end pt-1">
+        <Button onClick={handleSave} disabled={saving} className="min-w-[160px]">
           <Check className="w-4 h-4 mr-1" />
           {saving ? "Salvando..." : "Salvar Permissões"}
         </Button>
@@ -165,7 +215,7 @@ export default function PermissionsPanel({ profiles, onRefresh }) {
                   {isAdmin(profile) ? (
                     <Badge className="bg-purple-100 text-purple-800">Acesso Total</Badge>
                   ) : (
-                    <Badge className="bg-gray-100 text-gray-700">
+                    <Badge className={`${(profile.permissions || []).length > 0 ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-500"}`}>
                       {(profile.permissions || []).length} permissões
                     </Badge>
                   )}
@@ -183,7 +233,11 @@ export default function PermissionsPanel({ profiles, onRefresh }) {
                     Este usuário tem acesso total — não é necessário configurar permissões individualmente.
                   </p>
                 ) : (
-                  <PermissionEditor profile={profile} onSaved={() => { onRefresh(); }} />
+                  <PermissionEditor
+                    key={profile.id}
+                    profile={profile}
+                    onSaved={() => { onRefresh(); }}
+                  />
                 )}
               </CardContent>
             )}

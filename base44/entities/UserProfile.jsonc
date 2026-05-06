@@ -24,6 +24,13 @@
       "default": "cliente",
       "description": "Perfil de acesso"
     },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Permiss\u00f5es individuais de acesso \u00e0s p\u00e1ginas do sistema"
+    },
     "status": {
       "type": "string",
       "enum": [

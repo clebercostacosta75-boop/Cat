@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { base44 } from "@/api/base44Client";
 import {
   LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText,
-  Building2, UserCog, Mail, History, Bell, DollarSign, Award, TrendingUp,
-  PenLine, Settings, AlertTriangle, Target, Instagram, MessageSquare, ShieldAlert
+  Building2, UserCog, Mail, Bell, Award,
+  TrendingUp, PenLine, Settings, Target, Instagram, MessageSquare, ShieldAlert
 } from "lucide-react";
 
 import NotificationBell from "./components/notifications/NotificationBell";
@@ -16,8 +15,8 @@ import {
   SidebarProvider, SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Toaster } from "sonner";
+import { usePermissions } from "@/hooks/usePermissions";
 
-// ── Todos os itens possíveis do menu ──────────────────────────────────────────
 const ALL_ITEMS = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, key: "Dashboard" },
   { title: "Cronograma", url: createPageUrl("Schedule"), icon: Calendar, key: "Cronograma" },
@@ -53,65 +52,6 @@ const ALL_ITEMS = [
   { title: "Dashboard de Relatórios", url: "/Analytics", icon: BarChart3, key: "Dashboard de Relatórios" },
 ];
 
-// ── Mapeamento de permissões legadas para permissões atuais ──
-const LEGACY_PERMISSION_MAP = {
-  "Gerar BMM": "Gestão de BMM",
-  "Histórico BMM": "Gestão de BMM",
-  "Relatórios": "Dashboard de Relatórios",
-  "Alertas de Reciclagem": "Alertas de Vencimento",
-  "Análise de Lucratividade": "Dashboard Financeiro",
-  "Analytics": "Dashboard de Relatórios",
-};
-
-// Função para normalizar permissões (converte legadas para atuais)
-const normalizePermissions = (permissions) => {
-  if (!permissions) return null;
-  const normalized = new Set();
-  permissions.forEach(p => {
-    const mapped = LEGACY_PERMISSION_MAP[p] || p;
-    normalized.add(mapped);
-  });
-  return Array.from(normalized);
-};
-
-// ── Chaves permitidas por perfil (fallback quando não há permissões customizadas) ──
-const ROLE_MENUS = {
-  admin: null, // null = tudo
-  "Administrador Master": null,
-  Operacional: [
-    "Dashboard", "Agenda de Treinamentos", "Cronograma", "Chamada Presencial",
-    "Entrada de Propostas", "Gestão de BMM", "Instrutores", "Empresas", "Contratadas",
-    "Cursos", "Importar Excel", "Central de Comunicação",
-    "Config. Notificações", "Log de Notificações",
-    "Alunos Individuais (PF)",
-    "Dashboard Comercial", "Gestão de Leads", "Caixa de Entrada", "Base de Conhecimento", "Contas Sociais", "Dashboard de Relatórios",
-  ],
-  Financeiro: [
-    "Dashboard", "Dashboard Financeiro", "Dashboard de Relatórios",
-  ],
-  Certificacao: [
-    "Dashboard", "Certificações", "Alertas de Vencimento", "Designer de Certificados",
-    "Assinaturas Digitais", "Auditoria de Certificados",
-    "Agenda de Treinamentos", "Cronograma", "Chamada Presencial",
-    "Modelos E-mail", "Central de Comunicação",
-  ],
-  "Certificação": [
-    "Dashboard", "Certificações", "Alertas de Vencimento", "Designer de Certificados",
-    "Assinaturas Digitais", "Auditoria de Certificados",
-    "Agenda de Treinamentos", "Cronograma", "Chamada Presencial",
-    "Modelos E-mail", "Central de Comunicação",
-  ],
-  Atendimento: [
-    "Dashboard", "Caixa de Entrada", "Gestão de Leads", "Base de Conhecimento",
-    "Contas Sociais", "Dashboard Comercial", "Central de Comunicação",
-  ],
-  Instrutor: ["Dashboard"],
-  "Coordenador de Operações": [
-    "Dashboard", "Cronograma", "Agenda de Treinamentos", "Chamada Presencial",
-  ],
-  PortalEmpresa: [],
-};
-
 const ROLE_LABEL = {
   Instrutor: "Instrutor",
   "Coordenador de Operações": "Coordenador",
@@ -122,43 +62,15 @@ const ROLE_LABEL = {
   Atendimento: "Atendimento",
   admin: "Administrador",
   "Administrador Master": "Administrador",
+  gestor_master: "Gestor Master",
   PortalEmpresa: "Portal Empresa",
 };
 
 export default function Layout({ children }) {
   const location = useLocation();
-  const [userRole, setUserRole] = useState(null);
-  const [userPermissions, setUserPermissions] = useState(null); // null = não carregado ainda
+  const { role, allowedKeys } = usePermissions();
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const u = await base44.auth.me();
-        if (u.email) {
-          const insts = await base44.entities.Instructor.filter({ email: u.email });
-          if (insts.length > 0) { setUserRole("Instrutor"); setUserPermissions([]); return; }
-        }
-        setUserRole(u.custom_role || u.role || "user");
-        // Permissões customizadas salvas no campo permissions do usuário (normalizadas)
-        setUserPermissions(normalizePermissions(u.permissions));
-      } catch { /* silent */ }
-    };
-    load();
-  }, []);
-
-  // Se tem permissões customizadas, usa elas; senão usa o ROLE_MENUS por perfil
-  const getAllowedKeys = () => {
-    const role = userRole;
-    if (!role) return [];
-    // Admin/Master sempre vê tudo
-    if (role === "admin" || role === "Administrador Master") return null;
-    // Se o usuário tem permissões customizadas definidas, usa elas
-    if (userPermissions && userPermissions.length > 0) return userPermissions;
-    // Fallback para o mapa de perfis
-    return ROLE_MENUS[role] ?? [];
-  };
-
-  const allowedKeys = getAllowedKeys();
+  // null = acesso total, array = filtro
   const navigationItems = allowedKeys === null
     ? ALL_ITEMS
     : ALL_ITEMS.filter(i => allowedKeys.includes(i.key));
@@ -178,8 +90,8 @@ export default function Layout({ children }) {
               </div>
               <div>
                 <h2 className="font-semibold text-gray-900 text-sm">Sistema de Treinamento</h2>
-                {userRole && (
-                  <p className="text-xs text-gray-500">{ROLE_LABEL[userRole] || userRole}</p>
+                {role && (
+                  <p className="text-xs text-gray-500">{ROLE_LABEL[role] || role}</p>
                 )}
               </div>
             </div>
