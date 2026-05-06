@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import EmailDeliveryPanel from "@/components/users/EmailDeliveryPanel";
 import PermissionsPanel from "@/components/users/PermissionsPanel";
+import CredentialsModal from "@/components/users/CredentialsModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
@@ -145,6 +146,7 @@ export default function UsersPage() {
   const [saving, setSaving] = useState(false);
   const [deletingProfile, setDeletingProfile] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [credentialsModal, setCredentialsModal] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(u => setCurrentUser(u)).catch(() => {});
@@ -229,7 +231,12 @@ export default function UsersPage() {
         profile_id: profile.id,
       });
       if (res.data?.success) {
-        toast.success(`Credenciais reenviadas para ${profile.user_email} ✓`);
+        // Exibe modal com credenciais geradas
+        setCredentialsModal({
+          name: profile.user_name,
+          email: profile.user_email,
+          password: res.data.password,
+        });
         await loadProfiles();
       } else {
         toast.error(res.data?.error || "Erro ao reenviar credenciais");
@@ -444,6 +451,11 @@ export default function UsersPage() {
           )}
         </TabsContent>
       </Tabs>
+      <CredentialsModal
+        isOpen={!!credentialsModal}
+        credentials={credentialsModal}
+        onClose={() => setCredentialsModal(null)}
+      />
       <AlertDialog open={!!deletingProfile} onOpenChange={open => !open && setDeletingProfile(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
