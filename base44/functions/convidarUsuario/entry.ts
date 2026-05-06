@@ -1,0 +1,40 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Não autorizado' }, { status: 401 });
+    if (user.role !== 'admin' && user.custom_role !== 'Administrador Master') {
+      return Response.json({ error: 'Sem permissão' }, { status: 403 });
+    }
+
+    const { email, role } = await req.json();
+    if (!email) return Response.json({ error: 'E-mail obrigatório' }, { status: 400 });
+
+    // Verificar se usuário já existe
+    const existingUsers = await base44.asServiceRole.entities.User.filter({});
+    const already = existingUsers.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    if (already) {
+      return Response.json({ 
+        success: false, 
+        already_exists: true,
+        message: `O e-mail ${email} já está cadastrado no sistema.`
+      }, { status: 200 });
+    }
+
+    // Convidar via SDK
+    await base44.users.inviteUser(email, role || 'user');
+
+    return Response.json({ 
+      success: true, 
+      message: `Convite enviado para ${email} com sucesso.`
+    });
+
+  } catch (error) {
+    return Response.json({ 
+      error: 'Erro ao convidar usuário', 
+      details: error.message 
+    }, { status: 500 });
+  }
+});

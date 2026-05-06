@@ -176,8 +176,16 @@ export default function UsersPage() {
     if (!newUserEmail) { toast.error("Informe o e-mail do usuário"); return; }
     setInviteSending(true);
     try {
-      // 1. Convidar o usuário via Base44 (envia e-mail de convite)
-      await base44.users.inviteUser(newUserEmail, "user");
+      // 1. Convidar via função backend (que verifica duplicatas antes)
+      const res = await base44.functions.invoke('convidarUsuario', {
+        email: newUserEmail,
+        role: 'user',
+      });
+
+      if (res.data?.already_exists) {
+        toast.warning("⚠️ Usuário já cadastrado", { description: res.data.message });
+        return;
+      }
 
       toast.success(`✅ Convite enviado para ${newUserEmail}!`);
       setShowNewUserDialog(false);
@@ -186,29 +194,22 @@ export default function UsersPage() {
       if (newUserPhone) {
         const phone = newUserPhone.replace(/\D/g, '');
         const phoneWithCountry = phone.startsWith('55') ? phone : '55' + phone;
+        const perfil = roles.find(r => r.value === newUserRole)?.label || newUserRole;
         const msg = `🔐 *Bem-vindo ao Sistema CAT Cursos!*\n\n` +
           `Olá *${newUserName || newUserEmail}*! 👋\n\n` +
           `Você recebeu um convite de acesso ao Sistema de Treinamento CAT.\n\n` +
           `📧 *E-mail de acesso:* ${newUserEmail}\n` +
-          `🔑 *Perfil:* ${roles.find(r => r.value === newUserRole)?.label || newUserRole}\n\n` +
+          `🔑 *Perfil:* ${perfil}\n\n` +
           `📩 Verifique sua caixa de entrada (e o spam) para o link de confirmação e criação de senha.\n\n` +
           `Em caso de dúvidas, entre em contato com o administrador.`;
 
-        const whatsappUrl = `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(msg)}`;
-        window.open(whatsappUrl, '_blank');
+        window.open(`https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(msg)}`, '_blank');
       }
 
       setNewUserEmail(""); setNewUserName(""); setNewUserPhone(""); setNewUserRole("user"); setNewUserPermissions([]);
       queryClient.invalidateQueries({ queryKey: ['users'] });
     } catch (error) {
-      const msg = error.message || '';
-      if (msg.includes('already') || msg.includes('exists') || msg.includes('500') || msg.includes('registrado')) {
-        toast.error("❌ Usuário já cadastrado", { description: "Este e-mail já está registrado no sistema." });
-      } else if (msg.includes('invalid') || msg.includes('email')) {
-        toast.error("❌ E-mail inválido", { description: "Verifique o endereço de e-mail informado." });
-      } else {
-        toast.error("❌ Erro ao convidar usuário", { description: msg || "Tente novamente." });
-      }
+      toast.error("❌ Erro ao convidar usuário", { description: error.message || "Tente novamente." });
     } finally {
       setInviteSending(false);
     }
