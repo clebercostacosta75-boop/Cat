@@ -9,6 +9,7 @@ import { UserCog, Plus, Search, Shield, Edit, Lock, Unlock, Mail, Phone, X, Chec
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import EmailDeliveryPanel from "@/components/users/EmailDeliveryPanel";
+import PermissionsPanel from "@/components/users/PermissionsPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
@@ -300,6 +301,7 @@ export default function UsersPage() {
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="permissoes">Permissões de Acesso</TabsTrigger>
         </TabsList>
 
         {/* Aba: lista de usuários */}
@@ -395,6 +397,17 @@ export default function UsersPage() {
             </div>
           ) : (
             <EmailDeliveryPanel profiles={profiles} onRefresh={loadProfiles} />
+          )}
+        </TabsContent>
+
+        {/* Aba: permissões de acesso */}
+        <TabsContent value="permissoes">
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-800 rounded-full animate-spin" />
+            </div>
+          ) : (
+            <PermissionsPanel profiles={profiles} onRefresh={loadProfiles} />
           )}
         </TabsContent>
       </Tabs>
