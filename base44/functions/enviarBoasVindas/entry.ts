@@ -1,22 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import nodemailer from 'npm:nodemailer@6.9.10';
 
-// Gera senha temporária segura de 8 caracteres
-function gerarSenhaTemporaria() {
-  const maiusculas = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-  const minusculas = 'abcdefghjkmnpqrstuvwxyz';
-  const numeros = '23456789';
-  const todos = maiusculas + minusculas + numeros;
-  let senha = '';
-  senha += maiusculas[Math.floor(Math.random() * maiusculas.length)];
-  senha += minusculas[Math.floor(Math.random() * minusculas.length)];
-  senha += numeros[Math.floor(Math.random() * numeros.length)];
-  for (let i = 3; i < 8; i++) {
-    senha += todos[Math.floor(Math.random() * todos.length)];
-  }
-  return senha.split('').sort(() => Math.random() - 0.5).join('');
-}
-
 function buildEmailHtml(userName, userEmail, senha) {
   const appUrl = 'https://app.base44.com';
   return `<!DOCTYPE html>
@@ -148,9 +132,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Sem permissão' }, { status: 403 });
     }
 
-    const { user_email, user_name } = await req.json();
-    if (!user_email || !user_name) {
-      return Response.json({ error: 'user_email e user_name são obrigatórios' }, { status: 400 });
+    const { user_email, user_name, senha_temporaria } = await req.json();
+    if (!user_email || !user_name || !senha_temporaria) {
+      return Response.json({ error: 'user_email, user_name e senha_temporaria são obrigatórios' }, { status: 400 });
     }
 
     const smtpEmail = Deno.env.get('UOL_SMTP_EMAIL');
@@ -159,14 +143,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Credenciais SMTP não configuradas (UOL_SMTP_EMAIL / UOL_SMTP_PASSWORD)' }, { status: 500 });
     }
 
-    // Gera senha temporária
-    const senha = gerarSenhaTemporaria();
-
-    // Salva a senha temporária e atualiza status no perfil
+    // Salva a senha temporária no perfil do usuário
     const profiles = await base44.asServiceRole.entities.UserProfile.filter({ user_email });
     if (profiles.length > 0) {
       await base44.asServiceRole.entities.UserProfile.update(profiles[0].id, {
-        initial_password: senha,
+        initial_password: senha_temporaria,
         status: 'pending_password_change',
         credentials_sent_at: new Date().toISOString(),
         credentials_sent_via: 'email',
@@ -186,13 +167,13 @@ Deno.serve(async (req) => {
       from: `"CAT Gestão de Cursos" <${smtpEmail}>`,
       to: user_email,
       subject: 'Bem-vindo(a) ao CAT Gestão de Cursos - Suas credenciais de acesso',
-      html: buildEmailHtml(user_name, user_email, senha),
+      html: buildEmailHtml(user_name, user_email, senha_temporaria),
     });
 
     return Response.json({
       success: true,
-      message: `E-mail de boas-vindas enviado para ${user_email}`,
-      senha_temporaria: senha,
+      message: `E-mail de boas-vindas com credenciais enviado para ${user_email}`,
+      email_enviado: true,
     });
 
   } catch (error) {
