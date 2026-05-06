@@ -75,7 +75,7 @@ import ProfitabilityAnalysis from './pages/ProfitabilityAnalysis';
 import RecyclingAlerts from './pages/RecyclingAlerts';
 import Reports from './pages/Reports';
 import Schedule from './pages/Schedule';
-import Users from './pages/Users';
+import Users from './pages/Users.jsx';
 import __Layout from './Layout.jsx';
 
 
