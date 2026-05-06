@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserCog, Plus, Search, Shield, Edit, Lock, Unlock, Mail, Phone, X, Check } from "lucide-react";
+import { UserCog, Plus, Search, Shield, Edit, Lock, Unlock, Mail, Phone, X, Check, Send } from "lucide-react";
 import { toast } from "sonner";
 
 const ROLE_OPTIONS = [
@@ -186,6 +186,22 @@ export default function UsersPage() {
     setEditingProfile(null);
   };
 
+  const handleResendInvite = async (profile) => {
+    try {
+      const res = await base44.functions.invoke("convidarUsuario", {
+        email: profile.user_email,
+        role: "user",
+      });
+      if (res.data?.already_exists || res.data?.success) {
+        toast.success(`Convite reenviado para ${profile.user_email}`);
+      } else {
+        toast.error(res.data?.message || "Erro ao reenviar convite");
+      }
+    } catch {
+      toast.error("Erro ao reenviar convite");
+    }
+  };
+
   const handleToggleBlock = async (profile) => {
     const newStatus = profile.status === "blocked" ? "active" : "blocked";
     try {
@@ -299,6 +315,14 @@ export default function UsersPage() {
                     <Badge className={STATUS_COLORS[profile.status] || "bg-gray-100 text-gray-800"}>
                       {statusLabel(profile.status)}
                     </Badge>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleResendInvite(profile)}
+                      title="Reenviar convite por e-mail"
+                    >
+                      <Send className="w-4 h-4 text-blue-500" />
+                    </Button>
                     <Button
                       size="icon"
                       variant="ghost"
