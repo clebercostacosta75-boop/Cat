@@ -176,7 +176,7 @@ export default function UsersPage() {
     if (!newUserEmail) { toast.error("Informe o e-mail do usuário"); return; }
     setInviteSending(true);
     try {
-      // 1. Convidar via função backend (que verifica duplicatas antes)
+      // 1. Convidar via função backend (verifica duplicatas + envia e-mail de convite)
       const res = await base44.functions.invoke('convidarUsuario', {
         email: newUserEmail,
         role: 'user',
@@ -187,13 +187,8 @@ export default function UsersPage() {
         return;
       }
 
-      toast.success(`✅ Convite enviado para ${newUserEmail}!`);
-      setShowNewUserDialog(false);
-
-      // 2. Se tem telefone, abrir WhatsApp com mensagem pré-preenchida
+      // 2. Se tem telefone, enviar WhatsApp via Twilio (envio automático pelo backend)
       if (newUserPhone) {
-        const phone = newUserPhone.replace(/\D/g, '');
-        const phoneWithCountry = phone.startsWith('55') ? phone : '55' + phone;
         const perfil = roles.find(r => r.value === newUserRole)?.label || newUserRole;
         const msg = `🔐 *Bem-vindo ao Sistema CAT Cursos!*\n\n` +
           `Olá *${newUserName || newUserEmail}*! 👋\n\n` +
@@ -203,9 +198,25 @@ export default function UsersPage() {
           `📩 Verifique sua caixa de entrada (e o spam) para o link de confirmação e criação de senha.\n\n` +
           `Em caso de dúvidas, entre em contato com o administrador.`;
 
-        window.open(`https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(msg)}`, '_blank');
+        try {
+          await base44.functions.invoke('enviarNotificacaoWhatsApp', {
+            recipient_type: 'custom',
+            recipient_name: newUserName || newUserEmail,
+            recipient_phone: newUserPhone,
+            message_type: 'custom',
+            message_body: msg,
+          });
+          toast.success(`✅ Convite enviado para ${newUserEmail} e WhatsApp notificado!`);
+        } catch (waErr) {
+          // WhatsApp falhou mas convite por e-mail já foi enviado
+          toast.success(`✅ Convite enviado para ${newUserEmail}!`);
+          toast.warning("⚠️ WhatsApp não enviado", { description: "Verifique se o Twilio está configurado ou se o número está correto." });
+        }
+      } else {
+        toast.success(`✅ Convite enviado para ${newUserEmail}!`);
       }
 
+      setShowNewUserDialog(false);
       setNewUserEmail(""); setNewUserName(""); setNewUserPhone(""); setNewUserRole("user"); setNewUserPermissions([]);
       queryClient.invalidateQueries({ queryKey: ['users'] });
     } catch (error) {
