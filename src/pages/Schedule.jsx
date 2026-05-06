@@ -99,49 +99,47 @@ export default function SchedulePage() {
       // Buscar instrutor
       const instructors = await base44.entities.Instructor.filter({ name: classItem.instructor_name });
       if (instructors.length === 0) {
-        toast.error('❌ Atenção: Instrutor não encontrado', {
-          description: 'Não foi possível localizar o instrutor. Verifique se o nome está correto.'
-        });
+        toast.error('❌ Instrutor não encontrado', { description: 'Verifique se o nome está correto.' });
         return;
       }
       const instructor = instructors[0];
 
-      // Buscar usuário do instrutor pelo email
-      const users = await base44.entities.User.filter({ email: instructor.email });
-      if (users.length === 0) {
-        toast.error('❌ Atenção: Usuário do instrutor não encontrado', {
-          description: 'O instrutor não possui um usuário vinculado no sistema. Crie um usuário com o email do instrutor.'
-        });
-        return;
-      }
-      const user = users[0];
-
-      if (!user.phone || !user.is_whatsapp) {
-        toast.error('❌ Atenção: WhatsApp não cadastrado', {
-          description: 'O instrutor não possui WhatsApp cadastrado. Edite o usuário e adicione o telefone marcando como WhatsApp.'
-        });
+      // Pegar telefone direto do instrutor
+      const phone = instructor.phone;
+      if (!phone) {
+        toast.error('❌ WhatsApp não cadastrado', { description: 'Adicione o telefone no cadastro do instrutor.' });
         return;
       }
 
-      // Enviar mensagem
-      await base44.functions.invoke('enviarNotificacaoWhatsApp', {
-        recipient_id: user.id,
-        recipient_type: 'instructor',
-        message_type: 'class_schedule',
-        class_schedule_id: classItem.id
-      });
+      // Montar mensagem
+      const datas = classItem.realization_dates?.length > 0
+        ? classItem.realization_dates.join(', ')
+        : classItem.start_date || 'A definir';
 
-      toast.success('✅ Cronograma enviado com sucesso!', {
-        description: 'O instrutor foi notificado via WhatsApp.'
+      const msg = `🎓 *Cronograma de Treinamento*\n\n` +
+        `Olá *${instructor.name}*!\n\n` +
+        `Segue o cronograma do treinamento:\n\n` +
+        `📚 *Treinamento:* ${classItem.training_name}\n` +
+        `🏢 *Empresa:* ${classItem.company_name}\n` +
+        `📅 *Data(s):* ${datas}\n` +
+        (classItem.training_schedule ? `🕐 *Horário:* ${classItem.training_schedule}\n` : '') +
+        (classItem.location ? `📍 *Local:* ${classItem.location}\n` : '') +
+        (classItem.students_count ? `👥 *Alunos:* ${classItem.students_count}\n` : '') +
+        (classItem.notes ? `\n📝 *Obs:* ${classItem.notes}\n` : '') +
+        `\n✅ *Status:* ${classItem.status}`;
+
+      const formattedPhone = phone.replace(/\D/g, '');
+      const phoneWithCountry = formattedPhone.startsWith('55') ? formattedPhone : '55' + formattedPhone;
+      window.open(`https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(msg)}`, '_blank');
+
+      toast.success('✅ WhatsApp aberto com a mensagem pronta!', {
+        description: 'Clique em enviar no WhatsApp para notificar o instrutor.'
       });
-      } catch (error) {
-      console.error('Erro ao enviar WhatsApp:', error);
-      toast.error('❌ Erro ao enviar mensagem', {
-        description: error.message || 'Ocorreu um erro desconhecido ao tentar enviar o WhatsApp. Tente novamente.'
-      });
-      } finally {
+    } catch (error) {
+      toast.error('❌ Erro ao preparar mensagem', { description: error.message });
+    } finally {
       setSendingWhatsApp(null);
-      }
+    }
   };
 
   return (
