@@ -190,7 +190,9 @@ export default function UsersPage() {
     setSaving(true);
     try {
       if (editingProfile) {
-        await base44.entities.UserProfile.update(editingProfile.id, formData);
+        // Usa o id do registro (hex), não o user_id (UUID)
+        const profileId = editingProfile.id;
+        await base44.entities.UserProfile.update(profileId, formData);
         toast.success("Usuário atualizado com sucesso!");
       } else {
         // Cria o perfil primeiro
