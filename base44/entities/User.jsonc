@@ -1,0 +1,78 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "custom_role": {
+      "type": "string",
+      "enum": [
+        "Administrador Master",
+        "Coordenador de Opera\u00e7\u00f5es",
+        "Financeiro",
+        "Instrutor",
+        "Certifica\u00e7\u00e3o",
+        "Atendimento",
+        "PortalEmpresa"
+      ],
+      "description": "N\u00edvel de acesso personalizado do usu\u00e1rio"
+    },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Dashboard",
+          "Cronograma",
+          "Agenda de Treinamentos",
+          "Chamada Presencial",
+          "Entrada de Propostas",
+          "Gest\u00e3o de BMM",
+          "Instrutores",
+          "Empresas",
+          "Contratadas",
+          "Cursos",
+          "Importar Excel",
+          "Dashboard Financeiro",
+          "Alunos Individuais (PF)",
+          "Certifica\u00e7\u00f5es",
+          "Alertas de Vencimento",
+          "Designer de Certificados",
+          "Assinaturas Digitais",
+          "Auditoria de Certificados",
+          "Config. Notifica\u00e7\u00f5es",
+          "Log de Notifica\u00e7\u00f5es",
+          "Modelos E-mail",
+          "Central de Comunica\u00e7\u00e3o",
+          "Usu\u00e1rios",
+          "Log de Auditoria",
+          "Dashboard Admin",
+          "Dashboard Comercial",
+          "Gest\u00e3o de Leads",
+          "Caixa de Entrada",
+          "Base de Conhecimento",
+          "Contas Sociais",
+          "Dashboard de Relat\u00f3rios",
+          "Gerar BMM",
+          "Hist\u00f3rico BMM",
+          "Relat\u00f3rios",
+          "Alertas de Reciclagem",
+          "An\u00e1lise de Lucratividade"
+        ]
+      },
+      "description": "Permiss\u00f5es espec\u00edficas para funcionalidades do dashboard"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Telefone/WhatsApp do usu\u00e1rio"
+    },
+    "is_whatsapp": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indica se o telefone \u00e9 WhatsApp"
+    }
+  },
+  "required": [
+    "custom_role",
+    "permissions",
+    "phone"
+  ]
+}

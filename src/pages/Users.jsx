@@ -80,7 +80,7 @@ export default function UsersPage() {
     loadCurrentUser();
   }, []);
 
-  // Lista de todas as permissões disponíveis
+  // Lista de todas as permissões disponíveis + compatibilidade com nomes legados
   const availablePermissions = [
     "Dashboard",
     "Cronograma",
@@ -113,6 +113,12 @@ export default function UsersPage() {
     "Base de Conhecimento",
     "Contas Sociais",
     "Dashboard de Relatórios",
+    // Nomes legados (compatibilidade com dados existentes)
+    "Gerar BMM",
+    "Histórico BMM",
+    "Relatórios",
+    "Alertas de Reciclagem",
+    "Análise de Lucratividade",
   ];
 
   const { data: users = [], isLoading } = useQuery({
