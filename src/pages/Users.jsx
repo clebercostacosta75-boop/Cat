@@ -168,21 +168,22 @@ export default function UsersPage() {
     loadProfiles();
   }, []);
 
-  const sendInviteAndRecord = async (email, profileId, role) => {
+  const sendInviteAndRecord = async (email, profileId, role, userName) => {
     try {
+      // 1. Convida via plataforma (cria o acesso)
       const res = await base44.functions.invoke("convidarUsuario", {
         email,
         role: role || "user",
       });
-      const success = res.data?.success || res.data?.already_exists;
-      await base44.entities.UserProfile.update(profileId, {
-        credentials_sent_at: new Date().toISOString(),
-        credentials_sent_via: "email",
-        credentials_sent_by: "sistema",
+      // 2. Envia e-mail de boas-vindas com template bonito e senha temporária
+      const welcomeRes = await base44.functions.invoke("enviarBoasVindas", {
+        user_email: email,
+        user_name: userName || email,
+        profile_id: profileId,
       });
-      return success;
+      return { success: res.data?.success || res.data?.already_exists, senha: welcomeRes.data?.senha_temporaria };
     } catch {
-      return false;
+      return { success: false };
     }
   };
 
@@ -196,13 +197,16 @@ export default function UsersPage() {
         toast.success("Usuário atualizado com sucesso!");
       } else {
         // Cria o perfil primeiro
-        const created = await base44.entities.UserProfile.create(formData);
-        // Envia convite por e-mail automaticamente e registra
-        const sent = await sendInviteAndRecord(formData.user_email, created.id, formData.role);
-        if (sent) {
-          toast.success(`Usuário criado! Convite enviado para ${formData.user_email}`);
+        const created = await base44.entities.UserProfile.create({
+          ...formData,
+          status: "pending_password_change",
+        });
+        // Envia convite + e-mail de boas-vindas com senha temporária
+        const result = await sendInviteAndRecord(formData.user_email, created.id, formData.role, formData.user_name);
+        if (result.success) {
+          toast.success(`Usuário criado! Credenciais enviadas para ${formData.user_email}`);
         } else {
-          toast.warning("Usuário criado, mas houve um problema ao enviar o convite. Use o botão de reenvio.");
+          toast.warning("Usuário criado, mas houve um problema ao enviar as credenciais. Use o botão de reenvio.");
         }
       }
       setShowForm(false);
@@ -232,15 +236,15 @@ export default function UsersPage() {
 
   const handleResendInvite = async (profile) => {
     try {
-      const sent = await sendInviteAndRecord(profile.user_email, profile.id, profile.role);
-      if (sent) {
-        toast.success(`Convite reenviado para ${profile.user_email} ✓`);
+      const result = await sendInviteAndRecord(profile.user_email, profile.id, profile.role, profile.user_name);
+      if (result.success !== false) {
+        toast.success(`Credenciais reenviadas para ${profile.user_email} ✓`);
         await loadProfiles();
       } else {
-        toast.error("Erro ao reenviar convite");
+        toast.error("Erro ao reenviar credenciais");
       }
     } catch {
-      toast.error("Erro ao reenviar convite");
+      toast.error("Erro ao reenviar credenciais");
     }
   };
 
@@ -396,8 +400,14 @@ export default function UsersPage() {
                         <Badge className={STATUS_COLORS[profile.status] || "bg-gray-100 text-gray-800"}>
                           {statusLabel(profile.status)}
                         </Badge>
-                        <Button size="icon" variant="ghost" onClick={() => handleResendInvite(profile)} title="Reenviar convite">
-                          <Send className="w-4 h-4 text-blue-500" />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleResendInvite(profile)}
+                          title="Reenviar credenciais por e-mail"
+                          className="text-xs text-blue-600 border-blue-200 hover:bg-blue-50 gap-1"
+                        >
+                          <Send className="w-3 h-3" /> Reenviar
                         </Button>
                         <Button size="icon" variant="ghost" onClick={() => handleEdit(profile)} title="Editar">
                           <Edit className="w-4 h-4" />
