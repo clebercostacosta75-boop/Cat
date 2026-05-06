@@ -52,7 +52,7 @@ const ALL_ITEMS = [
   { title: "Dashboard de Relatórios", url: "/Analytics", icon: BarChart3, key: "Analytics" },
 ];
 
-// ── Chaves permitidas por perfil ───────────────────────────────────────────────
+// ── Chaves permitidas por perfil (fallback quando não há permissões customizadas) ──
 const ROLE_MENUS = {
   admin: null, // null = tudo
   "Administrador Master": null,
@@ -62,16 +62,26 @@ const ROLE_MENUS = {
     "Cursos", "Importar Excel", "Central de Comunicação",
     "Config. Notificações", "Log de Notificações",
     "Alunos Individuais (PF)",
-    "Dashboard Comercial", "Gestão de Leads", "Caixa de Entrada", "Base de Conhecimento", "Contas Sociais", "Analytics",
+    "Dashboard Comercial", "Gestão de Leads", "Caixa de Entrada", "Base de Conhecimento", "Contas Sociais", "Dashboard de Relatórios",
   ],
   Financeiro: [
-    "Dashboard", "Dashboard Financeiro", "Analytics",
+    "Dashboard", "Dashboard Financeiro", "Dashboard de Relatórios",
   ],
   Certificacao: [
     "Dashboard", "Certificações", "Alertas de Vencimento", "Designer de Certificados",
     "Assinaturas Digitais", "Auditoria de Certificados",
     "Agenda de Treinamentos", "Cronograma", "Chamada Presencial",
-    "Gerar BMM", "Modelos E-mail", "Central de Comunicação",
+    "Modelos E-mail", "Central de Comunicação",
+  ],
+  "Certificação": [
+    "Dashboard", "Certificações", "Alertas de Vencimento", "Designer de Certificados",
+    "Assinaturas Digitais", "Auditoria de Certificados",
+    "Agenda de Treinamentos", "Cronograma", "Chamada Presencial",
+    "Modelos E-mail", "Central de Comunicação",
+  ],
+  Atendimento: [
+    "Dashboard", "Caixa de Entrada", "Gestão de Leads", "Base de Conhecimento",
+    "Contas Sociais", "Dashboard Comercial", "Central de Comunicação",
   ],
   Instrutor: ["Dashboard"],
   "Coordenador de Operações": [
@@ -86,6 +96,8 @@ const ROLE_LABEL = {
   Financeiro: "Financeiro",
   Operacional: "Operacional",
   Certificacao: "Certificação",
+  "Certificação": "Certificação",
+  Atendimento: "Atendimento",
   admin: "Administrador",
   "Administrador Master": "Administrador",
   PortalEmpresa: "Portal Empresa",
@@ -94,6 +106,7 @@ const ROLE_LABEL = {
 export default function Layout({ children }) {
   const location = useLocation();
   const [userRole, setUserRole] = useState(null);
+  const [userPermissions, setUserPermissions] = useState(null); // null = não carregado ainda
 
   useEffect(() => {
     const load = async () => {
@@ -101,18 +114,32 @@ export default function Layout({ children }) {
         const u = await base44.auth.me();
         if (u.email) {
           const insts = await base44.entities.Instructor.filter({ email: u.email });
-          if (insts.length > 0) { setUserRole("Instrutor"); return; }
+          if (insts.length > 0) { setUserRole("Instrutor"); setUserPermissions([]); return; }
         }
         setUserRole(u.custom_role || u.role || "user");
+        // Permissões customizadas salvas no campo permissions do usuário
+        setUserPermissions(u.permissions || null);
       } catch { /* silent */ }
     };
     load();
   }, []);
 
-  const allowedKeys = userRole ? ROLE_MENUS[userRole] : [];
+  // Se tem permissões customizadas, usa elas; senão usa o ROLE_MENUS por perfil
+  const getAllowedKeys = () => {
+    const role = userRole;
+    if (!role) return [];
+    // Admin/Master sempre vê tudo
+    if (role === "admin" || role === "Administrador Master") return null;
+    // Se o usuário tem permissões customizadas definidas, usa elas
+    if (userPermissions && userPermissions.length > 0) return userPermissions;
+    // Fallback para o mapa de perfis
+    return ROLE_MENUS[role] ?? [];
+  };
+
+  const allowedKeys = getAllowedKeys();
   const navigationItems = allowedKeys === null
     ? ALL_ITEMS
-    : ALL_ITEMS.filter(i => allowedKeys?.includes(i.key));
+    : ALL_ITEMS.filter(i => allowedKeys.includes(i.key));
 
   return (
     <SidebarProvider>
