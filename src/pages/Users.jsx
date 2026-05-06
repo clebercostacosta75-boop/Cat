@@ -5,7 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserCog, Plus, Search, Shield, Edit, Lock, Unlock, Mail, Phone, X, Check, Send, CheckCircle, Clock } from "lucide-react";
+import { UserCog, Plus, Search, Shield, Edit, Lock, Unlock, Mail, Phone, X, Check, Send, CheckCircle, Clock, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import EmailDeliveryPanel from "@/components/users/EmailDeliveryPanel";
@@ -139,6 +143,14 @@ export default function UsersPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingProfile, setEditingProfile] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [deletingProfile, setDeletingProfile] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(u => setCurrentUser(u)).catch(() => {});
+  }, []);
+
+  const canDelete = currentUser?.role === "admin" || currentUser?.role === "gestor_master";
 
   const loadProfiles = async () => {
     setLoading(true);
@@ -227,6 +239,19 @@ export default function UsersPage() {
       }
     } catch {
       toast.error("Erro ao reenviar convite");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingProfile) return;
+    try {
+      await base44.entities.UserProfile.delete(deletingProfile.id);
+      setProfiles(prev => prev.filter(p => p.id !== deletingProfile.id));
+      toast.success(`Usuário ${deletingProfile.user_name || deletingProfile.user_email} excluído com sucesso.`);
+    } catch {
+      toast.error("Erro ao excluir usuário");
+    } finally {
+      setDeletingProfile(null);
     }
   };
 
@@ -380,6 +405,11 @@ export default function UsersPage() {
                             ? <Unlock className="w-4 h-4 text-green-600" />
                             : <Lock className="w-4 h-4 text-red-500" />}
                         </Button>
+                        {canDelete && (
+                          <Button size="icon" variant="ghost" onClick={() => setDeletingProfile(profile)} title="Excluir usuário">
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -411,6 +441,22 @@ export default function UsersPage() {
           )}
         </TabsContent>
       </Tabs>
+      <AlertDialog open={!!deletingProfile} onOpenChange={open => !open && setDeletingProfile(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir usuário</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o usuário <strong>{deletingProfile?.user_name || deletingProfile?.user_email}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
