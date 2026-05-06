@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserCog, Plus, Search, Shield, Edit, Lock, Unlock, Mail, Phone, X, Check, Send, CheckCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import EmailDeliveryPanel from "@/components/users/EmailDeliveryPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
 const ROLE_OPTIONS = [
@@ -287,105 +289,115 @@ export default function UsersPage() {
         </Card>
       )}
 
-      {/* Busca */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <Input
-          className="pl-9"
-          placeholder="Buscar por nome ou e-mail..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-      </div>
+      <Tabs defaultValue="usuarios">
+        <TabsList className="mb-4">
+          <TabsTrigger value="usuarios">Usuários</TabsTrigger>
+          <TabsTrigger value="entregas">
+            Status de E-mails
+            {profiles.filter(p => !p.credentials_sent_at).length > 0 && (
+              <span className="ml-2 bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5">
+                {profiles.filter(p => !p.credentials_sent_at).length}
+              </span>
+            )}
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Lista */}
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-800 rounded-full animate-spin" />
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          <UserCog className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-          <p>Nenhum usuário encontrado.</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map(profile => (
-            <Card key={profile.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      <Shield className="w-5 h-5 text-gray-500" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{profile.user_name || "—"}</p>
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Mail className="w-3 h-3" />
-                        <span className="truncate">{profile.user_email}</span>
+        {/* Aba: lista de usuários */}
+        <TabsContent value="usuarios">
+          {/* Busca */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              className="pl-9"
+              placeholder="Buscar por nome ou e-mail..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-800 rounded-full animate-spin" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <UserCog className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p>Nenhum usuário encontrado.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filtered.map(profile => (
+                <Card key={profile.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                          <Shield className="w-5 h-5 text-gray-500" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{profile.user_name || "—"}</p>
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <Mail className="w-3 h-3" />
+                            <span className="truncate">{profile.user_email}</span>
+                          </div>
+                          {profile.phone && (
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Phone className="w-3 h-3" />
+                              <span>{profile.phone}</span>
+                            </div>
+                          )}
+                          {profile.credentials_sent_at ? (
+                            <div className="flex items-center gap-1 text-xs text-green-600 mt-0.5">
+                              <CheckCircle className="w-3 h-3" />
+                              <span>Convite enviado em {format(new Date(profile.credentials_sent_at), "dd/MM/yy HH:mm", { locale: ptBR })}</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1 text-xs text-orange-500 mt-0.5">
+                              <Clock className="w-3 h-3" />
+                              <span>Convite não enviado ainda</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      {profile.phone && (
-                        <div className="flex items-center gap-1 text-xs text-gray-500">
-                          <Phone className="w-3 h-3" />
-                          <span>{profile.phone}</span>
-                        </div>
-                      )}
-                      {/* Status do envio do convite */}
-                      {profile.credentials_sent_at ? (
-                        <div className="flex items-center gap-1 text-xs text-green-600 mt-0.5">
-                          <CheckCircle className="w-3 h-3" />
-                          <span>Convite enviado em {format(new Date(profile.credentials_sent_at), "dd/MM/yy HH:mm", { locale: ptBR })}</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1 text-xs text-orange-500 mt-0.5">
-                          <Clock className="w-3 h-3" />
-                          <span>Convite não enviado ainda</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Badge className={ROLE_COLORS[profile.role] || "bg-gray-100 text-gray-800"}>
-                      {roleLabel(profile.role)}
-                    </Badge>
-                    <Badge className={STATUS_COLORS[profile.status] || "bg-gray-100 text-gray-800"}>
-                      {statusLabel(profile.status)}
-                    </Badge>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleResendInvite(profile)}
-                      title="Reenviar convite por e-mail"
-                    >
-                      <Send className="w-4 h-4 text-blue-500" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleEdit(profile)}
-                      title="Editar"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleToggleBlock(profile)}
-                      title={profile.status === "blocked" ? "Desbloquear" : "Bloquear"}
-                    >
-                      {profile.status === "blocked"
-                        ? <Unlock className="w-4 h-4 text-green-600" />
-                        : <Lock className="w-4 h-4 text-red-500" />
-                      }
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Badge className={ROLE_COLORS[profile.role] || "bg-gray-100 text-gray-800"}>
+                          {roleLabel(profile.role)}
+                        </Badge>
+                        <Badge className={STATUS_COLORS[profile.status] || "bg-gray-100 text-gray-800"}>
+                          {statusLabel(profile.status)}
+                        </Badge>
+                        <Button size="icon" variant="ghost" onClick={() => handleResendInvite(profile)} title="Reenviar convite">
+                          <Send className="w-4 h-4 text-blue-500" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => handleEdit(profile)} title="Editar">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => handleToggleBlock(profile)} title={profile.status === "blocked" ? "Desbloquear" : "Bloquear"}>
+                          {profile.status === "blocked"
+                            ? <Unlock className="w-4 h-4 text-green-600" />
+                            : <Lock className="w-4 h-4 text-red-500" />}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Aba: status de entregas */}
+        <TabsContent value="entregas">
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-800 rounded-full animate-spin" />
+            </div>
+          ) : (
+            <EmailDeliveryPanel profiles={profiles} onRefresh={loadProfiles} />
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
