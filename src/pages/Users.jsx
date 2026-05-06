@@ -168,24 +168,7 @@ export default function UsersPage() {
     loadProfiles();
   }, []);
 
-  const sendInviteAndRecord = async (email, profileId, role, userName) => {
-    try {
-      // 1. Convida via plataforma (cria o acesso)
-      const res = await base44.functions.invoke("convidarUsuario", {
-        email,
-        role: role || "user",
-      });
-      // 2. Envia e-mail de boas-vindas com template bonito e senha temporária
-      const welcomeRes = await base44.functions.invoke("enviarBoasVindas", {
-        user_email: email,
-        user_name: userName || email,
-        profile_id: profileId,
-      });
-      return { success: res.data?.success || res.data?.already_exists, senha: welcomeRes.data?.senha_temporaria };
-    } catch {
-      return { success: false };
-    }
-  };
+
 
   const handleSave = async (formData) => {
     setSaving(true);
@@ -201,9 +184,13 @@ export default function UsersPage() {
           ...formData,
           status: "pending_password_change",
         });
-        // Envia convite + e-mail de boas-vindas com senha temporária
-        const result = await sendInviteAndRecord(formData.user_email, created.id, formData.role, formData.user_name);
-        if (result.success) {
+        // Envia convite + e-mail com credenciais
+        const result = await base44.functions.invoke("convidarUsuario", {
+          email: formData.user_email,
+          user_name: formData.user_name,
+          role: formData.role,
+        });
+        if (result.data?.success || result.data?.already_exists) {
           toast.success(`Usuário criado! Credenciais enviadas para ${formData.user_email}`);
         } else {
           toast.warning("Usuário criado, mas houve um problema ao enviar as credenciais. Use o botão de reenvio.");
@@ -236,15 +223,19 @@ export default function UsersPage() {
 
   const handleResendInvite = async (profile) => {
     try {
-      const result = await sendInviteAndRecord(profile.user_email, profile.id, profile.role, profile.user_name);
-      if (result.success !== false) {
+      const res = await base44.functions.invoke("reenviarCredenciais", {
+        user_email: profile.user_email,
+        user_name: profile.user_name,
+        profile_id: profile.id,
+      });
+      if (res.data?.success) {
         toast.success(`Credenciais reenviadas para ${profile.user_email} ✓`);
         await loadProfiles();
       } else {
-        toast.error("Erro ao reenviar credenciais");
+        toast.error(res.data?.error || "Erro ao reenviar credenciais");
       }
-    } catch {
-      toast.error("Erro ao reenviar credenciais");
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Erro ao reenviar credenciais");
     }
   };
 
