@@ -201,7 +201,14 @@ export default function UsersPage() {
       setNewUserEmail(""); setNewUserName(""); setNewUserPhone(""); setNewUserRole("user"); setNewUserPermissions([]);
       queryClient.invalidateQueries({ queryKey: ['users'] });
     } catch (error) {
-      toast.error("❌ Erro ao convidar usuário", { description: error.message });
+      const msg = error.message || '';
+      if (msg.includes('already') || msg.includes('exists') || msg.includes('500') || msg.includes('registrado')) {
+        toast.error("❌ Usuário já cadastrado", { description: "Este e-mail já está registrado no sistema." });
+      } else if (msg.includes('invalid') || msg.includes('email')) {
+        toast.error("❌ E-mail inválido", { description: "Verifique o endereço de e-mail informado." });
+      } else {
+        toast.error("❌ Erro ao convidar usuário", { description: msg || "Tente novamente." });
+      }
     } finally {
       setInviteSending(false);
     }
