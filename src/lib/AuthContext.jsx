@@ -3,6 +3,18 @@ import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 
+// Grava tentativa de acesso com falha
+const logAccessEvent = async (eventType, reason, userEmail) => {
+  try {
+    await base44.entities.AccessLog.create({
+      event_type: eventType,
+      reason: reason,
+      user_email: userEmail || null,
+      user_agent: navigator.userAgent,
+    });
+  } catch { /* silencioso — não bloquear o fluxo */ }
+};
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -52,20 +64,14 @@ export const AuthProvider = ({ children }) => {
         if (appError.status === 403 && appError.data?.extra_data?.reason) {
           const reason = appError.data.extra_data.reason;
           if (reason === 'auth_required') {
-            setAuthError({
-              type: 'auth_required',
-              message: 'Authentication required'
-            });
+            setAuthError({ type: 'auth_required', message: 'Authentication required' });
+            logAccessEvent('login_failed', 'auth_required', null);
           } else if (reason === 'user_not_registered') {
-            setAuthError({
-              type: 'user_not_registered',
-              message: 'User not registered for this app'
-            });
+            setAuthError({ type: 'user_not_registered', message: 'User not registered for this app' });
+            logAccessEvent('not_registered', 'user_not_registered', null);
           } else {
-            setAuthError({
-              type: reason,
-              message: appError.message
-            });
+            setAuthError({ type: reason, message: appError.message });
+            logAccessEvent('login_failed', reason, null);
           }
         } else {
           setAuthError({
@@ -102,10 +108,8 @@ export const AuthProvider = ({ children }) => {
       
       // If user auth fails, it might be an expired token
       if (error.status === 401 || error.status === 403) {
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
+        setAuthError({ type: 'auth_required', message: 'Authentication required' });
+        logAccessEvent('token_expired', 'token_expired', null);
       }
     }
   };

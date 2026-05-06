@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import {
   LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText,
   Building2, UserCog, Mail, History, Bell, DollarSign, Award, TrendingUp,
-  PenLine, Settings, AlertTriangle, Target, Instagram, MessageSquare
+  PenLine, Settings, AlertTriangle, Target, Instagram, MessageSquare, ShieldAlert
 } from "lucide-react";
 
 import NotificationBell from "./components/notifications/NotificationBell";
@@ -43,6 +43,7 @@ const ALL_ITEMS = [
   { title: "Central de Comunicação", url: createPageUrl("CommunicationCenter"), icon: Mail, key: "Central de Comunicação" },
   { title: "Usuários", url: createPageUrl("Users"), icon: UserCog, key: "Usuários" },
   { title: "Log de Auditoria", url: createPageUrl("AuditLog"), icon: FileText, key: "Log de Auditoria" },
+  { title: "Log de Acesso", url: "/AccessLog", icon: ShieldAlert, key: "Log de Acesso" },
   { title: "Dashboard Admin", url: "/AdminDashboard", icon: TrendingUp, key: "Dashboard Admin" },
   { title: "Dashboard Comercial", url: "/DashboardComercial", icon: Target, key: "Dashboard Comercial" },
   { title: "Gestão de Leads", url: "/GestaoLeads", icon: Users, key: "Gestão de Leads" },

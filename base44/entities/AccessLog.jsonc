@@ -1,0 +1,46 @@
+{
+  "name": "AccessLog",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "E-mail do usu\u00e1rio que tentou acessar"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "login_success",
+        "login_failed",
+        "not_registered",
+        "blocked",
+        "consent_required",
+        "token_expired"
+      ],
+      "description": "Tipo do evento"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Motivo detalhado do bloqueio/falha"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "IP aproximado (via fetch ipapi)"
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "Navegador/dispositivo"
+    },
+    "resolved": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o problema foi resolvido/investigado"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es do administrador"
+    }
+  },
+  "required": [
+    "event_type"
+  ]
+}

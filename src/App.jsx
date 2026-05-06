@@ -43,6 +43,7 @@ import CaixaEntrada from './pages/CaixaEntrada.jsx';
 import ConsentForm from './pages/ConsentForm.jsx';
 import PrivacyPolicy from './pages/PrivacyPolicy.jsx';
 import Analytics from './pages/Analytics.jsx';
+import AccessLog from './pages/AccessLog.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -117,6 +118,7 @@ const AuthenticatedApp = () => {
       <Route path="/BaseConhecimento" element={<LayoutWrapper currentPageName="BaseConhecimento"><BaseConhecimento /></LayoutWrapper>} />
       <Route path="/CaixaEntrada" element={<LayoutWrapper currentPageName="CaixaEntrada"><CaixaEntrada /></LayoutWrapper>} />
       <Route path="/Analytics" element={<LayoutWrapper currentPageName="Analytics"><Analytics /></LayoutWrapper>} />
+      <Route path="/AccessLog" element={<LayoutWrapper currentPageName="AccessLog"><AccessLog /></LayoutWrapper>} />
       <Route path="/ProposalEntry" element={<LayoutWrapper currentPageName="ProposalEntry"><ProposalEntry /></LayoutWrapper>} />
       <Route path="/GestaoBMM" element={<LayoutWrapper currentPageName="GestaoBMM"><GestaoBMM /></LayoutWrapper>} />
       <Route path="/GestaoAlunosIndividuais" element={<LayoutWrapper currentPageName="GestaoAlunosIndividuais"><GestaoAlunosIndividuais /></LayoutWrapper>} />
