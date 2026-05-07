@@ -134,25 +134,12 @@ export default function AIChatWidget() {
         return;
       }
 
-      const userRole = user?.role || user?.custom_role || "usuário";
-      const welcomeMsg = {
-        role: "user",
-        content: `[CONTEXTO INTERNO]\nUsuário: ${user?.full_name || "Usuário"}\nRole: ${userRole}\nTela atual: ${currentPageName}\nHorário: ${new Date().toLocaleString("pt-BR")}\n[FIM DO CONTEXTO]\n\nOlá! Preciso de ajuda.`
-      };
-
-      const updatedConv = await base44.agents.addMessage(conv, welcomeMsg);
-
-      if (!updatedConv?.id || isInvalidId(updatedConv.id)) {
-        console.error("Conversa atualizada com ID inválido:", updatedConv?.id);
-        return;
-      }
-
       if (unsubscribeRef.current) unsubscribeRef.current();
-      const unsub = base44.agents.subscribeToConversation(updatedConv.id, (data) => {
-        setMessages(data.messages.filter(m => !(m.role === "user" && m.content?.includes("[CONTEXTO INTERNO]"))));
+      const unsub = base44.agents.subscribeToConversation(conv.id, (data) => {
+        setMessages(data.messages || []);
       });
       unsubscribeRef.current = unsub;
-      setConversation(updatedConv);
+      setConversation(conv);
     } catch (err) {
       console.error("Erro ao iniciar conversa:", err);
     }
@@ -182,7 +169,7 @@ export default function AIChatWidget() {
     try {
       const msg = {
         role: "user",
-        content: `[Tela: ${currentPageName}] ${userInput}`,
+        content: userInput,
         ...(fileUrl ? { file_urls: [fileUrl] } : {})
       };
       await base44.agents.addMessage(conversation, msg);
