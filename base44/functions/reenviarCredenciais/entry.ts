@@ -28,13 +28,16 @@ Deno.serve(async (req) => {
       await base44.users.inviteUser(user_email, existingUser.role === 'admin' ? 'admin' : 'user');
     }
 
-    // Atualiza perfil com registro do reenvio
-    await base44.asServiceRole.entities.UserProfile.update(profile_id, {
-      status: 'pending_password_change',
-      credentials_sent_at: new Date().toISOString(),
-      credentials_sent_via: 'email',
-      credentials_sent_by: user.email,
-    });
+    // Atualiza perfil com registro do reenvio — busca pelo email para garantir o ID correto
+    const profiles = await base44.asServiceRole.entities.UserProfile.filter({ user_email: user_email });
+    if (profiles.length > 0) {
+      await base44.asServiceRole.entities.UserProfile.update(profiles[0].id, {
+        status: 'pending_password_change',
+        credentials_sent_at: new Date().toISOString(),
+        credentials_sent_via: 'email',
+        credentials_sent_by: user.email,
+      });
+    }
 
     return Response.json({
       success: true,

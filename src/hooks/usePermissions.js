@@ -59,23 +59,43 @@ export function usePermissions() {
     try {
       const u = await base44.auth.me();
 
+      // Admin da plataforma = acesso total imediato
+      if (u.role === "admin") {
+        setRole("admin");
+        setAllowedKeys(null);
+        setLoading(false);
+        return;
+      }
+
+      // Busca o UserProfile pelo email para obter role e permissões reais
+      const profiles = await base44.entities.UserProfile.filter({ user_email: u.email });
+      const profile = profiles.length > 0 ? profiles[0] : null;
+
+      const profileRole = profile?.role || u.role || "user";
+      setRole(profileRole);
+
+      // Roles com acesso total
+      if (FULL_ACCESS_ROLES.includes(profileRole)) {
+        setAllowedKeys(null);
+        setLoading(false);
+        return;
+      }
+
       // Verifica se é instrutor
       if (u.email) {
         const insts = await base44.entities.Instructor.filter({ email: u.email });
         if (insts.length > 0) {
           setRole("Instrutor");
-          setAllowedKeys([]);
+          setAllowedKeys(["Dashboard"]);
           setLoading(false);
           return;
         }
       }
 
-      const userRole = u.custom_role || u.role || "user";
-      setRole(userRole);
-
-      // Admin / Gestor Master = acesso total
-      if (FULL_ACCESS_ROLES.includes(userRole)) {
-        setAllowedKeys(null);
+      // Permissões customizadas salvas no UserProfile
+      const profilePerms = normalize(profile?.permissions);
+      if (profilePerms && profilePerms.length > 0) {
+        setAllowedKeys(profilePerms);
         setLoading(false);
         return;
       }
@@ -89,9 +109,9 @@ export function usePermissions() {
       }
 
       // Fallback: menu padrão do perfil
-      setAllowedKeys(ROLE_MENUS[userRole] ?? []);
+      setAllowedKeys(ROLE_MENUS[profileRole] ?? ROLE_MENUS[u.role] ?? ["Dashboard"]);
     } catch {
-      setAllowedKeys([]);
+      setAllowedKeys(null); // Em caso de erro, libera acesso para não bloquear
     } finally {
       setLoading(false);
     }
