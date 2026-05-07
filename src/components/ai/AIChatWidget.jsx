@@ -144,6 +144,14 @@ export default function AIChatWidget() {
     }
   };
 
+  const closeChat = () => {
+    setIsOpen(false);
+    // Reseta a conversa ao fechar para evitar IDs inválidos na próxima abertura
+    setConversation(null);
+    setMessages([]);
+    if (unsubscribeRef.current) { unsubscribeRef.current(); unsubscribeRef.current = null; }
+  };
+
   const openChat = async () => {
     setIsOpen(true);
     setIsMinimized(false);
@@ -167,6 +175,12 @@ export default function AIChatWidget() {
       setFileUrl(null);
     } catch (err) {
       console.error("Erro ao enviar mensagem:", err);
+      // Se a conversa for inválida (ID antigo), reinicia
+      if (err?.message?.includes("Object not found") || err?.message?.includes("Invalid id")) {
+        setConversation(null);
+        setMessages([]);
+        await initConversation();
+      }
     } finally {
       setIsLoading(false);
     }
@@ -232,7 +246,7 @@ export default function AIChatWidget() {
           <button onClick={() => { setIsMinimized(true); setUnreadCount(0); }} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors">
             <Minimize2 className="w-4 h-4" />
           </button>
-          <button onClick={() => setIsOpen(false)} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors">
+          <button onClick={closeChat} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
