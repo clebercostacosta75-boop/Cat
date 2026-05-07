@@ -239,14 +239,10 @@ function AlunosCadastro() {
     else createMutation.mutate(form);
   };
 
-  const searchNorm = search.toLowerCase().replace(/[\.\-\/\s]/g, "");
-  const filtered = students.filter(s =>
-    s.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    s.social_name?.toLowerCase().includes(search.toLowerCase()) ||
-    s.cpf?.replace(/[\.\-\/\s]/g, "").includes(searchNorm) ||
-    s.email?.toLowerCase().includes(search.toLowerCase()) ||
-    s.whatsapp?.replace(/[\s\(\)\-]/g, "").includes(searchNorm) ||
-    s.rg?.replace(/[\.\-\/\s]/g, "").includes(searchNorm)
+  const norm = (v) => (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w]/g, "");
+  const searchNorm = norm(search);
+  const filtered = !searchNorm ? students : students.filter(s =>
+    [s.full_name, s.social_name, s.cpf, s.email, s.whatsapp, s.rg].some(f => norm(f).includes(searchNorm))
   );
 
   return (
@@ -268,7 +264,14 @@ function AlunosCadastro() {
           ) : filtered.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <Users className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>Nenhum aluno encontrado</p>
+              {search ? (
+                <>
+                  <p className="font-medium">Nenhum resultado para "<span className="text-gray-800">{search}</span>"</p>
+                  <p className="text-xs mt-1">Verifique a ortografia ou tente um termo diferente.</p>
+                </>
+              ) : (
+                <p>Nenhum aluno cadastrado</p>
+              )}
             </div>
           ) : (
             <div className="divide-y">
@@ -646,9 +649,10 @@ function AcessoPortal() {
 
   const isMaster = userRole === "admin" || userRole === "Administrador Master";
 
-  const filtered = students.filter(s =>
-    s.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    s.cpf?.includes(search)
+  const norm = (v) => (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w]/g, "");
+  const searchNorm = norm(search);
+  const filtered = !searchNorm ? students : students.filter(s =>
+    [s.full_name, s.social_name, s.cpf, s.email, s.whatsapp].some(f => norm(f).includes(searchNorm))
   );
 
   return (
