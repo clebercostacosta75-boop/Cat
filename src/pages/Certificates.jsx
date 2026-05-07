@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -6,9 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Award, Search, Send, Eye, XCircle, Copy, CheckCircle, Clock, Settings, PlusCircle, Users } from "lucide-react";
+import { Award, Search, Send, Eye, XCircle, Copy, CheckCircle, Clock, Settings, PlusCircle, Users, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import CertificateExporter from "@/components/certificates/CertificateExporter";
 import CertificateValidation from "@/components/certificates/CertificateValidation";
 import CertificateQRCode from "@/components/certificates/CertificateQRCode";
@@ -29,7 +33,26 @@ export default function Certificates() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("lista");
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [canDelete, setCanDelete] = useState(false);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    base44.auth.me().then(user => {
+      if (!user) return;
+      const masterRoles = ["admin", "gestor_master", "Administrador Master"];
+      if (masterRoles.includes(user.role)) {
+        setCanDelete(true);
+        return;
+      }
+      // Verificar se tem permissão delegada via UserProfile
+      base44.entities.UserProfile.filter({ user_email: user.email }).then(profiles => {
+        const profile = profiles[0];
+        if (profile?.permissions?.includes("delete_certificates")) {
+          setCanDelete(true);
+        }
+      }).catch(() => {});
+    }).catch(() => {});
+  }, []);
 
   const { data: certificates = [], isLoading } = useQuery({
     queryKey: ["certificates"],
@@ -57,6 +80,14 @@ export default function Certificates() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["certificates"] });
       toast.success("Revogação desfeita. Certificado reativado.");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Certificate.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["certificates"] });
+      toast.success("Certificado excluído com sucesso!");
     },
   });
 
@@ -339,17 +370,49 @@ export default function Certificates() {
                             <XCircle className="w-3 h-3 mr-1" /> Revogar
                           </Button>
                           <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-green-600 border-green-200 hover:bg-green-50"
-                            onClick={() => {
-                              if (confirm("Desfazer a revogação deste certificado?")) unrevokeMutation.mutate(cert.id);
-                            }}
-                            disabled={cert.status !== "revoked"}
+                           size="sm"
+                           variant="outline"
+                           className="text-green-600 border-green-200 hover:bg-green-50"
+                           onClick={() => {
+                             if (confirm("Desfazer a revogação deste certificado?")) unrevokeMutation.mutate(cert.id);
+                           }}
+                           disabled={cert.status !== "revoked"}
                           >
-                            <CheckCircle className="w-3 h-3 mr-1" /> Desfazer Revogação
+                           <CheckCircle className="w-3 h-3 mr-1" /> Desfazer Revogação
                           </Button>
-                        </div>
+                          {canDelete && (
+                           <AlertDialog>
+                             <AlertDialogTrigger asChild>
+                               <Button
+                                 size="sm"
+                                 variant="outline"
+                                 className="text-red-700 border-red-400 hover:bg-red-50"
+                               >
+                                 <Trash2 className="w-3 h-3 mr-1" /> Excluir
+                               </Button>
+                             </AlertDialogTrigger>
+                             <AlertDialogContent>
+                               <AlertDialogHeader>
+                                 <AlertDialogTitle>Excluir Certificado</AlertDialogTitle>
+                                 <AlertDialogDescription>
+                                   Tem certeza que deseja excluir este certificado?<br />
+                                   <strong>{cert.student_name}</strong> — {cert.course_name}<br /><br />
+                                   Esta ação não pode ser desfeita.
+                                 </AlertDialogDescription>
+                               </AlertDialogHeader>
+                               <AlertDialogFooter>
+                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                 <AlertDialogAction
+                                   className="bg-red-600 hover:bg-red-700 text-white"
+                                   onClick={() => deleteMutation.mutate(cert.id)}
+                                 >
+                                   Confirmar Exclusão
+                                 </AlertDialogAction>
+                               </AlertDialogFooter>
+                             </AlertDialogContent>
+                           </AlertDialog>
+                          )}
+                          </div>
                       </div>
                     </CardContent>
                   </Card>
