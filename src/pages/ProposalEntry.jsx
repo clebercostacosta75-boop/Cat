@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, FileText, Eye, CheckCircle, Clock, AlertCircle, Loader2, Plus, Trash2, Building2 } from "lucide-react";
+import { Upload, FileText, Eye, CheckCircle, Clock, AlertCircle, Loader2, Plus, Trash2, Building2, Layers } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -103,7 +103,7 @@ export default function ProposalEntry() {
       company_id: proposal.company_id || '',
       total_value: proposal.total_value || '',
       notes: proposal.notes || '',
-      courses: (proposal.courses || []).map(c => ({ ...c })),
+      courses: (proposal.courses || []).map(c => ({ ...c, num_turmas: c.num_turmas || 1 })),
     });
     setReviewOpen(true);
   };
@@ -120,9 +120,17 @@ export default function ProposalEntry() {
       courses: [...editData.courses, {
         course_name: '', workload_hours: '', students_count: '',
         unit_value: '', total_value: '', start_date: '',
-        end_date: '', location: '', instructor_name: '', modality: 'Presencial'
+        end_date: '', location: '', instructor_name: '', modality: 'Presencial',
+        num_turmas: 1
       }]
     });
+  };
+
+  const calculateTotalValue = (course) => {
+    const unit = parseFloat(course.unit_value) || 0;
+    const students = parseInt(course.students_count) || 0;
+    const turmas = parseInt(course.num_turmas) || 1;
+    return unit * students * turmas;
   };
 
   const removeCourse = (idx) => {
@@ -417,7 +425,7 @@ export default function ProposalEntry() {
                         </div>
                       </div>
 
-                      <div className="grid md:grid-cols-4 gap-3">
+                      <div className="grid md:grid-cols-5 gap-3">
                         <div className="space-y-1">
                           <Label>Carga Horária (h)</Label>
                           <Input type="number" value={course.workload_hours || ''} onChange={e => updateCourse(idx, 'workload_hours', parseFloat(e.target.value) || '')} placeholder="8" />
@@ -427,12 +435,16 @@ export default function ProposalEntry() {
                           <Input type="number" value={course.students_count || ''} onChange={e => updateCourse(idx, 'students_count', parseInt(e.target.value) || '')} placeholder="10" />
                         </div>
                         <div className="space-y-1">
+                          <Label className="flex items-center gap-1"><Layers className="w-3 h-3" /> Nº Turmas</Label>
+                          <Input type="number" value={course.num_turmas || 1} onChange={e => updateCourse(idx, 'num_turmas', parseInt(e.target.value) || 1)} placeholder="1" min="1" />
+                        </div>
+                        <div className="space-y-1">
                           <Label>Valor Unit. (R$)</Label>
                           <Input type="number" value={course.unit_value || ''} onChange={e => updateCourse(idx, 'unit_value', parseFloat(e.target.value) || '')} placeholder="0,00" />
                         </div>
                         <div className="space-y-1">
                           <Label>Valor Total (R$)</Label>
-                          <Input type="number" value={course.total_value || ''} onChange={e => updateCourse(idx, 'total_value', parseFloat(e.target.value) || '')} placeholder="0,00" />
+                          <Input type="number" value={calculateTotalValue(course)} disabled className="bg-gray-100 cursor-not-allowed" />
                         </div>
                       </div>
 
