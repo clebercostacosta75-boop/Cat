@@ -68,10 +68,25 @@ export function usePermissions() {
       }
 
       // Busca o UserProfile pelo email para obter role e permissões reais
-      const profiles = await base44.entities.UserProfile.filter({ user_email: u.email });
-      const profile = profiles.length > 0 ? profiles[0] : null;
+      let profile = null;
+      try {
+        const profiles = await base44.entities.UserProfile.filter({ user_email: u.email });
+        if (profiles.length > 0) {
+          profile = profiles[0];
+        } else {
+          // Cria UserProfile automaticamente com role padrão se não existir
+          profile = await base44.entities.UserProfile.create({
+            user_email: u.email,
+            user_name: u.full_name || u.email,
+            role: "editor",
+            status: "active",
+          });
+        }
+      } catch {
+        // Se falhar ao buscar/criar, continua sem profile
+      }
 
-      const profileRole = profile?.role || u.role || "user";
+      const profileRole = profile?.role || "editor";
       setRole(profileRole);
 
       // Roles com acesso total
@@ -82,7 +97,7 @@ export function usePermissions() {
       }
 
       // Verifica se é instrutor
-      if (u.email) {
+      try {
         const insts = await base44.entities.Instructor.filter({ email: u.email });
         if (insts.length > 0) {
           setRole("Instrutor");
@@ -90,6 +105,8 @@ export function usePermissions() {
           setLoading(false);
           return;
         }
+      } catch {
+        // ignora falha na busca de instrutor
       }
 
       // Permissões customizadas salvas no UserProfile
@@ -100,18 +117,12 @@ export function usePermissions() {
         return;
       }
 
-      // Permissões customizadas salvas no User da plataforma
-      const customPerms = normalize(u.permissions);
-      if (customPerms && customPerms.length > 0) {
-        setAllowedKeys(customPerms);
-        setLoading(false);
-        return;
-      }
-
-      // Fallback: menu padrão do perfil
-      setAllowedKeys(ROLE_MENUS[profileRole] ?? ROLE_MENUS[u.role] ?? ["Dashboard"]);
+      // Fallback: menu padrão do perfil — se não tiver mapeamento, libera acesso total
+      const menuFallback = ROLE_MENUS[profileRole];
+      setAllowedKeys(menuFallback ?? null);
     } catch {
-      setAllowedKeys(null); // Em caso de erro, libera acesso para não bloquear
+      // Em qualquer erro inesperado, libera acesso para não bloquear
+      setAllowedKeys(null);
     } finally {
       setLoading(false);
     }
