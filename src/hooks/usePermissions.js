@@ -109,7 +109,7 @@ export function usePermissions() {
         // ignora falha na busca de instrutor
       }
 
-      // Permissões customizadas salvas no UserProfile
+      // Permissões customizadas salvas no UserProfile — SEMPRE respeitadas
       const profilePerms = normalize(profile?.permissions);
       if (profilePerms && profilePerms.length > 0) {
         setAllowedKeys(profilePerms);
@@ -117,9 +117,10 @@ export function usePermissions() {
         return;
       }
 
-      // Fallback: menu padrão do perfil — se não tiver mapeamento, libera acesso total
-      const menuFallback = ROLE_MENUS[profileRole];
-      setAllowedKeys(menuFallback ?? null);
+      // Fallback: menu padrão do perfil por role
+      // Se não tiver mapeamento específico, usa menu do Operacional (acesso amplo mas não total)
+      const menuFallback = ROLE_MENUS[profileRole] ?? ROLE_MENUS["Operacional"];
+      setAllowedKeys(menuFallback);
     } catch {
       // Em qualquer erro inesperado, libera acesso para não bloquear
       setAllowedKeys(null);
