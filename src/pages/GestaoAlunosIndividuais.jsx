@@ -11,10 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Users, UserPlus, BookOpen, DollarSign, Shield, Search, Edit, Trash2,
-  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, QrCode
+  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, QrCode, FileText, Copy
 } from "lucide-react";
 import { toast } from "sonner";
 import PagamentosAsaas from "@/components/alunos/PagamentosAsaas";
+import DocumentosAluno from "@/components/alunos/DocumentosAluno";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -726,7 +727,7 @@ export default function GestaoAlunosIndividuais() {
         </div>
 
         <Tabs defaultValue="cadastro">
-          <TabsList className="grid w-full grid-cols-5 mb-6 bg-gray-100 p-1 h-auto">
+          <TabsList className="grid w-full grid-cols-6 mb-6 bg-gray-100 p-1 h-auto">
             <TabsTrigger value="cadastro" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Cadastro</span>
@@ -747,6 +748,10 @@ export default function GestaoAlunosIndividuais() {
               <CreditCard className="w-4 h-4" />
               <span className="hidden sm:inline">Pagamentos Asaas</span>
             </TabsTrigger>
+            <TabsTrigger value="documentos" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
+              <FileText className="w-4 h-4" />
+              <span className="hidden sm:inline">Documentos LGPD</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="cadastro"><AlunosCadastro /></TabsContent>
@@ -754,6 +759,21 @@ export default function GestaoAlunosIndividuais() {
           <TabsContent value="financeiro"><FinanceiroAlunos /></TabsContent>
           <TabsContent value="acesso"><AcessoPortal /></TabsContent>
           <TabsContent value="pagamentos"><PagamentosAsaas /></TabsContent>
+          <TabsContent value="documentos">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div>
+                  <p className="text-sm font-semibold text-blue-900">Link de Auto-Cadastro para Alunos</p>
+                  <p className="text-xs text-blue-700 mt-0.5">Compartilhe este link para que o aluno preencha seus próprios dados e envie documentos.</p>
+                </div>
+                <Button size="sm" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                  onClick={() => { navigator.clipboard.writeText(window.location.origin + "/AutoCadastroAluno"); toast.success("Link copiado!"); }}>
+                  <Copy className="w-4 h-4 mr-1" /> Copiar Link
+                </Button>
+              </div>
+              <DocumentosAluno />
+            </div>
+          </TabsContent>
         </Tabs>
       </div>
     </div>

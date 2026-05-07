@@ -1,0 +1,81 @@
+{
+  "name": "StudentDocument",
+  "type": "object",
+  "properties": {
+    "student_id": {
+      "type": "string",
+      "description": "ID do aluno vinculado (refer\u00eancia \u00e0 entidade Student)"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "Nome do aluno (desnormalizado)"
+    },
+    "student_cpf": {
+      "type": "string",
+      "description": "CPF do aluno (desnormalizado)"
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "RG",
+        "CNH",
+        "CPF",
+        "Comprovante_Residencia",
+        "Outros"
+      ],
+      "description": "Tipo de documento enviado"
+    },
+    "file_uri": {
+      "type": "string",
+      "description": "URI do arquivo no armazenamento privado (gerado por UploadPrivateFile)"
+    },
+    "file_name": {
+      "type": "string",
+      "description": "Nome original do arquivo"
+    },
+    "extracted_data": {
+      "type": "object",
+      "description": "Dados extra\u00eddos pelo OCR (nome, cpf, data_nascimento, rg, etc.)"
+    },
+    "ocr_raw": {
+      "type": "string",
+      "description": "Texto bruto retornado pelo OCR para auditoria"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pendente_Revisao",
+        "Aprovado",
+        "Rejeitado"
+      ],
+      "default": "Pendente_Revisao",
+      "description": "Status da revis\u00e3o do documento"
+    },
+    "uploaded_by_email": {
+      "type": "string",
+      "description": "E-mail de quem fez o upload"
+    },
+    "reviewed_by_email": {
+      "type": "string",
+      "description": "E-mail do atendente que revisou"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora da revis\u00e3o"
+    },
+    "rejection_reason": {
+      "type": "string",
+      "description": "Motivo da rejei\u00e7\u00e3o, se houver"
+    },
+    "auto_cadastro": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o documento foi enviado via link de auto-cadastro"
+    }
+  },
+  "required": [
+    "document_type",
+    "file_uri"
+  ]
+}
