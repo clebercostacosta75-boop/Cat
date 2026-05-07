@@ -126,6 +126,12 @@ export default function ProposalEntry() {
     });
   };
 
+  const getDisplayUnitValue = (course) => {
+    const unit = parseFloat(course.unit_value) || 0;
+    const turmas = parseInt(course.num_turmas) || 1;
+    return unit / turmas;
+  };
+
   const calculateTotalValue = (course) => {
     const unit = parseFloat(course.unit_value) || 0;
     const students = parseInt(course.students_count) || 0;
@@ -440,7 +446,8 @@ export default function ProposalEntry() {
                         </div>
                         <div className="space-y-1">
                           <Label>Valor Unit. (R$)</Label>
-                          <Input type="number" value={course.unit_value || ''} onChange={e => updateCourse(idx, 'unit_value', parseFloat(e.target.value) || '')} placeholder="0,00" />
+                          <Input type="number" value={getDisplayUnitValue(course).toFixed(2)} disabled className="bg-gray-100 cursor-not-allowed" />
+                          <input type="hidden" value={course.unit_value || ''} />
                         </div>
                         <div className="space-y-1">
                           <Label>Valor Total (R$)</Label>
