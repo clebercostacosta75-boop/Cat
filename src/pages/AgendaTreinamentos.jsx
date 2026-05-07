@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,24 @@ export default function AgendaTreinamentos() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [sendingId, setSendingId] = useState(null);
+  const [preloadData, setPreloadData] = useState(null);
+
+  // Captar parâmetros de URL da proposta
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const company_id = params.get('company_id');
+    const company_name = params.get('company_name');
+
+    if (company_id || company_name) {
+      setPreloadData({
+        empresa_id: company_id,
+        empresa_nome: company_name ? decodeURIComponent(company_name) : '',
+      });
+      setModalOpen(true);
+      // Limpar URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   // Dados
   const { data: agendamentos = [], isLoading } = useQuery({
@@ -81,7 +99,7 @@ export default function AgendaTreinamentos() {
   };
 
   const handleNew = () => {
-    setEditingItem(null);
+    setEditingItem(preloadData ? preloadData : null);
     setModalOpen(true);
   };
 
@@ -257,9 +275,9 @@ export default function AgendaTreinamentos() {
 
       <AgendaFormModal
         open={modalOpen}
-        onClose={() => { setModalOpen(false); setEditingItem(null); }}
+        onClose={() => { setModalOpen(false); setEditingItem(null); setPreloadData(null); }}
         onSave={handleSave}
-        initialData={editingItem}
+        initialData={editingItem || preloadData}
         companies={companies}
         instructors={instructors}
         courses={courses}

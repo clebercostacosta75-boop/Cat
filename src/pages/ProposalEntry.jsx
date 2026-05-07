@@ -493,7 +493,7 @@ export default function ProposalEntry() {
               </div>
 
               {/* Ações */}
-              <div className="flex gap-3 justify-end pt-2 border-t">
+              <div className="flex gap-3 justify-end pt-2 border-t flex-wrap">
                 <Button variant="outline" onClick={() => setReviewOpen(false)}>Cancelar</Button>
                 <Button
                   variant="outline"
@@ -505,14 +505,25 @@ export default function ProposalEntry() {
                   Salvar Rascunho
                 </Button>
                 {selectedProposal?.status !== 'Finalizado' && (
-                  <Button
-                    onClick={handleFinalize}
-                    disabled={finalizing}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {finalizing ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
-                    Finalizar e Criar Turmas
-                  </Button>
+                  <>
+                    <Button
+                      onClick={handleFinalize}
+                      disabled={finalizing}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {finalizing ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
+                      Finalizar e Criar Turmas
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        window.location.href = `/AgendaTreinamentos?company_id=${editData.company_id || ''}&company_name=${encodeURIComponent(editData.company_name || '')}`;
+                      }}
+                      className="border-purple-300 text-purple-700"
+                    >
+                      📅 Agendar Treinamento
+                    </Button>
+                  </>
                 )}
               </div>
             </div>

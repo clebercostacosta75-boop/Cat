@@ -50,6 +50,28 @@ Retorne APENAS o JSON, sem explicações adicionais. Se não encontrar algum dad
     }
   });
 
+  let company_id = null;
+
+  // 1. Sincronizar empresa
+  if (result.company_name) {
+    const existingCompanies = await base44.asServiceRole.entities.Company.filter({
+      razao_social: result.company_name
+    });
+
+    if (existingCompanies.length > 0) {
+      company_id = existingCompanies[0].id;
+    } else if (result.company_cnpj) {
+      // Criar nova empresa se não existir
+      const newCompany = await base44.asServiceRole.entities.Company.create({
+        razao_social: result.company_name,
+        nome_fantasia: result.company_name,
+        cnpj: result.company_cnpj,
+        status: "Ativo"
+      });
+      company_id = newCompany.id;
+    }
+  }
+
   const courses = (result.courses || []).map(c => ({
     ...c,
     start_date: null,
@@ -63,10 +85,11 @@ Retorne APENAS o JSON, sem explicações adicionais. Se não encontrar algum dad
     status: "Aguardando Revisão",
     company_name: result.company_name || null,
     company_cnpj: result.company_cnpj || null,
+    company_id: company_id,
     courses: courses,
     total_value: result.total_value || null,
     ai_raw_extraction: JSON.stringify(result)
   });
 
-  return Response.json({ success: true, data: result });
+  return Response.json({ success: true, data: result, company_id });
 });
