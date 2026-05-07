@@ -237,8 +237,17 @@ function AlunosCadastro() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Student.delete(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["students-pf"] }); toast.success("Aluno removido!"); },
+    mutationFn: async (id) => {
+      // Remove matrículas vinculadas ao aluno
+      const enrollments = await base44.entities.StudentCourseEnrollment.filter({ student_id: id });
+      await Promise.all(enrollments.map(e => base44.entities.StudentCourseEnrollment.delete(e.id)));
+      await base44.entities.Student.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["students-pf"] });
+      queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] });
+      toast.success("Aluno e matrículas removidos!");
+    },
   });
 
   const handleSave = (form) => {
@@ -325,6 +334,13 @@ function MatriculasCursos() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_ENROLLMENT);
   const [paymentModal, setPaymentModal] = useState(null); // enrollment selecionado
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
+  }, []);
+
+  const isMaster = userRole === "admin" || userRole === "Administrador Master" || userRole === "gestor_master";
 
   const { data: enrollments = [], isLoading } = useQuery({
     queryKey: ["enrollments-pf"],
@@ -352,6 +368,11 @@ function MatriculasCursos() {
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }) => base44.entities.StudentCourseEnrollment.update(id, { status }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] }); toast.success("Status atualizado!"); },
+  });
+
+  const deleteEnrollmentMutation = useMutation({
+    mutationFn: (id) => base44.entities.StudentCourseEnrollment.delete(id),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] }); toast.success("Matrícula excluída!"); },
   });
 
   const handleStudentChange = (studentId) => {
@@ -432,6 +453,12 @@ function MatriculasCursos() {
                     {e.status === "Aguardando Autorização" && (
                       <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white text-xs" onClick={() => updateStatusMutation.mutate({ id: e.id, status: "Autorizado" })}>
                         <CheckCircle className="w-3 h-3 mr-1" /> Autorizar
+                      </Button>
+                    )}
+                    {isMaster && (
+                      <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700"
+                        onClick={() => { if (window.confirm(`Excluir a matrícula de "${e.student_name}" em "${e.course_name}"? Esta ação não pode ser desfeita.`)) deleteEnrollmentMutation.mutate(e.id); }}>
+                        <Trash2 className="w-3 h-3" />
                       </Button>
                     )}
                   </div>
