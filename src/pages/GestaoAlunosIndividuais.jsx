@@ -212,6 +212,13 @@ function AlunosCadastro() {
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
+  }, []);
+
+  const isMaster = userRole === "admin" || userRole === "Administrador Master" || userRole === "gestor_master";
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ["students-pf"],
@@ -288,7 +295,12 @@ function AlunosCadastro() {
                       {student.status || "Ativo"}
                     </Badge>
                     <Button size="sm" variant="ghost" onClick={() => { setEditingStudent(student); setModalOpen(true); }}><Edit className="w-4 h-4" /></Button>
-                    <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700" onClick={() => deleteMutation.mutate(student.id)}><Trash2 className="w-4 h-4" /></Button>
+                    {isMaster && (
+                      <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700"
+                        onClick={() => { if (window.confirm(`Excluir permanentemente "${student.full_name}"? Esta ação não pode ser desfeita.`)) deleteMutation.mutate(student.id); }}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
