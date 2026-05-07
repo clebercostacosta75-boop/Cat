@@ -4,6 +4,27 @@ import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { Loader2 } from 'lucide-react';
 
+// Mapa de chave de permissão → rota
+const PERMISSION_ROUTES = {
+  "Dashboard": "/Dashboard",
+  "Dashboard Comercial": "/DashboardComercial",
+  "Dashboard Financeiro": "/DashboardFinanceiro",
+  "Dashboard de Relatórios": "/Analytics",
+  "Agenda de Treinamentos": "/AgendaTreinamentos",
+  "Cronograma": "/Schedule",
+  "Certificações": "/Certificacoes",
+  "Caixa de Entrada": "/CaixaEntrada",
+  "Gestão de Leads": "/GestaoLeads",
+  "Alunos Individuais (PF)": "/GestaoAlunosIndividuais",
+  "Gestão de BMM": "/GestaoBMM",
+  "Entrada de Propostas": "/ProposalEntry",
+  "Instrutores": "/Instructors",
+  "Empresas": "/Companies",
+  "Cursos": "/Courses",
+  "Base de Conhecimento": "/BaseConhecimento",
+  "Contas Sociais": "/ContasSociais",
+};
+
 export default function Home() {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoadingAuth } = useAuth();
@@ -17,20 +38,36 @@ export default function Home() {
         if (isAuthenticated && user) {
            setRedirecting(true);
 
-           // Detecta perfil do usuário e redireciona
            const userRole = user.role || 'user';
 
-           // Redireciona de acordo com o role (prefere role nativo do user)
-           const redirects = {
-             'admin': '/DashboardMaster',
-             'Administrador Master': '/DashboardMaster',
-             'gestor_master': '/DashboardMaster'
-           };
+           // Admins vão direto para o DashboardMaster
+           if (['admin', 'Administrador Master', 'gestor_master'].includes(userRole)) {
+             navigate('/DashboardMaster');
+             return;
+           }
 
-           const redirectPath = redirects[userRole] || '/Dashboard';
-           navigate(redirectPath);
+           // Busca o perfil para descobrir as permissões reais
+           try {
+             const profiles = await base44.entities.UserProfile.filter({ user_email: user.email });
+             const profile = profiles.find(p => p.status === 'active') || profiles[0];
+             const perms = profile?.permissions || [];
+
+             if (perms.length > 0) {
+               // Redireciona para a primeira rota que o usuário tem permissão
+               for (const perm of perms) {
+                 if (PERMISSION_ROUTES[perm]) {
+                   navigate(PERMISSION_ROUTES[perm]);
+                   return;
+                 }
+               }
+             }
+           } catch {
+             // ignora e usa fallback
+           }
+
+           // Fallback padrão
+           navigate('/Dashboard');
         } else {
-          // Não autenticado, redireciona para StudentPortal (público)
           navigate('/StudentPortal');
         }
       } catch (err) {
