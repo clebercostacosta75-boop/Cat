@@ -239,7 +239,7 @@ function AlunosCadastro() {
     else createMutation.mutate(form);
   };
 
-  const norm = (v) => (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w]/g, "");
+  const norm = (v) => (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").trim();
   const searchNorm = norm(search);
   const filtered = !searchNorm ? students : students.filter(s =>
     [s.full_name, s.social_name, s.cpf, s.email, s.whatsapp, s.rg].some(f => norm(f).includes(searchNorm))
@@ -649,7 +649,7 @@ function AcessoPortal() {
 
   const isMaster = userRole === "admin" || userRole === "Administrador Master";
 
-  const norm = (v) => (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w]/g, "");
+  const norm = (v) => (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").trim();
   const searchNorm = norm(search);
   const filtered = !searchNorm ? students : students.filter(s =>
     [s.full_name, s.social_name, s.cpf, s.email, s.whatsapp].some(f => norm(f).includes(searchNorm))
