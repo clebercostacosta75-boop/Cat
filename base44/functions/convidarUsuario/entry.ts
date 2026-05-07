@@ -1,21 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-// Gera senha temporária segura (8 caracteres)
-function gerarSenhaTemporaria() {
-  const maiusculas = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-  const minusculas = 'abcdefghjkmnpqrstuvwxyz';
-  const numeros = '23456789';
-  const todos = maiusculas + minusculas + numeros;
-  let senha = '';
-  senha += maiusculas[Math.floor(Math.random() * maiusculas.length)];
-  senha += minusculas[Math.floor(Math.random() * minusculas.length)];
-  senha += numeros[Math.floor(Math.random() * numeros.length)];
-  for (let i = 3; i < 8; i++) {
-    senha += todos[Math.floor(Math.random() * todos.length)];
-  }
-  return senha.split('').sort(() => Math.random() - 0.5).join('');
-}
-
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -42,26 +26,26 @@ Deno.serve(async (req) => {
       }, { status: 200 });
     }
 
-    // Mapear perfil personalizado para perfil base aceito pelo SDK (admin ou user)
+    // Mapear perfil personalizado para perfil base aceito pelo SDK
     const baseRole = (role === 'gestor_master') ? 'admin' : 'user';
 
-    // Gera senha temporária ANTES de convidar
-    const senha = gerarSenhaTemporaria();
-
-    // Convidar via SDK (cria o usuário na plataforma)
+    // Enviar convite nativo do Base44 — o próprio usuário define sua senha pelo link recebido
     await base44.users.inviteUser(email, baseRole);
 
-    // Chamar enviarBoasVindas para enviar o e-mail com a senha
-    await base44.asServiceRole.functions.invoke('enviarBoasVindas', {
-      user_email: email,
-      user_name: user_name,
-      senha_temporaria: senha
-    });
+    // Atualizar perfil com registro de envio do convite
+    const profiles = await base44.asServiceRole.entities.UserProfile.filter({ user_email: email });
+    if (profiles.length > 0) {
+      await base44.asServiceRole.entities.UserProfile.update(profiles[0].id, {
+        status: 'pending_password_change',
+        credentials_sent_at: new Date().toISOString(),
+        credentials_sent_via: 'email',
+        credentials_sent_by: user.email,
+      });
+    }
 
     return Response.json({
       success: true,
-      message: `Usuário criado e convite enviado para ${email}`,
-      senha_temporaria: senha
+      message: `Convite enviado para ${email}. O usuário receberá um e-mail para definir sua senha e acessar o sistema.`,
     });
 
   } catch (error) {

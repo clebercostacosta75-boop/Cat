@@ -192,10 +192,14 @@ export default function UsersPage() {
           user_name: formData.user_name,
           role: formData.role,
         });
-        if (result.data?.success || result.data?.already_exists) {
-          toast.success(`Usuário criado! Credenciais enviadas para ${formData.user_email}`);
+        if (result.data?.success) {
+          toast.success(`Convite enviado para ${formData.user_email}! O usuário receberá um e-mail para definir sua senha.`);
+          // Exibe modal de confirmação com link do app para compartilhar via WhatsApp
+          setCredentialsModal({ name: formData.user_name, email: formData.user_email });
+        } else if (result.data?.already_exists) {
+          toast.warning(`O e-mail ${formData.user_email} já está cadastrado no sistema.`);
         } else {
-          toast.warning("Usuário criado, mas houve um problema ao enviar as credenciais. Use o botão de reenvio.");
+          toast.warning("Usuário criado, mas houve um problema ao enviar o convite. Use o botão de reenvio.");
         }
       }
       setShowForm(false);
@@ -231,18 +235,17 @@ export default function UsersPage() {
         profile_id: profile.id,
       });
       if (res.data?.success) {
-        // Exibe modal com credenciais geradas
+        // Exibe modal de confirmação com link do app para compartilhar
         setCredentialsModal({
           name: profile.user_name,
           email: profile.user_email,
-          password: res.data.password,
         });
         await loadProfiles();
       } else {
-        toast.error(res.data?.error || "Erro ao reenviar credenciais");
+        toast.error(res.data?.error || "Erro ao reenviar convite");
       }
     } catch (err) {
-      toast.error(err?.response?.data?.error || "Erro ao reenviar credenciais");
+      toast.error(err?.response?.data?.error || "Erro ao reenviar convite");
     }
   };
 
