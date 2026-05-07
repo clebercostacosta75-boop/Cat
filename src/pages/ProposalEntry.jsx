@@ -355,7 +355,7 @@ export default function ProposalEntry() {
               {/* Dados da Empresa */}
               <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                 <h3 className="font-semibold text-gray-700">Dados da Empresa</h3>
-                <div className="grid md:grid-cols-3 gap-3">
+                <div className="grid md:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label>Empresa</Label>
                     <Input
@@ -371,19 +371,6 @@ export default function ProposalEntry() {
                       onChange={e => setEditData({ ...editData, company_cnpj: e.target.value })}
                       placeholder="XX.XXX.XXX/XXXX-XX"
                     />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Vincular à Empresa Cadastrada</Label>
-                    <Select value={editData.company_id} onValueChange={v => setEditData({ ...editData, company_id: v })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecionar empresa..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {companies.map(c => (
-                          <SelectItem key={c.id} value={c.id}>{c.nome_fantasia || c.razao_social}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
                 </div>
               </div>
