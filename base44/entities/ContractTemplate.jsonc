@@ -1,0 +1,64 @@
+{
+  "name": "ContractTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome do modelo (ex: Contrato Padr\u00e3o PF)"
+    },
+    "template_type": {
+      "type": "string",
+      "enum": [
+        "Individual",
+        "Empresarial"
+      ],
+      "default": "Individual",
+      "description": "Tipo de contrato"
+    },
+    "html_content": {
+      "type": "string",
+      "description": "Conte\u00fado HTML do contrato com vari\u00e1veis din\u00e2micas {{student.full_name}}, {{course.name}}, etc."
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "company_info": {
+      "type": "object",
+      "properties": {
+        "corporate_name": {
+          "type": "string"
+        },
+        "cnpj": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        }
+      },
+      "description": "Dados da empresa contratada (CAT Cursos)"
+    },
+    "fine_percentage": {
+      "type": "number",
+      "default": 2
+    },
+    "interest_percentage": {
+      "type": "number",
+      "default": 1
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "html_content"
+  ]
+}

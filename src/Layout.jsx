@@ -31,6 +31,7 @@ const ALL_ITEMS = [
   { title: "Importar Excel", url: createPageUrl("Import"), icon: Upload, key: "Importar Excel" },
   { title: "Dashboard Financeiro", url: "/DashboardFinanceiro", icon: TrendingUp, key: "Dashboard Financeiro" },
   { title: "Alunos Individuais (PF)", url: "/GestaoAlunosIndividuais", icon: Users, key: "Alunos Individuais (PF)" },
+  { title: "Gestão de Contratos", url: "/GestaoContratos", icon: FileText, key: "Gestão de Contratos" },
   { title: "Certificações", url: "/Certificacoes", icon: Award, key: "Certificações" },
   { title: "Alertas de Vencimento", url: createPageUrl("CertificateAlerts"), icon: Bell, key: "Alertas de Vencimento" },
   { title: "Designer de Certificados", url: createPageUrl("CertDesigner"), icon: Award, key: "Designer de Certificados" },

@@ -11,11 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Users, UserPlus, BookOpen, DollarSign, Shield, Search, Edit, Trash2,
-  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, QrCode, FileText, Copy
+  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, QrCode, FileText, Copy, Activity, LayoutDashboard
 } from "lucide-react";
 import { toast } from "sonner";
 import PagamentosAsaas from "@/components/alunos/PagamentosAsaas";
 import DocumentosAluno from "@/components/alunos/DocumentosAluno";
+import TimelineAluno from "@/components/alunos/TimelineAluno";
+import GargalosDashboard from "@/components/alunos/GargalosDashboard";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -727,7 +729,7 @@ export default function GestaoAlunosIndividuais() {
         </div>
 
         <Tabs defaultValue="cadastro">
-          <TabsList className="grid w-full grid-cols-6 mb-6 bg-gray-100 p-1 h-auto">
+          <TabsList className="grid w-full grid-cols-8 mb-6 bg-gray-100 p-1 h-auto">
             <TabsTrigger value="cadastro" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Cadastro</span>
@@ -752,6 +754,14 @@ export default function GestaoAlunosIndividuais() {
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">Documentos LGPD</span>
             </TabsTrigger>
+            <TabsTrigger value="timeline" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
+              <Activity className="w-4 h-4" />
+              <span className="hidden sm:inline">Timeline</span>
+            </TabsTrigger>
+            <TabsTrigger value="gargalos" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
+              <LayoutDashboard className="w-4 h-4" />
+              <span className="hidden sm:inline">Gargalos</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="cadastro"><AlunosCadastro /></TabsContent>
@@ -773,6 +783,21 @@ export default function GestaoAlunosIndividuais() {
               </div>
               <DocumentosAluno />
             </div>
+          </TabsContent>
+          <TabsContent value="timeline">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <Activity className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Linha do Tempo — Visão Geral</p>
+                  <p className="text-xs text-gray-500">Para ver a timeline de um aluno específico, acesse o perfil do aluno na aba Cadastro.</p>
+                </div>
+              </div>
+              <TimelineAluno studentId={null} />
+            </div>
+          </TabsContent>
+          <TabsContent value="gargalos">
+            <GargalosDashboard />
           </TabsContent>
         </Tabs>
       </div>

@@ -1,0 +1,62 @@
+{
+  "name": "StudentTimeline",
+  "type": "object",
+  "properties": {
+    "student_id": {
+      "type": "string",
+      "description": "ID do aluno"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "Nome do aluno (desnormalizado)"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "cadastro",
+        "auto_cadastro",
+        "documento_enviado",
+        "documento_aprovado",
+        "documento_rejeitado",
+        "matricula_criada",
+        "matricula_autorizada",
+        "contrato_gerado",
+        "contrato_enviado",
+        "contrato_assinado",
+        "cobranca_gerada",
+        "pagamento_confirmado",
+        "certificado_gerado",
+        "certificado_assinado",
+        "acesso_liberado",
+        "acesso_bloqueado",
+        "observacao"
+      ],
+      "description": "Tipo do evento"
+    },
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo do evento"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o detalhada do evento"
+    },
+    "performed_by": {
+      "type": "string",
+      "description": "E-mail ou nome de quem realizou a a\u00e7\u00e3o"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "IP do dispositivo (para assinaturas)"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Dados adicionais do evento (ex: valor da cobran\u00e7a, id do contrato)"
+    }
+  },
+  "required": [
+    "student_id",
+    "event_type",
+    "title"
+  ]
+}

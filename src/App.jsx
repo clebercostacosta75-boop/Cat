@@ -38,6 +38,7 @@ import GestaoBMM from './pages/GestaoBMM.jsx';
 import GestaoAlunosIndividuais from './pages/GestaoAlunosIndividuais.jsx';
 import GestaoLeads from './pages/GestaoLeads.jsx';
 import AutoCadastroAluno from './pages/AutoCadastroAluno.jsx';
+import GestaoContratos from './pages/GestaoContratos.jsx';
 import ContasSociais from './pages/ContasSociais.jsx';
 import BaseConhecimento from './pages/BaseConhecimento.jsx';
 import CaixaEntrada from './pages/CaixaEntrada.jsx';
@@ -131,6 +132,7 @@ const AuthenticatedApp = () => {
       <Route path="/CompanyPortal" element={<CompanyPortal />} />
       <Route path="/AcessoNegado" element={<AcessoNegado />} />
       <Route path="/AutoCadastroAluno" element={<AutoCadastroAluno />} />
+      <Route path="/GestaoContratos" element={<LayoutWrapper currentPageName="GestaoContratos"><GestaoContratos /></LayoutWrapper>} />
       <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
       <Route path="/DashboardComercial" element={<LayoutWrapper currentPageName="DashboardComercial"><ProtectedRoute pageKey="Dashboard Comercial"><DashboardComercial /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/GestaoLeads" element={<LayoutWrapper currentPageName="GestaoLeads"><ProtectedRoute pageKey="Gestão de Leads"><GestaoLeads /></ProtectedRoute></LayoutWrapper>} />

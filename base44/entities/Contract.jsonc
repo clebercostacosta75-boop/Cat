@@ -1,0 +1,134 @@
+{
+  "name": "Contract",
+  "type": "object",
+  "properties": {
+    "contract_number": {
+      "type": "string",
+      "description": "N\u00famero \u00fanico do contrato (ex: CAT-2026-0001)"
+    },
+    "template_id": {
+      "type": "string",
+      "description": "ID do modelo de contrato utilizado"
+    },
+    "template_name": {
+      "type": "string",
+      "description": "Nome do modelo"
+    },
+    "student_id": {
+      "type": "string",
+      "description": "ID do aluno"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "Nome do aluno"
+    },
+    "student_cpf": {
+      "type": "string",
+      "description": "CPF do aluno"
+    },
+    "student_email": {
+      "type": "string",
+      "description": "E-mail do aluno"
+    },
+    "student_phone": {
+      "type": "string",
+      "description": "WhatsApp do aluno"
+    },
+    "enrollment_id": {
+      "type": "string",
+      "description": "ID da matr\u00edcula vinculada"
+    },
+    "course_name": {
+      "type": "string",
+      "description": "Nome do curso"
+    },
+    "course_value": {
+      "type": "number",
+      "description": "Valor do curso"
+    },
+    "payment_method": {
+      "type": "string",
+      "description": "Forma de pagamento"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Rascunho",
+        "Aguardando_Assinatura",
+        "Assinado_Aluno",
+        "Assinado_Gestor",
+        "Vigente",
+        "Vencido",
+        "Cancelado"
+      ],
+      "default": "Rascunho",
+      "description": "Status do contrato"
+    },
+    "html_content_filled": {
+      "type": "string",
+      "description": "HTML do contrato com as vari\u00e1veis j\u00e1 preenchidas"
+    },
+    "pdf_url": {
+      "type": "string",
+      "description": "URL do PDF gerado do contrato"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do envio para assinatura"
+    },
+    "sent_via": {
+      "type": "string",
+      "enum": [
+        "whatsapp",
+        "email",
+        "manual"
+      ],
+      "description": "Canal de envio"
+    },
+    "student_signed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da assinatura do aluno"
+    },
+    "student_signature_url": {
+      "type": "string",
+      "description": "URL da assinatura digital do aluno"
+    },
+    "student_signed_ip": {
+      "type": "string",
+      "description": "IP do dispositivo do aluno ao assinar"
+    },
+    "student_signed_device": {
+      "type": "string",
+      "description": "User-agent do dispositivo do aluno"
+    },
+    "manager_signed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da assinatura do gestor"
+    },
+    "manager_signed_by": {
+      "type": "string",
+      "description": "E-mail do gestor que assinou"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de validade do contrato"
+    },
+    "renewal_alert_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o alerta de renova\u00e7\u00e3o j\u00e1 foi enviado"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "student_id",
+    "student_name",
+    "student_cpf"
+  ]
+}
