@@ -118,12 +118,21 @@ export default function AIChatWidget() {
   // Return condicional DEPOIS de todos os hooks
   if (PUBLIC_ROUTES.includes(location.pathname)) return null;
 
+  // UUID v4 pattern — these are invalid IDs in the new environment
+  const isInvalidId = (id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
   const initConversation = async () => {
     try {
       const conv = await base44.agents.createConversation({
         agent_name: "central_inteligencia_cat",
         metadata: { name: `Suporte CAT — ${new Date().toLocaleDateString("pt-BR")}` }
       });
+
+      // Validate that the created conversation has a valid (non-UUID) ID
+      if (!conv?.id || isInvalidId(conv.id)) {
+        console.error("Conversa criada com ID inválido:", conv?.id);
+        return;
+      }
 
       const userRole = user?.role || user?.custom_role || "usuário";
       const welcomeMsg = {
@@ -132,6 +141,11 @@ export default function AIChatWidget() {
       };
 
       const updatedConv = await base44.agents.addMessage(conv, welcomeMsg);
+
+      if (!updatedConv?.id || isInvalidId(updatedConv.id)) {
+        console.error("Conversa atualizada com ID inválido:", updatedConv?.id);
+        return;
+      }
 
       if (unsubscribeRef.current) unsubscribeRef.current();
       const unsub = base44.agents.subscribeToConversation(updatedConv.id, (data) => {
@@ -177,6 +191,7 @@ export default function AIChatWidget() {
       console.error("Erro ao enviar mensagem:", err);
       // Se a conversa for inválida (ID antigo), reinicia
       if (err?.message?.includes("Object not found") || err?.message?.includes("Invalid id")) {
+        if (unsubscribeRef.current) { unsubscribeRef.current(); unsubscribeRef.current = null; }
         setConversation(null);
         setMessages([]);
         await initConversation();
