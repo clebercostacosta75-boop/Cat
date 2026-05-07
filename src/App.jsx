@@ -67,7 +67,14 @@ const AuthenticatedApp = () => {
     const checkConsent = async () => {
       try {
         const user = await base44.auth.me();
-        if (!user) return;
+        if (!user) { setConsentChecked(true); return; }
+
+        // gestor_master e admin nunca precisam de gates
+        if (['admin', 'gestor_master', 'Administrador Master'].includes(user.role)) {
+          setConsentChecked(true);
+          return;
+        }
+
         const profiles = await base44.entities.UserProfile.filter({ user_email: user.email });
         const profile = profiles[0];
         if (!profile || !profile.consent_accepted_at) {
