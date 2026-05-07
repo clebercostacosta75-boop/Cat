@@ -239,10 +239,14 @@ function AlunosCadastro() {
     else createMutation.mutate(form);
   };
 
+  const searchNorm = search.toLowerCase().replace(/[\.\-\/\s]/g, "");
   const filtered = students.filter(s =>
     s.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    s.cpf?.includes(search) ||
-    s.email?.toLowerCase().includes(search.toLowerCase())
+    s.social_name?.toLowerCase().includes(search.toLowerCase()) ||
+    s.cpf?.replace(/[\.\-\/\s]/g, "").includes(searchNorm) ||
+    s.email?.toLowerCase().includes(search.toLowerCase()) ||
+    s.whatsapp?.replace(/[\s\(\)\-]/g, "").includes(searchNorm) ||
+    s.rg?.replace(/[\.\-\/\s]/g, "").includes(searchNorm)
   );
 
   return (
