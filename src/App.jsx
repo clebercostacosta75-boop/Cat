@@ -41,6 +41,7 @@ import ContasSociais from './pages/ContasSociais.jsx';
 import BaseConhecimento from './pages/BaseConhecimento.jsx';
 import CaixaEntrada from './pages/CaixaEntrada.jsx';
 import ConsentForm from './pages/ConsentForm.jsx';
+import TrocarSenha from './pages/TrocarSenha.jsx';
 import PrivacyPolicy from './pages/PrivacyPolicy.jsx';
 import Analytics from './pages/Analytics.jsx';
 import AccessLog from './pages/AccessLog.jsx';
@@ -60,6 +61,7 @@ const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
   const [consentChecked, setConsentChecked] = useState(false);
   const [needsConsent, setNeedsConsent] = useState(false);
+  const [needsPasswordChange, setNeedsPasswordChange] = useState(false);
 
   useEffect(() => {
     const checkConsent = async () => {
@@ -67,8 +69,11 @@ const AuthenticatedApp = () => {
         const user = await base44.auth.me();
         if (!user) return;
         const profiles = await base44.entities.UserProfile.filter({ user_email: user.email });
-        if (profiles.length === 0 || !profiles[0].consent_accepted_at) {
+        const profile = profiles[0];
+        if (!profile || !profile.consent_accepted_at) {
           setNeedsConsent(true);
+        } else if (profile.status === "pending_password_change") {
+          setNeedsPasswordChange(true);
         }
       } catch {}
       setConsentChecked(true);
@@ -100,6 +105,11 @@ const AuthenticatedApp = () => {
   // Gate de consentimento LGPD
   if (needsConsent) {
     return <ConsentForm onConsented={() => setNeedsConsent(false)} />;
+  }
+
+  // Gate de troca de senha obrigatória no primeiro acesso
+  if (needsPasswordChange) {
+    return <TrocarSenha onPasswordChanged={() => setNeedsPasswordChange(false)} />;
   }
 
   // Render the main app

@@ -10,20 +10,16 @@ const APP_URL = window.location.origin;
 export default function CredentialsModal({ isOpen, onClose, credentials }) {
   if (!credentials) return null;
 
-  const handleCopyEmail = () => {
-    navigator.clipboard.writeText(credentials.email);
-    toast.success("E-mail copiado!");
+  const handleCopyAll = () => {
+    const pwd = credentials.password ? `🔑 *Senha inicial:* ${credentials.password}\n` : "";
+    const msg = `Olá ${credentials.name}! 👋\n\nSeu acesso ao *CAT Gestão de Cursos* foi criado.\n\n📧 *E-mail:* ${credentials.email}\n${pwd}🔗 *Link:* ${APP_URL}\n\n⚠️ No primeiro acesso, você será solicitado a trocar a senha.`;
+    navigator.clipboard.writeText(msg);
+    toast.success("Mensagem copiada! Pronta para enviar via WhatsApp.");
   };
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(APP_URL);
-    toast.success("Link do aplicativo copiado!");
-  };
-
-  const handleCopyMessage = () => {
-    const msg = `Olá ${credentials.name}! 👋\n\nSeu acesso ao *CAT Gestão de Cursos* foi criado.\n\n📧 *E-mail:* ${credentials.email}\n\nVocê receberá um e-mail com o link para definir sua senha. Após isso, acesse o sistema pelo link abaixo:\n🔗 ${APP_URL}\n\nCaso não encontre o e-mail, verifique a caixa de spam.`;
-    navigator.clipboard.writeText(msg);
-    toast.success("Mensagem copiada! Pronta para enviar via WhatsApp.");
+    toast.success("Link copiado!");
   };
 
   return (
@@ -32,70 +28,65 @@ export default function CredentialsModal({ isOpen, onClose, credentials }) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-600" />
-            Convite Enviado com Sucesso!
+            Usuário Criado com Sucesso!
           </DialogTitle>
           <DialogDescription>
-            O usuário receberá um e-mail para definir sua própria senha
+            Comunique os dados de acesso abaixo ao usuário
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {/* Usuário */}
+        <div className="space-y-3 py-4">
           <div>
-            <label className="text-sm font-medium text-gray-700">Usuário convidado:</label>
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Usuário</label>
             <div className="mt-1 p-3 bg-gray-50 rounded-lg border border-gray-200">
               <span className="font-medium text-gray-900">{credentials.name}</span>
             </div>
           </div>
 
-          {/* E-mail */}
           <div>
-            <label className="text-sm font-medium text-gray-700">E-mail de acesso:</label>
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">E-mail (login)</label>
             <div className="mt-1 p-3 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-center">
               <span className="font-medium text-gray-900 truncate">{credentials.email}</span>
-              <Button size="sm" variant="ghost" onClick={handleCopyEmail} className="ml-2">
+              <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(credentials.email); toast.success("Copiado!"); }}>
                 <Copy className="w-4 h-4" />
               </Button>
             </div>
           </div>
 
-          {/* Link do App */}
+          {credentials.password && (
+            <div>
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Senha inicial</label>
+              <div className="mt-1 p-3 bg-yellow-50 rounded-lg border-2 border-yellow-200 flex justify-between items-center">
+                <span className="font-mono font-bold text-yellow-900">{credentials.password}</span>
+                <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(credentials.password); toast.success("Senha copiada!"); }}>
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div>
-            <label className="text-sm font-medium text-gray-700">Link do aplicativo:</label>
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Link do sistema</label>
             <div className="mt-1 p-3 bg-blue-50 rounded-lg border-2 border-blue-200 flex justify-between items-center">
               <span className="text-blue-800 text-sm font-medium truncate">{APP_URL}</span>
-              <Button size="sm" variant="ghost" onClick={handleCopyLink} className="ml-2 text-blue-600">
+              <Button size="sm" variant="ghost" onClick={handleCopyLink} className="text-blue-600">
                 <Copy className="w-4 h-4" />
               </Button>
             </div>
           </div>
 
-          {/* Aviso */}
-          <Card className="bg-green-50 border-green-200 p-3">
-            <p className="text-sm text-green-800">
-              ✅ <strong>Como funciona:</strong> O usuário receberá um e-mail do sistema com um link seguro para definir sua própria senha e acessar o aplicativo.
+          <Card className="bg-amber-50 border-amber-200 p-3">
+            <p className="text-sm text-amber-800">
+              ⚠️ O usuário deverá <strong>trocar a senha no primeiro acesso</strong>. Oriente-o a acessar o link acima com as credenciais informadas.
             </p>
           </Card>
 
-          <Card className="bg-yellow-50 border-yellow-200 p-3">
-            <p className="text-sm text-yellow-800">
-              ⚠️ <strong>Não recebeu o e-mail?</strong> Peça ao usuário para verificar a caixa de spam. Caso necessário, use o botão <em>"Reenviar"</em> na lista de usuários.
-            </p>
-          </Card>
-
-          {/* Botões */}
-          <div className="flex gap-2 pt-2">
-            <Button
-              variant="outline"
-              onClick={handleCopyMessage}
-              className="flex-1 text-green-700 border-green-300 hover:bg-green-50"
-            >
+          <div className="flex gap-2 pt-1">
+            <Button variant="outline" onClick={handleCopyAll} className="flex-1 text-green-700 border-green-300 hover:bg-green-50">
               <Copy className="w-4 h-4 mr-2" />
               Copiar p/ WhatsApp
             </Button>
-            <Button onClick={onClose} className="flex-1">
-              Fechar
-            </Button>
+            <Button onClick={onClose} className="flex-1">Fechar</Button>
           </div>
         </div>
       </DialogContent>

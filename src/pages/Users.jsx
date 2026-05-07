@@ -5,14 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserCog, Plus, Search, Shield, Edit, Lock, Unlock, Mail, Phone, X, Check, Send, CheckCircle, Clock, Trash2 } from "lucide-react";
+import { UserCog, Plus, Search, Shield, Edit, Mail, Phone, X, Check, Send, CheckCircle, Clock, Trash2, Key } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import EmailDeliveryPanel from "@/components/users/EmailDeliveryPanel";
 import PermissionsPanel from "@/components/users/PermissionsPanel";
 import CredentialsModal from "@/components/users/CredentialsModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,12 +23,6 @@ const ROLE_OPTIONS = [
   { value: "cliente", label: "Cliente" },
 ];
 
-const STATUS_OPTIONS = [
-  { value: "active", label: "Ativo" },
-  { value: "blocked", label: "Bloqueado" },
-  { value: "pending_password_change", label: "Pendente" },
-];
-
 const ROLE_COLORS = {
   gestor_master: "bg-purple-100 text-purple-800",
   editor: "bg-blue-100 text-blue-800",
@@ -38,18 +31,23 @@ const ROLE_COLORS = {
 
 const STATUS_COLORS = {
   active: "bg-green-100 text-green-800",
-  blocked: "bg-red-100 text-red-800",
   pending_password_change: "bg-yellow-100 text-yellow-800",
+};
+
+const STATUS_LABELS = {
+  active: "Ativo",
+  pending_password_change: "Aguardando 1º acesso",
 };
 
 // Formulário isolado para evitar conflitos com o Dialog
 function UserForm({ profile, onSave, onCancel }) {
+  const isNew = !profile;
   const [formData, setFormData] = useState({
     user_name: profile?.user_name || "",
     user_email: profile?.user_email || "",
     phone: profile?.phone || "",
-    role: profile?.role || "cliente",
-    status: profile?.status || "active",
+    role: profile?.role || "editor",
+    initial_password: "",
   });
 
   const handleChange = (field, value) => {
@@ -64,7 +62,7 @@ function UserForm({ profile, onSave, onCancel }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="user_name">Nome</Label>
+        <Label htmlFor="user_name">Nome completo</Label>
         <Input
           id="user_name"
           value={formData.user_name}
@@ -111,26 +109,28 @@ function UserForm({ profile, onSave, onCancel }) {
         </select>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="status">Status</Label>
-        <select
-          id="status"
-          value={formData.status}
-          onChange={e => handleChange("status", e.target.value)}
-          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-        >
-          {STATUS_OPTIONS.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-      </div>
+      {isNew && (
+        <div className="space-y-2">
+          <Label htmlFor="initial_password">
+            Senha inicial <span className="text-gray-400 font-normal">(sugestão: o e-mail do usuário)</span>
+          </Label>
+          <Input
+            id="initial_password"
+            type="text"
+            value={formData.initial_password}
+            onChange={e => handleChange("initial_password", e.target.value)}
+            placeholder="Ex: usuario@empresa.com"
+          />
+          <p className="text-xs text-gray-500">Esta senha será exibida no modal para você comunicar ao usuário. O usuário deverá trocá-la no primeiro acesso.</p>
+        </div>
+      )}
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel}>
           <X className="w-4 h-4 mr-1" /> Cancelar
         </Button>
         <Button type="submit">
-          <Check className="w-4 h-4 mr-1" /> Salvar
+          <Check className="w-4 h-4 mr-1" /> {isNew ? "Criar Usuário" : "Salvar"}
         </Button>
       </div>
     </form>
@@ -176,31 +176,40 @@ export default function UsersPage() {
     setSaving(true);
     try {
       if (editingProfile) {
-        // Usa o id do registro (hex), não o user_id (UUID)
-        const profileId = editingProfile.id;
-        await base44.entities.UserProfile.update(profileId, formData);
+        const { initial_password, ...updateData } = formData;
+        await base44.entities.UserProfile.update(editingProfile.id, updateData);
         toast.success("Usuário atualizado com sucesso!");
       } else {
-        // Cria o perfil primeiro
-        const created = await base44.entities.UserProfile.create({
-          ...formData,
+        // Verifica se já existe
+        const existing = profiles.find(p => p.user_email?.toLowerCase() === formData.user_email?.toLowerCase());
+        if (existing) {
+          toast.warning(`O e-mail ${formData.user_email} já está cadastrado.`);
+          setSaving(false);
+          return;
+        }
+        // Cria perfil já ativo
+        await base44.entities.UserProfile.create({
+          user_name: formData.user_name,
+          user_email: formData.user_email,
+          phone: formData.phone,
+          role: formData.role,
           status: "pending_password_change",
+          initial_password: formData.initial_password || formData.user_email,
+          credentials_sent_at: new Date().toISOString(),
+          credentials_sent_via: "manual",
         });
-        // Envia convite + e-mail com credenciais
-        const result = await base44.functions.invoke("convidarUsuario", {
+        // Convida no sistema Base44
+        await base44.functions.invoke("convidarUsuario", {
           email: formData.user_email,
           user_name: formData.user_name,
           role: formData.role,
         });
-        if (result.data?.success) {
-          toast.success(`Convite enviado para ${formData.user_email}! O usuário receberá um e-mail para definir sua senha.`);
-          // Exibe modal de confirmação com link do app para compartilhar via WhatsApp
-          setCredentialsModal({ name: formData.user_name, email: formData.user_email });
-        } else if (result.data?.already_exists) {
-          toast.warning(`O e-mail ${formData.user_email} já está cadastrado no sistema.`);
-        } else {
-          toast.warning("Usuário criado, mas houve um problema ao enviar o convite. Use o botão de reenvio.");
-        }
+        toast.success(`Usuário ${formData.user_name} criado com sucesso!`);
+        setCredentialsModal({
+          name: formData.user_name,
+          email: formData.user_email,
+          password: formData.initial_password || formData.user_email,
+        });
       }
       setShowForm(false);
       setEditingProfile(null);
@@ -262,17 +271,6 @@ export default function UsersPage() {
     }
   };
 
-  const handleToggleBlock = async (profile) => {
-    const newStatus = profile.status === "blocked" ? "active" : "blocked";
-    try {
-      await base44.entities.UserProfile.update(profile.id, { status: newStatus });
-      toast.success(newStatus === "blocked" ? "Usuário bloqueado" : "Usuário desbloqueado");
-      await loadProfiles();
-    } catch {
-      toast.error("Erro ao alterar status");
-    }
-  };
-
   const filtered = profiles.filter(p => {
     const q = search.toLowerCase();
     return (
@@ -283,7 +281,6 @@ export default function UsersPage() {
   });
 
   const roleLabel = (r) => ROLE_OPTIONS.find(o => o.value === r)?.label || r;
-  const statusLabel = (s) => STATUS_OPTIONS.find(o => o.value === s)?.label || s;
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -325,14 +322,6 @@ export default function UsersPage() {
       <Tabs defaultValue="usuarios">
         <TabsList className="mb-4">
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
-          <TabsTrigger value="entregas">
-            Status de E-mails
-            {profiles.filter(p => !p.credentials_sent_at).length > 0 && (
-              <span className="ml-2 bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5">
-                {profiles.filter(p => !p.credentials_sent_at).length}
-              </span>
-            )}
-          </TabsTrigger>
           <TabsTrigger value="permissoes">Permissões de Acesso</TabsTrigger>
         </TabsList>
 
@@ -399,24 +388,19 @@ export default function UsersPage() {
                           {roleLabel(profile.role)}
                         </Badge>
                         <Badge className={STATUS_COLORS[profile.status] || "bg-gray-100 text-gray-800"}>
-                          {statusLabel(profile.status)}
+                          {STATUS_LABELS[profile.status] || profile.status}
                         </Badge>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleResendInvite(profile)}
-                          title="Reenviar credenciais por e-mail"
+                          title="Reenviar convite por e-mail"
                           className="text-xs text-blue-600 border-blue-200 hover:bg-blue-50 gap-1"
                         >
                           <Send className="w-3 h-3" /> Reenviar
                         </Button>
                         <Button size="icon" variant="ghost" onClick={() => handleEdit(profile)} title="Editar">
                           <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button size="icon" variant="ghost" onClick={() => handleToggleBlock(profile)} title={profile.status === "blocked" ? "Desbloquear" : "Bloquear"}>
-                          {profile.status === "blocked"
-                            ? <Unlock className="w-4 h-4 text-green-600" />
-                            : <Lock className="w-4 h-4 text-red-500" />}
                         </Button>
                         {canDelete && (
                           <Button size="icon" variant="ghost" onClick={() => setDeletingProfile(profile)} title="Excluir usuário">
@@ -429,17 +413,6 @@ export default function UsersPage() {
                 </Card>
               ))}
             </div>
-          )}
-        </TabsContent>
-
-        {/* Aba: status de entregas */}
-        <TabsContent value="entregas">
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-800 rounded-full animate-spin" />
-            </div>
-          ) : (
-            <EmailDeliveryPanel profiles={profiles} onRefresh={loadProfiles} />
           )}
         </TabsContent>
 
