@@ -37,8 +37,8 @@ async function sendEmail({ to, subject, html }) {
   if (!to || !RESEND_API_KEY) return null;
   // Tenta com domínio personalizado primeiro, depois fallback para domínio padrão Resend
   const fromOptions = [
+    "CAT Cursos <noreply@catcursos.com>",
     "CAT Cursos <noreply@catcursos.com.br>",
-    "CAT Cursos <onboarding@resend.dev>",
   ];
   for (const from of fromOptions) {
     const res = await fetch("https://api.resend.com/emails", {
