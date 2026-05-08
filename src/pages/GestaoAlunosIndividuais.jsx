@@ -227,9 +227,10 @@ function MatriculaModal({ open, onClose, onSave, isPending }) {
     queryFn: () => base44.entities.StudentCourseEnrollment.list(),
   });
 
-  const { data: courses = [] } = useQuery({
+  const { data: courses = [], isLoading: loadingCourses } = useQuery({
     queryKey: ["courses"],
     queryFn: () => base44.entities.Course.list(),
+    staleTime: 0,
   });
 
   useEffect(() => {
@@ -451,8 +452,13 @@ function MatriculaModal({ open, onClose, onSave, isPending }) {
           <div>
             <Label>Curso *</Label>
             <Select value={form.course_id} onValueChange={handleCourseChange}>
-              <SelectTrigger><SelectValue placeholder="Selecione o curso" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder={loadingCourses ? "Carregando cursos..." : courses.length === 0 ? "Nenhum curso cadastrado" : "Selecione o curso"} />
+              </SelectTrigger>
               <SelectContent>
+                {courses.length === 0 && !loadingCourses && (
+                  <div className="px-3 py-2 text-sm text-gray-500">Nenhum curso encontrado. Cadastre cursos primeiro.</div>
+                )}
                 {courses.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -677,6 +683,7 @@ function MatriculasCursos() {
     queryKey: ["courses"],
     queryFn: () => base44.entities.Course.list(),
     initialData: [],
+    staleTime: 0,
   });
 
   const createMutation = useMutation({
