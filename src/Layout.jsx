@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import {
   LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText,
   Building2, UserCog, Mail, Bell, Award,
-  TrendingUp, PenLine, Settings, Target, Instagram, MessageSquare, ShieldAlert
+  TrendingUp, PenLine, Settings, Target, Instagram, MessageSquare, ShieldAlert, Bot
 } from "lucide-react";
 
 import NotificationBell from "./components/notifications/NotificationBell";
@@ -48,6 +48,7 @@ const ALL_ITEMS = [
   { title: "Dashboard Admin", url: "/AdminDashboard", icon: TrendingUp, key: "Dashboard Admin" },
   { title: "Dashboard Comercial", url: "/DashboardComercial", icon: Target, key: "Dashboard Comercial" },
   { title: "Gestão de Leads", url: "/GestaoLeads", icon: Users, key: "Gestão de Leads" },
+  { title: "Assistente de Cadastros (IA)", url: "/AssistenteCadastros", icon: Bot, key: "Assistente de Cadastros" },
   { title: "Caixa de Entrada", url: "/CaixaEntrada", icon: MessageSquare, key: "Caixa de Entrada" },
   { title: "Base de Conhecimento", url: "/BaseConhecimento", icon: BookOpen, key: "Base de Conhecimento" },
   { title: "Contas Sociais", url: "/ContasSociais", icon: Instagram, key: "Contas Sociais" },
