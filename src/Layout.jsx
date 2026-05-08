@@ -43,6 +43,7 @@ const ALL_ITEMS = [
   { title: "Central de Comunicação", url: createPageUrl("CommunicationCenter"), icon: Mail, key: "Central de Comunicação" },
   { title: "Usuários", url: createPageUrl("Users"), icon: UserCog, key: "Usuários" },
   { title: "Log de Auditoria", url: createPageUrl("AuditLog"), icon: FileText, key: "Log de Auditoria" },
+  { title: "Auditoria Completa", url: "/AuditoriaCompleta", icon: FileText, key: "Auditoria Completa" },
   { title: "Log de Acesso", url: "/AccessLog", icon: ShieldAlert, key: "Log de Acesso" },
   { title: "Dashboard Admin", url: "/AdminDashboard", icon: TrendingUp, key: "Dashboard Admin" },
   { title: "Dashboard Comercial", url: "/DashboardComercial", icon: Target, key: "Dashboard Comercial" },
