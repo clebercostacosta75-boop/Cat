@@ -1,8 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import nodemailer from 'npm:nodemailer@6.9.10';
 
 const ASAAS_BASE_URL = "https://api.asaas.com/v3";
 const API_KEY = Deno.env.get("ASAAS_API_KEY");
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 const asaasHeaders = {
   "Content-Type": "application/json",
@@ -19,39 +19,35 @@ function formatMoney(value) {
   return `R$ ${parseFloat(value).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function createTransporter() {
-  const smtpEmail = Deno.env.get("UOL_SMTP_EMAIL");
-  const smtpPassword = Deno.env.get("UOL_SMTP_PASSWORD");
-  return nodemailer.createTransport({
-    host: "smtp.uol.com.br",
-    port: 465,
-    secure: true, // SSL
-    auth: { user: smtpEmail, pass: smtpPassword },
-  });
-}
-
-async function sendEmail(transporter, { to, subject, body }) {
+async function sendEmail({ to, subject, html }) {
   if (!to) return;
-  await transporter.sendMail({
-    from: `"CAT Cursos" <${Deno.env.get("UOL_SMTP_EMAIL")}>`,
-    to,
-    subject,
-    html: body,
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: "CAT Cursos <noreply@catcursos.com.br>",
+      to: [to],
+      subject,
+      html,
+    }),
   });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Resend error: ${err}`);
+  }
+  return res.json();
 }
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    const smtpEmail = Deno.env.get("UOL_SMTP_EMAIL");
-    const smtpPassword = Deno.env.get("UOL_SMTP_PASSWORD");
-
-    if (!smtpEmail || !smtpPassword) {
-      return Response.json({ error: "SMTP credentials not configured (UOL_SMTP_EMAIL / UOL_SMTP_PASSWORD)" }, { status: 500 });
+    if (!RESEND_API_KEY) {
+      return Response.json({ error: "RESEND_API_KEY não configurada" }, { status: 500 });
     }
-
-    const transporter = createTransporter();
 
     // Busca admins para cópia
     const allUsers = await base44.asServiceRole.entities.User.list();
@@ -102,7 +98,7 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const emailBody = `
+      const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: #f59e0b; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
             <h2 style="margin: 0;">⚠️ Lembrete de Vencimento</h2>
@@ -132,27 +128,19 @@ Deno.serve(async (req) => {
 
       if (customer.email) {
         try {
-          await sendEmail(transporter, {
-            to: customer.email,
-            subject: `⚠️ Seu boleto vence ${label} — ${formatMoney(charge.value)}`,
-            body: emailBody,
-          });
+          await sendEmail({ to: customer.email, subject: `⚠️ Seu boleto vence ${label} — ${formatMoney(charge.value)}`, html });
           emailsSent++;
         } catch (e) {
-          errors.push(`Erro ao enviar e-mail para aluno ${customer.email}: ${e.message}`);
+          errors.push(`Erro ao enviar e-mail para ${customer.email}: ${e.message}`);
         }
       }
 
       for (const adminEmail of adminEmails) {
         try {
-          await sendEmail(transporter, {
-            to: adminEmail,
-            subject: `[CAT] Boleto de ${customer.name} vence ${label}`,
-            body: emailBody,
-          });
+          await sendEmail({ to: adminEmail, subject: `[CAT] Boleto de ${customer.name} vence ${label}`, html });
           emailsSent++;
         } catch (e) {
-          errors.push(`Erro ao enviar e-mail admin ${adminEmail}: ${e.message}`);
+          errors.push(`Erro admin ${adminEmail}: ${e.message}`);
         }
       }
     }
@@ -171,7 +159,7 @@ Deno.serve(async (req) => {
       const dueDate = new Date(charge.dueDate + "T00:00:00");
       const daysLate = Math.round((today - dueDate) / (1000 * 60 * 60 * 24));
 
-      const emailBody = `
+      const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: #dc2626; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
             <h2 style="margin: 0;">🔴 Boleto em Atraso</h2>
@@ -205,27 +193,19 @@ Deno.serve(async (req) => {
 
       if (customer.email) {
         try {
-          await sendEmail(transporter, {
-            to: customer.email,
-            subject: `🔴 Boleto em atraso — ${daysLate} dia(s) — ${formatMoney(charge.value)}`,
-            body: emailBody,
-          });
+          await sendEmail({ to: customer.email, subject: `🔴 Boleto em atraso — ${daysLate} dia(s) — ${formatMoney(charge.value)}`, html });
           emailsSent++;
         } catch (e) {
-          errors.push(`Erro ao enviar e-mail para aluno ${customer.email}: ${e.message}`);
+          errors.push(`Erro ao enviar e-mail para ${customer.email}: ${e.message}`);
         }
       }
 
       for (const adminEmail of adminEmails) {
         try {
-          await sendEmail(transporter, {
-            to: adminEmail,
-            subject: `[CAT] ATRASO: Boleto de ${customer.name} — ${daysLate} dia(s)`,
-            body: emailBody,
-          });
+          await sendEmail({ to: adminEmail, subject: `[CAT] ATRASO: Boleto de ${customer.name} — ${daysLate} dia(s)`, html });
           emailsSent++;
         } catch (e) {
-          errors.push(`Erro ao enviar e-mail admin ${adminEmail}: ${e.message}`);
+          errors.push(`Erro admin ${adminEmail}: ${e.message}`);
         }
       }
     }
@@ -241,9 +221,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('[alertarBoletosVencimento] Erro:', error);
-    return Response.json({
-      error: error.message,
-      timestamp: new Date().toISOString(),
-    }, { status: 500 });
+    return Response.json({ error: error.message, timestamp: new Date().toISOString() }, { status: 500 });
   }
 });
