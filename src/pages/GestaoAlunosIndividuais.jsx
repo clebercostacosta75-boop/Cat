@@ -11,10 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Users, UserPlus, BookOpen, DollarSign, Shield, Search, Edit, Trash2,
-  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, QrCode, FileText, Copy, Activity, LayoutDashboard
+  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, QrCode, FileText, Copy, Activity, LayoutDashboard, Bell
 } from "lucide-react";
 import { toast } from "sonner";
 import PagamentosAsaas from "@/components/alunos/PagamentosAsaas";
+import PainelPendenciasFinanceiras from "@/components/financeiro/PainelPendenciasFinanceiras";
 import DocumentosAluno from "@/components/alunos/DocumentosAluno";
 import TimelineAluno from "@/components/alunos/TimelineAluno";
 import GargalosDashboard from "@/components/alunos/GargalosDashboard";
@@ -1015,7 +1016,7 @@ export default function GestaoAlunosIndividuais() {
         </div>
 
         <Tabs defaultValue="cadastro">
-          <TabsList className="grid w-full grid-cols-8 mb-6 bg-gray-100 p-1 h-auto">
+          <TabsList className="grid w-full grid-cols-9 mb-6 bg-gray-100 p-1 h-auto">
             <TabsTrigger value="cadastro" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Cadastro</span>
@@ -1047,6 +1048,10 @@ export default function GestaoAlunosIndividuais() {
             <TabsTrigger value="gargalos" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden sm:inline">Gargalos</span>
+            </TabsTrigger>
+            <TabsTrigger value="pendencias" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
+              <Bell className="w-4 h-4" />
+              <span className="hidden sm:inline">Pendências</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1084,6 +1089,9 @@ export default function GestaoAlunosIndividuais() {
           </TabsContent>
           <TabsContent value="gargalos">
             <GargalosDashboard />
+          </TabsContent>
+          <TabsContent value="pendencias">
+            <PainelPendenciasFinanceiras />
           </TabsContent>
         </Tabs>
       </div>

@@ -1,0 +1,116 @@
+{
+  "name": "FinancialNotification",
+  "type": "object",
+  "properties": {
+    "aluno_nome": {
+      "type": "string",
+      "description": "Nome do aluno"
+    },
+    "aluno_cpf": {
+      "type": "string",
+      "description": "CPF do aluno"
+    },
+    "aluno_whatsapp": {
+      "type": "string",
+      "description": "WhatsApp do aluno"
+    },
+    "aluno_email": {
+      "type": "string",
+      "description": "E-mail do aluno"
+    },
+    "curso_nome": {
+      "type": "string",
+      "description": "Nome do curso"
+    },
+    "matricula_id": {
+      "type": "string",
+      "description": "ID da matr\u00edcula"
+    },
+    "boleto_id": {
+      "type": "string",
+      "description": "ID do boleto/cobran\u00e7a no Asaas"
+    },
+    "valor_vencido": {
+      "type": "number",
+      "description": "Valor vencido"
+    },
+    "data_vencimento": {
+      "type": "string",
+      "description": "Data de vencimento"
+    },
+    "dias_atraso": {
+      "type": "number",
+      "description": "Dias em atraso"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "boleto_vencido",
+        "proximo_vencimento"
+      ],
+      "description": "Tipo da notifica\u00e7\u00e3o"
+    },
+    "canal_envio": {
+      "type": "string",
+      "enum": [
+        "email",
+        "whatsapp",
+        "portal",
+        "manual"
+      ],
+      "description": "Canal de envio"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Gerada",
+        "Pendente de envio",
+        "Pendente por falta de RESEND_API_KEY",
+        "Enviada via WhatsApp",
+        "Enviada por e-mail",
+        "Visualizada pelo aluno no Portal",
+        "Regularizada",
+        "Cancelada",
+        "Erro no envio",
+        "Ignorada por duplicidade"
+      ],
+      "default": "Gerada",
+      "description": "Status da notifica\u00e7\u00e3o"
+    },
+    "mensagem_whatsapp": {
+      "type": "string",
+      "description": "Mensagem pronta para WhatsApp"
+    },
+    "data_geracao": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de gera\u00e7\u00e3o"
+    },
+    "data_envio": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de envio"
+    },
+    "usuario_responsavel": {
+      "type": "string",
+      "description": "E-mail do usu\u00e1rio que enviou (manual)"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es administrativas"
+    },
+    "erro_envio": {
+      "type": "string",
+      "description": "Detalhe do erro, se houver"
+    },
+    "invoice_url": {
+      "type": "string",
+      "description": "URL da fatura no Asaas"
+    }
+  },
+  "required": [
+    "aluno_nome",
+    "status",
+    "tipo"
+  ]
+}
