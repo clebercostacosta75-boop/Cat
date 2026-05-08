@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -209,10 +209,19 @@ function AlunoModal({ open, onClose, onSave, editingStudent }) {
 // ─── Modal de Nova Matrícula ──────────────────────────────────────────────────
 function MatriculaModal({ open, onClose, onSave, isPending }) {
   const [form, setForm] = useState(EMPTY_ENROLLMENT);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedStudentLabel, setSelectedStudentLabel] = useState("");
+  const searchRef = useRef(null);
 
-  const { data: students = [] } = useQuery({
+  const { data: allStudents = [] } = useQuery({
     queryKey: ["students-pf"],
     queryFn: () => base44.entities.Student.list("-full_name"),
+  });
+
+  const { data: allEnrollments = [] } = useQuery({
+    queryKey: ["all-enrollments"],
+    queryFn: () => base44.entities.StudentCourseEnrollment.list(),
   });
 
   const { data: courses = [] } = useQuery({
@@ -221,13 +230,57 @@ function MatriculaModal({ open, onClose, onSave, isPending }) {
   });
 
   useEffect(() => {
-    if (open) setForm(EMPTY_ENROLLMENT);
+    if (open) {
+      setForm(EMPTY_ENROLLMENT);
+      setStudentSearch("");
+      setSelectedStudentLabel("");
+      setShowDropdown(false);
+    }
   }, [open]);
 
-  const handleStudentChange = (studentId) => {
-    const s = students.find(s => s.id === studentId);
-    if (s) setForm(f => ({ ...f, student_id: s.id, student_name: s.full_name, student_cpf: s.cpf, student_email: s.email || "", student_phone: s.whatsapp || "" }));
+  // Fecha dropdown ao clicar fora
+  useEffect(() => {
+    const handler = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) setShowDropdown(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const norm = (v) => (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").trim();
+
+  const filteredStudents = studentSearch.length >= 3
+    ? [...allStudents]
+        .filter(s => [s.full_name, s.cpf, s.email, s.whatsapp].some(f => norm(f).includes(norm(studentSearch))))
+        .sort((a, b) => (a.full_name || "").localeCompare(b.full_name || ""))
+    : [];
+
+  const maskCpf = (cpf) => {
+    if (!cpf) return "";
+    const d = cpf.replace(/\D/g, "");
+    if (d.length === 11) return `${d.slice(0,3)}.${d.slice(3,6)}.***.** `;
+    return cpf;
   };
+
+  const countEnrollments = (studentId) =>
+    allEnrollments.filter(e => e.student_id === studentId).length;
+
+  const handleSelectStudent = (s) => {
+    setForm(f => ({ ...f, student_id: s.id, student_name: s.full_name, student_cpf: s.cpf, student_email: s.email || "", student_phone: s.whatsapp || "" }));
+    setSelectedStudentLabel(`${s.full_name} — ${maskCpf(s.cpf)}`);
+    setStudentSearch("");
+    setShowDropdown(false);
+  };
+
+  const handleClearStudent = () => {
+    setForm(f => ({ ...f, student_id: "", student_name: "", student_cpf: "", student_email: "", student_phone: "" }));
+    setSelectedStudentLabel("");
+    setStudentSearch("");
+  };
+
+  // Aviso se aluno já matriculado no mesmo curso
+  const alreadyInCourse = !!(form.student_id && form.course_id &&
+    allEnrollments.some(e => e.student_id === form.student_id && e.course_id === form.course_id));
 
   const handleCourseChange = (courseId) => {
     const c = courses.find(c => c.id === courseId);
@@ -241,15 +294,65 @@ function MatriculaModal({ open, onClose, onSave, isPending }) {
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Nova Matrícula Individual (PF)</DialogTitle></DialogHeader>
         <div className="space-y-3">
+
+          {/* Campo Aluno com busca avançada */}
           <div>
             <Label>Aluno *</Label>
-            <Select value={form.student_id} onValueChange={handleStudentChange}>
-              <SelectTrigger><SelectValue placeholder="Selecione o aluno" /></SelectTrigger>
-              <SelectContent>
-                {students.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name} — {s.cpf}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            {form.student_id ? (
+              <div className="flex items-center gap-2 p-2.5 border border-gray-300 rounded-md bg-gray-50">
+                <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <span className="flex-1 text-sm font-medium text-gray-800">{selectedStudentLabel}</span>
+                <button onClick={handleClearStudent} className="text-gray-400 hover:text-red-500 text-xs underline ml-1">Trocar</button>
+              </div>
+            ) : (
+              <div ref={searchRef} className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <Input
+                  className="pl-9"
+                  placeholder="Digite nome, CPF, e-mail ou telefone (mín. 3 caracteres)..."
+                  value={studentSearch}
+                  onChange={e => { setStudentSearch(e.target.value); setShowDropdown(true); }}
+                  onFocus={() => studentSearch.length >= 3 && setShowDropdown(true)}
+                  autoComplete="off"
+                />
+                {showDropdown && studentSearch.length >= 3 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-y-auto">
+                    {filteredStudents.length === 0 ? (
+                      <div className="p-3 text-sm text-gray-500 text-center">Nenhum aluno encontrado</div>
+                    ) : (
+                      filteredStudents.map(s => {
+                        const qty = countEnrollments(s.id);
+                        return (
+                          <div
+                            key={s.id}
+                            className="flex items-center justify-between px-3 py-2.5 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                            onMouseDown={() => handleSelectStudent(s)}
+                          >
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">{s.full_name}</p>
+                              <p className="text-xs text-gray-500">CPF: {maskCpf(s.cpf)}{s.email ? ` • ${s.email}` : ""}</p>
+                            </div>
+                            <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">{qty} curso{qty !== 1 ? "s" : ""}</span>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+                {studentSearch.length > 0 && studentSearch.length < 3 && (
+                  <p className="text-xs text-gray-400 mt-1">Digite mais {3 - studentSearch.length} caractere(s) para buscar...</p>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Aviso: aluno já matriculado no mesmo curso */}
+          {alreadyInCourse && (
+            <div className="flex items-start gap-2 p-2.5 bg-yellow-50 border border-yellow-300 rounded-md">
+              <AlertTriangle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-yellow-800">Este aluno já possui uma matrícula neste curso. Você pode prosseguir, mas verifique se é uma renovação ou duplicidade.</p>
+            </div>
+          )}
           <div>
             <Label>Curso *</Label>
             <Select value={form.course_id} onValueChange={handleCourseChange}>
