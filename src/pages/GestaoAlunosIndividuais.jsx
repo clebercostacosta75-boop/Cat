@@ -212,11 +212,13 @@ function MatriculaModal({ open, onClose, onSave, isPending }) {
   const [studentSearch, setStudentSearch] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedStudentLabel, setSelectedStudentLabel] = useState("");
+  const [deepSearch, setDeepSearch] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState(null); // student to confirm
   const searchRef = useRef(null);
 
   const { data: allStudents = [] } = useQuery({
     queryKey: ["students-pf"],
-    queryFn: () => base44.entities.Student.list("-full_name"),
+    queryFn: () => base44.entities.Student.list("-created_date"),
   });
 
   const { data: allEnrollments = [] } = useQuery({
@@ -235,10 +237,11 @@ function MatriculaModal({ open, onClose, onSave, isPending }) {
       setStudentSearch("");
       setSelectedStudentLabel("");
       setShowDropdown(false);
+      setDeepSearch(false);
+      setConfirmDialog(null);
     }
   }, [open]);
 
-  // Fecha dropdown ao clicar fora
   useEffect(() => {
     const handler = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) setShowDropdown(false);
@@ -248,28 +251,57 @@ function MatriculaModal({ open, onClose, onSave, isPending }) {
   }, []);
 
   const norm = (v) => (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").trim();
+  const today = new Date().toISOString().split("T")[0];
 
-  const filteredStudents = studentSearch.length >= 3
-    ? [...allStudents]
-        .filter(s => [s.full_name, s.cpf, s.email, s.whatsapp].some(f => norm(f).includes(norm(studentSearch))))
-        .sort((a, b) => (a.full_name || "").localeCompare(b.full_name || ""))
-    : [];
+  // IDs de alunos que já têm matrícula
+  const enrolledStudentIds = new Set(allEnrollments.map(e => e.student_id));
+
+  // Alunos sem matrícula, priorizando cadastrados hoje
+  const studentsWithoutEnrollment = allStudents
+    .filter(s => !enrolledStudentIds.has(s.id))
+    .sort((a, b) => {
+      const aToday = (a.created_date || "").startsWith(today);
+      const bToday = (b.created_date || "").startsWith(today);
+      if (aToday && !bToday) return -1;
+      if (!aToday && bToday) return 1;
+      return (b.created_date || "").localeCompare(a.created_date || "");
+    });
 
   const maskCpf = (cpf) => {
     if (!cpf) return "";
     const d = cpf.replace(/\D/g, "");
-    if (d.length === 11) return `${d.slice(0,3)}.${d.slice(3,6)}.***.** `;
+    if (d.length === 11) return `${d.slice(0,3)}.${d.slice(3,6)}.***-**`;
     return cpf;
   };
 
-  const countEnrollments = (studentId) =>
-    allEnrollments.filter(e => e.student_id === studentId).length;
+  const hasEnrollment = (studentId) => enrolledStudentIds.has(studentId);
+  const countEnrollments = (studentId) => allEnrollments.filter(e => e.student_id === studentId).length;
 
-  const handleSelectStudent = (s) => {
+  // Lista filtrada pelo campo de busca
+  const sourceList = deepSearch ? allStudents : studentsWithoutEnrollment;
+  const filteredStudents = studentSearch.length >= 3
+    ? sourceList
+        .filter(s => [s.full_name, s.cpf, s.email, s.whatsapp].some(f => norm(f).includes(norm(studentSearch))))
+        .sort((a, b) => (a.full_name || "").localeCompare(b.full_name || ""))
+    : deepSearch
+      ? [] // busca profunda exige digitar
+      : studentsWithoutEnrollment.slice(0, 20); // padrão: mostra até 20 sem matrícula
+
+  const doSelectStudent = (s) => {
     setForm(f => ({ ...f, student_id: s.id, student_name: s.full_name, student_cpf: s.cpf, student_email: s.email || "", student_phone: s.whatsapp || "" }));
     setSelectedStudentLabel(`${s.full_name} — ${maskCpf(s.cpf)}`);
     setStudentSearch("");
     setShowDropdown(false);
+    setConfirmDialog(null);
+  };
+
+  const handleSelectStudent = (s) => {
+    if (deepSearch && hasEnrollment(s.id)) {
+      setConfirmDialog(s);
+      setShowDropdown(false);
+    } else {
+      doSelectStudent(s);
+    }
   };
 
   const handleClearStudent = () => {
@@ -278,7 +310,6 @@ function MatriculaModal({ open, onClose, onSave, isPending }) {
     setStudentSearch("");
   };
 
-  // Aviso se aluno já matriculado no mesmo curso
   const alreadyInCourse = !!(form.student_id && form.course_id &&
     allEnrollments.some(e => e.student_id === form.student_id && e.course_id === form.course_id));
 
@@ -289,15 +320,49 @@ function MatriculaModal({ open, onClose, onSave, isPending }) {
 
   const canSave = !!(form.student_id && form.course_id && form.start_date && form.end_date);
 
+  const showList = showDropdown || (!form.student_id && !deepSearch && studentSearch.length === 0);
+
   return (
+    <>
+    {/* Diálogo de confirmação para aluno com matrícula anterior */}
+    {confirmDialog && (
+      <Dialog open={!!confirmDialog} onOpenChange={() => setConfirmDialog(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-yellow-500" /> Aluno com matrícula anterior</DialogTitle></DialogHeader>
+          <p className="text-sm text-gray-700 mt-1">
+            <strong>{confirmDialog.full_name}</strong> já possui {countEnrollments(confirmDialog.id)} matrícula(s) no sistema.
+            Deseja continuar com uma nova inscrição?
+          </p>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setConfirmDialog(null)}>Cancelar</Button>
+            <Button className="bg-gray-900 hover:bg-gray-800" onClick={() => doSelectStudent(confirmDialog)}>Continuar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )}
+
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Nova Matrícula Individual (PF)</DialogTitle></DialogHeader>
         <div className="space-y-3">
 
-          {/* Campo Aluno com busca avançada */}
+          {/* Campo Aluno */}
           <div>
-            <Label>Aluno *</Label>
+            <div className="flex items-center justify-between mb-1">
+              <Label>Aluno *</Label>
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={deepSearch}
+                  onChange={e => { setDeepSearch(e.target.checked); setStudentSearch(""); setShowDropdown(false); }}
+                  className="w-3.5 h-3.5 accent-gray-800"
+                />
+                <span className="text-xs font-medium text-blue-700 flex items-center gap-1">
+                  <Search className="w-3 h-3" /> Busca Profunda
+                </span>
+              </label>
+            </div>
+
             {form.student_id ? (
               <div className="flex items-center gap-2 p-2.5 border border-gray-300 rounded-md bg-gray-50">
                 <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -309,48 +374,77 @@ function MatriculaModal({ open, onClose, onSave, isPending }) {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <Input
                   className="pl-9"
-                  placeholder="Digite nome, CPF, e-mail ou telefone (mín. 3 caracteres)..."
+                  placeholder={deepSearch
+                    ? "Busca Profunda: digite nome, CPF, e-mail ou telefone..."
+                    : "Buscar aluno sem matrícula por nome, CPF, e-mail..."}
                   value={studentSearch}
                   onChange={e => { setStudentSearch(e.target.value); setShowDropdown(true); }}
-                  onFocus={() => studentSearch.length >= 3 && setShowDropdown(true)}
+                  onFocus={() => setShowDropdown(true)}
                   autoComplete="off"
                 />
-                {showDropdown && studentSearch.length >= 3 && (
-                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-y-auto">
+
+                {/* Dropdown de resultados */}
+                {showList && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    {/* Cabeçalho do modo */}
+                    <div className={`px-3 py-1.5 text-xs font-semibold border-b ${deepSearch ? "bg-blue-50 text-blue-700" : "bg-gray-50 text-gray-500"}`}>
+                      {deepSearch
+                        ? `🔍 Busca Profunda — todos os alunos${studentSearch.length >= 3 ? "" : " (digite para buscar)"}`
+                        : `⚡ Alunos sem matrícula${studentSearch.length === 0 ? " — cadastros recentes" : ""}`}
+                    </div>
+
                     {filteredStudents.length === 0 ? (
-                      <div className="p-3 text-sm text-gray-500 text-center">Nenhum aluno encontrado</div>
+                      <div className="p-3 text-sm text-gray-500 text-center">
+                        {studentSearch.length > 0 && studentSearch.length < 3
+                          ? `Digite mais ${3 - studentSearch.length} caractere(s) para buscar...`
+                          : deepSearch
+                            ? "Digite para buscar em todos os alunos"
+                            : "Nenhum aluno sem matrícula encontrado"}
+                      </div>
                     ) : (
                       filteredStudents.map(s => {
                         const qty = countEnrollments(s.id);
+                        const hasAny = hasEnrollment(s.id);
+                        const isToday = (s.created_date || "").startsWith(today);
                         return (
                           <div
                             key={s.id}
-                            className="flex items-center justify-between px-3 py-2.5 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                            className="flex items-start justify-between px-3 py-2.5 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
                             onMouseDown={() => handleSelectStudent(s)}
                           >
-                            <div>
-                              <p className="text-sm font-semibold text-gray-900">{s.full_name}</p>
-                              <p className="text-xs text-gray-500">CPF: {maskCpf(s.cpf)}{s.email ? ` • ${s.email}` : ""}</p>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold text-gray-900 truncate">{s.full_name}</p>
+                                {isToday && <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium flex-shrink-0">Hoje</span>}
+                              </div>
+                              <p className="text-xs text-gray-500">CPF: {maskCpf(s.cpf)}{s.whatsapp ? ` • ${s.whatsapp}` : ""}</p>
+                              {deepSearch && (
+                                <p className={`text-xs mt-0.5 font-medium ${hasAny ? "text-orange-600" : "text-green-600"}`}>
+                                  {hasAny ? `⚠ Já possui ${qty} matrícula(s) anterior(es)` : "✓ Sem matrícula"}
+                                </p>
+                              )}
                             </div>
-                            <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">{qty} curso{qty !== 1 ? "s" : ""}</span>
                           </div>
                         );
                       })
                     )}
                   </div>
                 )}
-                {studentSearch.length > 0 && studentSearch.length < 3 && (
-                  <p className="text-xs text-gray-400 mt-1">Digite mais {3 - studentSearch.length} caractere(s) para buscar...</p>
-                )}
               </div>
+            )}
+
+            {!deepSearch && !form.student_id && (
+              <p className="text-xs text-gray-400 mt-1">
+                Mostrando alunos <strong>sem matrícula</strong>. Para buscar todos, ative <strong>Busca Profunda</strong>.
+              </p>
             )}
           </div>
 
-          {/* Aviso: aluno já matriculado no mesmo curso */}
+          {/* Aviso: mesmo curso */}
           {alreadyInCourse && (
             <div className="flex items-start gap-2 p-2.5 bg-yellow-50 border border-yellow-300 rounded-md">
               <AlertTriangle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-yellow-800">Este aluno já possui uma matrícula neste curso. Você pode prosseguir, mas verifique se é uma renovação ou duplicidade.</p>
+              <p className="text-xs text-yellow-800">Este aluno já possui matrícula neste curso. Verifique se é uma renovação ou duplicidade.</p>
             </div>
           )}
           <div>
@@ -428,11 +522,12 @@ function MatriculaModal({ open, onClose, onSave, isPending }) {
           </div>
         </div>
       </DialogContent>
-    </Dialog>
-  );
-}
+      </Dialog>
+      </>
+      );
+      }
 
-// ─── Aba: Cadastro de Alunos ─────────────────────────────────────────────────
+      // ─── Aba: Cadastro de Alunos ─────────────────────────────────────────────────
 function AlunosCadastro() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
