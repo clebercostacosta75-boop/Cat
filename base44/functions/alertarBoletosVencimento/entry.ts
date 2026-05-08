@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import nodemailer from 'npm:nodemailer@6.9.10';
 
 const ASAAS_BASE_URL = "https://api.asaas.com/v3";
 const API_KEY = Deno.env.get("ASAAS_API_KEY");
@@ -18,28 +19,51 @@ function formatMoney(value) {
   return `R$ ${parseFloat(value).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+async function sendEmail(transporter, { to, subject, body }) {
+  if (!to) return;
+  await transporter.sendMail({
+    from: `"CAT Cursos" <${Deno.env.get("UOL_SMTP_EMAIL")}>`,
+    to,
+    subject,
+    html: body,
+  });
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Busca todos os admins do sistema
+    const smtpEmail = Deno.env.get("UOL_SMTP_EMAIL");
+    const smtpPassword = Deno.env.get("UOL_SMTP_PASSWORD");
+
+    if (!smtpEmail || !smtpPassword) {
+      return Response.json({ error: "SMTP credentials not configured (UOL_SMTP_EMAIL / UOL_SMTP_PASSWORD)" }, { status: 500 });
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: "smtp.uol.com.br",
+      port: 587,
+      secure: false,
+      auth: { user: smtpEmail, pass: smtpPassword },
+    });
+
+    // Busca admins para cópia
     const allUsers = await base44.asServiceRole.entities.User.list();
-    const admins = allUsers.filter(u => u.role === "admin" || u.role === "Administrador Master");
+    const adminEmails = allUsers
+      .filter(u => u.role === "admin" || u.role === "Administrador Master" || u.role === "gestor_master")
+      .map(u => u.email)
+      .filter(Boolean);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const in3Days = new Date(today);
-    in3Days.setDate(today.getDate() + 3);
-
     const in7Days = new Date(today);
     in7Days.setDate(today.getDate() + 7);
 
-    // Formata datas para query Asaas (yyyy-mm-dd)
     const todayStr = today.toISOString().split("T")[0];
     const in7Str = in7Days.toISOString().split("T")[0];
 
-    // Busca cobranças pendentes que vencem nos próximos 7 dias OU já estão atrasadas
+    // Busca cobranças pendentes (próximos 7 dias) e atrasadas
     const [pendingRes, overdueRes] = await Promise.all([
       fetch(`${ASAAS_BASE_URL}/payments?status=PENDING&dueDateGe=${todayStr}&dueDateLe=${in7Str}&limit=100`, { headers: asaasHeaders }),
       fetch(`${ASAAS_BASE_URL}/payments?status=OVERDUE&limit=100`, { headers: asaasHeaders }),
@@ -54,19 +78,23 @@ Deno.serve(async (req) => {
     let emailsSent = 0;
     const errors = [];
 
-    // Processa cobranças próximas do vencimento
+    // ─── Cobranças próximas do vencimento ────────────────────────────────────
     for (const charge of pendingCharges) {
       const dueDate = new Date(charge.dueDate + "T00:00:00");
       const diffDays = Math.round((dueDate - today) / (1000 * 60 * 60 * 24));
 
-      // Só alerta para 1, 3 ou 7 dias antes
       if (![1, 3, 7].includes(diffDays)) continue;
 
       const label = diffDays === 1 ? "amanhã" : `em ${diffDays} dias`;
 
-      // Busca o cliente no Asaas para pegar o e-mail
-      const custRes = await fetch(`${ASAAS_BASE_URL}/customers/${charge.customer}`, { headers: asaasHeaders });
-      const customer = await custRes.json();
+      let customer = {};
+      try {
+        const custRes = await fetch(`${ASAAS_BASE_URL}/customers/${charge.customer}`, { headers: asaasHeaders });
+        customer = await custRes.json();
+      } catch (e) {
+        errors.push(`Erro ao buscar cliente ${charge.customer}: ${e.message}`);
+        continue;
+      }
 
       const emailBody = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -96,32 +124,45 @@ Deno.serve(async (req) => {
         </div>
       `;
 
-      // E-mail para o aluno (se tiver e-mail cadastrado)
+      // E-mail para o aluno
       if (customer.email) {
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          to: customer.email,
-          subject: `⚠️ Seu boleto vence ${label} — ${formatMoney(charge.value)}`,
-          body: emailBody,
-        });
-        emailsSent++;
+        try {
+          await sendEmail(transporter, {
+            to: customer.email,
+            subject: `⚠️ Seu boleto vence ${label} — ${formatMoney(charge.value)}`,
+            body: emailBody,
+          });
+          emailsSent++;
+        } catch (e) {
+          errors.push(`Erro ao enviar e-mail para aluno ${customer.email}: ${e.message}`);
+        }
       }
 
-      // E-mail para os admins
-      for (const admin of admins) {
-        if (!admin.email) continue;
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          to: admin.email,
-          subject: `[CAT] Boleto de ${customer.name} vence ${label}`,
-          body: emailBody,
-        });
-        emailsSent++;
+      // Cópia para admins
+      for (const adminEmail of adminEmails) {
+        try {
+          await sendEmail(transporter, {
+            to: adminEmail,
+            subject: `[CAT] Boleto de ${customer.name} vence ${label}`,
+            body: emailBody,
+          });
+          emailsSent++;
+        } catch (e) {
+          errors.push(`Erro ao enviar e-mail admin ${adminEmail}: ${e.message}`);
+        }
       }
     }
 
-    // Processa cobranças atrasadas
+    // ─── Cobranças atrasadas ──────────────────────────────────────────────────
     for (const charge of overdueCharges) {
-      const custRes = await fetch(`${ASAAS_BASE_URL}/customers/${charge.customer}`, { headers: asaasHeaders });
-      const customer = await custRes.json();
+      let customer = {};
+      try {
+        const custRes = await fetch(`${ASAAS_BASE_URL}/customers/${charge.customer}`, { headers: asaasHeaders });
+        customer = await custRes.json();
+      } catch (e) {
+        errors.push(`Erro ao buscar cliente ${charge.customer}: ${e.message}`);
+        continue;
+      }
 
       const dueDate = new Date(charge.dueDate + "T00:00:00");
       const daysLate = Math.round((today - dueDate) / (1000 * 60 * 60 * 24));
@@ -159,22 +200,29 @@ Deno.serve(async (req) => {
       `;
 
       if (customer.email) {
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          to: customer.email,
-          subject: `🔴 Boleto em atraso — ${daysLate} dia(s) — ${formatMoney(charge.value)}`,
-          body: emailBody,
-        });
-        emailsSent++;
+        try {
+          await sendEmail(transporter, {
+            to: customer.email,
+            subject: `🔴 Boleto em atraso — ${daysLate} dia(s) — ${formatMoney(charge.value)}`,
+            body: emailBody,
+          });
+          emailsSent++;
+        } catch (e) {
+          errors.push(`Erro ao enviar e-mail para aluno ${customer.email}: ${e.message}`);
+        }
       }
 
-      for (const admin of admins) {
-        if (!admin.email) continue;
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          to: admin.email,
-          subject: `[CAT] ATRASO: Boleto de ${customer.name} — ${daysLate} dia(s)`,
-          body: emailBody,
-        });
-        emailsSent++;
+      for (const adminEmail of adminEmails) {
+        try {
+          await sendEmail(transporter, {
+            to: adminEmail,
+            subject: `[CAT] ATRASO: Boleto de ${customer.name} — ${daysLate} dia(s)`,
+            body: emailBody,
+          });
+          emailsSent++;
+        } catch (e) {
+          errors.push(`Erro ao enviar e-mail admin ${adminEmail}: ${e.message}`);
+        }
       }
     }
 
@@ -189,9 +237,9 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('[alertarBoletosVencimento] Erro:', error);
-    return Response.json({ 
+    return Response.json({
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     }, { status: 500 });
   }
 });
