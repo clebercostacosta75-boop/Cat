@@ -35,24 +35,29 @@ function montarMensagemWhatsApp({ nome, curso, valor, vencimento, diasAtraso, ti
 
 async function sendEmail({ to, subject, html }) {
   if (!to || !RESEND_API_KEY) return null;
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: "CAT Cursos <noreply@catcursos.com.br>",
-      to: [to],
-      subject,
-      html,
-    }),
-  });
-  if (!res.ok) {
+  // Tenta com domínio personalizado primeiro, depois fallback para domínio padrão Resend
+  const fromOptions = [
+    "CAT Cursos <noreply@catcursos.com.br>",
+    "CAT Cursos <onboarding@resend.dev>",
+  ];
+  for (const from of fromOptions) {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ from, to: [to], subject, html }),
+    });
+    if (res.ok) return res.json();
     const err = await res.text();
-    throw new Error(`Resend error: ${err}`);
+    // Se erro não for de domínio, lança imediatamente
+    if (!err.includes("domain") && !err.includes("from") && !err.includes("outside the app") && !err.includes("not verified")) {
+      throw new Error(`Resend error: ${err}`);
+    }
+    console.log(`Fallback de remetente: ${from} falhou, tentando próximo...`);
   }
-  return res.json();
+  throw new Error("Resend: nenhum remetente funcionou. Verifique o domínio catcursos.com.br no painel Resend.");
 }
 
 Deno.serve(async (req) => {
@@ -62,11 +67,17 @@ Deno.serve(async (req) => {
     const resendConfigurado = !!RESEND_API_KEY;
     console.log(`RESEND_API_KEY configurada: ${resendConfigurado ? "Sim" : "Não"}`);
 
-    const allUsers = await base44.asServiceRole.entities.User.list();
-    const adminEmails = allUsers
-      .filter(u => u.role === "admin" || u.role === "Administrador Master" || u.role === "gestor_master")
-      .map(u => u.email)
-      .filter(Boolean);
+    // Usa asServiceRole para buscar usuários pois pode ser chamado por automação (sem sessão)
+    let adminEmails = [];
+    try {
+      const allUsers = await base44.asServiceRole.entities.User.list();
+      adminEmails = allUsers
+        .filter(u => u.role === "admin" || u.role === "Administrador Master" || u.role === "gestor_master")
+        .map(u => u.email)
+        .filter(Boolean);
+    } catch (e) {
+      console.log("Aviso: não foi possível buscar admins:", e.message);
+    }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
