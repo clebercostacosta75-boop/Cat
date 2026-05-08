@@ -207,8 +207,18 @@ function AlunoModal({ open, onClose, onSave, editingStudent }) {
 }
 
 // ─── Modal de Nova Matrícula ──────────────────────────────────────────────────
-function MatriculaModal({ open, onClose, students, courses, onSave, isPending }) {
+function MatriculaModal({ open, onClose, onSave, isPending }) {
   const [form, setForm] = useState(EMPTY_ENROLLMENT);
+
+  const { data: students = [] } = useQuery({
+    queryKey: ["students-pf"],
+    queryFn: () => base44.entities.Student.list("-full_name"),
+  });
+
+  const { data: courses = [] } = useQuery({
+    queryKey: ["courses"],
+    queryFn: () => base44.entities.Course.list(),
+  });
 
   useEffect(() => {
     if (open) setForm(EMPTY_ENROLLMENT);
@@ -224,7 +234,7 @@ function MatriculaModal({ open, onClose, students, courses, onSave, isPending })
     if (c) setForm(f => ({ ...f, course_id: c.id, course_name: c.name }));
   };
 
-  const canSave = form.student_id && form.course_id && form.start_date && form.end_date;
+  const canSave = !!(form.student_id && form.course_id && form.start_date && form.end_date);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -570,8 +580,6 @@ function MatriculasCursos() {
       <MatriculaModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        students={students}
-        courses={courses}
         onSave={(form) => createMutation.mutate(form)}
         isPending={createMutation.isPending}
       />
