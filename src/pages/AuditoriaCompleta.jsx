@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Download, AlertCircle, CheckCircle2, Trash2 } from 'lucide-react';
+import HistoricoDetalhado from '@/components/audit/HistoricoDetalhado';
 
 export default function AuditoriaCompleta() {
   const [search, setSearch] = useState('');
@@ -87,37 +88,7 @@ export default function AuditoriaCompleta() {
           </Card>
         ) : (
           filteredLogs.map((log) => (
-            <Card key={log.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      {getActionBadge(log.action)}
-                      <span className="text-sm font-mono text-gray-500">
-                        {new Date(log.created_date).toLocaleString('pt-BR')}
-                      </span>
-                    </div>
-                    <p className="font-medium">{log.entity_name}</p>
-                    <p className="text-sm text-gray-600">
-                      Tipo: {log.entity_type} | ID: {log.entity_id || 'sistema'}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Usuário: {log.user_email}
-                    </p>
-                    {log.details && (
-                      <p className="text-sm text-gray-700 mt-2 bg-gray-50 p-2 rounded">
-                        {log.details}
-                      </p>
-                    )}
-                  </div>
-                  {log.action === 'delete' && (
-                    <div className="flex-shrink-0 p-2 bg-destructive/10 rounded">
-                      <AlertCircle className="w-5 h-5 text-destructive" />
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <HistoricoDetalhado key={log.id} log={log} />
           ))
         )}
       </div>
