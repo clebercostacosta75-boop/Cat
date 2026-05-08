@@ -134,9 +134,8 @@ export default function ProposalEntry() {
 
   const calculateTotalValue = (course) => {
     const unit = parseFloat(course.unit_value) || 0;
-    const students = parseInt(course.students_count) || 0;
     const turmas = parseInt(course.num_turmas) || 1;
-    return unit * students * turmas;
+    return unit * turmas;
   };
 
   const removeCourse = (idx) => {
