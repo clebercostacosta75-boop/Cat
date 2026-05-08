@@ -206,6 +206,119 @@ function AlunoModal({ open, onClose, onSave, editingStudent }) {
   );
 }
 
+// ─── Modal de Nova Matrícula ──────────────────────────────────────────────────
+function MatriculaModal({ open, onClose, students, courses, onSave, isPending }) {
+  const [form, setForm] = useState(EMPTY_ENROLLMENT);
+
+  useEffect(() => {
+    if (open) setForm(EMPTY_ENROLLMENT);
+  }, [open]);
+
+  const handleStudentChange = (studentId) => {
+    const s = students.find(s => s.id === studentId);
+    if (s) setForm(f => ({ ...f, student_id: s.id, student_name: s.full_name, student_cpf: s.cpf, student_email: s.email || "", student_phone: s.whatsapp || "" }));
+  };
+
+  const handleCourseChange = (courseId) => {
+    const c = courses.find(c => c.id === courseId);
+    if (c) setForm(f => ({ ...f, course_id: c.id, course_name: c.name }));
+  };
+
+  const canSave = form.student_id && form.course_id && form.start_date && form.end_date;
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Nova Matrícula Individual (PF)</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>Aluno *</Label>
+            <Select value={form.student_id} onValueChange={handleStudentChange}>
+              <SelectTrigger><SelectValue placeholder="Selecione o aluno" /></SelectTrigger>
+              <SelectContent>
+                {students.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name} — {s.cpf}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Curso *</Label>
+            <Select value={form.course_id} onValueChange={handleCourseChange}>
+              <SelectTrigger><SelectValue placeholder="Selecione o curso" /></SelectTrigger>
+              <SelectContent>
+                {courses.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Data Início *</Label>
+              <Input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Data Fim *</Label>
+              <Input type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
+            </div>
+          </div>
+
+          <div className="border-t pt-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1"><CreditCard className="w-3 h-3" /> Pagamento</p>
+            <p className="text-xs text-gray-500 mb-3">O valor do curso será definido na geração do boleto/cobrança.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Status Pagamento</Label>
+                <Select value={form.status_pagamento} onValueChange={v => setForm(f => ({ ...f, status_pagamento: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pendente">Pendente</SelectItem>
+                    <SelectItem value="Pago">Pago</SelectItem>
+                    <SelectItem value="Parcialmente Pago">Parcialmente Pago</SelectItem>
+                    <SelectItem value="Inadimplente">Inadimplente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Forma de Pagamento</Label>
+                <Select value={form.forma_pagamento} onValueChange={v => setForm(f => ({ ...f, forma_pagamento: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="À Vista">À Vista</SelectItem>
+                    <SelectItem value="Parcelado 2x">Parcelado 2x</SelectItem>
+                    <SelectItem value="Parcelado 3x">Parcelado 3x</SelectItem>
+                    <SelectItem value="Parcelado 4x">Parcelado 4x</SelectItem>
+                    <SelectItem value="Parcelado 5x">Parcelado 5x</SelectItem>
+                    <SelectItem value="Parcelado 6x">Parcelado 6x</SelectItem>
+                    <SelectItem value="Boleto">Boleto</SelectItem>
+                    <SelectItem value="Pix">Pix</SelectItem>
+                    <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
+                    <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
+                    <SelectItem value="Transferência Bancária">Transferência Bancária</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <Label>Observações</Label>
+            <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button
+              className="bg-gray-900 hover:bg-gray-800"
+              onClick={() => onSave(form)}
+              disabled={!canSave || isPending}
+            >
+              {isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Aba: Cadastro de Alunos ─────────────────────────────────────────────────
 function AlunosCadastro() {
   const queryClient = useQueryClient();
@@ -238,7 +351,6 @@ function AlunosCadastro() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      // Remove matrículas vinculadas ao aluno
       const enrollments = await base44.entities.StudentCourseEnrollment.filter({ student_id: id });
       await Promise.all(enrollments.map(e => base44.entities.StudentCourseEnrollment.delete(e.id)));
       await base44.entities.Student.delete(id);
@@ -332,8 +444,6 @@ function AlunosCadastro() {
 function MatriculasCursos() {
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState(EMPTY_ENROLLMENT);
-  const [paymentModal, setPaymentModal] = useState(null); // enrollment selecionado
   const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
@@ -375,16 +485,6 @@ function MatriculasCursos() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] }); toast.success("Matrícula excluída!"); },
   });
 
-  const handleStudentChange = (studentId) => {
-    const s = students.find(s => s.id === studentId);
-    if (s) setForm(f => ({ ...f, student_id: s.id, student_name: s.full_name, student_cpf: s.cpf, student_email: s.email || "", student_phone: s.whatsapp || "" }));
-  };
-
-  const handleCourseChange = (courseId) => {
-    const c = courses.find(c => c.id === courseId);
-    if (c) setForm(f => ({ ...f, course_id: c.id, course_name: c.name }));
-  };
-
   const statusColors = {
     "Aguardando Autorização": "bg-yellow-100 text-yellow-800",
     "Autorizado": "bg-blue-100 text-blue-800",
@@ -401,12 +501,10 @@ function MatriculasCursos() {
     "Inadimplente": "bg-red-100 text-red-800",
   };
 
-  const openNew = () => { setForm(EMPTY_ENROLLMENT); setModalOpen(true); };
-
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={openNew} className="bg-gray-900 hover:bg-gray-800">
+        <Button onClick={() => setModalOpen(true)} className="bg-gray-900 hover:bg-gray-800">
           <Plus className="w-4 h-4 mr-2" /> Nova Matrícula
         </Button>
       </div>
@@ -469,79 +567,14 @@ function MatriculasCursos() {
         </CardContent>
       </Card>
 
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Nova Matrícula Individual (PF)</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label>Aluno *</Label>
-              <Select value={form.student_id} onValueChange={handleStudentChange}>
-                <SelectTrigger><SelectValue placeholder="Selecione o aluno" /></SelectTrigger>
-                <SelectContent>
-                  {students.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name} — {s.cpf}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Curso *</Label>
-              <Select value={form.course_id} onValueChange={handleCourseChange}>
-                <SelectTrigger><SelectValue placeholder="Selecione o curso" /></SelectTrigger>
-                <SelectContent>
-                  {courses.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Data Início *</Label><Input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} /></div>
-              <div><Label>Data Fim *</Label><Input type="date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} /></div>
-            </div>
-
-            <div className="border-t pt-3">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1"><CreditCard className="w-3 h-3" /> Pagamento</p>
-              <p className="text-xs text-gray-500 mb-3">O valor do curso será definido na geração do boleto/cobrança.</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Status Pagamento</Label>
-                  <Select value={form.status_pagamento} onValueChange={v => setForm({ ...form, status_pagamento: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Pendente">Pendente</SelectItem>
-                      <SelectItem value="Pago">Pago</SelectItem>
-                      <SelectItem value="Parcialmente Pago">Parcialmente Pago</SelectItem>
-                      <SelectItem value="Inadimplente">Inadimplente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Forma de Pagamento</Label>
-                  <Select value={form.forma_pagamento} onValueChange={v => setForm({ ...form, forma_pagamento: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="À Vista">À Vista</SelectItem>
-                      <SelectItem value="Parcelado 2x">Parcelado 2x</SelectItem>
-                      <SelectItem value="Parcelado 3x">Parcelado 3x</SelectItem>
-                      <SelectItem value="Parcelado 4x">Parcelado 4x</SelectItem>
-                      <SelectItem value="Parcelado 5x">Parcelado 5x</SelectItem>
-                      <SelectItem value="Parcelado 6x">Parcelado 6x</SelectItem>
-                      <SelectItem value="Boleto">Boleto</SelectItem>
-                      <SelectItem value="Pix">Pix</SelectItem>
-                      <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
-                      <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
-                      <SelectItem value="Transferência Bancária">Transferência Bancária</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            <div><Label>Observações</Label><Input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
-              <Button className="bg-gray-900 hover:bg-gray-800" onClick={() => createMutation.mutate(form)}>Salvar</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <MatriculaModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        students={students}
+        courses={courses}
+        onSave={(form) => createMutation.mutate(form)}
+        isPending={createMutation.isPending}
+      />
     </div>
   );
 }
