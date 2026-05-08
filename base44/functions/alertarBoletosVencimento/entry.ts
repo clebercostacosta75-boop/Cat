@@ -19,6 +19,17 @@ function formatMoney(value) {
   return `R$ ${parseFloat(value).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function createTransporter() {
+  const smtpEmail = Deno.env.get("UOL_SMTP_EMAIL");
+  const smtpPassword = Deno.env.get("UOL_SMTP_PASSWORD");
+  return nodemailer.createTransport({
+    host: "smtp.uol.com.br",
+    port: 465,
+    secure: true, // SSL
+    auth: { user: smtpEmail, pass: smtpPassword },
+  });
+}
+
 async function sendEmail(transporter, { to, subject, body }) {
   if (!to) return;
   await transporter.sendMail({
@@ -40,12 +51,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: "SMTP credentials not configured (UOL_SMTP_EMAIL / UOL_SMTP_PASSWORD)" }, { status: 500 });
     }
 
-    const transporter = nodemailer.createTransport({
-      host: "smtp.uol.com.br",
-      port: 587,
-      secure: false,
-      auth: { user: smtpEmail, pass: smtpPassword },
-    });
+    const transporter = createTransporter();
 
     // Busca admins para cópia
     const allUsers = await base44.asServiceRole.entities.User.list();
@@ -124,7 +130,6 @@ Deno.serve(async (req) => {
         </div>
       `;
 
-      // E-mail para o aluno
       if (customer.email) {
         try {
           await sendEmail(transporter, {
@@ -138,7 +143,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Cópia para admins
       for (const adminEmail of adminEmails) {
         try {
           await sendEmail(transporter, {
