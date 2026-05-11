@@ -25,12 +25,6 @@ Deno.serve(async (req) => {
     const profileToUpdate = profiles[0];
     await base44.asServiceRole.entities.UserProfile.update(profileToUpdate.id, { permissions });
 
-    // 2. Salva no User da plataforma (usado pelo Layout para montar o menu)
-    const users = await base44.asServiceRole.entities.User.filter({ email: user_email });
-    if (users.length > 0) {
-      await base44.asServiceRole.entities.User.update(users[0].id, { permissions });
-    }
-
     return Response.json({ success: true, message: 'Permissões atualizadas com sucesso.' });
   } catch (error) {
     return Response.json({ error: 'Erro ao atualizar permissões', details: error.message }, { status: 500 });
