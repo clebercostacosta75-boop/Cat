@@ -87,7 +87,7 @@ export default function CertificatesDashboard() {
           Painel de Certificados
         </h2>
         <RouterLink
-          to="/Certificates"
+          to="/Certificacoes"
           className="text-xs text-emerald-600 hover:underline font-medium"
         >
           Ver todos →
@@ -150,9 +150,9 @@ export default function CertificatesDashboard() {
               Pendentes por Curso (Top 5)
             </CardTitle>
             {pending > 0 && (
-              <RouterLink to="/BulkSign">
+              <RouterLink to="/Certificacoes">
                 <Badge className="bg-amber-100 text-amber-700 border-0 text-xs cursor-pointer hover:bg-amber-200">
-                  <PenLine className="w-3 h-3 mr-1" /> Assinar em massa
+                  <PenLine className="w-3 h-3 mr-1" /> Ver pendentes
                 </Badge>
               </RouterLink>
             )}

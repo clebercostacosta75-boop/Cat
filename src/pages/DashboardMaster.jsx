@@ -13,7 +13,7 @@ import {
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from "recharts";
-import { format, differenceInDays, parseISO, isToday } from "date-fns";
+import { format, differenceInDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 function StatCard({ icon: Icon, label, value, color = "blue", loading, sub }) {
@@ -168,9 +168,9 @@ export default function DashboardMaster() {
         <Link to={createPageUrl("Schedule")}><Button size="sm" variant="outline">Cronograma</Button></Link>
         <Link to="/Certificacoes"><Button size="sm" variant="outline">Certificações</Button></Link>
         <Link to={createPageUrl("Companies")}><Button size="sm" variant="outline">Empresas</Button></Link>
-        <Link to={createPageUrl("InstructorFinancialControl")}><Button size="sm" variant="outline">Financeiro</Button></Link>
+        <Link to="/DashboardFinanceiro"><Button size="sm" variant="outline">Financeiro</Button></Link>
         <Link to="/CertificateAuditPanel"><Button size="sm" variant="outline">Auditoria</Button></Link>
-        <Link to={createPageUrl("Reports")}><Button size="sm" variant="outline">Relatórios</Button></Link>
+        <Link to="/Analytics"><Button size="sm" variant="outline">Relatórios</Button></Link>
       </div>
 
       {/* Gráfico Receita x Custo */}

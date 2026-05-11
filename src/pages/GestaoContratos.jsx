@@ -213,7 +213,7 @@ function ContratosGerados() {
 
   const { data: enrollments = [] } = useQuery({
     queryKey: ["enrollments-pf"],
-    queryFn: () => base44.entities.StudentCourseEnrollment.filter({ company_name: "Individual (PF)" }),
+    queryFn: () => base44.entities.StudentCourseEnrollment.list("-created_date", 200),
     initialData: [],
   });
 

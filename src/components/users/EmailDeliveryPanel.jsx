@@ -56,7 +56,8 @@ export default function EmailDeliveryPanel({ profiles, onRefresh }) {
     try {
       const res = await base44.functions.invoke("convidarUsuario", {
         email: profile.user_email,
-        role: "user",
+        user_name: profile.user_name || profile.user_email,
+        role: profile.role || "user",
       });
       const ok = res.data?.success || res.data?.already_exists;
       const sentAt = new Date().toISOString();
