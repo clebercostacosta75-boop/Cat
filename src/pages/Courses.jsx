@@ -17,7 +17,7 @@ export default function CoursesPage() {
 
   const { data: courses = [] } = useQuery({
     queryKey: ['courses'],
-    queryFn: () => base44.entities.Course.list(),
+    queryFn: () => base44.entities.Course.list('-name', 200),
     initialData: [],
   });
 
