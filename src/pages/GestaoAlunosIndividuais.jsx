@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Users, UserPlus, BookOpen, DollarSign, Shield, Search, Edit, Trash2,
-  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, QrCode, FileText, Copy, Activity, LayoutDashboard, Bell
+  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, QrCode, FileText, Copy, Activity, LayoutDashboard, Bell, PenLine
 } from "lucide-react";
 import { toast } from "sonner";
 import PagamentosAsaas from "@/components/alunos/PagamentosAsaas";
@@ -19,6 +19,7 @@ import PainelPendenciasFinanceiras from "@/components/financeiro/PainelPendencia
 import DocumentosAluno from "@/components/alunos/DocumentosAluno";
 import TimelineAluno from "@/components/alunos/TimelineAluno";
 import GargalosDashboard from "@/components/alunos/GargalosDashboard";
+import ContratoAssinaturaTab from "@/components/contratos/ContratoAssinaturaTab";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -660,6 +661,8 @@ function MatriculasCursos() {
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [userRole, setUserRole] = useState(null);
+  const [contratoGeradoInfo, setContratoGeradoInfo] = useState(null); // { enrollment, contractNumber }
+  const [selectedEnrollmentForContract, setSelectedEnrollmentForContract] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
@@ -687,8 +690,28 @@ function MatriculasCursos() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.StudentCourseEnrollment.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] }); toast.success("Matrícula criada!"); setModalOpen(false); },
+    mutationFn: async (data) => {
+      const enrollment = await base44.entities.StudentCourseEnrollment.create(data);
+      // Geração automática do contrato
+      try {
+        const result = await base44.functions.invoke("gerarContrato", {
+          student_id: enrollment.student_id,
+          enrollment_id: enrollment.id,
+          force_regen: false,
+        });
+        if (result.data?.contract_number) {
+          setContratoGeradoInfo({ enrollment, contractNumber: result.data.contract_number });
+        }
+      } catch (e) {
+        console.warn("Contrato não gerado automaticamente:", e);
+      }
+      return enrollment;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] });
+      toast.success("Matrícula criada! Contrato gerado automaticamente.");
+      setModalOpen(false);
+    },
   });
 
   const updateStatusMutation = useMutation({
@@ -719,6 +742,61 @@ function MatriculasCursos() {
 
   return (
     <div className="space-y-4">
+      {/* Modal de contrato gerado automaticamente */}
+      {contratoGeradoInfo && (
+        <Dialog open={!!contratoGeradoInfo} onOpenChange={() => setContratoGeradoInfo(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-emerald-700">
+                <CheckCircle className="w-5 h-5" /> Matrícula Finalizada com Sucesso!
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                <p className="text-sm font-semibold text-emerald-800">
+                  O contrato digital foi gerado automaticamente.
+                </p>
+                <p className="text-xs text-emerald-700 mt-1">Contrato Nº <strong>{contratoGeradoInfo.contractNumber}</strong> — Pronto para envio ao aluno.</p>
+              </div>
+              <p className="text-sm text-gray-600">O que deseja fazer agora?</p>
+              <div className="grid grid-cols-1 gap-2">
+                <Button
+                  className="bg-blue-700 hover:bg-blue-800 justify-start gap-2"
+                  onClick={() => {
+                    setSelectedEnrollmentForContract(contratoGeradoInfo.enrollment);
+                    setContratoGeradoInfo(null);
+                  }}
+                >
+                  <PenLine className="w-4 h-4" />Visualizar Contrato e Enviar para Assinatura
+                </Button>
+                <Button variant="outline" className="justify-start gap-2" onClick={() => setContratoGeradoInfo(null)}>
+                  <BookOpen className="w-4 h-4" />Voltar para Matrículas
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Painel de contrato da matrícula selecionada */}
+      {selectedEnrollmentForContract && (
+        <Card className="border-2 border-blue-300">
+          <CardHeader className="pb-2 bg-blue-50">
+            <CardTitle className="text-sm font-bold text-blue-900 flex items-center justify-between">
+              <span className="flex items-center gap-2"><PenLine className="w-4 h-4" />Contrato e Assinatura — {selectedEnrollmentForContract.student_name}</span>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedEnrollmentForContract(null)} className="text-gray-400 hover:text-gray-700 text-xs">Fechar</Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <ContratoAssinaturaTab
+              enrollmentId={selectedEnrollmentForContract.id}
+              studentId={selectedEnrollmentForContract.student_id}
+              enrollmentData={selectedEnrollmentForContract}
+            />
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex justify-end">
         <Button onClick={() => setModalOpen(true)} className="bg-gray-900 hover:bg-gray-800">
           <Plus className="w-4 h-4 mr-2" /> Nova Matrícula
@@ -758,24 +836,33 @@ function MatriculasCursos() {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <Badge className={statusColors[e.status] || "bg-gray-100 text-gray-800"}>{e.status}</Badge>
-                    {e.status_pagamento && (
-                      <Badge className={pagamentoColors[e.status_pagamento] || "bg-gray-100 text-gray-800"}>
-                        {e.status_pagamento}
-                      </Badge>
-                    )}
-                    {e.status === "Aguardando Autorização" && (
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white text-xs" onClick={() => updateStatusMutation.mutate({ id: e.id, status: "Autorizado" })}>
-                        <CheckCircle className="w-3 h-3 mr-1" /> Autorizar
-                      </Button>
-                    )}
-                    {isMaster && (
-                      <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700"
-                        onClick={() => { if (window.confirm(`Excluir a matrícula de "${e.student_name}" em "${e.course_name}"? Esta ação não pode ser desfeita.`)) deleteEnrollmentMutation.mutate(e.id); }}>
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    )}
-                  </div>
+                     <Badge className={statusColors[e.status] || "bg-gray-100 text-gray-800"}>{e.status}</Badge>
+                     {e.status_pagamento && (
+                       <Badge className={pagamentoColors[e.status_pagamento] || "bg-gray-100 text-gray-800"}>
+                         {e.status_pagamento}
+                       </Badge>
+                     )}
+                     <Button
+                       size="sm"
+                       variant="outline"
+                       className="text-xs h-7 border-blue-300 text-blue-700 hover:bg-blue-50"
+                       onClick={() => setSelectedEnrollmentForContract(selectedEnrollmentForContract?.id === e.id ? null : e)}
+                     >
+                       <PenLine className="w-3 h-3 mr-1" />
+                       {selectedEnrollmentForContract?.id === e.id ? "Fechar Contrato" : "Ver Contrato"}
+                     </Button>
+                     {e.status === "Aguardando Autorização" && (
+                       <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white text-xs" onClick={() => updateStatusMutation.mutate({ id: e.id, status: "Autorizado" })}>
+                         <CheckCircle className="w-3 h-3 mr-1" /> Autorizar
+                       </Button>
+                     )}
+                     {isMaster && (
+                       <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700"
+                         onClick={() => { if (window.confirm(`Excluir a matrícula de "${e.student_name}" em "${e.course_name}"? Esta ação não pode ser desfeita.`)) deleteEnrollmentMutation.mutate(e.id); }}>
+                         <Trash2 className="w-3 h-3" />
+                       </Button>
+                     )}
+                   </div>
                 </div>
               ))}
             </div>
@@ -1010,6 +1097,103 @@ function AcessoPortal() {
   );
 }
 
+// ─── Aba: Contratos Geral ────────────────────────────────────────────────────
+function ContratosGeral() {
+  const [selectedEnrollment, setSelectedEnrollment] = useState(null);
+
+  const { data: enrollments = [], isLoading } = useQuery({
+    queryKey: ["enrollments-pf"],
+    queryFn: () => base44.entities.StudentCourseEnrollment.filter({ company_name: "Individual (PF)" }),
+    initialData: [],
+  });
+
+  const { data: contracts = [] } = useQuery({
+    queryKey: ["all-contracts-pf"],
+    queryFn: () => base44.entities.Contract.list("-created_date", 200),
+    initialData: [],
+  });
+
+  const contractByEnrollment = {};
+  contracts.forEach(c => { if (c.enrollment_id) contractByEnrollment[c.enrollment_id] = c; });
+
+  const STATUS_COLOR = {
+    Gerado_Automaticamente: "bg-blue-100 text-blue-700",
+    Gerado_Manualmente: "bg-indigo-100 text-indigo-700",
+    Enviado_Assinatura: "bg-yellow-100 text-yellow-800",
+    Assinado_Todas_Partes: "bg-emerald-100 text-emerald-800",
+    PDF_Gerado: "bg-green-100 text-green-700",
+    Cancelado: "bg-red-100 text-red-700",
+    Rascunho: "bg-gray-100 text-gray-600",
+  };
+
+  if (isLoading) return <div className="text-center py-12 text-gray-400">Carregando...</div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <PenLine className="w-5 h-5 text-blue-600 flex-shrink-0" />
+        <div>
+          <p className="text-sm font-semibold text-blue-900">Contratos Digitais — Alunos Individuais PF</p>
+          <p className="text-xs text-blue-700 mt-0.5">Clique em uma matrícula para ver ou gerenciar o contrato vinculado.</p>
+        </div>
+      </div>
+
+      <Card className="border border-gray-200">
+        <CardContent className="p-0">
+          {enrollments.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+              <p>Nenhuma matrícula individual encontrada</p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {enrollments.map(e => {
+                const contract = contractByEnrollment[e.id];
+                const isSelected = selectedEnrollment?.id === e.id;
+                return (
+                  <div key={e.id}>
+                    <div
+                      className={`flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors ${isSelected ? "bg-blue-50" : ""}`}
+                      onClick={() => setSelectedEnrollment(isSelected ? null : e)}
+                    >
+                      <div>
+                        <p className="font-semibold text-gray-900">{e.student_name}</p>
+                        <p className="text-sm text-gray-500">{e.course_name}</p>
+                        <p className="text-xs text-gray-400">{e.start_date} → {e.end_date}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        {contract ? (
+                          <>
+                            <Badge className={STATUS_COLOR[contract.status] || "bg-gray-100 text-gray-700"}>
+                              {contract.status?.replace(/_/g, " ")}
+                            </Badge>
+                            <span className="text-xs text-gray-400">{contract.contract_number}</span>
+                          </>
+                        ) : (
+                          <Badge className="bg-red-100 text-red-600">Sem contrato</Badge>
+                        )}
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <div className="p-4 bg-gray-50 border-t border-blue-100">
+                        <ContratoAssinaturaTab
+                          enrollmentId={e.id}
+                          studentId={e.student_id}
+                          enrollmentData={e}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ─── Página Principal ────────────────────────────────────────────────────────
 export default function GestaoAlunosIndividuais() {
   return (
@@ -1023,7 +1207,7 @@ export default function GestaoAlunosIndividuais() {
         </div>
 
         <Tabs defaultValue="cadastro">
-          <TabsList className="grid w-full grid-cols-9 mb-6 bg-gray-100 p-1 h-auto">
+          <TabsList className="grid w-full grid-cols-10 mb-6 bg-gray-100 p-1 h-auto">
             <TabsTrigger value="cadastro" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Cadastro</span>
@@ -1059,6 +1243,10 @@ export default function GestaoAlunosIndividuais() {
             <TabsTrigger value="pendencias" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
               <Bell className="w-4 h-4" />
               <span className="hidden sm:inline">Pendências</span>
+            </TabsTrigger>
+            <TabsTrigger value="contratos" className="flex items-center gap-2 data-[state=active]:bg-blue-700 data-[state=active]:text-white py-3">
+              <PenLine className="w-4 h-4" />
+              <span className="hidden sm:inline">Contratos</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1099,6 +1287,9 @@ export default function GestaoAlunosIndividuais() {
           </TabsContent>
           <TabsContent value="pendencias">
             <PainelPendenciasFinanceiras />
+          </TabsContent>
+          <TabsContent value="contratos">
+            <ContratosGeral />
           </TabsContent>
         </Tabs>
       </div>

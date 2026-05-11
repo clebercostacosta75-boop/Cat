@@ -13,6 +13,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import CertificateSign from './pages/CertificateSign';
+import ContractSign from './pages/ContractSign';
 import CertificateValidate from './pages/CertificateValidate';
 import CertificateEmissao from './pages/CertificateEmissao';
 import StudentPortal from './pages/StudentPortal';
@@ -128,6 +129,7 @@ const AuthenticatedApp = () => {
     <Routes>
       {/* Rotas públicas (sem layout) */}
       <Route path="/CertificateSign" element={<CertificateSign />} />
+      <Route path="/ContractSign" element={<ContractSign />} />
       <Route path="/CertificateValidate" element={<CertificateValidate />} />
       <Route path="/StudentPortal" element={<StudentPortal />} />
       <Route path="/AttendanceConfirm" element={<AttendanceConfirm />} />
