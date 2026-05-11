@@ -90,14 +90,21 @@ function PermissionEditor({ profile, onSaved }) {
       });
       if (res.data?.success) {
         toast.success(`Permissões de ${profile.user_name} salvas com sucesso! O menu será atualizado automaticamente.`);
-        // Dispara evento para o Layout atualizar o menu imediatamente
         window.dispatchEvent(new Event("permissions-updated"));
         onSaved();
       } else {
-        toast.error(res.data?.error || "Erro ao salvar permissões");
+        const errMsg = res.data?.error || "Erro ao salvar permissões";
+        toast.error(errMsg);
       }
-    } catch {
-      toast.error("Erro ao salvar permissões");
+    } catch (err) {
+      const detail = err?.response?.data?.error || err?.response?.data?.details || err?.message || "";
+      if (detail.includes("403") || detail.toLowerCase().includes("sem permissão") || detail.toLowerCase().includes("forbidden")) {
+        toast.error("Sem permissão para alterar permissões. Apenas Administradores e Gestores Master podem fazer isso.");
+      } else if (detail.includes("404") || detail.toLowerCase().includes("não encontrado")) {
+        toast.error("Perfil do usuário não encontrado no sistema.");
+      } else {
+        toast.error(detail ? `Erro: ${detail}` : "Erro ao salvar permissões. Tente novamente.");
+      }
     } finally {
       setSaving(false);
     }
