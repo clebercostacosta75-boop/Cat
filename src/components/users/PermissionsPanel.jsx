@@ -32,7 +32,7 @@ const PERMISSION_GROUPS = [
   {
     label: "Comercial / Atendimento",
     color: "bg-purple-100 text-purple-700",
-    items: ["Dashboard Comercial", "Gestão de Leads", "Caixa de Entrada", "Base de Conhecimento", "Contas Sociais"],
+    items: ["Dashboard Comercial", "Gestão de Leads", "Assistente de Cadastros", "Caixa de Entrada", "Base de Conhecimento", "Contas Sociais"],
   },
   {
     label: "Comunicação",
