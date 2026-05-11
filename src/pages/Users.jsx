@@ -204,7 +204,28 @@ export default function UsersPage() {
           user_name: formData.user_name,
           role: formData.role,
         });
-        toast.success(`Usuário ${formData.user_name} criado com sucesso!`);
+
+        // Envia credenciais por WhatsApp se tiver telefone
+        if (formData.phone) {
+          try {
+            await base44.functions.invoke("enviarNotificacaoWhatsApp", {
+              recipient_type: "user",
+              recipient_name: formData.user_name,
+              recipient_phone: formData.phone,
+              message_type: "credentials",
+              credential_email: formData.user_email,
+              credential_password: formData.initial_password || formData.user_email,
+              app_url: window.location.origin,
+            });
+            toast.success(`Usuário ${formData.user_name} criado! Credenciais enviadas por WhatsApp.`);
+          } catch {
+            toast.success(`Usuário ${formData.user_name} criado com sucesso!`);
+            toast.warning("Não foi possível enviar o WhatsApp. Compartilhe as credenciais manualmente.");
+          }
+        } else {
+          toast.success(`Usuário ${formData.user_name} criado com sucesso!`);
+        }
+
         setCredentialsModal({
           name: formData.user_name,
           email: formData.user_email,
@@ -244,10 +265,30 @@ export default function UsersPage() {
         profile_id: profile.id,
       });
       if (res.data?.success) {
-        // Exibe modal de confirmação com link do app para compartilhar
+        // Envia por WhatsApp se tiver telefone
+        if (profile.phone) {
+          try {
+            await base44.functions.invoke("enviarNotificacaoWhatsApp", {
+              recipient_type: "user",
+              recipient_name: profile.user_name,
+              recipient_phone: profile.phone,
+              message_type: "credentials",
+              credential_email: profile.user_email,
+              credential_password: profile.initial_password || "",
+              app_url: window.location.origin,
+            });
+            toast.success("Convite reenviado! Credenciais enviadas por WhatsApp.");
+          } catch {
+            toast.success("Convite reenviado por e-mail.");
+            toast.warning("Não foi possível enviar o WhatsApp.");
+          }
+        } else {
+          toast.success("Convite reenviado por e-mail.");
+        }
         setCredentialsModal({
           name: profile.user_name,
           email: profile.user_email,
+          password: profile.initial_password || "",
         });
         await loadProfiles();
       } else {

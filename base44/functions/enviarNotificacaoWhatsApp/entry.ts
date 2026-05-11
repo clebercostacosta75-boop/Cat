@@ -93,11 +93,19 @@ Deno.serve(async (req) => {
       if (cs.notes) finalMessageBody += `\n📝 *Obs:* ${cs.notes}\n`;
       finalMessageBody += `\n✅ *Status:* ${cs.status}`;
     } else if (message_type === 'credentials') {
-      finalMessageBody = `🔐 *Credenciais de Acesso*\n\n`;
-      finalMessageBody += `Olá *${recipientName}*!\n\n`;
-      finalMessageBody += `Suas credenciais de acesso ao Sistema de Treinamento:\n\n`;
-      finalMessageBody += `📧 *E-mail:* ${recipient_id}\n\n`;
-      finalMessageBody += `Por favor, faça login e altere sua senha no primeiro acesso.`;
+      const credEmail = requestData.credential_email || recipient_id || '';
+      const credPassword = requestData.credential_password || '';
+      const appUrl = requestData.app_url || 'https://app.base44.com';
+      finalMessageBody = `🔐 *Credenciais de Acesso - CAT Cursos*\n\n`;
+      finalMessageBody += `Olá *${recipientName}*! 👋\n\n`;
+      finalMessageBody += `Seu acesso ao *CAT Gestão de Cursos* foi criado.\n\n`;
+      finalMessageBody += `📧 *E-mail:* ${credEmail}\n`;
+      if (credPassword) {
+        finalMessageBody += `🔑 *Senha inicial:* ${credPassword}\n`;
+      }
+      finalMessageBody += `🔗 *Link:* ${appUrl}\n\n`;
+      finalMessageBody += `⚠️ No primeiro acesso, você será solicitado a trocar a senha.\n\n`;
+      finalMessageBody += `Dúvidas? Entre em contato: suporte@catcursos.com.br`;
     } else {
       return Response.json({ error: 'Tipo de mensagem inválido ou mensagem não fornecida' }, { status: 400 });
     }
