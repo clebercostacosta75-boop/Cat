@@ -15,10 +15,15 @@ export default function CoursesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const queryClient = useQueryClient();
 
-  const { data: courses = [] } = useQuery({
-    queryKey: ['courses'],
-    queryFn: () => base44.entities.Course.list('-name', 200),
-    initialData: [],
+  const { data: courses = [], isLoading, error } = useQuery({
+    queryKey: ['courses', 'prod'],
+    queryFn: async () => {
+      const result = await base44.entities.Course.list('-name', 200);
+      console.log('Cursos carregados:', result?.length, result);
+      return result || [];
+    },
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const createMutation = useMutation({
@@ -130,6 +135,28 @@ export default function CoursesPage() {
   const filteredCourses = courses.filter((course) =>
     course.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (isLoading) {
+    return (
+      <div className="p-8 flex items-center justify-center min-h-64">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-800 rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-gray-500 text-sm">Carregando cursos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-700 font-semibold">Erro ao carregar cursos:</p>
+          <p className="text-red-600 text-sm mt-1">{error.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
