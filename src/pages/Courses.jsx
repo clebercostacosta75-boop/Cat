@@ -16,10 +16,9 @@ export default function CoursesPage() {
   const queryClient = useQueryClient();
 
   const { data: courses = [], isLoading, error } = useQuery({
-    queryKey: ['courses', 'prod'],
+    queryKey: ['courses'],
     queryFn: async () => {
       const result = await base44.entities.Course.list('-name', 200);
-      console.log('Cursos carregados:', result?.length, result);
       return result || [];
     },
     staleTime: 0,

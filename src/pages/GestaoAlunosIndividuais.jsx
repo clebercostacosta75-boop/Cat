@@ -230,8 +230,9 @@ function MatriculaModal({ open, onClose, onSave, isPending }) {
 
   const { data: courses = [], isLoading: loadingCourses } = useQuery({
     queryKey: ["courses"],
-    queryFn: () => base44.entities.Course.list(),
+    queryFn: () => base44.entities.Course.list("-name", 200),
     staleTime: 0,
+    gcTime: 0,
   });
 
   useEffect(() => {
@@ -672,21 +673,26 @@ function MatriculasCursos() {
 
   const { data: enrollments = [], isLoading } = useQuery({
     queryKey: ["enrollments-pf"],
-    queryFn: () => base44.entities.StudentCourseEnrollment.filter({ company_name: "Individual (PF)" }),
-    initialData: [],
+    queryFn: async () => {
+      const all = await base44.entities.StudentCourseEnrollment.list("-created_date", 500);
+      return (all || []).filter(e => !e.company_id || e.company_id === "individual" || e.company_name === "Individual (PF)");
+    },
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: students = [] } = useQuery({
     queryKey: ["students-pf"],
-    queryFn: () => base44.entities.Student.list(),
+    queryFn: () => base44.entities.Student.list("-created_date", 500),
     initialData: [],
   });
 
   const { data: courses = [] } = useQuery({
     queryKey: ["courses"],
-    queryFn: () => base44.entities.Course.list(),
+    queryFn: () => base44.entities.Course.list("-name", 200),
     initialData: [],
     staleTime: 0,
+    gcTime: 0,
   });
 
   const createMutation = useMutation({
@@ -884,8 +890,12 @@ function MatriculasCursos() {
 function FinanceiroAlunos() {
   const { data: enrollments = [] } = useQuery({
     queryKey: ["enrollments-pf"],
-    queryFn: () => base44.entities.StudentCourseEnrollment.filter({ company_name: "Individual (PF)" }),
-    initialData: [],
+    queryFn: async () => {
+      const all = await base44.entities.StudentCourseEnrollment.list("-created_date", 500);
+      return (all || []).filter(e => !e.company_id || e.company_id === "individual" || e.company_name === "Individual (PF)");
+    },
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const total = enrollments.length;
@@ -1103,8 +1113,12 @@ function ContratosGeral() {
 
   const { data: enrollments = [], isLoading } = useQuery({
     queryKey: ["enrollments-pf"],
-    queryFn: () => base44.entities.StudentCourseEnrollment.filter({ company_name: "Individual (PF)" }),
-    initialData: [],
+    queryFn: async () => {
+      const all = await base44.entities.StudentCourseEnrollment.list("-created_date", 500);
+      return (all || []).filter(e => !e.company_id || e.company_id === "individual" || e.company_name === "Individual (PF)");
+    },
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: contracts = [] } = useQuery({

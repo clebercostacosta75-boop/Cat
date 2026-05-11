@@ -37,21 +37,35 @@ Deno.serve(async (req) => {
         }
       }
 
-      // ── Enviar e-mail ────────────────────────────────────────────────────────
+      // ── Enviar e-mail via Resend ──────────────────────────────────────────────
       if (studentEmail) {
-        try {
-          const emailBody = billingType === "BOLETO"
-            ? `Olá ${studentName},\n\nSeu boleto bancário foi gerado com sucesso!\n\nValor: R$ ${parseFloat(chargeValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}\nVencimento: ${dueDate}\n\nLinha Digitável:\n${boletoLine}\n\nPara mais informações, acesse seu portal.\n\nObrigado!`
-            : `Olá ${studentName},\n\nSeu pagamento de R$ ${parseFloat(chargeValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} foi gerado com sucesso!\n\nVencimento: ${dueDate}\n\nPara mais informações, acesse seu portal.\n\nObrigado!`;
+        const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+        if (RESEND_API_KEY) {
+          try {
+            const emailBody = billingType === "BOLETO"
+              ? `<p>Olá <strong>${studentName}</strong>,</p><p>Seu boleto bancário foi gerado com sucesso!</p><p><strong>Valor:</strong> R$ ${parseFloat(chargeValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}<br><strong>Vencimento:</strong> ${dueDate}</p>${boletoLine ? `<p><strong>Linha Digitável:</strong><br><code>${boletoLine}</code></p>` : ""}<p>Para mais informações, acesse seu portal.</p><p>Obrigado!</p>`
+              : `<p>Olá <strong>${studentName}</strong>,</p><p>Seu pagamento de R$ ${parseFloat(chargeValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} foi gerado com sucesso!</p><p><strong>Vencimento:</strong> ${dueDate}</p><p>Para mais informações, acesse seu portal.</p><p>Obrigado!</p>`;
 
-          await base44.integrations.Core.SendEmail({
-            to: studentEmail,
-            subject: `Boleto Bancário Gerado — R$ ${parseFloat(chargeValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-            body: emailBody,
-          });
-          emailSent = true;
-        } catch (err) {
-          console.error("Erro ao enviar e-mail:", err.message);
+            const resendRes = await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                from: "CAT Cursos <noreply@catcursos.com.br>",
+                to: [studentEmail],
+                subject: `Boleto Bancário Gerado — R$ ${parseFloat(chargeValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+                html: emailBody,
+              }),
+            });
+            if (resendRes.ok) emailSent = true;
+            else {
+              const errData = await resendRes.json();
+              console.error("Erro Resend:", JSON.stringify(errData));
+            }
+          } catch (err) {
+            console.error("Erro ao enviar e-mail:", err.message);
+          }
+        } else {
+          console.log("RESEND_API_KEY não configurada — e-mail não enviado");
         }
       }
 
