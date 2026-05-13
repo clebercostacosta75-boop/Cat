@@ -10,7 +10,10 @@ const VERIFY_TOKEN = "cat_cursos_webhook_2025";
 export default function WebhookConfigInstrucoes() {
   const [copiedField, setCopiedField] = useState(null);
 
-  const webhookUrl = `https://api.base44.com/api/apps/${import.meta.env.VITE_APP_ID}/functions/whatsappWebhook`;
+  const appId = import.meta.env.VITE_APP_ID || window.__BASE44_APP_ID__ || "";
+  const webhookUrl = appId
+    ? `https://api.base44.com/api/apps/${appId}/functions/whatsappWebhook`
+    : "(carregando URL... recarregue a página)";
   const whatsappNumber = "+55 91 98864-8079";
 
   const copyToClipboard = (text, field) => {

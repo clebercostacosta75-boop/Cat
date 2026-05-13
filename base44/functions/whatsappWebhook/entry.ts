@@ -28,10 +28,21 @@ Deno.serve(async (req) => {
       const changes = entry?.changes?.[0];
       const value = changes?.value;
 
+      // Ignorar eventos que não sejam mensagens (ex: status de entrega)
       if (!value?.messages?.length) {
-        // Pode ser status update ou outro evento — ignorar silenciosamente
         return Response.json({ status: "ignored" }, { status: 200 });
       }
+
+      // Busca a conta social do WhatsApp para vincular à conversa
+      let socialAccountId = null;
+      let socialAccountName = "CAT Cursos WhatsApp (+55 91 98864-8079)";
+      try {
+        const waAccounts = await base44.asServiceRole.entities.SocialAccount.filter({ platform: "WhatsApp Business" });
+        if (waAccounts?.length > 0) {
+          socialAccountId = waAccounts[0].id;
+          socialAccountName = waAccounts[0].name || socialAccountName;
+        }
+      } catch (_) {}
 
       for (const msg of value.messages) {
         const fromPhone = msg.from; // número do remetente (ex: "5591999999999")
@@ -124,6 +135,8 @@ Deno.serve(async (req) => {
             last_message_preview: content.substring(0, 100),
             unread_count: (openConv.unread_count || 0) + 1,
             status: openConv.status === "Resolvida" ? "Aberta" : openConv.status,
+            social_account_id: openConv.social_account_id || socialAccountId,
+            social_account_name: openConv.social_account_name || socialAccountName,
           });
           console.log(`Mensagem adicionada na conversa ${openConv.id}`);
         } else {
@@ -137,6 +150,8 @@ Deno.serve(async (req) => {
             last_message_at: timestamp,
             last_message_preview: content.substring(0, 100),
             unread_count: 1,
+            social_account_id: socialAccountId,
+            social_account_name: socialAccountName,
           });
           console.log(`Nova conversa criada para ${leadName} (${fromPhone})`);
         }
