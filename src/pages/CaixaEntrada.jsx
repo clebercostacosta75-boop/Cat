@@ -63,24 +63,46 @@ export default function CaixaEntrada() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [selected?.messages]);
 
+  const [isSending, setIsSending] = useState(false);
+
   const sendMessage = async () => {
     if (!newMessage.trim() || !selected) return;
-    const msg = {
-      role: "human_agent",
-      content: newMessage.trim(),
-      timestamp: new Date().toISOString(),
-    };
-    const updatedMessages = [...(selected.messages || []), msg];
-    await updateMutation.mutateAsync({
-      id: selected.id,
-      data: {
-        messages: updatedMessages,
-        last_message_at: new Date().toISOString(),
-        last_message_preview: newMessage.trim(),
-        status: "Em Atendimento Humano",
-      },
-    });
-    setNewMessage("");
+    setIsSending(true);
+    try {
+      // Se for canal WhatsApp, envia de verdade via API
+      if (selected.channel === "WhatsApp") {
+        const res = await base44.functions.invoke("enviarRespostaWhatsApp", {
+          conversation_id: selected.id,
+          message: newMessage.trim(),
+        });
+        if (res.data?.error) throw new Error(res.data.error);
+        toast.success("Mensagem enviada pelo WhatsApp!");
+      } else {
+        // Outros canais: salva só internamente
+        const msg = {
+          role: "human_agent",
+          content: newMessage.trim(),
+          timestamp: new Date().toISOString(),
+        };
+        const updatedMessages = [...(selected.messages || []), msg];
+        await updateMutation.mutateAsync({
+          id: selected.id,
+          data: {
+            messages: updatedMessages,
+            last_message_at: new Date().toISOString(),
+            last_message_preview: newMessage.trim(),
+            status: "Em Atendimento Humano",
+          },
+        });
+        toast.success("Mensagem registrada.");
+      }
+      setNewMessage("");
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    } catch (err) {
+      toast.error("Erro ao enviar: " + (err.message || "tente novamente"));
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const assumeConversation = (conv) => {
@@ -298,17 +320,18 @@ export default function CaixaEntrada() {
                 <Textarea
                   value={newMessage}
                   onChange={e => setNewMessage(e.target.value)}
-                  placeholder="Digite uma mensagem como atendente humano..."
+                  placeholder={selected.channel === "WhatsApp" ? "Digite e envie pelo WhatsApp..." : "Digite uma mensagem como atendente humano..."}
                   rows={2}
                   className="resize-none flex-1"
                   onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                 />
                 <Button
                   onClick={sendMessage}
-                  disabled={!newMessage.trim() || updateMutation.isPending}
-                  className="bg-blue-600 hover:bg-blue-700 self-end"
+                  disabled={!newMessage.trim() || isSending}
+                  className="bg-blue-600 hover:bg-blue-700 self-end gap-1"
                 >
-                  <Send className="w-4 h-4" />
+                  {isSending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {selected.channel === "WhatsApp" && !isSending && <span className="text-xs">WhatsApp</span>}
                 </Button>
               </div>
             )}
