@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   MessageSquare, Instagram, Facebook, Linkedin, Globe, PhoneCall, Mail,
-  Send, Search, User, Bot, RefreshCw, UserCheck, Clock, CheckCheck, Filter
+  Send, Search, User, Bot, RefreshCw, UserCheck, Clock, CheckCheck, Filter, AtSign
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -221,6 +221,27 @@ export default function CaixaEntrada() {
 
           {/* Mensagens */}
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            {/* Badge de origem da conversa */}
+            <div className="flex justify-center">
+              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-1.5 text-xs text-gray-600 shadow-sm">
+                {CHANNEL_ICONS[selected.channel]}
+                <span className="font-medium">{selected.channel}</span>
+                {selected.social_account_name && (
+                  <>
+                    <span className="text-gray-300">•</span>
+                    <AtSign className="w-3 h-3 text-gray-400" />
+                    <span>{selected.social_account_name}</span>
+                  </>
+                )}
+                {selected.channel === "WhatsApp" && (
+                  <>
+                    <span className="text-gray-300">•</span>
+                    <span className="font-mono text-green-700">+55 91 98864-8079</span>
+                  </>
+                )}
+              </div>
+            </div>
+
             {(!selected.messages || selected.messages.length === 0) ? (
               <div className="text-center text-gray-400 py-12">
                 <MessageSquare className="w-10 h-10 mx-auto mb-2 text-gray-200" />
@@ -239,6 +260,12 @@ export default function CaixaEntrada() {
                     msg.role === "assistant" ? "bg-purple-600 text-white" :
                     "bg-blue-600 text-white"
                   }`}>
+                    {msg.role === "user" && (
+                      <p className="text-xs text-gray-400 mb-1 flex items-center gap-1">
+                        {CHANNEL_ICONS[selected.channel]}
+                        <span>{selected.social_account_name || selected.channel}</span>
+                      </p>
+                    )}
                     {msg.role !== "user" && (
                       <p className="text-xs opacity-70 mb-1 flex items-center gap-1">
                         {msg.role === "assistant" ? <><Bot className="w-3 h-3" /> Agente IA</> : <><UserCheck className="w-3 h-3" /> Atendente</>}
