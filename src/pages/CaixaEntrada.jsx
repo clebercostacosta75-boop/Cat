@@ -23,6 +23,26 @@ const CHANNEL_ICONS = {
   "Outro": <Globe className="w-4 h-4 text-gray-400" />,
 };
 
+const CHANNEL_COLORS = {
+  "Instagram": { bg: "bg-pink-50", border: "border-pink-200", text: "text-pink-700", badge: "bg-pink-100 text-pink-800", button: "bg-pink-600 hover:bg-pink-700" },
+  "Facebook": { bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-700", badge: "bg-blue-100 text-blue-800", button: "bg-blue-600 hover:bg-blue-700" },
+  "LinkedIn": { bg: "bg-sky-50", border: "border-sky-200", text: "text-sky-700", badge: "bg-sky-100 text-sky-800", button: "bg-sky-700 hover:bg-sky-800" },
+  "WhatsApp": { bg: "bg-green-50", border: "border-green-200", text: "text-green-700", badge: "bg-green-100 text-green-800", button: "bg-green-600 hover:bg-green-700" },
+  "TikTok": { bg: "bg-gray-50", border: "border-gray-300", text: "text-gray-800", badge: "bg-gray-100 text-gray-800", button: "bg-gray-800 hover:bg-gray-900" },
+  "E-mail": { bg: "bg-red-50", border: "border-red-200", text: "text-red-700", badge: "bg-red-100 text-red-800", button: "bg-red-600 hover:bg-red-700" },
+  "Outro": { bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-600", badge: "bg-gray-100 text-gray-700", button: "bg-gray-600 hover:bg-gray-700" },
+};
+
+const CHANNEL_ICONS_LG = {
+  "Instagram": <Instagram className="w-5 h-5 text-pink-500" />,
+  "Facebook": <Facebook className="w-5 h-5 text-blue-600" />,
+  "LinkedIn": <Linkedin className="w-5 h-5 text-sky-700" />,
+  "WhatsApp": <PhoneCall className="w-5 h-5 text-green-500" />,
+  "TikTok": <Globe className="w-5 h-5 text-gray-800" />,
+  "E-mail": <Mail className="w-5 h-5 text-red-500" />,
+  "Outro": <Globe className="w-5 h-5 text-gray-400" />,
+};
+
 const STATUS_COLORS = {
   "Aberta": "bg-blue-100 text-blue-800",
   "Em Atendimento IA": "bg-purple-100 text-purple-800",
@@ -179,9 +199,16 @@ export default function CaixaEntrada() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">{conv.lead_name || "Desconhecido"}</p>
-                    <div className="flex items-center gap-1 text-xs text-gray-400">
-                      {CHANNEL_ICONS[conv.channel]}
-                      <span className="truncate">{conv.social_account_name || conv.channel}</span>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      {(() => {
+                        const ch = CHANNEL_COLORS[conv.channel] || CHANNEL_COLORS["Outro"];
+                        return (
+                          <span className={`inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full border font-medium ${ch.badge} ${ch.border}`}>
+                            {CHANNEL_ICONS[conv.channel]}
+                            {conv.channel}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -212,57 +239,64 @@ export default function CaixaEntrada() {
         </div>
       ) : (
         <div className="flex-1 flex flex-col">
-          {/* Header da conversa */}
-          <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-700">
-                {selected.lead_name?.charAt(0)?.toUpperCase() || "?"}
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900">{selected.lead_name}</p>
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  {CHANNEL_ICONS[selected.channel]}
-                  <span>{selected.social_account_name || selected.channel}</span>
-                  <Badge className={`text-xs ${STATUS_COLORS[selected.status]}`}>{selected.status}</Badge>
+          {/* Header da conversa — com faixa colorida do canal */}
+          {(() => {
+            const ch = CHANNEL_COLORS[selected.channel] || CHANNEL_COLORS["Outro"];
+            return (
+              <div className={`border-b px-6 py-3 flex items-center justify-between ${ch.bg} ${ch.border}`}>
+                <div className="flex items-center gap-3">
+                  {/* Avatar */}
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shrink-0 ${ch.button.split(" ")[0]}`}>
+                    {selected.lead_name?.charAt(0)?.toUpperCase() || "?"}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">{selected.lead_name}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* Badge do canal — destaque principal */}
+                      <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${ch.badge} ${ch.border}`}>
+                        {CHANNEL_ICONS[selected.channel]}
+                        {selected.channel}
+                      </span>
+                      {selected.social_account_name && (
+                        <span className={`text-xs ${ch.text} flex items-center gap-1`}>
+                          <AtSign className="w-3 h-3" />{selected.social_account_name}
+                        </span>
+                      )}
+                      <Badge className={`text-xs ${STATUS_COLORS[selected.status]}`}>{selected.status}</Badge>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {selected.status !== "Em Atendimento Humano" && (
+                    <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => assumeConversation(selected)}>
+                      <UserCheck className="w-3 h-3" /> Assumir
+                    </Button>
+                  )}
+                  {selected.status !== "Resolvida" && (
+                    <Button size="sm" variant="outline" className="gap-1 text-xs text-green-700 border-green-300" onClick={() => closeConversation(selected)}>
+                      <CheckCheck className="w-3 h-3" /> Resolver
+                    </Button>
+                  )}
                 </div>
               </div>
-            </div>
-            <div className="flex gap-2">
-              {selected.status !== "Em Atendimento Humano" && (
-                <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => assumeConversation(selected)}>
-                  <UserCheck className="w-3 h-3" /> Assumir
-                </Button>
-              )}
-              {selected.status !== "Resolvida" && (
-                <Button size="sm" variant="outline" className="gap-1 text-xs text-green-700 border-green-300" onClick={() => closeConversation(selected)}>
-                  <CheckCheck className="w-3 h-3" /> Resolver
-                </Button>
-              )}
-            </div>
-          </div>
+            );
+          })()}
 
           {/* Mensagens */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {/* Badge de origem da conversa */}
-            <div className="flex justify-center">
-              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-1.5 text-xs text-gray-600 shadow-sm">
-                {CHANNEL_ICONS[selected.channel]}
-                <span className="font-medium">{selected.channel}</span>
-                {selected.social_account_name && (
-                  <>
-                    <span className="text-gray-300">•</span>
-                    <AtSign className="w-3 h-3 text-gray-400" />
-                    <span>{selected.social_account_name}</span>
-                  </>
-                )}
-                {selected.channel === "WhatsApp" && (
-                  <>
-                    <span className="text-gray-300">•</span>
-                    <span className="font-mono text-green-700">+55 91 98864-8079</span>
-                  </>
-                )}
-              </div>
-            </div>
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+            {/* Pill de origem centralizado */}
+            {(() => {
+              const ch = CHANNEL_COLORS[selected.channel] || CHANNEL_COLORS["Outro"];
+              return (
+                <div className="flex justify-center">
+                  <div className={`inline-flex items-center gap-2 border rounded-full px-4 py-1.5 text-xs font-medium shadow-sm ${ch.bg} ${ch.border} ${ch.text}`}>
+                    {CHANNEL_ICONS_LG[selected.channel]}
+                    <span>Conversa via <strong>{selected.channel}</strong></span>
+                    {selected.social_account_name && <><span className="opacity-40">•</span><span>{selected.social_account_name}</span></>}
+                  </div>
+                </div>
+              );
+            })()}
 
             {(!selected.messages || selected.messages.length === 0) ? (
               <div className="text-center text-gray-400 py-12">
@@ -270,72 +304,94 @@ export default function CaixaEntrada() {
                 <p>Nenhuma mensagem nesta conversa</p>
               </div>
             ) : (
-              selected.messages.map((msg, idx) => (
-                <div key={idx} className={`flex gap-3 ${msg.role === "user" ? "justify-start" : "justify-end"}`}>
-                  {msg.role === "user" && (
-                    <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center shrink-0 mt-1">
-                      <User className="w-3.5 h-3.5 text-gray-600" />
-                    </div>
-                  )}
-                  <div className={`max-w-md rounded-2xl px-4 py-2.5 ${
-                    msg.role === "user" ? "bg-white border border-gray-200 text-gray-900" :
-                    msg.role === "assistant" ? "bg-purple-600 text-white" :
-                    "bg-blue-600 text-white"
-                  }`}>
+              selected.messages.map((msg, idx) => {
+                const ch = CHANNEL_COLORS[selected.channel] || CHANNEL_COLORS["Outro"];
+                return (
+                  <div key={idx} className={`flex gap-3 ${msg.role === "user" ? "justify-start" : "justify-end"}`}>
                     {msg.role === "user" && (
-                      <p className="text-xs text-gray-400 mb-1 flex items-center gap-1">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-1 ${ch.bg} border ${ch.border}`}>
                         {CHANNEL_ICONS[selected.channel]}
-                        <span>{selected.social_account_name || selected.channel}</span>
-                      </p>
+                      </div>
                     )}
+                    <div className={`max-w-md rounded-2xl px-4 py-2.5 ${
+                      msg.role === "user" ? `bg-white border ${ch.border} text-gray-900` :
+                      msg.role === "assistant" ? "bg-purple-600 text-white" :
+                      "bg-gray-800 text-white"
+                    }`}>
+                      {msg.role === "user" && (
+                        <p className={`text-xs mb-1 flex items-center gap-1 font-semibold ${ch.text}`}>
+                          {CHANNEL_ICONS[selected.channel]}
+                          <span>{selected.channel}{selected.social_account_name ? ` · ${selected.social_account_name}` : ""}</span>
+                        </p>
+                      )}
+                      {msg.role !== "user" && (
+                        <p className="text-xs opacity-70 mb-1 flex items-center gap-1">
+                          {msg.role === "assistant" ? <><Bot className="w-3 h-3" /> Agente IA</> : <><UserCheck className="w-3 h-3" /> Atendente Humano</>}
+                        </p>
+                      )}
+                      <p className="text-sm leading-relaxed">{msg.content}</p>
+                      {msg.timestamp && (
+                        <p className={`text-xs mt-1 ${msg.role === "user" ? "text-gray-400" : "opacity-60"}`}>
+                          {format(new Date(msg.timestamp), "HH:mm")}
+                        </p>
+                      )}
+                    </div>
                     {msg.role !== "user" && (
-                      <p className="text-xs opacity-70 mb-1 flex items-center gap-1">
-                        {msg.role === "assistant" ? <><Bot className="w-3 h-3" /> Agente IA</> : <><UserCheck className="w-3 h-3" /> Atendente</>}
-                      </p>
-                    )}
-                    <p className="text-sm leading-relaxed">{msg.content}</p>
-                    {msg.timestamp && (
-                      <p className={`text-xs mt-1 ${msg.role === "user" ? "text-gray-400" : "opacity-60"}`}>
-                        {format(new Date(msg.timestamp), "HH:mm")}
-                      </p>
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-1 ${msg.role === "assistant" ? "bg-purple-100" : "bg-gray-200"}`}>
+                        {msg.role === "assistant" ? <Bot className="w-3.5 h-3.5 text-purple-600" /> : <UserCheck className="w-3.5 h-3.5 text-gray-700" />}
+                      </div>
                     )}
                   </div>
-                  {msg.role !== "user" && (
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-1 ${msg.role === "assistant" ? "bg-purple-100" : "bg-blue-100"}`}>
-                      {msg.role === "assistant" ? <Bot className="w-3.5 h-3.5 text-purple-600" /> : <UserCheck className="w-3.5 h-3.5 text-blue-600" />}
-                    </div>
-                  )}
-                </div>
-              ))
+                );
+              })
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input de mensagem */}
-          <div className="bg-white border-t border-gray-200 p-4">
-            {selected.status === "Resolvida" || selected.status === "Encerrada" ? (
-              <p className="text-center text-sm text-gray-400 py-2">Esta conversa foi encerrada.</p>
-            ) : (
-              <div className="flex gap-3">
-                <Textarea
-                  value={newMessage}
-                  onChange={e => setNewMessage(e.target.value)}
-                  placeholder={selected.channel === "WhatsApp" ? "Digite e envie pelo WhatsApp..." : "Digite uma mensagem como atendente humano..."}
-                  rows={2}
-                  className="resize-none flex-1"
-                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                />
-                <Button
-                  onClick={sendMessage}
-                  disabled={!newMessage.trim() || isSending}
-                  className="bg-blue-600 hover:bg-blue-700 self-end gap-1"
-                >
-                  {isSending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  {selected.channel === "WhatsApp" && !isSending && <span className="text-xs">WhatsApp</span>}
-                </Button>
+          {/* Caixa de envio — com indicação clara do canal de resposta */}
+          {(() => {
+            const ch = CHANNEL_COLORS[selected.channel] || CHANNEL_COLORS["Outro"];
+            const isHuman = selected.status === "Em Atendimento Humano";
+            return (
+              <div className={`border-t p-4 ${isHuman ? ch.bg : "bg-white"} ${isHuman ? ch.border : "border-gray-200"}`}>
+                {selected.status === "Resolvida" || selected.status === "Encerrada" ? (
+                  <p className="text-center text-sm text-gray-400 py-2">Esta conversa foi encerrada.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {/* Banner do canal de resposta */}
+                    <div className={`flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg border ${ch.bg} ${ch.border} ${ch.text}`}>
+                      {CHANNEL_ICONS_LG[selected.channel]}
+                      <span>Respondendo via <strong>{selected.channel}</strong></span>
+                      {selected.social_account_name && <span className="opacity-60">· {selected.social_account_name}</span>}
+                      {!isHuman && (
+                        <span className="ml-auto text-yellow-600 font-normal flex items-center gap-1">
+                          <UserCheck className="w-3 h-3" /> Clique em "Assumir" para ativar o envio
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-3">
+                      <Textarea
+                        value={newMessage}
+                        onChange={e => setNewMessage(e.target.value)}
+                        placeholder={`Digite sua resposta para ${selected.lead_name} via ${selected.channel}...`}
+                        rows={2}
+                        className="resize-none flex-1"
+                        onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                      />
+                      <Button
+                        onClick={sendMessage}
+                        disabled={!newMessage.trim() || isSending}
+                        className={`self-end gap-1.5 ${ch.button}`}
+                      >
+                        {isSending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                        <span className="text-xs">{selected.channel}</span>
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            );
+          })()}
         </div>
       )}
     </div>
