@@ -11,9 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Instagram, Facebook, Linkedin, Youtube, Globe, Plus, Edit, Trash2, Wifi, WifiOff, Bot, Send } from "lucide-react";
+import { Instagram, Facebook, Linkedin, Youtube, Globe, Plus, Edit, Trash2, Wifi, WifiOff, Bot, Send, Webhook } from "lucide-react";
 import { toast } from "sonner";
 import EnvioMassaWhatsApp from "@/components/social/EnvioMassaWhatsApp";
+import WebhookConfigInstrucoes from "@/components/social/WebhookConfigInstrucoes";
 
 const PLATFORM_OPTIONS = ["Instagram", "Facebook", "WhatsApp Business", "LinkedIn", "TikTok", "YouTube"];
 
@@ -133,6 +134,9 @@ export default function ContasSociais() {
           <TabsTrigger value="envio" className="flex items-center gap-2">
             <Send className="w-4 h-4" /> Envio em Massa (WhatsApp)
           </TabsTrigger>
+          <TabsTrigger value="webhook" className="flex items-center gap-2">
+            <Webhook className="w-4 h-4" /> Receber Mensagens (Webhook)
+          </TabsTrigger>
         </TabsList>
 
         {/* Aba Contas */}
@@ -220,6 +224,11 @@ export default function ContasSociais() {
         {/* Aba Envio em Massa */}
         <TabsContent value="envio" className="mt-4">
           <EnvioMassaWhatsApp />
+        </TabsContent>
+
+        {/* Aba Webhook */}
+        <TabsContent value="webhook" className="mt-4">
+          <WebhookConfigInstrucoes />
         </TabsContent>
       </Tabs>
 
