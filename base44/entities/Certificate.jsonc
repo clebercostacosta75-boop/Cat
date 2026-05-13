@@ -203,6 +203,29 @@
       "type": "string",
       "format": "date-time",
       "description": "Data/hora do reenvio autom\u00e1tico do link (48h)"
+    },
+    "recipient_type": {
+      "type": "string",
+      "enum": [
+        "aluno",
+        "empresa"
+      ],
+      "description": "Tipo de destinat\u00e1rio: aluno (prazo 30 dias) ou empresa (prazo 45 dias)"
+    },
+    "download_deadline": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora limite para download do certificado (calculado automaticamente a partir de signed_at)"
+    },
+    "is_blocked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o download do certificado est\u00e1 bloqueado (ativado automaticamente ap\u00f3s download_deadline)"
+    },
+    "downloaded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora em que o certificado foi baixado (opcional)"
     }
   },
   "required": [
