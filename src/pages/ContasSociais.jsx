@@ -11,10 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Instagram, Facebook, Linkedin, Youtube, Globe, Plus, Edit, Trash2, Wifi, WifiOff, Bot, Send, Webhook } from "lucide-react";
+import { Instagram, Facebook, Linkedin, Youtube, Globe, Plus, Edit, Trash2, Wifi, WifiOff, Bot, Send, Webhook, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import EnvioMassaWhatsApp from "@/components/social/EnvioMassaWhatsApp";
 import WebhookConfigInstrucoes from "@/components/social/WebhookConfigInstrucoes";
+import CaixaEntrada from "@/pages/CaixaEntrada";
 
 const PLATFORM_OPTIONS = ["Instagram", "Facebook", "WhatsApp Business", "LinkedIn", "TikTok", "YouTube"];
 
@@ -137,6 +138,9 @@ export default function ContasSociais() {
           <TabsTrigger value="webhook" className="flex items-center gap-2">
             <Webhook className="w-4 h-4" /> Receber Mensagens (Webhook)
           </TabsTrigger>
+          <TabsTrigger value="caixa" className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4" /> Caixa de Entrada
+          </TabsTrigger>
         </TabsList>
 
         {/* Aba Contas */}
@@ -229,6 +233,11 @@ export default function ContasSociais() {
         {/* Aba Webhook */}
         <TabsContent value="webhook" className="mt-4">
           <WebhookConfigInstrucoes />
+        </TabsContent>
+
+        {/* Aba Caixa de Entrada */}
+        <TabsContent value="caixa" className="mt-0 -mx-6">
+          <CaixaEntrada />
         </TabsContent>
       </Tabs>
 
