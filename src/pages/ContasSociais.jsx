@@ -10,8 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Instagram, Facebook, Linkedin, Youtube, Globe, Plus, Edit, Trash2, Wifi, WifiOff, Bot } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Instagram, Facebook, Linkedin, Youtube, Globe, Plus, Edit, Trash2, Wifi, WifiOff, Bot, Send } from "lucide-react";
 import { toast } from "sonner";
+import EnvioMassaWhatsApp from "@/components/social/EnvioMassaWhatsApp";
 
 const PLATFORM_OPTIONS = ["Instagram", "Facebook", "WhatsApp Business", "LinkedIn", "TikTok", "YouTube"];
 
@@ -122,85 +124,104 @@ export default function ContasSociais() {
         ))}
       </div>
 
-      {/* Por plataforma */}
-      {isLoading ? (
-        <div className="text-center py-12 text-gray-400">Carregando...</div>
-      ) : (
-        <div className="space-y-6">
-          {PLATFORM_OPTIONS.map(platform => {
-            const platformAccounts = grouped[platform] || [];
-            if (platformAccounts.length === 0) return null;
-            return (
-              <div key={platform}>
-                <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-3">
-                  {PLATFORM_ICONS[platform]}
-                  {platform}
-                  <span className="text-gray-400 font-normal">({platformAccounts.length}/3)</span>
-                </h2>
-                <div className="grid md:grid-cols-3 gap-3">
-                  {platformAccounts.map(account => (
-                    <Card key={account.id} className="hover:shadow-sm transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            {PLATFORM_ICONS[account.platform]}
-                            <div>
-                              <p className="font-semibold text-sm text-gray-900">{account.name}</p>
-                              <p className="text-xs text-gray-500">{account.username || "sem username"}</p>
+      {/* Abas */}
+      <Tabs defaultValue="contas">
+        <TabsList>
+          <TabsTrigger value="contas" className="flex items-center gap-2">
+            <Instagram className="w-4 h-4" /> Contas Cadastradas
+          </TabsTrigger>
+          <TabsTrigger value="envio" className="flex items-center gap-2">
+            <Send className="w-4 h-4" /> Envio em Massa (WhatsApp)
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Aba Contas */}
+        <TabsContent value="contas" className="mt-4">
+          {isLoading ? (
+            <div className="text-center py-12 text-gray-400">Carregando...</div>
+          ) : (
+            <div className="space-y-6">
+              {PLATFORM_OPTIONS.map(platform => {
+                const platformAccounts = grouped[platform] || [];
+                if (platformAccounts.length === 0) return null;
+                return (
+                  <div key={platform}>
+                    <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-3">
+                      {PLATFORM_ICONS[platform]}
+                      {platform}
+                      <span className="text-gray-400 font-normal">({platformAccounts.length}/3)</span>
+                    </h2>
+                    <div className="grid md:grid-cols-3 gap-3">
+                      {platformAccounts.map(account => (
+                        <Card key={account.id} className="hover:shadow-sm transition-shadow">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                {PLATFORM_ICONS[account.platform]}
+                                <div>
+                                  <p className="font-semibold text-sm text-gray-900">{account.name}</p>
+                                  <p className="text-xs text-gray-500">{account.username || "sem username"}</p>
+                                </div>
+                              </div>
+                              <Badge className={`text-xs ${STATUS_COLORS[account.status] || "bg-gray-100"}`}>
+                                {account.status === "Ativa" ? <Wifi className="w-2.5 h-2.5 inline mr-1" /> : <WifiOff className="w-2.5 h-2.5 inline mr-1" />}
+                                {account.status}
+                              </Badge>
                             </div>
-                          </div>
-                          <Badge className={`text-xs ${STATUS_COLORS[account.status] || "bg-gray-100"}`}>
-                            {account.status === "Ativa" ? <Wifi className="w-2.5 h-2.5 inline mr-1" /> : <WifiOff className="w-2.5 h-2.5 inline mr-1" />}
-                            {account.status}
-                          </Badge>
-                        </div>
 
-                        {account.purpose && (
-                          <p className="text-xs text-gray-500 mb-2 bg-gray-50 rounded px-2 py-1">{account.purpose}</p>
-                        )}
+                            {account.purpose && (
+                              <p className="text-xs text-gray-500 mb-2 bg-gray-50 rounded px-2 py-1">{account.purpose}</p>
+                            )}
 
-                        <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                          <span className="flex items-center gap-1">
-                            <Bot className="w-3 h-3" />
-                            IA: {account.auto_reply_enabled ? "Ativada" : "Desativada"}
-                          </span>
-                          {account.is_primary && <Badge variant="outline" className="text-xs">Principal</Badge>}
-                          <span>Conta #{account.account_number}</span>
-                        </div>
+                            <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+                              <span className="flex items-center gap-1">
+                                <Bot className="w-3 h-3" />
+                                IA: {account.auto_reply_enabled ? "Ativada" : "Desativada"}
+                              </span>
+                              {account.is_primary && <Badge variant="outline" className="text-xs">Principal</Badge>}
+                              <span>Conta #{account.account_number}</span>
+                            </div>
 
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="flex-1 text-xs gap-1" onClick={() => openEdit(account)}>
-                            <Edit className="w-3 h-3" /> Editar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-red-500 hover:text-red-700"
-                            onClick={() => { if (confirm("Remover conta?")) deleteMutation.mutate(account.id); }}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" className="flex-1 text-xs gap-1" onClick={() => openEdit(account)}>
+                                <Edit className="w-3 h-3" /> Editar
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-red-500 hover:text-red-700"
+                                onClick={() => { if (confirm("Remover conta?")) deleteMutation.mutate(account.id); }}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
 
-          {accounts.length === 0 && (
-            <Card className="border-2 border-dashed border-gray-200">
-              <CardContent className="p-12 text-center">
-                <Instagram className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-gray-500 font-medium">Nenhuma conta cadastrada</p>
-                <p className="text-gray-400 text-sm mt-1">Cadastre suas contas sociais para organizar o atendimento</p>
-                <Button onClick={openCreate} className="mt-4 bg-pink-600 hover:bg-pink-700">Cadastrar Primeira Conta</Button>
-              </CardContent>
-            </Card>
+              {accounts.length === 0 && (
+                <Card className="border-2 border-dashed border-gray-200">
+                  <CardContent className="p-12 text-center">
+                    <Instagram className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p className="text-gray-500 font-medium">Nenhuma conta cadastrada</p>
+                    <p className="text-gray-400 text-sm mt-1">Cadastre suas contas sociais para organizar o atendimento</p>
+                    <Button onClick={openCreate} className="mt-4 bg-pink-600 hover:bg-pink-700">Cadastrar Primeira Conta</Button>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           )}
-        </div>
-      )}
+        </TabsContent>
+
+        {/* Aba Envio em Massa */}
+        <TabsContent value="envio" className="mt-4">
+          <EnvioMassaWhatsApp />
+        </TabsContent>
+      </Tabs>
 
       {/* Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
