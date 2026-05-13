@@ -11,6 +11,7 @@ export default function WebhookConfigInstrucoes() {
   const [copiedField, setCopiedField] = useState(null);
 
   const webhookUrl = `https://api.base44.com/api/apps/${import.meta.env.VITE_APP_ID}/functions/whatsappWebhook`;
+  const whatsappNumber = "+55 91 98864-8079";
 
   const copyToClipboard = (text, field) => {
     navigator.clipboard.writeText(text);
@@ -74,6 +75,11 @@ export default function WebhookConfigInstrucoes() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <CopyField
+            label="Número WhatsApp Business"
+            value={whatsappNumber}
+            field="number"
+          />
           <CopyField
             label="URL do Callback (Webhook URL)"
             value={webhookUrl}

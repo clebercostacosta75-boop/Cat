@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const VERIFY_TOKEN = Deno.env.get("WHATSAPP_VERIFY_TOKEN") || "cat_cursos_webhook_2025";
+const WHATSAPP_BUSINESS_NUMBER = "5591988648079"; // +55 91 98864-8079
 
 Deno.serve(async (req) => {
   // ── GET: verificação do webhook pelo Meta ──────────────────────────────────
