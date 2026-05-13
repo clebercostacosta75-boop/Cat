@@ -33,31 +33,45 @@ function montarMensagemWhatsApp({ nome, curso, valor, vencimento, diasAtraso, ti
   return `Olá, ${nome}.\n\nAqui é da CAT CURSOS.\n\nIdentificamos uma pendência financeira referente à sua matrícula no curso ${curso}.\n\nDados da pendência:\n\nValor: ${formatMoney(valor)}\nVencimento: ${formatDate(vencimento)}\nStatus: Vencido\nDias em atraso: ${diasAtraso}\n\nPara regularizar sua situação, fale com nosso setor financeiro:\n\nWhatsApp Financeiro:\n(91) 99182-9203\n\nCaso o pagamento já tenha sido realizado, favor desconsiderar esta mensagem e enviar o comprovante para atualização do sistema.\n\nCAT CURSOS\nSetor Financeiro`;
 }
 
-async function sendEmail({ to, subject, html }) {
-  if (!to || !RESEND_API_KEY) return null;
-  // Tenta com domínio personalizado primeiro, depois fallback para domínio padrão Resend
-  const fromOptions = [
-    "CAT Cursos <noreply@catcursos.com>",
-    "CAT Cursos <noreply@catcursos.com.br>",
-  ];
-  for (const from of fromOptions) {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ from, to: [to], subject, html }),
-    });
-    if (res.ok) return res.json();
+
+async function sendEmailViaBase44(base44Client, { to, subject, html }) {
+  // Usa a integração nativa Base44 SendEmail — sem restrições de domínio externo
+  return await base44Client.asServiceRole.integrations.Core.SendEmail({
+    to,
+    subject,
+    body: html,
+    from_name: "CAT Cursos",
+  });
+}
+
+async function sendEmailViaResend({ to, subject, html }) {
+  if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY não configurada");
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ from: "CAT Cursos <noreply@catcursos.com.br>", to: [to], subject, html }),
+  });
+  if (!res.ok) {
     const err = await res.text();
-    // Se erro não for de domínio, lança imediatamente
-    if (!err.includes("domain") && !err.includes("from") && !err.includes("outside the app") && !err.includes("not verified")) {
-      throw new Error(`Resend error: ${err}`);
-    }
-    console.log(`Fallback de remetente: ${from} falhou, tentando próximo...`);
+    throw new Error(`Resend error: ${err}`);
   }
-  throw new Error("Resend: nenhum remetente funcionou. Verifique o domínio catcursos.com.br no painel Resend.");
+  return res.json();
+}
+
+async function sendEmail(base44Client, { to, subject, html }) {
+  if (!to) return null;
+  // Tenta Resend primeiro; se falhar (domínio não verificado / externo), usa Base44 SendEmail
+  if (RESEND_API_KEY) {
+    try {
+      return await sendEmailViaResend({ to, subject, html });
+    } catch (e) {
+      console.log(`Resend falhou para ${to}: ${e.message}. Usando Base44 SendEmail...`);
+    }
+  }
+  return await sendEmailViaBase44(base44Client, { to, subject, html });
 }
 
 Deno.serve(async (req) => {
@@ -196,14 +210,14 @@ Deno.serve(async (req) => {
             </div>
           </div>`;
         try {
-          await sendEmail({ to: customer.email, subject: `⚠️ Seu boleto vence ${label} — ${formatMoney(charge.value)}`, html });
+          await sendEmail(base44, { to: customer.email, subject: `⚠️ Seu boleto vence ${label} — ${formatMoney(charge.value)}`, html });
           emailsEnviados++;
         } catch (e) {
           errors.push(`Erro e-mail ${customer.email}: ${e.message}`);
         }
         for (const adminEmail of adminEmails) {
           try {
-            await sendEmail({ to: adminEmail, subject: `[CAT] Boleto de ${customer.name} vence ${label}`, html });
+            await sendEmail(base44, { to: adminEmail, subject: `[CAT] Boleto de ${customer.name} vence ${label}`, html });
           } catch (e) { /* silencioso para admins */ }
         }
       }
@@ -289,14 +303,14 @@ Deno.serve(async (req) => {
             </div>
           </div>`;
         try {
-          await sendEmail({ to: customer.email, subject: `🔴 Boleto em atraso — ${daysLate} dia(s) — ${formatMoney(charge.value)}`, html });
+          await sendEmail(base44, { to: customer.email, subject: `🔴 Boleto em atraso — ${daysLate} dia(s) — ${formatMoney(charge.value)}`, html });
           emailsEnviados++;
         } catch (e) {
           errors.push(`Erro e-mail ${customer.email}: ${e.message}`);
         }
         for (const adminEmail of adminEmails) {
           try {
-            await sendEmail({ to: adminEmail, subject: `[CAT] ATRASO: Boleto de ${customer.name} — ${daysLate} dia(s)`, html });
+            await sendEmail(base44, { to: adminEmail, subject: `[CAT] ATRASO: Boleto de ${customer.name} — ${daysLate} dia(s)`, html });
           } catch (e) { /* silencioso para admins */ }
         }
       }
