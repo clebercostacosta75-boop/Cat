@@ -25,6 +25,36 @@ Deno.serve(async (req) => {
     const profileToUpdate = profiles[0];
     await base44.asServiceRole.entities.UserProfile.update(profileToUpdate.id, { permissions });
 
+    // Notificar admins/gestores master sobre a alteração de permissões
+    try {
+      const allProfiles = await base44.asServiceRole.entities.UserProfile.list();
+      const masters = allProfiles.filter(p =>
+        ["admin", "Administrador Master", "gestor_master"].includes(p.role) && p.user_email
+      );
+      const alteradoPor = user.full_name || user.email;
+      const dataHora = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+      const listaPerms = permissions.length > 0 ? permissions.join(", ") : "Nenhuma (acesso bloqueado)";
+      for (const master of masters) {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          to: master.user_email,
+          subject: `[CAT Cursos] Permissões alteradas — ${profileToUpdate.user_name}`,
+          body: `
+            <p>Olá, ${master.user_name || "Gestor"}.</p>
+            <p>Uma alteração de permissões foi realizada no sistema:</p>
+            <ul>
+              <li><strong>Usuário afetado:</strong> ${profileToUpdate.user_name} (${user_email})</li>
+              <li><strong>Alterado por:</strong> ${alteradoPor}</li>
+              <li><strong>Data/Hora:</strong> ${dataHora}</li>
+              <li><strong>Novas permissões:</strong> ${listaPerms}</li>
+            </ul>
+            <p>Acesse o sistema para revisar se necessário.</p>
+          `,
+        });
+      }
+    } catch (notifErr) {
+      console.warn("Aviso: não foi possível notificar masters por e-mail:", notifErr.message);
+    }
+
     return Response.json({ success: true, message: 'Permissões atualizadas com sucesso.' });
   } catch (error) {
     return Response.json({ error: 'Erro ao atualizar permissões', details: error.message }, { status: 500 });

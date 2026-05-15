@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1328,8 +1329,23 @@ function ContratosGeral() {
   );
 }
 
+// ─── Bloqueio de Seção ────────────────────────────────────────────────────────
+function SecaoBloqueada({ nome }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-24 text-center gap-3">
+      <Lock className="w-12 h-12 text-gray-300" />
+      <p className="font-semibold text-gray-500">Acesso bloqueado</p>
+      <p className="text-sm text-gray-400">Você não tem permissão para acessar <strong>{nome}</strong>.<br/>Solicite ao Gestor Master a liberação desta seção.</p>
+    </div>
+  );
+}
+
 // ─── Página Principal ────────────────────────────────────────────────────────
 export default function GestaoAlunosIndividuais() {
+  const { hasPermission, allowedKeys } = usePermissions();
+  // null = acesso total (admin/master). Caso contrário, verifica permissão da seção.
+  const canAccess = (secao) => allowedKeys === null || hasPermission(secao);
+
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
@@ -1384,10 +1400,10 @@ export default function GestaoAlunosIndividuais() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="cadastro"><AlunosCadastro /></TabsContent>
-          <TabsContent value="matriculas"><MatriculasCursos /></TabsContent>
-          <TabsContent value="financeiro"><FinanceiroAlunos /></TabsContent>
-          <TabsContent value="acesso"><AcessoPortal /></TabsContent>
+          <TabsContent value="cadastro">{canAccess("Alunos PF: Cadastro") ? <AlunosCadastro /> : <SecaoBloqueada nome="Cadastro" />}</TabsContent>
+          <TabsContent value="matriculas">{canAccess("Alunos PF: Matrículas") ? <MatriculasCursos /> : <SecaoBloqueada nome="Matrículas" />}</TabsContent>
+          <TabsContent value="financeiro">{canAccess("Alunos PF: Financeiro") ? <FinanceiroAlunos /> : <SecaoBloqueada nome="Financeiro" />}</TabsContent>
+          <TabsContent value="acesso">{canAccess("Alunos PF: Controle de Acesso") ? <AcessoPortal /> : <SecaoBloqueada nome="Controle de Acesso" />}</TabsContent>
           <TabsContent value="pagamentos"><PagamentosAsaas /></TabsContent>
           <TabsContent value="documentos">
             <div className="space-y-4">

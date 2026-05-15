@@ -20,6 +20,16 @@ const PERMISSION_GROUPS = [
     items: ["Entrada de Propostas", "Gestão de BMM", "Instrutores", "Empresas", "Contratadas", "Cursos", "Importar Excel", "Alunos Individuais (PF)"],
   },
   {
+    label: "Alunos Individuais (PF) — Seções",
+    color: "bg-orange-100 text-orange-700",
+    items: [
+      "Alunos PF: Cadastro",
+      "Alunos PF: Matrículas",
+      "Alunos PF: Financeiro",
+      "Alunos PF: Controle de Acesso",
+    ],
+  },
+  {
     label: "Financeiro",
     color: "bg-green-100 text-green-700",
     items: ["Dashboard Financeiro"],
