@@ -130,6 +130,89 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Se todas as partes assinaram, notificar o aluno por e-mail e WhatsApp
+    if (newStatus === 'Assinado_Todas_Partes') {
+      const appUrl = Deno.env.get('BASE44_APP_URL') || 'https://app.base44.com';
+      const signUrl = `${appUrl}/ContractSign?code=${contract.auth_code}`;
+
+      // Enviar e-mail de confirmação ao aluno
+      if (contract.student_email) {
+        try {
+          await base44.asServiceRole.integrations.Core.SendEmail({
+            to: contract.student_email,
+            subject: `✅ Contrato Nº ${contract.contract_number} — Assinado com Sucesso! — CAT Cursos`,
+            body: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: #1a3a5c; color: white; padding: 20px; text-align: center;">
+                  <h2 style="margin:0;">CAT Cursos de Aprimoramento do Trabalhador</h2>
+                  <p style="margin:4px 0; font-size: 12px;">CNPJ: 07.238.084/0001-45</p>
+                </div>
+                <div style="padding: 24px;">
+                  <p>Olá, <strong>${contract.student_name}</strong>!</p>
+                  <p>🎉 Seu contrato foi <strong>assinado com sucesso por todas as partes</strong>. Sua matrícula no curso está confirmada!</p>
+
+                  <div style="background: #e8f5e9; border: 1px solid #2e7d32; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 0 0 8px; font-weight: bold; color: #2e7d32;">✅ Contrato Confirmado</p>
+                    <p style="margin: 4px 0; font-size: 13px;"><strong>Nº do Contrato:</strong> ${contract.contract_number}</p>
+                    <p style="margin: 4px 0; font-size: 13px;"><strong>Curso:</strong> ${contract.course_name}</p>
+                    ${contract.course_value ? `<p style="margin: 4px 0; font-size: 13px;"><strong>Valor:</strong> R$ ${parseFloat(contract.course_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>` : ''}
+                    ${contract.payment_method ? `<p style="margin: 4px 0; font-size: 13px;"><strong>Forma de Pagamento:</strong> ${contract.payment_method}</p>` : ''}
+                    ${contract.course_start_date ? `<p style="margin: 4px 0; font-size: 13px;"><strong>Data de Início:</strong> ${new Date(contract.course_start_date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>` : ''}
+                    <p style="margin: 8px 0 0; font-size: 12px; color: #555;"><strong>Código de Autenticação:</strong> <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px;">${contract.auth_code}</code></p>
+                  </div>
+
+                  <div style="text-align: center; margin: 28px 0;">
+                    <a href="${signUrl}"
+                       style="background: #1a3a5c; color: white; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-size: 15px; font-weight: bold; display: inline-block;">
+                      📄 Visualizar Contrato Assinado
+                    </a>
+                  </div>
+
+                  <p style="font-size: 12px; color: #888; margin-top: 20px;">
+                    Guarde este e-mail como comprovante. O contrato assinado digitalmente tem validade jurídica conforme a Lei nº 14.063/2020.<br/>
+                    Dúvidas? Entre em contato: (91) 98413-2527
+                  </p>
+                </div>
+                <div style="background: #f5f5f5; padding: 12px; text-align: center; font-size: 10px; color: #888;">
+                  CAT Cursos — Av. Beira Rio, 1740 — Vila Nova, Barcarena/PA — CNPJ: 07.238.084/0001-45
+                </div>
+              </div>
+            `,
+          });
+        } catch (emailErr) {
+          console.error('Erro ao enviar e-mail de confirmação:', emailErr.message);
+        }
+      }
+
+      // Enviar WhatsApp de confirmação ao aluno
+      const WHATSAPP_TOKEN = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
+      const PHONE_NUMBER_ID = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID');
+      if (WHATSAPP_TOKEN && PHONE_NUMBER_ID && contract.student_phone) {
+        try {
+          const sanitizePhone = (phone) => {
+            let p = phone.replace(/\D/g, '');
+            if (p.length === 11) p = '55' + p;
+            if (p.length === 10) p = '55' + p;
+            return p;
+          };
+          const phone = sanitizePhone(contract.student_phone);
+          const message = `✅ *Contrato Assinado com Sucesso!*\n\nOlá, *${contract.student_name}*!\n\nSeu contrato da *CAT CURSOS* foi assinado por todas as partes e sua matrícula está confirmada!\n\n📋 *Detalhes:*\n• Contrato: ${contract.contract_number}\n• Curso: ${contract.course_name}${contract.course_start_date ? `\n• Início: ${new Date(contract.course_start_date + 'T00:00:00').toLocaleDateString('pt-BR')}` : ''}\n\n🔗 Acesse seu contrato assinado:\n${signUrl}\n\n*CAT CURSOS* — Capacitação que protege vidas e fortalece operações.`;
+          await fetch(`https://graph.facebook.com/v18.0/${PHONE_NUMBER_ID}/messages`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              to: phone,
+              type: 'text',
+              text: { body: message }
+            })
+          });
+        } catch (waErr) {
+          console.error('Erro ao enviar WhatsApp de confirmação:', waErr.message);
+        }
+      }
+    }
+
     return Response.json({ success: true, status: newStatus, all_signed: newStatus === 'Assinado_Todas_Partes' });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

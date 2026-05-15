@@ -409,6 +409,17 @@ export default function ContractSign() {
                 <Shield className="w-4 h-4 inline mr-2 flex-shrink-0" />
                 <span>Assinatura registrada em {new Date().toLocaleString("pt-BR")} — Dados armazenados com segurança.</span>
               </div>
+
+              {signerParam === "student" && (
+                <div className="mt-4 bg-blue-50 rounded-xl p-4 text-xs sm:text-sm text-blue-700 border border-blue-200 text-left space-y-1">
+                  <p className="font-semibold text-blue-800">📩 Você receberá uma cópia do contrato assinado:</p>
+                  {contract?.student_email && <p>• Por <strong>e-mail</strong>: {contract.student_email}</p>}
+                  {contract?.student_phone && <p>• Por <strong>WhatsApp</strong>: {contract.student_phone}</p>}
+                  {!contract?.student_email && !contract?.student_phone && (
+                    <p>Entre em contato com a CAT Cursos para obter uma cópia: (91) 98413-2527</p>
+                  )}
+                </div>
+              )}
             </div>
             <p className="text-xs text-gray-400 mt-4">Você pode fechar esta janela. O contrato assinado ficará disponível no sistema da CAT Cursos.</p>
           </div>
