@@ -389,13 +389,19 @@ export default function SchedulePage() {
   }, [allItems, search, filterStatus]);
 
   // Estatísticas
-  const stats = useMemo(() => ({
-    total: allItems.length,
-    agendado: allItems.filter((c) => c.status === "Agendado").length,
-    emAndamento: allItems.filter((c) => c.status === "Em Andamento").length,
-    concluido: allItems.filter((c) => c.status === "Concluído").length,
-    totalAlunos: classes.reduce((s, c) => s + (c.students_count || 0), 0),
-  }), [allItems, classes]);
+  const stats = useMemo(() => {
+    const datas = allItems.map(i => i.data_inicio).filter(Boolean).sort();
+    const datasTermino = allItems.map(i => i._raw?.end_date || i._raw?.data_fim).filter(Boolean).sort();
+    return {
+      total: allItems.length,
+      agendado: allItems.filter((c) => c.status === "Agendado").length,
+      emAndamento: allItems.filter((c) => c.status === "Em Andamento").length,
+      concluido: allItems.filter((c) => c.status === "Concluído").length,
+      totalAlunos: classes.reduce((s, c) => s + (c.students_count || 0), 0),
+      dataInicio: datas[0] || null,
+      dataFim: datasTermino[datasTermino.length - 1] || datas[datas.length - 1] || null,
+    };
+  }, [allItems, classes]);
 
   // Mutações ClassSchedule
   const createMutation = useMutation({
@@ -426,18 +432,24 @@ export default function SchedulePage() {
   const handleSendWhatsApp = async (classItem) => {
     setSendingWhatsApp(classItem.id);
     try {
-      const instructors = await base44.entities.Instructor.filter({ name: classItem.instructor_name });
-      if (!instructors.length) { toast.error("❌ Instrutor não encontrado"); return; }
-      const instructor = instructors[0];
-      if (!instructor.phone) { toast.error("❌ WhatsApp não cadastrado", { description: "Adicione o telefone no cadastro do instrutor." }); return; }
-      const datas = classItem.realization_dates?.length > 0 ? classItem.realization_dates.join(", ") : classItem.start_date || "A definir";
-      const msg = `🎓 *Cronograma de Treinamento*\n\nOlá *${instructor.name}*!\n\n📚 *Treinamento:* ${classItem.training_name}\n🏢 *Empresa:* ${classItem.company_name}\n📅 *Data(s):* ${datas}\n${classItem.training_schedule ? `🕐 *Horário:* ${classItem.training_schedule}\n` : ""}${classItem.location ? `📍 *Local:* ${classItem.location}\n` : ""}${classItem.students_count ? `👥 *Alunos:* ${classItem.students_count}\n` : ""}\n✅ *Status:* ${classItem.status}`;
-      const phone = instructor.phone.replace(/\D/g, "");
-      const phoneWithCountry = phone.startsWith("55") ? phone : "55" + phone;
-      window.open(`https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(msg)}`, "_blank");
-      toast.success("✅ WhatsApp aberto com a mensagem pronta!");
+      const response = await base44.functions.invoke("enviarNotificacaoWhatsApp", {
+        recipient_type: "instructor",
+        recipient_id: classItem.instructor_id || null,
+        recipient_name: classItem.instructor_name,
+        message_type: "class_schedule",
+        class_schedule_id: classItem.id,
+      });
+      if (response.data?.success) {
+        toast.success("✅ WhatsApp enviado ao instrutor com sucesso!", {
+          description: `Mensagem entregue para ${response.data.recipient} (${response.data.phone})`,
+        });
+      } else {
+        toast.error("❌ Não foi possível enviar o WhatsApp", {
+          description: response.data?.error || "Verifique se o instrutor tem telefone cadastrado.",
+        });
+      }
     } catch (e) {
-      toast.error("❌ Erro ao preparar mensagem", { description: e.message });
+      toast.error("❌ Erro ao enviar WhatsApp", { description: e.message });
     } finally {
       setSendingWhatsApp(null);
     }
@@ -457,7 +469,25 @@ export default function SchedulePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Cronograma de Turmas</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{stats.total} treinamento(s) no total</p>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {stats.total} treinamento(s) no total
+            {stats.dataInicio && (
+              <span className="ml-2 text-gray-400">
+                · de{" "}
+                <span className="font-medium text-gray-600">
+                  {format(parseISO(stats.dataInicio), "dd/MM/yyyy")}
+                </span>
+                {stats.dataFim && stats.dataFim !== stats.dataInicio && (
+                  <>
+                    {" "}até{" "}
+                    <span className="font-medium text-gray-600">
+                      {format(parseISO(stats.dataFim), "dd/MM/yyyy")}
+                    </span>
+                  </>
+                )}
+              </span>
+            )}
+          </p>
         </div>
         <button
           onClick={() => { setEditingClass(null); setShowForm(true); }}
