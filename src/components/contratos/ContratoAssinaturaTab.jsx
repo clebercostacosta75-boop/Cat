@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   FileText, Send, CheckCircle, Clock, XCircle, Eye, Download, RefreshCw, PenLine,
-  AlertTriangle, User, Shield, Copy, ExternalLink
+  AlertTriangle, User, Shield, Copy, ExternalLink, Mail
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -54,6 +54,7 @@ export default function ContratoAssinaturaTab({ enrollmentId, studentId, student
   const queryClient = useQueryClient();
   const [viewHtml, setViewHtml] = useState(false);
   const [sending, setSending] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [userRole, setUserRole] = useState(null);
 
@@ -105,6 +106,23 @@ export default function ContratoAssinaturaTab({ enrollmentId, studentId, student
       toast.error("Erro ao enviar WhatsApp.");
     }
     setSending(false);
+  };
+
+  const handleEnviarEmail = async () => {
+    if (!contract) return;
+    if (!contract.student_email) {
+      toast.error("O aluno não possui e-mail cadastrado.");
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      await base44.functions.invoke("enviarContratoEmail", { contract_id: contract.id, app_url: window.location.origin });
+      toast.success(`Contrato enviado por e-mail para ${contract.student_email}!`);
+      refetch();
+    } catch (err) {
+      toast.error("Erro ao enviar e-mail: " + (err.message || "tente novamente"));
+    }
+    setSendingEmail(false);
   };
 
   const handleCancelarContrato = async () => {
@@ -246,7 +264,18 @@ export default function ContratoAssinaturaTab({ enrollmentId, studentId, student
               <Eye className="w-4 h-4 text-blue-600" />Visualizar Contrato
             </Button>
 
-            {/* Enviar para aluno */}
+            {/* Enviar por e-mail */}
+            <Button
+              variant="outline"
+              className="justify-start gap-2 text-sm h-10 border-blue-300 text-blue-700 hover:bg-blue-50"
+              onClick={handleEnviarEmail}
+              disabled={sendingEmail || !contract.student_email}
+              title={!contract.student_email ? "Aluno sem e-mail cadastrado" : ""}
+            >
+              <Mail className="w-4 h-4 text-blue-600" />{sendingEmail ? "Enviando..." : "Enviar por E-mail ao Aluno"}
+            </Button>
+
+            {/* Enviar para aluno via WhatsApp */}
             <Button
               variant="outline"
               className="justify-start gap-2 text-sm h-10"

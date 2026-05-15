@@ -20,6 +20,7 @@ import DocumentosAluno from "@/components/alunos/DocumentosAluno";
 import TimelineAluno from "@/components/alunos/TimelineAluno";
 import GargalosDashboard from "@/components/alunos/GargalosDashboard";
 import ContratoAssinaturaTab from "@/components/contratos/ContratoAssinaturaTab";
+import ReciboPagamento from "@/components/financeiro/ReciboPagamento";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -508,6 +509,7 @@ function MatriculaModal({ open, onClose, onSave, isPending }) {
                     <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
                     <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
                     <SelectItem value="Transferência Bancária">Transferência Bancária</SelectItem>
+                    <SelectItem value="Dinheiro em Espécie">💵 Dinheiro em Espécie</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -888,6 +890,7 @@ function MatriculasCursos() {
 
 // ─── Aba: Financeiro ─────────────────────────────────────────────────────────
 function FinanceiroAlunos() {
+  const [selectedEnrollmentForRecibo, setSelectedEnrollmentForRecibo] = useState(null);
   const { data: enrollments = [] } = useQuery({
     queryKey: ["enrollments-pf"],
     queryFn: async () => {
@@ -978,27 +981,43 @@ function FinanceiroAlunos() {
           ) : (
             <div className="divide-y">
               {enrollments.map(e => (
-                <div key={e.id} className="flex items-center justify-between p-4">
-                  <div>
-                    <p className="font-semibold text-gray-900">{e.student_name}</p>
-                    <p className="text-sm text-gray-500">{e.course_name}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-xs text-gray-400">{e.start_date} → {e.end_date}</p>
-                      {e.forma_pagamento && (
-                        <span className="text-xs text-gray-500 flex items-center gap-1">
-                          <CreditCard className="w-3 h-3" /> {e.forma_pagamento}
-                        </span>
-                      )}
+                <div key={e.id}>
+                  <div className="flex items-center justify-between p-4">
+                    <div>
+                      <p className="font-semibold text-gray-900">{e.student_name}</p>
+                      <p className="text-sm text-gray-500">{e.course_name}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-xs text-gray-400">{e.start_date} → {e.end_date}</p>
+                        {e.forma_pagamento && (
+                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                            <CreditCard className="w-3 h-3" /> {e.forma_pagamento}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="font-semibold text-sm text-gray-900">
+                        {e.unit_value ? `R$ ${parseFloat(e.unit_value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : <span className="text-gray-400 font-normal">Sem valor</span>}
+                      </span>
+                      <Badge className={pagamentoColors[e.status_pagamento] || "bg-gray-100 text-gray-800"}>
+                        {e.status_pagamento || "Pendente"}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7 border-green-300 text-green-700 hover:bg-green-50"
+                        onClick={() => setSelectedEnrollmentForRecibo(selectedEnrollmentForRecibo?.id === e.id ? null : e)}
+                      >
+                        <FileText className="w-3 h-3 mr-1" />
+                        {selectedEnrollmentForRecibo?.id === e.id ? "Fechar Recibos" : "Recibos"}
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className="font-semibold text-sm text-gray-900">
-                      {e.unit_value ? `R$ ${parseFloat(e.unit_value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : <span className="text-gray-400 font-normal">Sem valor</span>}
-                    </span>
-                    <Badge className={pagamentoColors[e.status_pagamento] || "bg-gray-100 text-gray-800"}>
-                      {e.status_pagamento || "Pendente"}
-                    </Badge>
-                  </div>
+                  {selectedEnrollmentForRecibo?.id === e.id && (
+                    <div className="px-4 pb-4 bg-green-50 border-t border-green-100">
+                      <ReciboPagamento enrollment={e} />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

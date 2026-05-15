@@ -1,0 +1,95 @@
+{
+  "name": "Receipt",
+  "type": "object",
+  "properties": {
+    "receipt_number": {
+      "type": "string",
+      "description": "N\u00famero \u00fanico do recibo (ex: REC-2026-0001)"
+    },
+    "student_id": {
+      "type": "string",
+      "description": "ID do aluno"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "Nome do aluno"
+    },
+    "student_cpf": {
+      "type": "string",
+      "description": "CPF do aluno"
+    },
+    "enrollment_id": {
+      "type": "string",
+      "description": "ID da matr\u00edcula vinculada"
+    },
+    "course_name": {
+      "type": "string",
+      "description": "Nome do curso"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Valor recebido"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "Dinheiro em Esp\u00e9cie",
+        "Pix",
+        "Cart\u00e3o de Cr\u00e9dito",
+        "Cart\u00e3o de D\u00e9bito",
+        "Transfer\u00eancia Banc\u00e1ria",
+        "Boleto",
+        "Cheque",
+        "Outro"
+      ],
+      "description": "Forma de pagamento"
+    },
+    "payment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do recebimento"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o / observa\u00e7\u00f5es do pagamento"
+    },
+    "received_by": {
+      "type": "string",
+      "description": "E-mail do usu\u00e1rio que registrou o recebimento"
+    },
+    "received_by_name": {
+      "type": "string",
+      "description": "Nome do respons\u00e1vel pelo recebimento"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Emitido",
+        "Cancelado"
+      ],
+      "default": "Emitido",
+      "description": "Status do recibo"
+    },
+    "email_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o recibo foi enviado por e-mail"
+    },
+    "email_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do envio do e-mail"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es internas"
+    }
+  },
+  "required": [
+    "student_name",
+    "student_cpf",
+    "amount",
+    "payment_method",
+    "payment_date"
+  ]
+}
