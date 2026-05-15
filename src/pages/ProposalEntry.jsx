@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Upload, FileText, Eye, CheckCircle, Clock, AlertCircle, Loader2, Plus, Trash2, Building2, Layers } from "lucide-react";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
 const STATUS_CONFIG = {
@@ -199,18 +200,26 @@ export default function ProposalEntry() {
 
       const classIds = [];
       for (const course of editData.courses) {
+        // Monta o array de datas de realização (início + fim se diferente)
+        const realizationDates = [];
+        if (course.start_date) realizationDates.push(course.start_date);
+        if (course.end_date && course.end_date !== course.start_date) realizationDates.push(course.end_date);
+
         const cls = await base44.entities.ClassSchedule.create({
           training_name: course.course_name,
           company_name: editData.company_name,
           company_id: resolvedCompanyId || null,
-          location: course.location,
-          students_count: course.students_count || 0,
+          location: course.location || '',
+          students_count: parseInt(course.students_count) || 0,
           instructor_name: course.instructor_name || '',
-          start_date: course.start_date,
-          end_date: course.end_date,
-          unit_value: course.unit_value || 0,
-          total_value: course.total_value || 0,
-          modality: course.modality || 'Presencial',
+          realization_dates: realizationDates,
+          specific_days: course.start_date && course.end_date
+            ? `De ${format(new Date(course.start_date), 'dd/MM/yyyy')} a ${format(new Date(course.end_date), 'dd/MM/yyyy')}`
+            : '',
+          duration_hours: parseFloat(course.workload_hours) || 0,
+          unit_value: parseFloat(course.unit_value) || 0,
+          total_value: parseFloat(calculateTotalValue(course)) || 0,
+          category: course.modality === 'Online' ? 'Online' : course.modality === 'Híbrido' ? 'Híbrido' : 'Presencial',
           status: 'Agendado',
           notes: `Criado via Proposta: ${selectedProposal.file_name}`,
         });

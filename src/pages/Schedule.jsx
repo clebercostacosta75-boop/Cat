@@ -19,7 +19,9 @@ import { ptBR } from "date-fns/locale";
 
 // ─── Normaliza dados das duas entidades num formato comum ───────────────────
 function normalizeClassSchedule(c) {
-  const date = c.realization_dates?.[0] || c.start_date || null;
+  const datas = c.realization_dates || [];
+  const dataInicio = datas[0] || null;
+  const dataFim = datas.length > 1 ? datas[datas.length - 1] : dataInicio;
   return {
     id: c.id,
     _source: "ClassSchedule",
@@ -28,15 +30,16 @@ function normalizeClassSchedule(c) {
     curso_nome: c.training_name,
     empresa_nome: c.company_name,
     instrutor_nome: c.instructor_name || "—",
-    data_inicio: date,
-    horario: c.training_schedule || "—",
+    data_inicio: dataInicio,
+    data_fim: dataFim,
+    horario: c.training_schedule || (c.specific_days ? c.specific_days : "—"),
     local: c.location || "—",
     carga_horaria: c.duration_hours ? `${c.duration_hours}h` : "—",
     status: c.status || "Agendado",
     alunos: c.students_count || 0,
     modalidade: c.category || c.modality || "—",
     notes: c.notes,
-    datas_realizacao: c.realization_dates || [],
+    datas_realizacao: datas,
   };
 }
 
@@ -193,7 +196,10 @@ function ListView({ items, onEdit, onDelete, onWhatsApp, sendingWhatsApp }) {
               <td className="px-4 py-3 text-gray-700">{item.empresa_nome}</td>
               <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
                 <div>{item.data_inicio ? format(parseISO(item.data_inicio), "dd/MM/yyyy") : "—"}</div>
-                <div className="text-xs text-gray-400">{item.horario}</div>
+                {item.data_fim && item.data_fim !== item.data_inicio && (
+                  <div className="text-xs text-gray-500">até {format(parseISO(item.data_fim), "dd/MM/yyyy")}</div>
+                )}
+                <div className="text-xs text-gray-400">{item.horario !== item._raw?.specific_days ? item.horario : ""}</div>
               </td>
               <td className="px-4 py-3 text-gray-700">{item.instrutor_nome}</td>
               <td className="px-4 py-3 text-gray-700">{item.carga_horaria}</td>
@@ -259,9 +265,12 @@ function CardItem({ item, onEdit, onDelete, onWhatsApp, sendingWhatsApp }) {
               <div className="flex items-start gap-2">
                 <Calendar className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-xs text-gray-400">Data</p>
+                  <p className="text-xs text-gray-400">Período</p>
                   <p className="text-xs font-semibold text-gray-800">
                     {item.data_inicio ? format(parseISO(item.data_inicio), "dd/MM/yyyy") : "—"}
+                    {item.data_fim && item.data_fim !== item.data_inicio && (
+                      <span className="font-normal text-gray-500"> → {format(parseISO(item.data_fim), "dd/MM/yyyy")}</span>
+                    )}
                   </p>
                 </div>
               </div>
@@ -391,7 +400,7 @@ export default function SchedulePage() {
   // Estatísticas
   const stats = useMemo(() => {
     const datas = allItems.map(i => i.data_inicio).filter(Boolean).sort();
-    const datasTermino = allItems.map(i => i._raw?.end_date || i._raw?.data_fim).filter(Boolean).sort();
+    const datasTermino = allItems.map(i => i.data_fim || i.data_inicio).filter(Boolean).sort();
     return {
       total: allItems.length,
       agendado: allItems.filter((c) => c.status === "Agendado").length,
