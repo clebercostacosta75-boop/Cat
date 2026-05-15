@@ -52,20 +52,44 @@ Retorne APENAS o JSON, sem explicações adicionais. Se não encontrar algum dad
 
   let company_id = null;
 
-  // 1. Sincronizar empresa
-  if (result.company_name) {
-    const existingCompanies = await base44.asServiceRole.entities.Company.filter({
-      razao_social: result.company_name
-    });
+  // 1. Sincronizar empresa — busca por CNPJ primeiro, depois por razão social
+  if (result.company_name || result.company_cnpj) {
+    let existingCompanies = [];
+
+    // Busca prioritária pelo CNPJ (mais confiável)
+    if (result.company_cnpj) {
+      existingCompanies = await base44.asServiceRole.entities.Company.filter({
+        cnpj: result.company_cnpj
+      });
+    }
+
+    // Fallback: busca por razão social
+    if (existingCompanies.length === 0 && result.company_name) {
+      existingCompanies = await base44.asServiceRole.entities.Company.filter({
+        razao_social: result.company_name
+      });
+      // Também tenta pelo nome_fantasia
+      if (existingCompanies.length === 0) {
+        existingCompanies = await base44.asServiceRole.entities.Company.filter({
+          nome_fantasia: result.company_name
+        });
+      }
+    }
 
     if (existingCompanies.length > 0) {
+      // Empresa já existe — atualiza CNPJ se estava faltando
       company_id = existingCompanies[0].id;
-    } else if (result.company_cnpj) {
-      // Criar nova empresa se não existir
+      if (result.company_cnpj && !existingCompanies[0].cnpj) {
+        await base44.asServiceRole.entities.Company.update(company_id, {
+          cnpj: result.company_cnpj
+        });
+      }
+    } else {
+      // Cria nova empresa mesmo sem CNPJ
       const newCompany = await base44.asServiceRole.entities.Company.create({
-        razao_social: result.company_name,
-        nome_fantasia: result.company_name,
-        cnpj: result.company_cnpj,
+        razao_social: result.company_name || "Empresa sem nome",
+        nome_fantasia: result.company_name || "Empresa sem nome",
+        cnpj: result.company_cnpj || "",
         status: "Ativo"
       });
       company_id = newCompany.id;

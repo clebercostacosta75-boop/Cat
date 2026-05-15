@@ -163,12 +163,46 @@ export default function ProposalEntry() {
 
     setFinalizing(true);
     try {
+      // Sincronizar dados da empresa revisados com a entidade Company
+      let resolvedCompanyId = editData.company_id;
+      if (editData.company_name) {
+        // Busca empresa existente por CNPJ ou nome
+        let existingCompanies = [];
+        if (editData.company_cnpj) {
+          existingCompanies = await base44.entities.Company.filter({ cnpj: editData.company_cnpj });
+        }
+        if (existingCompanies.length === 0) {
+          existingCompanies = await base44.entities.Company.filter({ razao_social: editData.company_name });
+        }
+        if (existingCompanies.length === 0) {
+          existingCompanies = await base44.entities.Company.filter({ nome_fantasia: editData.company_name });
+        }
+
+        if (existingCompanies.length > 0) {
+          resolvedCompanyId = existingCompanies[0].id;
+          // Atualiza dados se CNPJ estava faltando
+          if (editData.company_cnpj && !existingCompanies[0].cnpj) {
+            await base44.entities.Company.update(resolvedCompanyId, { cnpj: editData.company_cnpj });
+          }
+        } else {
+          // Cria empresa nova com os dados revisados
+          const newCompany = await base44.entities.Company.create({
+            razao_social: editData.company_name,
+            nome_fantasia: editData.company_name,
+            cnpj: editData.company_cnpj || '',
+            status: 'Ativo',
+          });
+          resolvedCompanyId = newCompany.id;
+          toast.success(`Empresa "${editData.company_name}" criada automaticamente!`);
+        }
+      }
+
       const classIds = [];
       for (const course of editData.courses) {
         const cls = await base44.entities.ClassSchedule.create({
           training_name: course.course_name,
           company_name: editData.company_name,
-          company_id: editData.company_id || null,
+          company_id: resolvedCompanyId || null,
           location: course.location,
           students_count: course.students_count || 0,
           instructor_name: course.instructor_name || '',
@@ -185,6 +219,7 @@ export default function ProposalEntry() {
 
       await base44.entities.Proposal.update(selectedProposal.id, {
         ...editData,
+        company_id: resolvedCompanyId || editData.company_id || null,
         status: 'Finalizado',
         class_schedule_ids: classIds,
       });
