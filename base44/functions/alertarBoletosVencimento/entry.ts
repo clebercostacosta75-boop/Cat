@@ -197,10 +197,12 @@ Deno.serve(async (req) => {
       }
 
       await base44.asServiceRole.entities.FinancialNotification.create({
-        aluno_nome: customer.name || "Aluno",
-        aluno_email: customer.email || "",
-        aluno_whatsapp: customer.mobilePhone || customer.phone || "",
+        aluno_nome: alunoApp.full_name || customer.name || "Aluno",
+        aluno_cpf: cpfCliente,
+        aluno_email: alunoApp.email || customer.email || "",
+        aluno_whatsapp: alunoApp.whatsapp || customer.mobilePhone || customer.phone || "",
         curso_nome: charge.description || "Curso",
+        matricula_id: alunoApp.id || "",
         boleto_id: charge.id,
         valor_vencido: charge.value,
         data_vencimento: charge.dueDate,
@@ -298,10 +300,12 @@ Deno.serve(async (req) => {
       }
 
       await base44.asServiceRole.entities.FinancialNotification.create({
-        aluno_nome: customer.name || "Aluno",
-        aluno_email: customer.email || "",
-        aluno_whatsapp: customer.mobilePhone || customer.phone || "",
+        aluno_nome: alunoApp.full_name || customer.name || "Aluno",
+        aluno_cpf: cpfCliente,
+        aluno_email: alunoApp.email || customer.email || "",
+        aluno_whatsapp: alunoApp.whatsapp || customer.mobilePhone || customer.phone || "",
         curso_nome: charge.description || "Curso",
+        matricula_id: alunoApp.id || "",
         boleto_id: charge.id,
         valor_vencido: charge.value,
         data_vencimento: charge.dueDate,
