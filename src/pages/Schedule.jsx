@@ -453,13 +453,38 @@ export default function SchedulePage() {
   const handleSendWhatsApp = async (classItem) => {
     setSendingWhatsApp(classItem.id);
     try {
+      // Se não tem instructor_id, tenta buscar o instrutor pelo nome para obter o telefone
+      let recipientPhone = null;
+      let recipientId = classItem.instructor_id || null;
+
+      if (!recipientId && classItem.instructor_name && classItem.instructor_name !== "—") {
+        const instructors = await base44.entities.Instructor.list();
+        const found = instructors.find(i =>
+          i.name?.toLowerCase().trim() === classItem.instructor_name?.toLowerCase().trim()
+        );
+        if (found) {
+          recipientId = found.id;
+          recipientPhone = found.phone || null;
+        }
+      }
+
+      if (!recipientId && !recipientPhone) {
+        toast.error("❌ Instrutor não encontrado no sistema", {
+          description: `Verifique se "${classItem.instructor_name}" está cadastrado com telefone.`,
+        });
+        setSendingWhatsApp(null);
+        return;
+      }
+
       const response = await base44.functions.invoke("enviarNotificacaoWhatsApp", {
         recipient_type: "instructor",
-        recipient_id: classItem.instructor_id || null,
+        recipient_id: recipientId,
         recipient_name: classItem.instructor_name,
+        recipient_phone: recipientPhone,
         message_type: "class_schedule",
         class_schedule_id: classItem.id,
       });
+
       if (response.data?.success) {
         toast.success("✅ WhatsApp enviado ao instrutor com sucesso!", {
           description: `Mensagem entregue para ${response.data.recipient} (${response.data.phone})`,
