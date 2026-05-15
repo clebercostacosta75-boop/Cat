@@ -116,6 +116,10 @@ export default function PainelPendenciasFinanceiras() {
     updateMutation.mutate({ id: n.id, data: { status: "Cancelada" } });
   };
 
+  const handleReativar = (n) => {
+    updateMutation.mutate({ id: n.id, data: { status: "Gerada" } });
+  };
+
   return (
     <div className="space-y-6">
       {/* Cards de resumo */}
@@ -283,12 +287,9 @@ export default function PainelPendenciasFinanceiras() {
                         </Button>
                       )}
                       {n.invoice_url && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-gray-700">{n.aluno_nome}</span>
-                          <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => window.open(n.invoice_url, "_blank")}>
-                            <Send className="w-3 h-3 mr-1" /> Ver Fatura
-                          </Button>
-                        </div>
+                        <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => window.open(n.invoice_url, "_blank")}>
+                          <Send className="w-3 h-3 mr-1" /> Ver Fatura
+                        </Button>
                       )}
                       {!["Regularizada", "Cancelada"].includes(n.status) && (
                         <Button
@@ -308,6 +309,16 @@ export default function PainelPendenciasFinanceiras() {
                           onClick={() => handleCancelar(n)}
                         >
                           <XCircle className="w-3 h-3 mr-1" /> Cancelar
+                        </Button>
+                      )}
+                      {n.status === "Cancelada" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs h-7 text-blue-700 border-blue-300 hover:bg-blue-50"
+                          onClick={() => handleReativar(n)}
+                        >
+                          <RefreshCw className="w-3 h-3 mr-1" /> Reativar
                         </Button>
                       )}
                     </div>
