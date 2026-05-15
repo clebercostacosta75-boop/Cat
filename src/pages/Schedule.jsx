@@ -32,7 +32,8 @@ function normalizeClassSchedule(c) {
     instrutor_nome: c.instructor_name || "—",
     data_inicio: dataInicio,
     data_fim: dataFim,
-    horario: c.training_schedule || (c.specific_days ? c.specific_days : "—"),
+    horario: c.training_schedule || "—",
+    periodo_descritivo: c.specific_days || null,
     local: c.location || "—",
     carga_horaria: c.duration_hours ? `${c.duration_hours}h` : "—",
     status: c.status || "Agendado",
@@ -266,12 +267,18 @@ function CardItem({ item, onEdit, onDelete, onWhatsApp, sendingWhatsApp }) {
                 <Calendar className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-xs text-gray-400">Período</p>
-                  <p className="text-xs font-semibold text-gray-800">
-                    {item.data_inicio ? format(parseISO(item.data_inicio), "dd/MM/yyyy") : "—"}
-                    {item.data_fim && item.data_fim !== item.data_inicio && (
-                      <span className="font-normal text-gray-500"> → {format(parseISO(item.data_fim), "dd/MM/yyyy")}</span>
-                    )}
-                  </p>
+                  {item.data_inicio ? (
+                    <p className="text-xs font-semibold text-gray-800">
+                      {format(parseISO(item.data_inicio), "dd/MM/yyyy")}
+                      {item.data_fim && item.data_fim !== item.data_inicio && (
+                        <span className="font-normal text-gray-500"> → {format(parseISO(item.data_fim), "dd/MM/yyyy")}</span>
+                      )}
+                    </p>
+                  ) : item.periodo_descritivo ? (
+                    <p className="text-xs font-semibold text-gray-800">{item.periodo_descritivo}</p>
+                  ) : (
+                    <p className="text-xs text-gray-400">—</p>
+                  )}
                 </div>
               </div>
               <div className="flex items-start gap-2">

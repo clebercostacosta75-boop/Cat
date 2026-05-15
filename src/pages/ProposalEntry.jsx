@@ -519,14 +519,18 @@ export default function ProposalEntry() {
 
                       <div className="space-y-1">
                         <Label>Instrutor</Label>
-                        <Select value={course.instructor_name || ''} onValueChange={v => updateCourse(idx, 'instructor_name', v)}>
-                          <SelectTrigger><SelectValue placeholder="Selecionar instrutor..." /></SelectTrigger>
-                          <SelectContent>
-                            {instructors.map(i => (
-                              <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <input
+                          list={`instructors-list-${idx}`}
+                          value={course.instructor_name || ''}
+                          onChange={e => updateCourse(idx, 'instructor_name', e.target.value)}
+                          placeholder="Digite ou selecione o instrutor..."
+                          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        />
+                        <datalist id={`instructors-list-${idx}`}>
+                          {instructors.map(i => (
+                            <option key={i.id} value={i.name} />
+                          ))}
+                        </datalist>
                       </div>
                     </CardContent>
                   </Card>
