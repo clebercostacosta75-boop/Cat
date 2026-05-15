@@ -283,9 +283,12 @@ export default function PainelPendenciasFinanceiras() {
                         </Button>
                       )}
                       {n.invoice_url && (
-                        <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => window.open(n.invoice_url, "_blank")}>
-                          <Send className="w-3 h-3 mr-1" /> Ver Fatura
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-gray-700">{n.aluno_nome}</span>
+                          <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => window.open(n.invoice_url, "_blank")}>
+                            <Send className="w-3 h-3 mr-1" /> Ver Fatura
+                          </Button>
+                        </div>
                       )}
                       {!["Regularizada", "Cancelada"].includes(n.status) && (
                         <Button
