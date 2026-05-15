@@ -63,8 +63,19 @@ export default function PainelPendenciasFinanceiras() {
     },
   });
 
-  const filtrados = notifs.filter(n => {
-    if (n.status === "Ignorada por duplicidade") return false;
+  // Deduplicar: manter apenas o registro mais recente por aluno+tipo+vencimento
+  const seen = new Map();
+  const deduped = notifs
+    .filter(n => n.status !== "Ignorada por duplicidade")
+    .sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""))
+    .filter(n => {
+      const key = `${n.aluno_cpf || n.aluno_nome}_${n.tipo}_${n.data_vencimento || ""}`;
+      if (seen.has(key)) return false;
+      seen.set(key, true);
+      return true;
+    });
+
+  const filtrados = deduped.filter(n => {
     const statusOk = filtroStatus === "todos" || n.status === filtroStatus;
     const tipoOk = filtroTipo === "todos" || n.tipo === filtroTipo;
     const buscaOk = !busca || (n.aluno_nome || "").toLowerCase().includes(busca.toLowerCase()) || (n.aluno_cpf || "").includes(busca);

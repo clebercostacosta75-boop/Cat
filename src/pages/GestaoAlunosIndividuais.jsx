@@ -544,13 +544,22 @@ function AlunosCadastro() {
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
+  const [userEmail, setUserEmail] = useState(null);
   const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
-    base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
+    base44.auth.me().then(u => { setUserRole(u?.role || "user"); setUserEmail(u?.email || null); }).catch(() => {});
   }, []);
 
   const isMaster = userRole === "admin" || userRole === "Administrador Master" || userRole === "gestor_master";
+
+  // Verifica se o usuário tem permissão de exclusão concedida pelo master
+  const { data: userProfiles = [] } = useQuery({
+    queryKey: ["user-profile-delete-perm", userEmail],
+    queryFn: () => userEmail ? base44.entities.UserProfile.filter({ user_email: userEmail }) : [],
+    enabled: !!userEmail && !isMaster,
+  });
+  const canDelete = isMaster || (userProfiles[0]?.permissions || []).includes("delete_students");
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ["students-pf"],
@@ -635,7 +644,7 @@ function AlunosCadastro() {
                       {student.status || "Ativo"}
                     </Badge>
                     <Button size="sm" variant="ghost" onClick={() => { setEditingStudent(student); setModalOpen(true); }}><Edit className="w-4 h-4" /></Button>
-                    {isMaster && (
+                    {canDelete && (
                       <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700"
                         onClick={() => { if (window.confirm(`Excluir permanentemente "${student.full_name}"? Esta ação não pode ser desfeita.`)) deleteMutation.mutate(student.id); }}>
                         <Trash2 className="w-4 h-4" />
@@ -1033,6 +1042,7 @@ function AcessoPortal() {
   const queryClient = useQueryClient();
   const [userRole, setUserRole] = useState(null);
   const [search, setSearch] = useState("");
+  const [showDeletePerms, setShowDeletePerms] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
@@ -1049,7 +1059,26 @@ function AcessoPortal() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["students-pf"] }); toast.success("Acesso atualizado!"); },
   });
 
-  const isMaster = userRole === "admin" || userRole === "Administrador Master";
+  const isMaster = userRole === "admin" || userRole === "Administrador Master" || userRole === "gestor_master";
+
+  const { data: allProfiles = [], isLoading: loadingProfiles } = useQuery({
+    queryKey: ["all-user-profiles-portal"],
+    queryFn: () => base44.entities.UserProfile.list(),
+    enabled: isMaster,
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: ({ id, permissions }) => base44.entities.UserProfile.update(id, { permissions }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["all-user-profiles-portal"] }); toast.success("Permissão atualizada!"); },
+  });
+
+  const toggleDeletePermission = (profile) => {
+    const perms = profile.permissions || [];
+    const newPerms = perms.includes("delete_students")
+      ? perms.filter(p => p !== "delete_students")
+      : [...perms, "delete_students"];
+    updateProfileMutation.mutate({ id: profile.id, permissions: newPerms });
+  };
 
   const norm = (v) => (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").trim();
   const searchNorm = norm(search);
@@ -1068,11 +1097,67 @@ function AcessoPortal() {
         </div>
       )}
       {isMaster && (
-        <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <Shield className="w-5 h-5 text-blue-600 flex-shrink-0" />
-          <p className="text-sm text-blue-800">
-            <strong>Gestor Master:</strong> Você tem permissão para liberar ou bloquear o acesso dos alunos ao portal.
-          </p>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-3">
+              <Shield className="w-5 h-5 text-blue-600 flex-shrink-0" />
+              <p className="text-sm text-blue-800">
+                <strong>Gestor Master:</strong> Você tem permissão para liberar/bloquear acesso e gerenciar permissões de exclusão.
+              </p>
+            </div>
+            <Button size="sm" variant="outline" className="border-red-300 text-red-700 hover:bg-red-50 flex-shrink-0"
+              onClick={() => setShowDeletePerms(!showDeletePerms)}>
+              <Trash2 className="w-3 h-3 mr-1" />{showDeletePerms ? "Fechar" : "Permissões de Exclusão"}
+            </Button>
+          </div>
+
+          {showDeletePerms && (
+            <Card className="border border-red-200">
+              <CardHeader className="pb-2 bg-red-50 border-b border-red-100">
+                <CardTitle className="text-sm font-bold text-red-800 flex items-center gap-2">
+                  <Trash2 className="w-4 h-4" /> Gerenciar Permissão de Exclusão de Alunos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {loadingProfiles ? (
+                  <div className="text-center py-6 text-gray-400 text-sm">Carregando usuários...</div>
+                ) : allProfiles.length === 0 ? (
+                  <div className="text-center py-6 text-gray-400 text-sm">Nenhum perfil encontrado.</div>
+                ) : (
+                  <div className="divide-y">
+                    {allProfiles.map(profile => {
+                      const hasDeletePerm = (profile.permissions || []).includes("delete_students");
+                      const isAdminRole = ["admin", "Administrador Master", "gestor_master"].includes(profile.role);
+                      return (
+                        <div key={profile.id} className="flex items-center justify-between p-3 hover:bg-gray-50">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">{profile.user_name}</p>
+                            <p className="text-xs text-gray-500">{profile.user_email} — {profile.role}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {isAdminRole ? (
+                              <Badge className="bg-blue-100 text-blue-700 text-xs">Acesso total (Master)</Badge>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className={hasDeletePerm ? "border-red-300 text-red-700 hover:bg-red-50" : "border-gray-300 text-gray-600 hover:bg-gray-50"}
+                                onClick={() => toggleDeletePermission(profile)}
+                                disabled={updateProfileMutation.isPending}
+                              >
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                {hasDeletePerm ? "Revogar" : "Conceder"}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 
