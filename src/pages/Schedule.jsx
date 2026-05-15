@@ -19,9 +19,26 @@ import { ptBR } from "date-fns/locale";
 
 // ─── Normaliza dados das duas entidades num formato comum ───────────────────
 function normalizeClassSchedule(c) {
-  const datas = c.realization_dates || [];
+  const datas = (c.realization_dates || []).filter(Boolean);
   const dataInicio = datas[0] || null;
   const dataFim = datas.length > 1 ? datas[datas.length - 1] : dataInicio;
+
+  // Converte YYYY-MM-DD para DD/MM/YYYY sem problema de timezone
+  const toBR = (d) => {
+    if (!d) return null;
+    const parts = d.split('-');
+    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    return d;
+  };
+
+  // Monta período descritivo a partir das datas ou do specific_days
+  let periodoDescritivo = c.specific_days || null;
+  if (!periodoDescritivo && dataInicio) {
+    periodoDescritivo = dataFim && dataFim !== dataInicio
+      ? `${toBR(dataInicio)} → ${toBR(dataFim)}`
+      : toBR(dataInicio);
+  }
+
   return {
     id: c.id,
     _source: "ClassSchedule",
@@ -33,7 +50,7 @@ function normalizeClassSchedule(c) {
     data_inicio: dataInicio,
     data_fim: dataFim,
     horario: c.training_schedule || "—",
-    periodo_descritivo: c.specific_days || null,
+    periodo_descritivo: periodoDescritivo,
     local: c.location || "—",
     carga_horaria: c.duration_hours ? `${c.duration_hours}h` : "—",
     status: c.status || "Agendado",
@@ -196,11 +213,8 @@ function ListView({ items, onEdit, onDelete, onWhatsApp, sendingWhatsApp }) {
               </td>
               <td className="px-4 py-3 text-gray-700">{item.empresa_nome}</td>
               <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
-                <div>{item.data_inicio ? format(parseISO(item.data_inicio), "dd/MM/yyyy") : "—"}</div>
-                {item.data_fim && item.data_fim !== item.data_inicio && (
-                  <div className="text-xs text-gray-500">até {format(parseISO(item.data_fim), "dd/MM/yyyy")}</div>
-                )}
-                <div className="text-xs text-gray-400">{item.horario !== item._raw?.specific_days ? item.horario : ""}</div>
+                <div>{item.periodo_descritivo || "—"}</div>
+                <div className="text-xs text-gray-400">{item.horario !== "—" ? item.horario : ""}</div>
               </td>
               <td className="px-4 py-3 text-gray-700">{item.instrutor_nome}</td>
               <td className="px-4 py-3 text-gray-700">{item.carga_horaria}</td>
@@ -267,18 +281,9 @@ function CardItem({ item, onEdit, onDelete, onWhatsApp, sendingWhatsApp }) {
                 <Calendar className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-xs text-gray-400">Período</p>
-                  {item.data_inicio ? (
-                    <p className="text-xs font-semibold text-gray-800">
-                      {format(parseISO(item.data_inicio), "dd/MM/yyyy")}
-                      {item.data_fim && item.data_fim !== item.data_inicio && (
-                        <span className="font-normal text-gray-500"> → {format(parseISO(item.data_fim), "dd/MM/yyyy")}</span>
-                      )}
-                    </p>
-                  ) : item.periodo_descritivo ? (
-                    <p className="text-xs font-semibold text-gray-800">{item.periodo_descritivo}</p>
-                  ) : (
-                    <p className="text-xs text-gray-400">—</p>
-                  )}
+                  <p className="text-xs font-semibold text-gray-800">
+                    {item.periodo_descritivo || "—"}
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-2">

@@ -200,10 +200,26 @@ export default function ProposalEntry() {
 
       const classIds = [];
       for (const course of editData.courses) {
-        // Monta o array de datas de realização (início + fim se diferente)
-        const realizationDates = [];
-        if (course.start_date) realizationDates.push(course.start_date);
-        if (course.end_date && course.end_date !== course.start_date) realizationDates.push(course.end_date);
+        // Garante datas no formato YYYY-MM-DD sem problemas de timezone
+        const startDate = course.start_date || null;
+        const endDate = course.end_date || startDate;
+
+        // realization_dates sempre tem início; adiciona fim só se diferente
+        const realizationDates = startDate ? [startDate] : [];
+        if (endDate && endDate !== startDate) realizationDates.push(endDate);
+
+        // Formata datas para exibição sem problema de timezone
+        const formatDateBR = (d) => {
+          if (!d) return '';
+          const [y, m, dia] = d.split('-');
+          return `${dia}/${m}/${y}`;
+        };
+
+        const periodoTexto = startDate
+          ? (endDate && endDate !== startDate
+              ? `De ${formatDateBR(startDate)} a ${formatDateBR(endDate)}`
+              : formatDateBR(startDate))
+          : '';
 
         const cls = await base44.entities.ClassSchedule.create({
           training_name: course.course_name,
@@ -213,9 +229,7 @@ export default function ProposalEntry() {
           students_count: parseInt(course.students_count) || 0,
           instructor_name: course.instructor_name || '',
           realization_dates: realizationDates,
-          specific_days: course.start_date && course.end_date
-            ? `De ${format(new Date(course.start_date), 'dd/MM/yyyy')} a ${format(new Date(course.end_date), 'dd/MM/yyyy')}`
-            : '',
+          specific_days: periodoTexto,
           duration_hours: parseFloat(course.workload_hours) || 0,
           unit_value: parseFloat(course.unit_value) || 0,
           total_value: parseFloat(calculateTotalValue(course)) || 0,
