@@ -577,6 +577,11 @@ function AlunosCadastro() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["students-pf"] }); toast.success("Aluno atualizado!"); setModalOpen(false); },
   });
 
+  const reativarMutation = useMutation({
+    mutationFn: (id) => base44.entities.Student.update(id, { status: "Ativo" }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["students-pf"] }); toast.success("Aluno reativado com sucesso!"); },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
       const enrollments = await base44.entities.StudentCourseEnrollment.filter({ student_id: id });
@@ -639,11 +644,22 @@ function AlunosCadastro() {
                     <p className="text-sm text-gray-500">CPF: {student.cpf} {student.email && `• ${student.email}`}</p>
                     {student.cidade && <p className="text-xs text-gray-400">{student.cidade}{student.estado ? `/${student.estado}` : ""}</p>}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Badge className={student.status === "Ativo" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
+                  <div className="flex items-center gap-3 flex-wrap justify-end">
+                    <Badge className={student.status === "Ativo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-700"}>
                       {student.status || "Ativo"}
                     </Badge>
                     <Button size="sm" variant="ghost" onClick={() => { setEditingStudent(student); setModalOpen(true); }}><Edit className="w-4 h-4" /></Button>
+                    {isMaster && student.status === "Inativo" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-green-700 border-green-300 hover:bg-green-50 text-xs h-8"
+                        onClick={() => { if (window.confirm(`Reativar o cadastro de "${student.full_name}"?`)) reativarMutation.mutate(student.id); }}
+                        disabled={reativarMutation.isPending}
+                      >
+                        <Unlock className="w-3 h-3 mr-1" /> Reativar
+                      </Button>
+                    )}
                     {canDelete && (
                       <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700"
                         onClick={() => { if (window.confirm(`Excluir permanentemente "${student.full_name}"? Esta ação não pode ser desfeita.`)) deleteMutation.mutate(student.id); }}>
