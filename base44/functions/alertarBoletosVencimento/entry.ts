@@ -100,6 +100,21 @@ Deno.serve(async (req) => {
     const todayStr = today.toISOString().split("T")[0];
     const in7Str = in7Days.toISOString().split("T")[0];
 
+    // ─── Buscar todos os alunos cadastrados no app e montar índice por CPF ──────
+    const alunosCadastrados = await base44.asServiceRole.entities.Student.list();
+    const cpfsAlunos = new Set(
+      alunosCadastrados
+        .map(a => (a.cpf || "").replace(/\D/g, ""))
+        .filter(Boolean)
+    );
+    // Índice CPF → dados do aluno para enriquecer as notificações
+    const alunoPorCpf = {};
+    for (const a of alunosCadastrados) {
+      const cpfLimpo = (a.cpf || "").replace(/\D/g, "");
+      if (cpfLimpo) alunoPorCpf[cpfLimpo] = a;
+    }
+    console.log(`Alunos cadastrados no app: ${alunosCadastrados.length} | CPFs indexados: ${cpfsAlunos.size}`);
+
     const [pendingRes, overdueRes] = await Promise.all([
       fetch(`${ASAAS_BASE_URL}/payments?status=PENDING&dueDateGe=${todayStr}&dueDateLe=${in7Str}&limit=100`, { headers: asaasHeaders }),
       fetch(`${ASAAS_BASE_URL}/payments?status=OVERDUE&limit=100`, { headers: asaasHeaders }),
@@ -150,6 +165,14 @@ Deno.serve(async (req) => {
         errors.push(`Erro ao buscar cliente ${charge.customer}: ${e.message}`);
         continue;
       }
+
+      // ── FILTRO: ignorar clientes que não são alunos cadastrados no app ──────
+      const cpfCliente = (customer.cpfCnpj || "").replace(/\D/g, "");
+      if (!cpfCliente || !cpfsAlunos.has(cpfCliente)) {
+        console.log(`Ignorando cobrança ${charge.id} — cliente "${customer.name}" (CPF: ${cpfCliente || "não informado"}) não é aluno cadastrado.`);
+        continue;
+      }
+      const alunoApp = alunoPorCpf[cpfCliente] || {};
 
       const label = diffDays === 1 ? "amanhã" : `em ${diffDays} dias`;
       const mensagemWA = montarMensagemWhatsApp({
@@ -245,6 +268,14 @@ Deno.serve(async (req) => {
         errors.push(`Erro ao buscar cliente ${charge.customer}: ${e.message}`);
         continue;
       }
+
+      // ── FILTRO: ignorar clientes que não são alunos cadastrados no app ──────
+      const cpfCliente = (customer.cpfCnpj || "").replace(/\D/g, "");
+      if (!cpfCliente || !cpfsAlunos.has(cpfCliente)) {
+        console.log(`Ignorando cobrança ${charge.id} — cliente "${customer.name}" (CPF: ${cpfCliente || "não informado"}) não é aluno cadastrado.`);
+        continue;
+      }
+      const alunoApp = alunoPorCpf[cpfCliente] || {};
 
       const dueDate = new Date(charge.dueDate + "T00:00:00");
       const daysLate = Math.round((today - dueDate) / (1000 * 60 * 60 * 24));
