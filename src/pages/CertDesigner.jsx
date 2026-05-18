@@ -589,7 +589,7 @@ export default function CertDesigner() {
                 <Eye className="w-4 h-4 text-gray-500" />
                 <span className="text-sm font-medium text-gray-600">Pré-visualização (atualiza em tempo real)</span>
               </div>
-              <CertificatePreview model={form} cert={null} scale={0.42} />
+              <CertificatePreview model={form} cert={{ course_name: form.name || "Nome do Modelo", course_duration: form.duration || "" }} scale={0.42} />
             </div>}
           </div>
         )}
