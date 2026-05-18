@@ -80,8 +80,12 @@ export default function CertDesigner() {
     if (!modelData.name) return;
     try {
       const courseName = modelData.name.trim();
-      const existing = await base44.entities.Course.filter({ name: courseName });
-      if (!existing || existing.length === 0) {
+      // Busca todos e filtra ignorando maiúsculas/minúsculas
+      const allCourses = await base44.entities.Course.list('-created_date', 500);
+      const existing = (allCourses || []).filter(
+        c => c.name?.trim().toLowerCase() === courseName.toLowerCase()
+      );
+      if (existing.length === 0) {
         await base44.entities.Course.create({
           name: courseName,
           description: `Curso cadastrado automaticamente a partir do modelo de certificado "${courseName}".`,
@@ -91,6 +95,7 @@ export default function CertDesigner() {
       }
     } catch (err) {
       console.warn("Não foi possível sincronizar curso com o catálogo:", err);
+      toast.warning(`⚠️ Modelo salvo, mas não foi possível sincronizar com o catálogo de cursos.`);
     }
   };
 
