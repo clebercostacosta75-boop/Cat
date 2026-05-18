@@ -18,7 +18,7 @@ export default function CoursesPage() {
   const { data: courses = [], isLoading, error } = useQuery({
     queryKey: ['courses'],
     queryFn: async () => {
-      const result = await base44.entities.Course.list('-name', 200);
+      const result = await base44.entities.Course.list('-created_date', 200);
       return result || [];
     },
     staleTime: 0,
