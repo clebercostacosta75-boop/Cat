@@ -76,6 +76,11 @@ export default function CertDesigner() {
     queryFn: () => base44.entities.DigitalSignature.filter({ is_active: true }, "-created_date", 100),
   });
 
+  const { data: courses = [] } = useQuery({
+    queryKey: ["coursesForDesigner"],
+    queryFn: () => base44.entities.Course.list("-name", 500),
+  });
+
   const syncCourseWithCatalog = async (modelData) => {
     if (!modelData.name) return;
     try {
@@ -321,7 +326,20 @@ export default function CertDesigner() {
                   {/* GERAL */}
                   <TabsContent value="geral" className="space-y-4">
                     <FieldGroup label="Nome do Modelo *">
-                      <Input value={form.name} onChange={e => set("name", e.target.value)} placeholder="Ex: NR-35 Trabalho em Altura" />
+                      <Select value={form.name} onValueChange={v => set("name", v)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um curso cadastrado..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {courses.map(c => (
+                            <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                          ))}
+                          {courses.length === 0 && (
+                            <SelectItem value={null} disabled>Nenhum curso cadastrado</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-400">Cursos cadastrados em Cursos → aparecerão aqui automaticamente.</p>
                     </FieldGroup>
                     <FieldGroup label="Carga Horária *">
                       <Input value={form.duration} onChange={e => set("duration", e.target.value)} placeholder="Ex: 8h" />
