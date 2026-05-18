@@ -76,12 +76,30 @@ export default function CertDesigner() {
     queryFn: () => base44.entities.DigitalSignature.filter({ is_active: true }, "-created_date", 100),
   });
 
+  const syncCourseWithCatalog = async (modelData) => {
+    if (!modelData.name) return;
+    try {
+      const courseName = modelData.name.trim();
+      const existing = await base44.entities.Course.filter({ name: courseName });
+      if (!existing || existing.length === 0) {
+        await base44.entities.Course.create({
+          name: courseName,
+          description: `Curso cadastrado automaticamente a partir do modelo de certificado "${courseName}".`,
+          validity: modelData.validity_period_months ? `${modelData.validity_period_months} meses` : "",
+        });
+        toast.info(`✅ Curso "${courseName}" adicionado automaticamente ao catálogo.`);
+      }
+    } catch (err) {
+      console.warn("Não foi possível sincronizar curso com o catálogo:", err);
+    }
+  };
+
   const saveMutation = useMutation({
     mutationFn: (data) =>
       selectedId
         ? base44.entities.CertificateModel.update(selectedId, data)
         : base44.entities.CertificateModel.create(data),
-    onSuccess: (result, variables) => {
+    onSuccess: async (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ["certificateModels"] });
       toast.success("Modelo salvo com sucesso!");
       const action = selectedId ? "modelo_editado" : "modelo_criado";
@@ -90,6 +108,7 @@ export default function CertDesigner() {
         duracao: variables.duration,
         modalidade: variables.modality,
       });
+      await syncCourseWithCatalog(variables);
       if (!selectedId) {
         setCreating(false);
         setSelectedId(null);
