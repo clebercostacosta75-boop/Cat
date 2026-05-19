@@ -29,7 +29,7 @@ export default function CertificateActionBar({
 }) {
   const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
   const [showDeadlineDialog, setShowDeadlineDialog] = useState(false);
-  const [phoneInput, setPhoneInput] = useState(cert.student_phone || "");
+  const [phoneInput, setPhoneInput] = useState("");
   const [deadlineInput, setDeadlineInput] = useState(
     cert.download_deadline ? format(parseISO(cert.download_deadline), "yyyy-MM-dd") : ""
   );
