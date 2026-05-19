@@ -278,8 +278,8 @@ export function buildCertificateHTMLFromModel(model, certData) {
       <!-- RODAPÉ DA FRENTE -->
       <div style="margin-top:auto; padding-top:3mm; border-top:1px solid #e5e7eb;">
         <div style="text-align:left;">
-          ${certCode ? `<p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${certCode}</p>` : ""}
-          <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${m.front_footer_line2 || "www.catcursos.com.br"}</p>
+          ${certCode ? `<p style="font-family:${font}; font-size:8pt; font-weight:bold; color:#9ca3af; line-height:1.5;">${certCode}</p>` : ""}
+          <p style="font-family:${font}; font-size:8pt; font-weight:bold; color:#9ca3af; line-height:1.5;">${m.front_footer_line2 || "www.catcursos.com.br"}</p>
         </div>
       </div>
 
@@ -304,8 +304,8 @@ export function buildCertificateHTMLFromModel(model, certData) {
       <div style="margin-bottom:4mm; padding-bottom:3mm; border-bottom:1.5px solid #d1d5db;"></div>
 
       <!-- INFORMAÇÕES DE AUTENTICIDADE -->
-      <p style="font-family:${font}; font-size:9pt; color:#6b7280; margin-bottom:2mm; line-height:1.5; text-align:justify;">${backHeader}</p>
-      ${backModality ? `<p style="font-family:${font}; font-size:9pt; color:#6b7280; margin-bottom:3mm; line-height:1.5;">${backModality}</p>` : ""}
+      <p style="font-family:${font}; font-size:9pt; font-weight:bold; color:#6b7280; margin-bottom:2mm; line-height:1.5; text-align:justify;">${backHeader}</p>
+      ${backModality ? `<p style="font-family:${font}; font-size:9pt; font-weight:bold; color:#6b7280; margin-bottom:3mm; line-height:1.5;">${backModality}</p>` : ""}
 
       <!-- NOME DO TREINAMENTO -->
       <p style="font-family:${font}; font-size:12pt; font-weight:bold; color:${highlightColor}; margin-bottom:4mm; text-transform:uppercase; text-align:center; line-height:1.5;">
@@ -373,9 +373,9 @@ export function buildCertificateHTMLFromModel(model, certData) {
       <!-- RODAPÉ DO VERSO -->
       <div style="margin-top:auto; padding-top:3mm; border-top:1px solid #e5e7eb;">
         <div>
-          <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${certCode ? `Registro: ${certCode}` : ""}</p>
-          <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${backFoot1} · ${backFoot2}</p>
-          <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">Emitido em: ${emissaoDateStr}</p>
+          <p style="font-family:${font}; font-size:8pt; font-weight:bold; color:#9ca3af; line-height:1.5;">${certCode ? `Registro: ${certCode}` : ""}</p>
+          <p style="font-family:${font}; font-size:8pt; font-weight:bold; color:#9ca3af; line-height:1.5;">${backFoot1} · ${backFoot2}</p>
+          <p style="font-family:${font}; font-size:8pt; font-weight:bold; color:#9ca3af; line-height:1.5;">Emitido em: ${emissaoDateStr}</p>
         </div>
       </div>
 
