@@ -6,13 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Award, Search, Send, Eye, XCircle, Copy, CheckCircle, Clock, Settings, PlusCircle, Users, Trash2 } from "lucide-react";
+import { Award, Search, Clock, Settings, PlusCircle, Users, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import CertificateExporter from "@/components/certificates/CertificateExporter";
 import CertificateValidation from "@/components/certificates/CertificateValidation";
 import CertificateQRCode from "@/components/certificates/CertificateQRCode";
@@ -20,12 +16,14 @@ import BulkCertificateExporter from "@/components/certificates/BulkCertificateEx
 import { Checkbox } from "@/components/ui/checkbox";
 import CertificateEmissaoIndividual from "@/components/certificates/CertificateEmissaoIndividual";
 import CertificateEmissaoMassa from "@/components/certificates/CertificateEmissaoMassa";
+import CertificateActionBar from "@/components/certificates/CertificateActionBar";
 
 const statusConfig = {
   pending_signature: { label: "Aguardando Assinatura", color: "bg-yellow-100 text-yellow-800", icon: Clock },
   signed: { label: "Assinado", color: "bg-blue-100 text-blue-800", icon: CheckCircle },
   active: { label: "Ativo", color: "bg-green-100 text-green-800", icon: CheckCircle },
   revoked: { label: "Revogado", color: "bg-red-100 text-red-800", icon: XCircle },
+  expired: { label: "Vencido", color: "bg-gray-100 text-gray-700", icon: XCircle },
 };
 
 export default function Certificates() {
@@ -90,31 +88,6 @@ export default function Certificates() {
       toast.success("Certificado excluído com sucesso!");
     },
   });
-
-  const sendWhatsAppMutation = useMutation({
-    mutationFn: (certificateId) =>
-      base44.functions.invoke("enviarCertificadoWhatsApp", { certificate_id: certificateId }),
-    onSuccess: (res) => {
-      if (res.data?.whatsapp_url) window.open(res.data.whatsapp_url, "_blank");
-      queryClient.invalidateQueries({ queryKey: ["certificates"] });
-      toast.success("Link de assinatura enviado via WhatsApp!");
-    },
-    onError: (err) => {
-      toast.error("Erro ao enviar WhatsApp: " + (err?.message || "Tente novamente"));
-    },
-  });
-
-  const copySignLink = (code) => {
-    const url = `${window.location.origin}/CertificateSign?code=${code}`;
-    navigator.clipboard.writeText(url);
-    toast.success("Link de assinatura copiado!");
-  };
-
-  const copyValidateLink = (code) => {
-    const url = `${window.location.origin}/CertificateValidate?code=${code}`;
-    navigator.clipboard.writeText(url);
-    toast.success("Link de validação copiado!");
-  };
 
   const filtered = certificates.filter((c) => {
     const matchSearch =
@@ -245,7 +218,7 @@ export default function Certificates() {
               />
             </div>
             <div className="flex gap-2 flex-wrap">
-              {["all", "pending_signature", "signed", "active", "revoked"].map((s) => (
+              {["all", "pending_signature", "signed", "active", "revoked", "expired"].map((s) => (
                 <Button
                   key={s}
                   variant={statusFilter === s ? "default" : "outline"}
@@ -327,92 +300,17 @@ export default function Certificates() {
                           </div>{/* fim info text */}
                         </div>{/* fim flex QR + info */}
                         </div>{/* fim flex checkbox + conteúdo */}
-                        <div className="flex gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
-                          {cert.status === "pending_signature" && cert.student_phone && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => sendWhatsAppMutation.mutate(cert.id)}
-                              disabled={sendWhatsAppMutation.isPending}
-                              className="text-green-700 border-green-300 hover:bg-green-50"
-                            >
-                              <Send className="w-3 h-3 mr-1" /> WhatsApp
-                            </Button>
-                          )}
-                          {cert.status === "pending_signature" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => copySignLink(cert.certificate_code)}
-                            >
-                              <Copy className="w-3 h-3 mr-1" /> Link Assinatura
-                            </Button>
-                          )}
-                          {cert.certificate_code && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => copyValidateLink(cert.certificate_code)}
-                            >
-                              <Eye className="w-3 h-3 mr-1" /> Link Validação
-                            </Button>
-                          )}
-                          <CertificateExporter certificate={cert} model={getModelForCert(cert)} />
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-red-600 border-red-200 hover:bg-red-50"
-                            onClick={() => {
-                              if (confirm("Revogar este certificado?")) revokeMutation.mutate(cert.id);
-                            }}
-                            disabled={cert.status === "revoked"}
-                          >
-                            <XCircle className="w-3 h-3 mr-1" /> Revogar
-                          </Button>
-                          <Button
-                           size="sm"
-                           variant="outline"
-                           className="text-green-600 border-green-200 hover:bg-green-50"
-                           onClick={() => {
-                             if (confirm("Desfazer a revogação deste certificado?")) unrevokeMutation.mutate(cert.id);
-                           }}
-                           disabled={cert.status !== "revoked"}
-                          >
-                           <CheckCircle className="w-3 h-3 mr-1" /> Desfazer Revogação
-                          </Button>
-                          {canDelete && (
-                           <AlertDialog>
-                             <AlertDialogTrigger asChild>
-                               <Button
-                                 size="sm"
-                                 variant="outline"
-                                 className="text-red-700 border-red-400 hover:bg-red-50"
-                               >
-                                 <Trash2 className="w-3 h-3 mr-1" /> Excluir
-                               </Button>
-                             </AlertDialogTrigger>
-                             <AlertDialogContent>
-                               <AlertDialogHeader>
-                                 <AlertDialogTitle>Excluir Certificado</AlertDialogTitle>
-                                 <AlertDialogDescription>
-                                   Tem certeza que deseja excluir este certificado?<br />
-                                   <strong>{cert.student_name}</strong> — {cert.course_name}<br /><br />
-                                   Esta ação não pode ser desfeita.
-                                 </AlertDialogDescription>
-                               </AlertDialogHeader>
-                               <AlertDialogFooter>
-                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                 <AlertDialogAction
-                                   className="bg-red-600 hover:bg-red-700 text-white"
-                                   onClick={() => deleteMutation.mutate(cert.id)}
-                                 >
-                                   Confirmar Exclusão
-                                 </AlertDialogAction>
-                               </AlertDialogFooter>
-                             </AlertDialogContent>
-                           </AlertDialog>
-                          )}
-                          </div>
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <CertificateActionBar
+                            cert={cert}
+                            model={getModelForCert(cert)}
+                            canDelete={canDelete}
+                            onRevoke={(id) => revokeMutation.mutate(id)}
+                            onUnrevoke={(id) => unrevokeMutation.mutate(id)}
+                            onDelete={(id) => deleteMutation.mutate(id)}
+                            onRefresh={() => queryClient.invalidateQueries({ queryKey: ["certificates"] })}
+                          />
+                         </div>
                       </div>
                     </CardContent>
                   </Card>
