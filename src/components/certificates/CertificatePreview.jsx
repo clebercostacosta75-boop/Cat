@@ -337,8 +337,8 @@ export function buildCertificateHTMLFromModel(model, certData) {
               ${r.signature_url ? `<img src="${r.signature_url}" style="height:28px; object-fit:contain; display:block; margin:0 auto 3px;" alt="Assinatura ${r.name}"/>` : `<div style="height:28px;"></div>`}
               <div style="border-top:1.5px solid #374151; padding-top:4px;">
                 <p style="font-family:${font}; font-size:9pt; font-weight:bold; color:${darkColor}; line-height:1.5;">${r.name || ""}</p>
-                ${(r.titles || [r.title]).filter(Boolean).map(t => `<p style="font-family:${font}; font-size:8pt; color:#6b7280; line-height:1.5;">${t}</p>`).join("")}
-                ${r.registration ? `<p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">${r.registration}</p>` : ""}
+                ${(r.titles || [r.title]).filter(Boolean).map(t => `<p style="font-family:${font}; font-size:8pt; font-weight:bold; color:#6b7280; line-height:1.5;">${t}</p>`).join("")}
+                ${r.registration ? `<p style="font-family:${font}; font-size:8pt; font-weight:bold; color:#9ca3af; line-height:1.5;">${r.registration}</p>` : ""}
               </div>
             </div>
           `).join("") : `
@@ -346,24 +346,24 @@ export function buildCertificateHTMLFromModel(model, certData) {
               <div style="height:28px;"></div>
               <div style="border-top:1.5px solid #374151; padding-top:4px;">
                 <p style="font-family:${font}; font-size:9pt; font-weight:bold; color:${darkColor}; line-height:1.5;">MILTON PINHEIRO DE ALMEIDA PINTO</p>
-                <p style="font-family:${font}; font-size:8pt; color:#6b7280; line-height:1.5;">Eng. Segurança no Trabalho</p>
-                <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">CREA/PA 21237 D/PA</p>
+                <p style="font-family:${font}; font-size:8pt; font-weight:bold; color:#6b7280; line-height:1.5;">Eng. Segurança no Trabalho</p>
+                <p style="font-family:${font}; font-size:8pt; font-weight:bold; color:#9ca3af; line-height:1.5;">CREA/PA 21237 D/PA</p>
               </div>
             </div>
             <div style="text-align:center; flex:1; min-width:50mm;">
               <div style="height:28px;"></div>
               <div style="border-top:1.5px solid #374151; padding-top:4px;">
                 <p style="font-family:${font}; font-size:9pt; font-weight:bold; color:${darkColor}; line-height:1.5;">CLEBER CORREA DA COSTA</p>
-                <p style="font-family:${font}; font-size:8pt; color:#6b7280; line-height:1.5;">Téc. Segurança do Trabalho/Pedagogo</p>
-                <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">MEC: 428/2013 · BRIGIN 266574</p>
+                <p style="font-family:${font}; font-size:8pt; font-weight:bold; color:#6b7280; line-height:1.5;">Téc. Segurança do Trabalho/Pedagogo</p>
+                <p style="font-family:${font}; font-size:8pt; font-weight:bold; color:#9ca3af; line-height:1.5;">MEC: 428/2013 · BRIGIN 266574</p>
               </div>
             </div>
             <div style="text-align:center; flex:1; min-width:50mm;">
               <div style="height:28px;"></div>
               <div style="border-top:1.5px solid #374151; padding-top:4px;">
                 <p style="font-family:${font}; font-size:9pt; font-weight:bold; color:${darkColor}; line-height:1.5;">VIVIANE SOUZA NUNES</p>
-                <p style="font-family:${font}; font-size:8pt; color:#6b7280; line-height:1.5;">Bacharel Adm. Ciências Contábeis</p>
-                <p style="font-family:${font}; font-size:8pt; color:#9ca3af; line-height:1.5;">Nº 134/19</p>
+                <p style="font-family:${font}; font-size:8pt; font-weight:bold; color:#6b7280; line-height:1.5;">Bacharel Adm. Ciências Contábeis</p>
+                <p style="font-family:${font}; font-size:8pt; font-weight:bold; color:#9ca3af; line-height:1.5;">Nº 134/19</p>
               </div>
             </div>
           `}
