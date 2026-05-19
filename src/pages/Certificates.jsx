@@ -259,48 +259,55 @@ export default function Certificates() {
                     className={`hover:shadow-md transition-shadow cursor-pointer ${isSelected ? "ring-2 ring-emerald-400 bg-emerald-50/30" : ""}`}
                     onClick={() => toggleSelect(cert.id)}
                   >
-                    <CardContent className="py-4">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => toggleSelect(cert.id)}
-                            onClick={(e) => e.stopPropagation()}
-                            className="mt-1 flex-shrink-0"
-                          />
-                        <div className="flex-1 min-w-0 flex gap-3 items-start">
-                          {cert.certificate_code && (
-                            <div className="flex-shrink-0 hidden sm:block">
-                              <CertificateQRCode certificateCode={cert.certificate_code} size={56} showLabel={false} />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
+                    <CardContent className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        {/* Checkbox */}
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelect(cert.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex-shrink-0"
+                        />
+
+                        {/* QR Code */}
+                        {cert.certificate_code && (
+                          <div className="flex-shrink-0 hidden sm:block">
+                            <CertificateQRCode certificateCode={cert.certificate_code} size={48} showLabel={false} />
+                          </div>
+                        )}
+
+                        {/* Info principal */}
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-semibold text-gray-900">{cert.student_name}</span>
-                            <Badge className={sc.color + " border-0"}>
+                            <span className="font-semibold text-gray-900 text-sm">{cert.student_name}</span>
+                            <Badge className={sc.color + " border-0 text-xs"}>
                               <Icon className="w-3 h-3 mr-1" />
                               {sc.label}
                             </Badge>
-                          </div>
-                          <div className="text-sm text-gray-500 mt-1">
-                            {cert.course_name}
-                            {cert.course_duration && ` • ${cert.course_duration}`}
-                            {cert.client_name && ` • ${cert.client_name}`}
-                          </div>
-                          <div className="text-xs text-gray-400 mt-1">
-                            {cert.certificate_code && (
-                              <span className="font-mono">{cert.certificate_code}</span>
+                            {cert.whatsapp_sent && (
+                              <span className="text-xs text-green-600">✓ WA</span>
                             )}
-                            {cert.student_cpf && <span className="ml-2">CPF: {cert.student_cpf}</span>}
-                            {cert.valid_until && <span className="ml-2">Válido até: {cert.valid_until}</span>}
                           </div>
-                          {cert.whatsapp_sent && (
-                            <div className="text-xs text-green-600 mt-1">✓ WhatsApp enviado</div>
-                          )}
-                          </div>{/* fim info text */}
-                        </div>{/* fim flex QR + info */}
-                        </div>{/* fim flex checkbox + conteúdo */}
-                        <div onClick={(e) => e.stopPropagation()}>
+                          <div className="text-sm text-gray-600 mt-0.5 truncate">
+                            {cert.course_name}
+                            {cert.course_duration && <span className="text-gray-400"> · {cert.course_duration}</span>}
+                            {cert.client_name && <span className="text-gray-400"> · {cert.client_name}</span>}
+                          </div>
+                          <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                            {cert.certificate_code && (
+                              <span className="text-xs font-mono text-gray-400">{cert.certificate_code}</span>
+                            )}
+                            {cert.student_cpf && (
+                              <span className="text-xs text-gray-400">CPF: {cert.student_cpf}</span>
+                            )}
+                            {cert.valid_until && (
+                              <span className="text-xs text-gray-400">Válido até: {cert.valid_until}</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Ações */}
+                        <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                           <CertificateActionBar
                             cert={cert}
                             model={getModelForCert(cert)}
@@ -310,7 +317,7 @@ export default function Certificates() {
                             onDelete={(id) => deleteMutation.mutate(id)}
                             onRefresh={() => queryClient.invalidateQueries({ queryKey: ["certificates"] })}
                           />
-                         </div>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
