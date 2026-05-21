@@ -66,8 +66,19 @@ export default function BMMGenerator() {
     },
   });
 
-  // Extrair períodos disponíveis
-  const availablePeriods = [...new Set(classSchedules.map(s => s.month).filter(Boolean))].sort();
+  // Derivar mês de uma ClassSchedule a partir de realization_dates quando month está vazio
+  const deriveMonth = (s) => {
+    if (s.month) return s.month;
+    const date = s.realization_dates?.[0];
+    if (!date) return null;
+    const [year, month] = date.split('-');
+    if (!year || !month) return null;
+    const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    return `${monthNames[parseInt(month) - 1]}/${year}`;
+  };
+
+  // Extrair períodos disponíveis (incluindo turmas sem month preenchido)
+  const availablePeriods = [...new Set(classSchedules.map(deriveMonth).filter(Boolean))].sort();
 
   // Quando selecionar empresa, pré-selecionar template padrão
   useEffect(() => {
@@ -79,10 +90,10 @@ export default function BMMGenerator() {
     }
   }, [selectedCompany, companies]);
 
-  // Filtrar turmas por empresa e período
+  // Filtrar turmas por empresa e período (usando month ou derivando de realization_dates)
   const filteredClasses = classSchedules.filter(classItem => {
     const matchCompany = classItem.company_id === selectedCompany;
-    const matchPeriod = classItem.month === selectedPeriod;
+    const matchPeriod = deriveMonth(classItem) === selectedPeriod;
     return matchCompany && matchPeriod;
   });
 
