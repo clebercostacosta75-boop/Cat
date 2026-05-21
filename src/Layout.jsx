@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 
 import NotificationBell from "./components/notifications/NotificationBell";
-import AIChatWidget from "./components/ai/AIChatWidget";
+
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader,
@@ -152,7 +152,6 @@ export default function Layout({ children }) {
         </main>
       </div>
       <Toaster position="top-right" richColors />
-      <AIChatWidget />
     </SidebarProvider>
   );
 }
