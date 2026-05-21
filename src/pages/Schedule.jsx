@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   CalendarPlus, Calendar, Eye, Clock, User, MessageCircle,
   MapPin, Users, Edit2, Trash2, BookOpen, List, LayoutGrid,
-  Search, ChevronLeft, ChevronRight, Filter
+  Search, ChevronLeft, ChevronRight, Filter, CheckCircle2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -256,7 +256,7 @@ function ListView({ items, onEdit, onDelete, onWhatsApp, sendingWhatsApp }) {
 }
 
 // ─── Componente: Cartão individual ───────────────────────────────────────────
-function CardItem({ item, onEdit, onDelete, onWhatsApp, sendingWhatsApp }) {
+function CardItem({ item, onEdit, onDelete, onWhatsApp, sendingWhatsApp, onConcluir, concluding }) {
   const isClassSchedule = item._source === "ClassSchedule";
   return (
     <Card className="border border-gray-200 bg-white hover:shadow-md transition-shadow">
@@ -345,6 +345,17 @@ function CardItem({ item, onEdit, onDelete, onWhatsApp, sendingWhatsApp }) {
               <Button variant="outline" size="sm" onClick={() => onEdit(item._raw)} className="w-full text-xs">
                 <Edit2 className="w-3.5 h-3.5 mr-1" /> Editar
               </Button>
+              {item.status !== 'Concluído' && (
+                <Button
+                  size="sm"
+                  onClick={() => onConcluir(item._raw)}
+                  disabled={concluding === item.id}
+                  className="w-full text-xs bg-green-700 hover:bg-green-800 text-white"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                  {concluding === item.id ? 'Concluindo...' : 'Concluir'}
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={() => onDelete(item.id)} className="w-full text-xs text-red-600">
                 <Trash2 className="w-3.5 h-3.5 mr-1" /> Excluir
               </Button>
@@ -362,6 +373,7 @@ export default function SchedulePage() {
   const [showForm, setShowForm] = useState(false);
   const [editingClass, setEditingClass] = useState(null);
   const [sendingWhatsApp, setSendingWhatsApp] = useState(null);
+  const [concluding, setConcluding] = useState(null);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [selectedCalendarItem, setSelectedCalendarItem] = useState(null);
@@ -449,6 +461,32 @@ export default function SchedulePage() {
   };
 
   const handleEdit = (rawItem) => { setEditingClass(rawItem); setShowForm(true); };
+
+  const handleConcluir = async (rawItem) => {
+    setConcluding(rawItem.id);
+    try {
+      // Deriva o mês a partir de realization_dates se month estiver vazio
+      let month = rawItem.month;
+      if (!month) {
+        const date = rawItem.realization_dates?.[0];
+        if (date) {
+          const [year, m] = date.split('-');
+          const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+          month = `${monthNames[parseInt(m) - 1]}/${year}`;
+        }
+      }
+      await base44.entities.ClassSchedule.update(rawItem.id, {
+        status: 'Concluído',
+        month: month || rawItem.month,
+      });
+      queryClient.invalidateQueries({ queryKey: ["classSchedules"] });
+      toast.success(`✅ Turma "${rawItem.training_name}" concluída! Já disponível no BMM.`);
+    } catch (e) {
+      toast.error('❌ Erro ao concluir turma', { description: e.message });
+    } finally {
+      setConcluding(null);
+    }
+  };
 
   const handleSendWhatsApp = async (classItem) => {
     setSendingWhatsApp(classItem.id);
@@ -675,6 +713,8 @@ export default function SchedulePage() {
                 onDelete={(id) => deleteMutation.mutate(id)}
                 onWhatsApp={handleSendWhatsApp}
                 sendingWhatsApp={sendingWhatsApp}
+                onConcluir={handleConcluir}
+                concluding={concluding}
               />
             ))}
           </div>
