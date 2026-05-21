@@ -692,6 +692,8 @@ function MatriculasCursos() {
   const [userRole, setUserRole] = useState(null);
   const [contratoGeradoInfo, setContratoGeradoInfo] = useState(null); // { enrollment, contractNumber }
   const [selectedEnrollmentForContract, setSelectedEnrollmentForContract] = useState(null);
+  const [filterCourseId, setFilterCourseId] = useState("all");
+  const [searchAluno, setSearchAluno] = useState("");
 
   useEffect(() => {
     base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
@@ -774,6 +776,21 @@ function MatriculasCursos() {
     "Inadimplente": "bg-red-100 text-red-800",
   };
 
+  const norm = (v) => (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").trim();
+
+  // Filtros
+  const filteredEnrollments = enrollments.filter(e => {
+    const byCourse = filterCourseId === "all" || e.course_id === filterCourseId;
+    const byAluno = !searchAluno || norm(e.student_name).includes(norm(searchAluno)) || norm(e.student_cpf).includes(norm(searchAluno));
+    return byCourse && byAluno;
+  });
+
+  // Contagem por curso
+  const countByCourse = {};
+  enrollments.forEach(e => {
+    if (e.course_id) countByCourse[e.course_id] = (countByCourse[e.course_id] || 0) + 1;
+  });
+
   return (
     <div className="space-y-4">
       {/* Modal de contrato gerado automaticamente */}
@@ -831,24 +848,68 @@ function MatriculasCursos() {
         </Card>
       )}
 
-      <div className="flex justify-end">
-        <Button onClick={() => setModalOpen(true)} className="bg-gray-900 hover:bg-gray-800">
+      {/* Barra de filtros + botão */}
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-2 flex-1">
+          {/* Busca por aluno */}
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Buscar aluno por nome ou CPF..."
+              value={searchAluno}
+              onChange={e => setSearchAluno(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          {/* Filtro por curso */}
+          <div className="min-w-[220px]">
+            <Select value={filterCourseId} onValueChange={setFilterCourseId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por curso" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os cursos ({enrollments.length} alunos)</SelectItem>
+                {courses.map(c => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name} {countByCourse[c.id] ? `(${countByCourse[c.id]})` : "(0)"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <Button onClick={() => setModalOpen(true)} className="bg-gray-900 hover:bg-gray-800 flex-shrink-0">
           <Plus className="w-4 h-4 mr-2" /> Nova Matrícula
         </Button>
       </div>
+
+      {/* Card de resumo do curso filtrado */}
+      {filterCourseId !== "all" && (
+        <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <BookOpen className="w-5 h-5 text-blue-600 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-blue-900">
+              {courses.find(c => c.id === filterCourseId)?.name}
+            </p>
+            <p className="text-xs text-blue-700">
+              {filteredEnrollments.length} aluno(s) inscrito(s) neste curso
+            </p>
+          </div>
+        </div>
+      )}
 
       <Card className="border border-gray-200">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="text-center py-12 text-gray-500">Carregando...</div>
-          ) : enrollments.length === 0 ? (
+          ) : filteredEnrollments.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <BookOpen className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>Nenhuma matrícula individual encontrada</p>
+              <p>{filterCourseId !== "all" || searchAluno ? "Nenhuma matrícula encontrada para o filtro aplicado" : "Nenhuma matrícula individual encontrada"}</p>
             </div>
           ) : (
             <div className="divide-y">
-              {enrollments.map(e => (
+              {filteredEnrollments.map(e => (
                 <div key={e.id} className="flex items-center justify-between p-4 hover:bg-gray-50">
                   <div>
                     <p className="font-semibold text-gray-900">{e.student_name}</p>
