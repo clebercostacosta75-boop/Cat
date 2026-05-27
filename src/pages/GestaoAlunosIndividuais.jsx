@@ -12,12 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Users, UserPlus, BookOpen, DollarSign, Shield, Search, Edit, Trash2,
-  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, QrCode, FileText, Copy, Activity, LayoutDashboard, Bell, PenLine
+  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, FileText, Copy, Activity, LayoutDashboard, Bell, PenLine, TrendingUp, Calendar, XCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import PagamentosAsaas from "@/components/alunos/PagamentosAsaas";
 import PainelPendenciasFinanceiras from "@/components/financeiro/PainelPendenciasFinanceiras";
-import DocumentosAluno from "@/components/alunos/DocumentosAluno";
 import TimelineAluno from "@/components/alunos/TimelineAluno";
 import GargalosDashboard from "@/components/alunos/GargalosDashboard";
 import ContratoAssinaturaTab from "@/components/contratos/ContratoAssinaturaTab";
@@ -975,10 +974,13 @@ function MatriculasCursos() {
   );
 }
 
-// ─── Aba: Financeiro ─────────────────────────────────────────────────────────
+// ─── Aba: Financeiro (Dashboard Completo) ────────────────────────────────────
 function FinanceiroAlunos() {
   const [selectedEnrollmentForRecibo, setSelectedEnrollmentForRecibo] = useState(null);
-  const { data: enrollments = [] } = useQuery({
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [searchAluno, setSearchAluno] = useState("");
+
+  const { data: enrollments = [], isLoading } = useQuery({
     queryKey: ["enrollments-pf"],
     queryFn: async () => {
       const all = await base44.entities.StudentCourseEnrollment.list("-created_date", 500);
@@ -988,14 +990,50 @@ function FinanceiroAlunos() {
     gcTime: 0,
   });
 
+  const { data: receipts = [] } = useQuery({
+    queryKey: ["receipts-pf"],
+    queryFn: () => base44.entities.Receipt.list("-created_date", 500),
+    initialData: [],
+  });
+
+  // Mapear recibos por enrollment_id
+  const receiptsByEnrollment = {};
+  receipts.forEach(r => {
+    if (r.enrollment_id) {
+      if (!receiptsByEnrollment[r.enrollment_id]) receiptsByEnrollment[r.enrollment_id] = [];
+      receiptsByEnrollment[r.enrollment_id].push(r);
+    }
+  });
+
+  const today = new Date();
+  const todayStr = today.toISOString().split("T")[0];
+
+  // KPIs
   const total = enrollments.length;
-  const autorizados = enrollments.filter(e => ["Autorizado", "Certificado Gerado", "Assinado"].includes(e.status)).length;
-  const aguardando = enrollments.filter(e => e.status === "Aguardando Autorização").length;
   const totalReceita = enrollments.reduce((acc, e) => acc + (parseFloat(e.unit_value) || 0), 0);
-  const receitaAutorizada = enrollments
-    .filter(e => ["Autorizado", "Certificado Gerado", "Assinado"].includes(e.status))
+  const totalRecebido = receipts
+    .filter(r => r.status === "Emitido")
+    .reduce((acc, r) => acc + (parseFloat(r.amount) || 0), 0);
+  const totalPendente = enrollments
+    .filter(e => ["Pendente", "Parcialmente Pago"].includes(e.status_pagamento))
     .reduce((acc, e) => acc + (parseFloat(e.unit_value) || 0), 0);
   const inadimplentes = enrollments.filter(e => e.status_pagamento === "Inadimplente").length;
+  const pagos = enrollments.filter(e => e.status_pagamento === "Pago").length;
+  const pendentes = enrollments.filter(e => e.status_pagamento === "Pendente").length;
+
+  // Vencimentos próximos (próximos 7 dias)
+  const proximosVencimentos = enrollments.filter(e => {
+    if (!e.data_vencimento_pagamento) return false;
+    const venc = new Date(e.data_vencimento_pagamento + "T00:00:00");
+    const diff = (venc - today) / (1000 * 60 * 60 * 24);
+    return diff >= 0 && diff <= 7 && e.status_pagamento !== "Pago";
+  });
+
+  // Vencimentos em atraso
+  const vencidos = enrollments.filter(e => {
+    if (!e.data_vencimento_pagamento) return false;
+    return e.data_vencimento_pagamento < todayStr && e.status_pagamento !== "Pago";
+  });
 
   const pagamentoColors = {
     "Pago": "bg-green-100 text-green-800",
@@ -1004,109 +1042,240 @@ function FinanceiroAlunos() {
     "Inadimplente": "bg-red-100 text-red-800",
   };
 
+  const norm = (v) => (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").trim();
+
+  const filteredEnrollments = enrollments.filter(e => {
+    const byStatus = filterStatus === "all" || e.status_pagamento === filterStatus;
+    const bySearch = !searchAluno || norm(e.student_name).includes(norm(searchAluno)) || norm(e.student_cpf || "").includes(norm(searchAluno));
+    return byStatus && bySearch;
+  });
+
+  const formatCurrency = (v) => `R$ ${(parseFloat(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+  const formatDate = (d) => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
+
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="space-y-6">
+
+      {/* KPIs principais */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <Card className="border border-gray-200">
           <CardContent className="p-4">
-            <BookOpen className="w-6 h-6 text-blue-600 mb-2" />
-            <p className="text-2xl font-bold text-black">{total}</p>
-            <p className="text-sm text-gray-600">Total de Matrículas PF</p>
+            <BookOpen className="w-5 h-5 text-blue-600 mb-1" />
+            <p className="text-xl font-bold text-black">{total}</p>
+            <p className="text-xs text-gray-500">Matrículas PF</p>
           </CardContent>
         </Card>
         <Card className="border border-gray-200">
           <CardContent className="p-4">
-            <DollarSign className="w-6 h-6 text-emerald-600 mb-2" />
-            <p className="text-2xl font-bold text-black">
-              R$ {totalReceita.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </p>
-            <p className="text-sm text-gray-600">Receita Total</p>
+            <TrendingUp className="w-5 h-5 text-emerald-600 mb-1" />
+            <p className="text-xl font-bold text-emerald-700">{formatCurrency(totalReceita)}</p>
+            <p className="text-xs text-gray-500">Receita Total</p>
           </CardContent>
         </Card>
         <Card className="border border-gray-200">
           <CardContent className="p-4">
-            <CheckCircle className="w-6 h-6 text-green-600 mb-2" />
-            <p className="text-2xl font-bold text-black">
-              R$ {receitaAutorizada.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </p>
-            <p className="text-sm text-gray-600">Receita Autorizada</p>
+            <CheckCircle className="w-5 h-5 text-green-600 mb-1" />
+            <p className="text-xl font-bold text-green-700">{formatCurrency(totalRecebido)}</p>
+            <p className="text-xs text-gray-500">Total Recebido</p>
           </CardContent>
         </Card>
         <Card className="border border-gray-200">
           <CardContent className="p-4">
-            <Clock className="w-6 h-6 text-yellow-600 mb-2" />
-            <p className="text-2xl font-bold text-black">{aguardando}</p>
-            <p className="text-sm text-gray-600">Aguardando Autorização</p>
+            <Clock className="w-5 h-5 text-yellow-600 mb-1" />
+            <p className="text-xl font-bold text-yellow-700">{formatCurrency(totalPendente)}</p>
+            <p className="text-xs text-gray-500">A Receber</p>
           </CardContent>
         </Card>
-        <Card className="border border-gray-200">
+        <Card className={`border ${vencidos.length > 0 ? "border-red-300 bg-red-50" : "border-gray-200"}`}>
           <CardContent className="p-4">
-            <AlertTriangle className="w-6 h-6 text-red-500 mb-2" />
-            <p className="text-2xl font-bold text-black">{inadimplentes}</p>
-            <p className="text-sm text-gray-600">Inadimplentes</p>
+            <XCircle className={`w-5 h-5 mb-1 ${vencidos.length > 0 ? "text-red-600" : "text-gray-400"}`} />
+            <p className={`text-xl font-bold ${vencidos.length > 0 ? "text-red-700" : "text-black"}`}>{vencidos.length}</p>
+            <p className="text-xs text-gray-500">Vencidos/Atraso</p>
           </CardContent>
         </Card>
-        <Card className="border border-gray-200">
+        <Card className={`border ${proximosVencimentos.length > 0 ? "border-orange-300 bg-orange-50" : "border-gray-200"}`}>
           <CardContent className="p-4">
-            <CheckCircle className="w-6 h-6 text-blue-600 mb-2" />
-            <p className="text-2xl font-bold text-black">{autorizados}</p>
-            <p className="text-sm text-gray-600">Autorizadas / Concluídas</p>
+            <Calendar className={`w-5 h-5 mb-1 ${proximosVencimentos.length > 0 ? "text-orange-600" : "text-gray-400"}`} />
+            <p className={`text-xl font-bold ${proximosVencimentos.length > 0 ? "text-orange-700" : "text-black"}`}>{proximosVencimentos.length}</p>
+            <p className="text-xs text-gray-500">Vencem em 7 dias</p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Alertas de vencimentos */}
+      {vencidos.length > 0 && (
+        <Card className="border border-red-200 bg-red-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-bold text-red-800 flex items-center gap-2">
+              <XCircle className="w-4 h-4" /> Pagamentos Vencidos ({vencidos.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-red-100">
+              {vencidos.map(e => (
+                <div key={e.id} className="flex items-center justify-between px-4 py-3">
+                  <div>
+                    <p className="text-sm font-semibold text-red-900">{e.student_name}</p>
+                    <p className="text-xs text-red-700">{e.course_name}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-red-800">{formatCurrency(e.unit_value)}</p>
+                    <p className="text-xs text-red-600">Venceu em {formatDate(e.data_vencimento_pagamento)}</p>
+                    <Badge className="bg-red-100 text-red-700 text-xs mt-0.5">{e.status_pagamento}</Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {proximosVencimentos.length > 0 && (
+        <Card className="border border-orange-200 bg-orange-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-bold text-orange-800 flex items-center gap-2">
+              <Calendar className="w-4 h-4" /> Próximos Vencimentos — 7 dias ({proximosVencimentos.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-orange-100">
+              {proximosVencimentos.map(e => (
+                <div key={e.id} className="flex items-center justify-between px-4 py-3">
+                  <div>
+                    <p className="text-sm font-semibold text-orange-900">{e.student_name}</p>
+                    <p className="text-xs text-orange-700">{e.course_name}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-orange-800">{formatCurrency(e.unit_value)}</p>
+                    <p className="text-xs text-orange-600">Vence em {formatDate(e.data_vencimento_pagamento)}</p>
+                    <Badge className="bg-orange-100 text-orange-700 text-xs mt-0.5">{e.forma_pagamento || "—"}</Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Filtros */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input placeholder="Buscar aluno..." value={searchAluno} onChange={e => setSearchAluno(e.target.value)} className="pl-10" />
+        </div>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Filtrar por status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os Status</SelectItem>
+            <SelectItem value="Pago">Pago ({pagos})</SelectItem>
+            <SelectItem value="Pendente">Pendente ({pendentes})</SelectItem>
+            <SelectItem value="Inadimplente">Inadimplente ({inadimplentes})</SelectItem>
+            <SelectItem value="Parcialmente Pago">Parcialmente Pago</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Tabela detalhada */}
       <Card className="border border-gray-200">
-        <CardHeader className="bg-gray-50">
-          <CardTitle className="text-base font-semibold">Resumo Financeiro por Aluno</CardTitle>
+        <CardHeader className="bg-gray-50 border-b border-gray-200">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <DollarSign className="w-4 h-4 text-gray-600" />
+            Detalhamento Financeiro por Aluno
+            <span className="ml-auto text-sm font-normal text-gray-500">{filteredEnrollments.length} registro(s)</span>
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          {enrollments.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12 text-gray-500">Carregando...</div>
+          ) : filteredEnrollments.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <DollarSign className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>Nenhuma matrícula individual registrada</p>
+              <p>Nenhum registro encontrado</p>
             </div>
           ) : (
             <div className="divide-y">
-              {enrollments.map(e => (
-                <div key={e.id}>
-                  <div className="flex items-center justify-between p-4">
-                    <div>
-                      <p className="font-semibold text-gray-900">{e.student_name}</p>
-                      <p className="text-sm text-gray-500">{e.course_name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <p className="text-xs text-gray-400">{e.start_date} → {e.end_date}</p>
-                        {e.forma_pagamento && (
-                          <span className="text-xs text-gray-500 flex items-center gap-1">
-                            <CreditCard className="w-3 h-3" /> {e.forma_pagamento}
+              {filteredEnrollments.map(e => {
+                const envReceipts = receiptsByEnrollment[e.id] || [];
+                const totalPago = envReceipts.filter(r => r.status === "Emitido").reduce((acc, r) => acc + (parseFloat(r.amount) || 0), 0);
+                const saldo = (parseFloat(e.unit_value) || 0) - totalPago;
+                const isOpen = selectedEnrollmentForRecibo?.id === e.id;
+                const isVencido = e.data_vencimento_pagamento && e.data_vencimento_pagamento < todayStr && e.status_pagamento !== "Pago";
+                const isProximo = e.data_vencimento_pagamento && !isVencido && (() => {
+                  const venc = new Date(e.data_vencimento_pagamento + "T00:00:00");
+                  const diff = (venc - today) / (1000 * 60 * 60 * 24);
+                  return diff >= 0 && diff <= 7;
+                })();
+
+                return (
+                  <div key={e.id} className={isVencido ? "bg-red-50" : isProximo ? "bg-orange-50" : ""}>
+                    <div className="flex items-start justify-between p-4 gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-gray-900">{e.student_name}</p>
+                          {isVencido && <Badge className="bg-red-100 text-red-700 text-xs">⚠ Vencido</Badge>}
+                          {isProximo && <Badge className="bg-orange-100 text-orange-700 text-xs">⏰ Vence em breve</Badge>}
+                        </div>
+                        <p className="text-sm text-gray-600">{e.course_name}</p>
+                        <div className="flex items-center gap-3 mt-1 flex-wrap">
+                          <span className="text-xs text-gray-400 flex items-center gap-1">
+                            <Calendar className="w-3 h-3" /> Curso: {formatDate(e.start_date)} → {formatDate(e.end_date)}
                           </span>
+                          {e.forma_pagamento && (
+                            <span className="text-xs text-gray-500 flex items-center gap-1">
+                              <CreditCard className="w-3 h-3" /> {e.forma_pagamento}
+                            </span>
+                          )}
+                          {e.data_vencimento_pagamento && (
+                            <span className={`text-xs flex items-center gap-1 font-medium ${isVencido ? "text-red-600" : isProximo ? "text-orange-600" : "text-gray-500"}`}>
+                              <Clock className="w-3 h-3" /> Vence: {formatDate(e.data_vencimento_pagamento)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                        <div className="text-right">
+                          <p className="text-xs text-gray-400">Valor do Curso</p>
+                          <p className="font-bold text-gray-900">{e.unit_value ? formatCurrency(e.unit_value) : <span className="text-gray-400 font-normal text-xs">Não informado</span>}</p>
+                        </div>
+                        {totalPago > 0 && (
+                          <div className="text-right">
+                            <p className="text-xs text-gray-400">Total Recebido</p>
+                            <p className="font-semibold text-green-700">{formatCurrency(totalPago)}</p>
+                          </div>
                         )}
+                        {saldo > 0 && totalPago > 0 && (
+                          <div className="text-right">
+                            <p className="text-xs text-gray-400">Saldo Restante</p>
+                            <p className="font-semibold text-orange-700">{formatCurrency(saldo)}</p>
+                          </div>
+                        )}
+                        <Badge className={pagamentoColors[e.status_pagamento] || "bg-gray-100 text-gray-800"}>
+                          {e.status_pagamento || "Pendente"}
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className={`text-xs h-7 ${isOpen ? "border-gray-400 text-gray-700" : "border-green-300 text-green-700 hover:bg-green-50"}`}
+                          onClick={() => setSelectedEnrollmentForRecibo(isOpen ? null : e)}
+                        >
+                          <FileText className="w-3 h-3 mr-1" />
+                          {isOpen ? "Fechar" : `Recibos ${envReceipts.length > 0 ? `(${envReceipts.length})` : ""}`}
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="font-semibold text-sm text-gray-900">
-                        {e.unit_value ? `R$ ${parseFloat(e.unit_value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : <span className="text-gray-400 font-normal">Sem valor</span>}
-                      </span>
-                      <Badge className={pagamentoColors[e.status_pagamento] || "bg-gray-100 text-gray-800"}>
-                        {e.status_pagamento || "Pendente"}
-                      </Badge>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs h-7 border-green-300 text-green-700 hover:bg-green-50"
-                        onClick={() => setSelectedEnrollmentForRecibo(selectedEnrollmentForRecibo?.id === e.id ? null : e)}
-                      >
-                        <FileText className="w-3 h-3 mr-1" />
-                        {selectedEnrollmentForRecibo?.id === e.id ? "Fechar Recibos" : "Recibos"}
-                      </Button>
-                    </div>
+
+                    {/* Recibos inline */}
+                    {isOpen && (
+                      <div className="px-4 pb-4 bg-white border-t border-green-100">
+                        <ReciboPagamento enrollment={e} />
+                      </div>
+                    )}
                   </div>
-                  {selectedEnrollmentForRecibo?.id === e.id && (
-                    <div className="px-4 pb-4 bg-green-50 border-t border-green-100">
-                      <ReciboPagamento enrollment={e} />
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -1418,7 +1587,7 @@ export default function GestaoAlunosIndividuais() {
         </div>
 
         <Tabs defaultValue="cadastro">
-          <TabsList className="grid w-full grid-cols-10 mb-6 bg-gray-100 p-1 h-auto">
+          <TabsList className="grid w-full grid-cols-9 mb-6 bg-gray-100 p-1 h-auto">
             <TabsTrigger value="cadastro" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Cadastro</span>
@@ -1438,10 +1607,6 @@ export default function GestaoAlunosIndividuais() {
             <TabsTrigger value="pagamentos" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
               <CreditCard className="w-4 h-4" />
               <span className="hidden sm:inline">Pagamentos Asaas</span>
-            </TabsTrigger>
-            <TabsTrigger value="documentos" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
-              <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline">Documentos LGPD</span>
             </TabsTrigger>
             <TabsTrigger value="timeline" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
               <Activity className="w-4 h-4" />
@@ -1466,21 +1631,6 @@ export default function GestaoAlunosIndividuais() {
           <TabsContent value="financeiro">{canAccess("Alunos PF: Financeiro") ? <FinanceiroAlunos /> : <SecaoBloqueada nome="Financeiro" />}</TabsContent>
           <TabsContent value="acesso">{canAccess("Alunos PF: Controle de Acesso") ? <AcessoPortal /> : <SecaoBloqueada nome="Controle de Acesso" />}</TabsContent>
           <TabsContent value="pagamentos"><PagamentosAsaas /></TabsContent>
-          <TabsContent value="documentos">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div>
-                  <p className="text-sm font-semibold text-blue-900">Link de Auto-Cadastro para Alunos</p>
-                  <p className="text-xs text-blue-700 mt-0.5">Compartilhe este link para que o aluno preencha seus próprios dados e envie documentos.</p>
-                </div>
-                <Button size="sm" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100"
-                  onClick={() => { navigator.clipboard.writeText(window.location.origin + "/AutoCadastroAluno"); toast.success("Link copiado!"); }}>
-                  <Copy className="w-4 h-4 mr-1" /> Copiar Link
-                </Button>
-              </div>
-              <DocumentosAluno />
-            </div>
-          </TabsContent>
           <TabsContent value="timeline">
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg">
