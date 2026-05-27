@@ -55,10 +55,6 @@ export default function OpResumoCards({ schedules, companies, instructors, loadi
 
   const meta = totalTreinamentos > 0 ? Math.round((concluidos / totalTreinamentos) * 100) : 0;
 
-  const totalValor = schedules
-    .filter(s => s.status !== "Cancelado")
-    .reduce((s, t) => s + (t.total_value || 0), 0);
-
   return (
     <div className="space-y-3">
       {/* Linha 1 */}
@@ -76,8 +72,7 @@ export default function OpResumoCards({ schedules, companies, instructors, loadi
         <StatCard icon={Calendar} label="Cancelados" value={cancelados} color="red" loading={loading} />
       </div>
       {/* Linha 3 */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard icon={TrendingUp} label="Contratos Ativos (R$)" value={`R$ ${totalValor.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`} color="green" loading={loading} />
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <StatCard icon={Clock} label="Horas no Mês" value={`${horasMes}h`} color="orange" loading={loading} />
         <StatCard icon={BookOpen} label="Turmas no Mês" value={totalTurmasMes} color="indigo" loading={loading} />
         <StatCard icon={TrendingUp} label="Meta Atingida" value={`${meta}%`} color={meta >= 80 ? "green" : meta >= 50 ? "yellow" : "red"} loading={loading} />
