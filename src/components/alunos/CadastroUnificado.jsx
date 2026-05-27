@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { User, MapPin, Shield, BookOpen, CheckCircle, ChevronRight, ChevronLeft, Loader2, Plus } from "lucide-react";
+import { User, MapPin, Shield, BookOpen, CheckCircle, ChevronRight, ChevronLeft, Loader2, Plus, Printer, Send, Mail, FileText, Receipt } from "lucide-react";
 import { toast } from "sonner";
 
 const EMPTY_STUDENT = {
@@ -35,6 +35,9 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
     data_vencimento_pagamento: "", num_parcelas: 1,
   });
   const [saving, setSaving] = useState(false);
+  const [successData, setSuccessData] = useState(null); // { student, enrollment, contractNumber, authCode, receiptHtml, receiptNumber }
+  const [sendingWhatsApp, setSendingWhatsApp] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
   const setEnr = (field, value) => setEnrollment(f => ({ ...f, [field]: value }));
@@ -46,7 +49,12 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
   });
 
   useEffect(() => {
-    if (open) { setStep(1); setForm(EMPTY_STUDENT); setEnrollment({ course_id: "", course_name: "", start_date: "", end_date: "", forma_pagamento: "", unit_value: "", status_pagamento: "Pendente", data_vencimento_pagamento: "", num_parcelas: 1 }); }
+    if (open) {
+      setStep(1);
+      setForm(EMPTY_STUDENT);
+      setEnrollment({ course_id: "", course_name: "", start_date: "", end_date: "", forma_pagamento: "", unit_value: "", status_pagamento: "Pendente", data_vencimento_pagamento: "", num_parcelas: 1 });
+      setSuccessData(null);
+    }
   }, [open]);
 
   const handleNext = () => {
@@ -95,25 +103,24 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
         });
       } catch (e) { console.warn("Contrato:", e); }
 
-      // 4. Se à vista, gerar recibo
+      // 4. Se à vista, gerar recibo via função backend (para obter HTML)
+      let receiptHtml = null;
+      let receiptNumber = null;
       if (isAVista && enrollment.unit_value) {
         try {
-          const year = new Date().getFullYear();
-          const countRes = await base44.entities.Receipt.list("-created_date", 1);
-          const num = `REC-${year}-${String((countRes.length || 0) + 1).padStart(4, "0")}`;
-          await base44.entities.Receipt.create({
-            receipt_number: num,
-            student_id: student.id,
-            student_name: student.full_name,
-            student_cpf: student.cpf,
+          const res = await base44.functions.invoke("gerarRecibo", {
             enrollment_id: newEnrollment.id,
-            course_name: enrollment.course_name,
+            student_id: student.id,
             amount: parseFloat(enrollment.unit_value),
             payment_method: enrollment.forma_pagamento,
             payment_date: enrollment.start_date || new Date().toISOString().split("T")[0],
             description: `Pagamento à vista — ${enrollment.course_name}`,
-            status: "Emitido",
+            send_email: false,
           });
+          if (res.data?.success) {
+            receiptHtml = res.data.html;
+            receiptNumber = res.data.receipt_number;
+          }
         } catch (e) { console.warn("Recibo:", e); }
       }
 
@@ -133,15 +140,179 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
       queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] });
       queryClient.invalidateQueries({ queryKey: ["receipts-pf"] });
 
-      toast.success("Aluno cadastrado e matrícula criada com sucesso!");
+      // Buscar número do contrato gerado
+      let contractNumber = null;
+      let contractId = null;
+      let contractAuthCode = null;
+      let studentPhone = student.whatsapp || "";
+      let studentEmail = student.email || "";
+      try {
+        const contracts = await base44.entities.Contract.filter({ enrollment_id: newEnrollment.id });
+        const c = contracts[0];
+        if (c) { contractNumber = c.contract_number; contractId = c.id; contractAuthCode = c.auth_code; }
+      } catch (e) {}
+
+      toast.success("Aluno cadastrado com sucesso!");
       onSaved && onSaved(student, newEnrollment);
-      onClose();
+
+      // Mostrar modal de conclusão com ações (não fechar ainda)
+      setSuccessData({
+        student, enrollment: newEnrollment,
+        contractNumber, contractId, contractAuthCode,
+        studentPhone, studentEmail,
+        receiptHtml, receiptNumber,
+        courseName: enrollment.course_name,
+        isAVista,
+      });
     } catch (e) {
       toast.error("Erro ao salvar: " + e.message);
     } finally {
       setSaving(false);
     }
   };
+
+  const handleImprimirRecibo = () => {
+    if (!successData?.receiptHtml) return;
+    const w = window.open("", "_blank");
+    w.document.write(successData.receiptHtml);
+    w.document.close();
+    w.print();
+  };
+
+  const handleEnviarContratoWhatsApp = async () => {
+    if (!successData?.contractId) return;
+    setSendingWhatsApp(true);
+    try {
+      await base44.functions.invoke("enviarContratoWhatsApp", { contract_id: successData.contractId, send_to: "student" });
+      toast.success("Contrato enviado pelo WhatsApp!");
+    } catch (e) { toast.error("Erro ao enviar WhatsApp: " + e.message); }
+    setSendingWhatsApp(false);
+  };
+
+  const handleEnviarContratoEmail = async () => {
+    if (!successData?.contractId) return;
+    if (!successData.studentEmail) { toast.error("Aluno sem e-mail cadastrado."); return; }
+    setSendingEmail(true);
+    try {
+      await base44.functions.invoke("enviarContratoEmail", { contract_id: successData.contractId, app_url: window.location.origin });
+      toast.success("Contrato enviado por e-mail!");
+    } catch (e) { toast.error("Erro ao enviar e-mail: " + e.message); }
+    setSendingEmail(false);
+  };
+
+  const handleCopiarLink = () => {
+    if (!successData?.contractAuthCode) return;
+    const url = `${window.location.origin}/ContractSign?code=${successData.contractAuthCode}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link de assinatura copiado!");
+  };
+
+  // Modal de conclusão pós-cadastro
+  if (successData) {
+    return (
+      <Dialog open={open} onOpenChange={() => { setSuccessData(null); onClose(); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-emerald-700">
+              <CheckCircle className="w-5 h-5" /> Cadastro Concluído com Sucesso!
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            {/* Resumo */}
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-sm">
+              <p className="font-semibold text-emerald-800">{successData.student.full_name}</p>
+              <p className="text-emerald-700 text-xs">CPF: {successData.student.cpf} · Curso: {successData.courseName}</p>
+              <p className="text-emerald-600 text-xs mt-1">
+                ✓ Aluno cadastrado &nbsp;·&nbsp; ✓ Matrícula criada &nbsp;·&nbsp;
+                {successData.contractNumber ? `✓ Contrato ${successData.contractNumber} gerado` : "⚠ Contrato não gerado"}&nbsp;·&nbsp;
+                {successData.isAVista && successData.receiptNumber ? `✓ Recibo ${successData.receiptNumber} emitido` : ""}
+              </p>
+            </div>
+
+            {/* RECIBO - Imprimir */}
+            {successData.isAVista && successData.receiptHtml && (
+              <div className="border border-green-200 rounded-lg p-3 bg-green-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Receipt className="w-4 h-4 text-green-600" />
+                    <div>
+                      <p className="text-sm font-semibold text-green-800">Recibo Nº {successData.receiptNumber}</p>
+                      <p className="text-xs text-green-600">Pagamento à vista registrado</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="bg-green-700 hover:bg-green-800"
+                    onClick={handleImprimirRecibo}
+                  >
+                    <Printer className="w-4 h-4 mr-1" /> Imprimir Recibo
+                  </Button>
+                </div>
+              </div>
+            )}
+            {successData.isAVista && !successData.receiptHtml && (
+              <div className="border border-yellow-200 rounded-lg p-3 bg-yellow-50">
+                <p className="text-xs text-yellow-700">⚠ Recibo não gerado automaticamente. Acesse a aba Financeiro para emitir manualmente.</p>
+              </div>
+            )}
+
+            {/* CONTRATO - Enviar para assinatura */}
+            {successData.contractId && (
+              <div className="border border-blue-200 rounded-lg p-3 bg-blue-50 space-y-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <FileText className="w-4 h-4 text-blue-600" />
+                  <p className="text-sm font-semibold text-blue-800">Contrato {successData.contractNumber} — Enviar para Assinatura</p>
+                </div>
+                <p className="text-xs text-blue-600">Escolha como enviar o contrato ao aluno para assinatura digital (LGPD inclusa):</p>
+                <div className="grid grid-cols-1 gap-2">
+                  <Button
+                    variant="outline"
+                    className="justify-start gap-2 border-green-300 text-green-700 hover:bg-green-50"
+                    onClick={handleEnviarContratoWhatsApp}
+                    disabled={sendingWhatsApp || !successData.studentPhone}
+                    title={!successData.studentPhone ? "Aluno sem WhatsApp cadastrado" : ""}
+                  >
+                    <Send className="w-4 h-4" />
+                    {sendingWhatsApp ? "Enviando..." : `Enviar via WhatsApp${!successData.studentPhone ? " (sem número)" : ""}`}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="justify-start gap-2 border-blue-300 text-blue-700 hover:bg-blue-50"
+                    onClick={handleEnviarContratoEmail}
+                    disabled={sendingEmail || !successData.studentEmail}
+                    title={!successData.studentEmail ? "Aluno sem e-mail cadastrado" : ""}
+                  >
+                    <Mail className="w-4 h-4" />
+                    {sendingEmail ? "Enviando..." : `Enviar via E-mail${!successData.studentEmail ? " (sem e-mail)" : ""}`}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="justify-start gap-2 border-gray-300 text-gray-600 hover:bg-gray-50"
+                    onClick={handleCopiarLink}
+                    disabled={!successData.contractAuthCode}
+                  >
+                    <FileText className="w-4 h-4" /> Copiar Link de Assinatura
+                  </Button>
+                </div>
+              </div>
+            )}
+            {!successData.contractId && (
+              <div className="border border-orange-200 rounded-lg p-3 bg-orange-50">
+                <p className="text-xs text-orange-700">⚠ Contrato não foi gerado automaticamente. Acesse a aba Contratos para gerar manualmente.</p>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2 border-t">
+              <Button className="bg-gray-900 hover:bg-gray-800" onClick={() => { setSuccessData(null); onClose(); }}>
+                Concluir
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
