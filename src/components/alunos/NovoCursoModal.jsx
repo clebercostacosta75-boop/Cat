@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { User, BookOpen, CreditCard, CheckCircle, Search, AlertTriangle, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import PixPagamento from "./PixPagamento";
 
 const STEPS = ["Dados do Aluno", "Seleção do Curso", "Pagamento"];
 
@@ -17,6 +18,7 @@ export default function NovoCursoModal({ open, onClose, enrollment, onSuccess })
   const [step, setStep] = useState(0);
   const [courseSearch, setCourseSearch] = useState("");
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [pixConfirmado, setPixConfirmado] = useState(false);
   const [form, setForm] = useState({
     start_date: "",
     end_date: "",
@@ -34,6 +36,7 @@ export default function NovoCursoModal({ open, onClose, enrollment, onSuccess })
       setStep(0);
       setCourseSearch("");
       setSelectedCourse(null);
+      setPixConfirmado(false);
       setForm({
         start_date: "",
         end_date: "",
@@ -307,7 +310,7 @@ export default function NovoCursoModal({ open, onClose, enrollment, onSuccess })
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Valor Total (R$)</Label>
+                <Label>Valor Total (R$) *</Label>
                 <Input
                   type="number"
                   placeholder="0,00"
@@ -338,16 +341,16 @@ export default function NovoCursoModal({ open, onClose, enrollment, onSuccess })
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Forma de Pagamento *</Label>
-                <Select value={form.forma_pagamento} onValueChange={v => setForm(f => ({ ...f, forma_pagamento: v }))}>
+                <Select value={form.forma_pagamento} onValueChange={v => setForm(f => ({ ...f, forma_pagamento: v, status_pagamento: v === "Pix" ? "Pendente" : f.status_pagamento }))}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="Pix">⚡ PIX (QR Code automático)</SelectItem>
                     <SelectItem value="À Vista">À Vista</SelectItem>
                     <SelectItem value="Parcelado 2x">Parcelado 2x</SelectItem>
                     <SelectItem value="Parcelado 3x">Parcelado 3x</SelectItem>
                     <SelectItem value="Parcelado 4x">Parcelado 4x</SelectItem>
                     <SelectItem value="Parcelado 5x">Parcelado 5x</SelectItem>
                     <SelectItem value="Parcelado 6x">Parcelado 6x</SelectItem>
-                    <SelectItem value="Pix">Pix</SelectItem>
                     <SelectItem value="Boleto">Boleto</SelectItem>
                     <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
                     <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
@@ -356,27 +359,47 @@ export default function NovoCursoModal({ open, onClose, enrollment, onSuccess })
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>Status Pagamento</Label>
-                <Select value={form.status_pagamento} onValueChange={v => setForm(f => ({ ...f, status_pagamento: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Pendente">Pendente</SelectItem>
-                    <SelectItem value="Pago">Pago</SelectItem>
-                    <SelectItem value="Parcialmente Pago">Parcialmente Pago</SelectItem>
-                    <SelectItem value="Inadimplente">Inadimplente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="col-span-2">
-                <Label>Data de Vencimento do Pagamento</Label>
-                <Input type="date" value={form.data_vencimento_pagamento} onChange={e => setForm(f => ({ ...f, data_vencimento_pagamento: e.target.value }))} />
-              </div>
+              {form.forma_pagamento !== "Pix" && (
+                <div>
+                  <Label>Status Pagamento</Label>
+                  <Select value={form.status_pagamento} onValueChange={v => setForm(f => ({ ...f, status_pagamento: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pendente">Pendente</SelectItem>
+                      <SelectItem value="Pago">Pago</SelectItem>
+                      <SelectItem value="Parcialmente Pago">Parcialmente Pago</SelectItem>
+                      <SelectItem value="Inadimplente">Inadimplente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {form.forma_pagamento !== "Pix" && (
+                <div className="col-span-2">
+                  <Label>Data de Vencimento do Pagamento</Label>
+                  <Input type="date" value={form.data_vencimento_pagamento} onChange={e => setForm(f => ({ ...f, data_vencimento_pagamento: e.target.value }))} />
+                </div>
+              )}
               <div className="col-span-2">
                 <Label>Observações</Label>
                 <Input placeholder="Opcional..." value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
               </div>
             </div>
+
+            {/* Bloco PIX */}
+            {form.forma_pagamento === "Pix" && (
+              <PixPagamento
+                value={valorFinal}
+                courseName={selectedCourse?.name || ""}
+                studentName={enrollment.student_name}
+                studentPhone={enrollment.student_phone}
+                studentEmail={enrollment.student_email}
+                enrollmentId={null}
+                onPaymentConfirmed={() => {
+                  setPixConfirmado(true);
+                  setForm(f => ({ ...f, status_pagamento: "Pago" }));
+                }}
+              />
+            )}
 
             <div className="flex justify-between gap-2 pt-2 border-t">
               <Button variant="outline" onClick={() => setStep(1)}>Voltar</Button>
@@ -385,7 +408,7 @@ export default function NovoCursoModal({ open, onClose, enrollment, onSuccess })
                 onClick={handleConfirm}
                 disabled={createMutation.isPending || !form.forma_pagamento}
               >
-                {createMutation.isPending ? "Criando..." : "✓ Confirmar Matrícula"}
+                {createMutation.isPending ? "Criando..." : pixConfirmado ? "✓ Concluir Matrícula (PIX Pago)" : "✓ Confirmar Matrícula"}
               </Button>
             </div>
           </div>
