@@ -214,12 +214,27 @@ export default function ContractSign() {
           <div className="space-y-6">
             {/* Status banner */}
             {alreadySigned ? (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
-                <CheckCircle className="w-6 h-6 text-emerald-600 flex-shrink-0" />
-                <div>
-                  <p className="font-semibold text-emerald-800">Você já assinou este contrato</p>
-                  <p className="text-sm text-emerald-600">Obrigado! Sua assinatura foi registrada com sucesso.</p>
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <CheckCircle className="w-6 h-6 text-emerald-600 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-emerald-800">Você já assinou este contrato</p>
+                    <p className="text-sm text-emerald-600">Obrigado! Sua assinatura foi registrada com sucesso.</p>
+                  </div>
                 </div>
+                {contract?.html_content_filled && (
+                  <Button
+                    className="w-full bg-blue-700 hover:bg-blue-800 gap-2"
+                    onClick={() => {
+                      const w = window.open("", "_blank");
+                      w.document.write(contract.html_content_filled);
+                      w.document.close();
+                      setTimeout(() => w.print(), 800);
+                    }}
+                  >
+                    <Download className="w-4 h-4" /> Baixar / Imprimir Contrato Assinado (PDF)
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
@@ -405,14 +420,33 @@ export default function ContractSign() {
                 <p className="text-xs text-blue-600 mb-1 font-medium">Código de Autenticação:</p>
                 <p className="font-mono text-sm font-bold text-blue-700 break-all">{contract?.auth_code}</p>
               </div>
-              <div className="mt-4 sm:mt-6 bg-emerald-50 rounded-xl p-4 text-xs sm:text-sm text-emerald-700 border border-emerald-200">
+
+              {/* BOTÃO BAIXAR PDF */}
+              {contract?.html_content_filled && (
+                <div className="my-4">
+                  <Button
+                    className="w-full sm:w-auto bg-blue-700 hover:bg-blue-800 gap-2"
+                    onClick={() => {
+                      const w = window.open("", "_blank");
+                      w.document.write(contract.html_content_filled);
+                      w.document.close();
+                      setTimeout(() => w.print(), 800);
+                    }}
+                  >
+                    <Download className="w-4 h-4" /> Baixar / Imprimir Contrato Assinado (PDF)
+                  </Button>
+                  <p className="text-xs text-gray-400 mt-1">Na janela de impressão, escolha "Salvar como PDF" para guardar uma cópia digital.</p>
+                </div>
+              )}
+
+              <div className="mt-4 bg-emerald-50 rounded-xl p-4 text-xs sm:text-sm text-emerald-700 border border-emerald-200">
                 <Shield className="w-4 h-4 inline mr-2 flex-shrink-0" />
                 <span>Assinatura registrada em {new Date().toLocaleString("pt-BR")} — Dados armazenados com segurança.</span>
               </div>
 
               {signerParam === "student" && (
                 <div className="mt-4 bg-blue-50 rounded-xl p-4 text-xs sm:text-sm text-blue-700 border border-blue-200 text-left space-y-1">
-                  <p className="font-semibold text-blue-800">📩 Você receberá uma cópia do contrato assinado:</p>
+                  <p className="font-semibold text-blue-800">📩 Você também receberá uma cópia do contrato assinado:</p>
                   {contract?.student_email && <p>• Por <strong>e-mail</strong>: {contract.student_email}</p>}
                   {contract?.student_phone && <p>• Por <strong>WhatsApp</strong>: {contract.student_phone}</p>}
                   {!contract?.student_email && !contract?.student_phone && (

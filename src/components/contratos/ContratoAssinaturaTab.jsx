@@ -361,6 +361,28 @@ export default function ContratoAssinaturaTab({ enrollmentId, studentId, student
               <span>Contrato assinado. O documento está bloqueado para edição. Alterações requerem aditivo contratual.</span>
             </div>
           )}
+
+          {/* Baixar PDF do contrato assinado */}
+          {contract?.student_signed_at && contract?.html_content_filled && (
+            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-xs font-semibold text-blue-800 mb-2 flex items-center gap-1">
+                <Download className="w-3 h-3" /> Contrato Assinado — Disponível para Download
+              </p>
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-2 text-sm h-9 border-blue-400 text-blue-700 hover:bg-blue-100"
+                onClick={() => {
+                  const w = window.open("", "_blank");
+                  w.document.write(contract.html_content_filled);
+                  w.document.close();
+                  setTimeout(() => w.print(), 800);
+                }}
+              >
+                <Download className="w-4 h-4" /> Baixar / Imprimir Contrato Assinado (PDF)
+              </Button>
+              <p className="text-xs text-blue-500 mt-1">Na janela de impressão, escolha "Salvar como PDF".</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
