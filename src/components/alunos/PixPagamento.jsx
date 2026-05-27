@@ -2,16 +2,19 @@ import React, { useState, useEffect, useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Copy, MessageCircle, Mail, Printer, CheckCircle, Clock, Zap } from "lucide-react";
+import { Copy, MessageCircle, Mail, Printer, CheckCircle, Clock, Zap, RotateCcw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 
 // ─── Configuração PIX fixa da instituição ────────────────────────────────────
 const PIX_KEY = "07238084000145";
 const PIX_BENEFICIARY = "V S NUNES CURSOS E TREINAMENTO";
+const PIX_BENEFICIARY_FULL = "V.S.NUNES CURSOS E TREINAMENTO LTDA";
+const PIX_CNPJ_FORMATTED = "07.238.084/0001-45";
 const PIX_CITY = "BARCARENA";
+const EMPRESA_WHATSAPP = "(91) 99999-0000"; // ajuste se necessário
+const EMPRESA_EMAIL = "contato@catcursos.com.br"; // ajuste se necessário
 
 // ─── Gerador de payload BR Code (padrão PIX oficial Banco Central) ────────────
 function buildPixPayload(key, beneficiary, city, amount, txid, description) {
@@ -35,7 +38,6 @@ function buildPixPayload(key, beneficiary, city, amount, txid, description) {
     fmt("62", fmt("05", txid.substring(0, 25))) +
     "6304";
 
-  // CRC16-CCITT
   let crc = 0xffff;
   for (let i = 0; i < payload.length; i++) {
     crc ^= payload.charCodeAt(i) << 8;
@@ -50,6 +52,110 @@ function generateTxid() {
   return "CAT" + Date.now().toString(36).toUpperCase().substring(0, 22).padEnd(22, "0");
 }
 
+function buildEmailHTML({ studentName, courseName, amount, pixCode, cnpjFormatted }) {
+  const valor = amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+  return `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f4f6f8;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f8;padding:20px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);max-width:600px;width:100%;">
+        <!-- Header -->
+        <tr>
+          <td style="background:#1a1a2e;padding:28px 32px;text-align:center;">
+            <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;letter-spacing:1px;">CAT Gestão de Cursos</h1>
+            <p style="color:#a0aec0;margin:6px 0 0;font-size:13px;">Sistema de Gestão de Treinamentos</p>
+          </td>
+        </tr>
+        <!-- Saudação -->
+        <tr>
+          <td style="padding:28px 32px 0;">
+            <p style="font-size:16px;color:#2d3748;margin:0;">Olá, <strong>${studentName}</strong>! 👋</p>
+            <p style="font-size:14px;color:#4a5568;margin:10px 0 0;">Sua matrícula no curso <strong>${courseName}</strong> foi realizada com sucesso! Abaixo estão os dados para realizar o pagamento via PIX.</p>
+          </td>
+        </tr>
+        <!-- Dados PIX -->
+        <tr>
+          <td style="padding:24px 32px;">
+            <div style="background:#f0fff4;border:2px solid #48bb78;border-radius:10px;padding:22px;">
+              <p style="font-size:15px;font-weight:700;color:#276749;margin:0 0 16px;text-align:center;">💳 DADOS PARA PAGAMENTO PIX</p>
+              <table width="100%" cellpadding="6" cellspacing="0">
+                <tr>
+                  <td style="font-size:13px;color:#718096;width:40%;">Beneficiário:</td>
+                  <td style="font-size:13px;font-weight:600;color:#2d3748;">${PIX_BENEFICIARY_FULL}</td>
+                </tr>
+                <tr>
+                  <td style="font-size:13px;color:#718096;">CNPJ:</td>
+                  <td style="font-size:13px;font-weight:600;color:#2d3748;">${cnpjFormatted}</td>
+                </tr>
+                <tr>
+                  <td style="font-size:13px;color:#718096;">Valor:</td>
+                  <td style="font-size:18px;font-weight:700;color:#276749;">R$ ${valor}</td>
+                </tr>
+                <tr>
+                  <td style="font-size:13px;color:#718096;">Descrição:</td>
+                  <td style="font-size:13px;color:#2d3748;">Matrícula - ${courseName}</td>
+                </tr>
+              </table>
+
+              <div style="margin-top:18px;padding-top:16px;border-top:1px dashed #9ae6b4;">
+                <p style="font-size:13px;color:#276749;font-weight:700;margin:0 0 8px;">🔑 Chave PIX (CNPJ):</p>
+                <div style="background:#ffffff;border:1px solid #48bb78;border-radius:6px;padding:10px 14px;font-family:monospace;font-size:16px;font-weight:700;color:#276749;text-align:center;">${PIX_KEY}</div>
+              </div>
+
+              <div style="margin-top:14px;">
+                <p style="font-size:12px;color:#718096;margin:0 0 6px;font-weight:600;">Código Copia e Cola:</p>
+                <div style="background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px;font-family:monospace;font-size:10px;color:#4a5568;word-break:break-all;">${pixCode}</div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <!-- Aviso -->
+        <tr>
+          <td style="padding:0 32px 24px;">
+            <div style="background:#fffbeb;border:1px solid #f6e05e;border-radius:8px;padding:14px 16px;">
+              <p style="margin:0;font-size:13px;color:#744210;">⚠️ <strong>Importante:</strong> Após realizar o pagamento, aguarde a confirmação da nossa equipe. Envie o comprovante assim que possível.</p>
+            </div>
+          </td>
+        </tr>
+        <!-- Contato -->
+        <tr>
+          <td style="padding:0 32px 28px;">
+            <p style="font-size:13px;color:#718096;margin:0;">Dúvidas? Entre em contato:</p>
+            <p style="font-size:13px;color:#4a5568;margin:6px 0 0;">📱 <a href="https://wa.me/55${EMPRESA_WHATSAPP.replace(/\D/g,"")}" style="color:#276749;font-weight:600;">${EMPRESA_WHATSAPP}</a> &nbsp;|&nbsp; 📧 <a href="mailto:${EMPRESA_EMAIL}" style="color:#276749;font-weight:600;">${EMPRESA_EMAIL}</a></p>
+          </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f7fafc;border-top:1px solid #e2e8f0;padding:16px 32px;text-align:center;">
+            <p style="font-size:12px;color:#a0aec0;margin:0;">CAT Gestão de Cursos — eadcatcursos.com.br | www.catcursos.com.br</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+function buildWhatsAppMessage({ studentName, courseName, amount, cnpjFormatted }) {
+  const valor = `R$ ${amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+  return (
+    `Olá ${studentName}! 👋\n\n` +
+    `Sua matrícula no curso *${courseName}* foi realizada!\n\n` +
+    `💳 *DADOS PARA PAGAMENTO PIX*\n\n` +
+    `Beneficiário:\n*${PIX_BENEFICIARY_FULL}*\n\n` +
+    `CNPJ: *${cnpjFormatted}*\n\n` +
+    `Valor: *${valor}*\n\n` +
+    `Descrição:\nMatrícula - ${courseName}\n\n` +
+    `*Chave PIX (CNPJ):*\n${PIX_KEY}\n\n` +
+    `Após realizar o pagamento, envie o comprovante para confirmarmos sua matrícula! ✅\n\n` +
+    `Dúvidas? Estamos à disposição! 😊\n*CAT Gestão de Cursos*`
+  );
+}
+
 export default function PixPagamento({ value, courseName, studentName, studentPhone, studentEmail, enrollmentId, onPaymentConfirmed }) {
   const [pixCode, setPixCode] = useState("");
   const [txid] = useState(generateTxid);
@@ -60,9 +166,13 @@ export default function PixPagamento({ value, courseName, studentName, studentPh
   const [timeLeft, setTimeLeft] = useState(30 * 60);
   const timerRef = useRef(null);
 
+  // Estado dos envios para feedback visual
+  const [emailSentAt, setEmailSentAt] = useState(null);
+  const [whatsappSentAt, setWhatsappSentAt] = useState(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
+
   const amount = parseFloat(value) || 0;
   const description = `${courseName} - ${studentName}`.substring(0, 72);
-  const cnpjFormatted = "07.238.084/0001-45";
 
   // Timer countdown
   useEffect(() => {
@@ -81,12 +191,38 @@ export default function PixPagamento({ value, courseName, studentName, studentPh
     return `${m}:${s}`;
   };
 
-  const handleGerar = () => {
+  const sendEmail = async (code, showToast = true) => {
+    if (!studentEmail) {
+      if (showToast) toast.warning("Aluno sem e-mail cadastrado — envio de e-mail ignorado.");
+      return false;
+    }
+    setSendingEmail(true);
+    try {
+      await base44.integrations.Core.SendEmail({
+        to: studentEmail,
+        subject: `Dados para Pagamento PIX - ${courseName} - CAT Cursos`,
+        body: buildEmailHTML({ studentName, courseName, amount, pixCode: code, cnpjFormatted: PIX_CNPJ_FORMATTED }),
+      });
+      const now = new Date().toLocaleString("pt-BR");
+      setEmailSentAt(now);
+      if (showToast) toast.success("📧 E-mail com dados do PIX enviado automaticamente!");
+      return true;
+    } catch (e) {
+      if (showToast) toast.error("Erro ao enviar e-mail: " + e.message);
+      return false;
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const handleGerar = async () => {
     if (amount <= 0) { toast.error("Informe o valor do curso antes de gerar o PIX."); return; }
     const code = buildPixPayload(PIX_KEY, PIX_BENEFICIARY, PIX_CITY, amount, txid, description);
     setPixCode(code);
     setGerado(true);
     setTimeLeft(30 * 60);
+    // Auto-envio de e-mail ao gerar
+    await sendEmail(code, true);
   };
 
   const handleCopiar = () => {
@@ -100,42 +236,18 @@ export default function PixPagamento({ value, courseName, studentName, studentPh
   const handleWhatsApp = () => {
     const phone = (studentPhone || "").replace(/\D/g, "");
     if (!phone) { toast.error("Aluno sem WhatsApp cadastrado."); return; }
-    const msg = encodeURIComponent(
-      `🏦 *PAGAMENTO VIA PIX*\n\n` +
-      `Beneficiário: *${PIX_BENEFICIARY}*\n` +
-      `CNPJ: ${cnpjFormatted}\n\n` +
-      `Curso: ${courseName}\n` +
-      `Valor: *R$ ${amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}*\n\n` +
-      `🔑 *Chave PIX (CNPJ):*\n${PIX_KEY}\n\n` +
-      `📋 *Código Copia e Cola:*\n${pixCode}\n\n` +
-      `⏱ Válido por 30 minutos.`
-    );
+    const msg = encodeURIComponent(buildWhatsAppMessage({ studentName, courseName, amount, cnpjFormatted: PIX_CNPJ_FORMATTED }));
     window.open(`https://wa.me/55${phone}?text=${msg}`, "_blank");
+    const now = new Date().toLocaleString("pt-BR");
+    setWhatsappSentAt(now);
+    toast.success("📱 WhatsApp aberto com mensagem pronta!");
   };
 
-  const handleEmail = async () => {
-    if (!studentEmail) { toast.error("Aluno sem e-mail cadastrado."); return; }
-    try {
-      await base44.integrations.Core.SendEmail({
-        to: studentEmail,
-        subject: `Pagamento PIX — ${courseName}`,
-        body: `
-          <h2>Pagamento via PIX</h2>
-          <p><strong>Beneficiário:</strong> ${PIX_BENEFICIARY}</p>
-          <p><strong>CNPJ:</strong> ${cnpjFormatted}</p>
-          <p><strong>Curso:</strong> ${courseName}</p>
-          <p><strong>Valor:</strong> R$ ${amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-          <h3>Chave PIX (CNPJ):</h3>
-          <p style="font-size:18px;background:#f5f5f5;padding:10px;border-radius:6px">${PIX_KEY}</p>
-          <h3>Código Copia e Cola:</h3>
-          <p style="font-size:11px;background:#f5f5f5;padding:10px;border-radius:6px;word-break:break-all">${pixCode}</p>
-          <p><em>Válido por 30 minutos.</em></p>
-        `,
-      });
-      toast.success("E-mail enviado com sucesso!");
-    } catch (e) {
-      toast.error("Erro ao enviar e-mail: " + e.message);
-    }
+  const handleEmail = () => sendEmail(pixCode, true);
+
+  const handleReenviar = async () => {
+    await sendEmail(pixCode, true);
+    toast.success("Dados do PIX reenviados!");
   };
 
   const handleImprimir = () => {
@@ -146,8 +258,8 @@ export default function PixPagamento({ value, courseName, studentName, studentPh
       <style>body{font-family:sans-serif;text-align:center;padding:30px}h2{margin-bottom:4px}p{margin:4px 0}svg{margin:16px 0}.code{font-size:10px;word-break:break-all;background:#f5f5f5;padding:10px;border-radius:6px;margin:10px 0}</style>
       </head><body>
         <h2>Pagamento via PIX</h2>
-        <p><strong>${PIX_BENEFICIARY}</strong></p>
-        <p>CNPJ: ${cnpjFormatted}</p>
+        <p><strong>${PIX_BENEFICIARY_FULL}</strong></p>
+        <p>CNPJ: ${PIX_CNPJ_FORMATTED}</p>
         <p>Curso: ${courseName}</p>
         <p>Aluno: ${studentName}</p>
         <p style="font-size:20px;font-weight:bold">R$ ${amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
@@ -164,14 +276,13 @@ export default function PixPagamento({ value, courseName, studentName, studentPh
   const handleConfirmar = async () => {
     setConfirming(true);
     try {
-      // Gerar recibo
       const now = new Date();
       await base44.functions.invoke("gerarRecibo", {
         enrollment_id: enrollmentId,
         payment_method: "Pix",
         amount,
         payment_date: now.toISOString().split("T")[0],
-        description: `PIX - Chave CNPJ: ${cnpjFormatted} | TxID: ${txid}`,
+        description: `PIX - Chave CNPJ: ${PIX_CNPJ_FORMATTED} | TxID: ${txid}`,
       });
       setConfirmado(true);
       clearInterval(timerRef.current);
@@ -200,6 +311,22 @@ export default function PixPagamento({ value, courseName, studentName, studentPh
         </Button>
       )}
 
+      {/* Alerta sem e-mail / sem WhatsApp */}
+      {!gerado && (
+        <div className="space-y-1.5">
+          {!studentEmail && (
+            <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+              <AlertTriangle className="w-3 h-3 flex-shrink-0" /> Aluno sem e-mail cadastrado — o e-mail PIX não será enviado automaticamente.
+            </div>
+          )}
+          {!studentPhone && (
+            <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+              <AlertTriangle className="w-3 h-3 flex-shrink-0" /> Aluno sem WhatsApp cadastrado — o envio por WhatsApp não estará disponível.
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Tela do PIX gerado */}
       {gerado && (
         <div className="border-2 border-green-300 rounded-xl p-4 bg-green-50 space-y-3">
@@ -217,8 +344,8 @@ export default function PixPagamento({ value, courseName, studentName, studentPh
 
           {/* Dados do beneficiário */}
           <div className="bg-white rounded-lg p-3 space-y-1 text-sm border border-green-200">
-            <div className="flex justify-between"><span className="text-gray-500 text-xs">Beneficiário:</span><span className="font-semibold text-gray-900 text-xs text-right">{PIX_BENEFICIARY}</span></div>
-            <div className="flex justify-between"><span className="text-gray-500 text-xs">CNPJ:</span><span className="font-mono text-xs font-semibold text-gray-800">{cnpjFormatted}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500 text-xs">Beneficiário:</span><span className="font-semibold text-gray-900 text-xs text-right">{PIX_BENEFICIARY_FULL}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500 text-xs">CNPJ:</span><span className="font-mono text-xs font-semibold text-gray-800">{PIX_CNPJ_FORMATTED}</span></div>
             <div className="flex justify-between"><span className="text-gray-500 text-xs">Valor:</span><span className="font-bold text-green-700 text-base">R$ {amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span></div>
             <div className="flex justify-between items-start gap-2"><span className="text-gray-500 text-xs flex-shrink-0">Descrição:</span><span className="text-xs text-gray-700 text-right">{description}</span></div>
           </div>
@@ -254,17 +381,60 @@ export default function PixPagamento({ value, courseName, studentName, studentPh
             </div>
           )}
 
+          {/* Histórico de envios */}
+          {(emailSentAt || whatsappSentAt) && (
+            <div className="bg-white rounded-lg p-3 border border-green-200 space-y-1.5">
+              <p className="text-xs font-semibold text-gray-600">📋 Histórico de Envios:</p>
+              {emailSentAt && (
+                <div className="flex items-center gap-2 text-xs text-green-700">
+                  <CheckCircle className="w-3 h-3 flex-shrink-0" />
+                  <span>📧 E-mail enviado em <strong>{emailSentAt}</strong></span>
+                </div>
+              )}
+              {whatsappSentAt && (
+                <div className="flex items-center gap-2 text-xs text-green-700">
+                  <CheckCircle className="w-3 h-3 flex-shrink-0" />
+                  <span>📱 WhatsApp aberto em <strong>{whatsappSentAt}</strong></span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Botões de ação */}
           {!confirmado && !isExpired && (
             <div className="grid grid-cols-2 gap-2">
-              <Button size="sm" variant="outline" className="text-xs border-green-300 text-green-700 hover:bg-green-50" onClick={handleWhatsApp}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs border-green-300 text-green-700 hover:bg-green-50"
+                onClick={handleWhatsApp}
+                disabled={!studentPhone}
+                title={!studentPhone ? "Aluno sem WhatsApp cadastrado" : ""}
+              >
                 <MessageCircle className="w-3 h-3 mr-1" /> 📱 WhatsApp
               </Button>
-              <Button size="sm" variant="outline" className="text-xs border-blue-300 text-blue-700 hover:bg-blue-50" onClick={handleEmail}>
-                <Mail className="w-3 h-3 mr-1" /> 📧 E-mail
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs border-blue-300 text-blue-700 hover:bg-blue-50"
+                onClick={handleEmail}
+                disabled={sendingEmail || !studentEmail}
+                title={!studentEmail ? "Aluno sem e-mail cadastrado" : ""}
+              >
+                <Mail className="w-3 h-3 mr-1" />
+                {sendingEmail ? "Enviando..." : "📧 E-mail"}
               </Button>
-              <Button size="sm" variant="outline" className="text-xs col-span-2" onClick={handleImprimir}>
-                <Printer className="w-3 h-3 mr-1" /> 🖨️ Imprimir QR Code
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs border-orange-300 text-orange-700 hover:bg-orange-50"
+                onClick={handleReenviar}
+                disabled={sendingEmail || !studentEmail}
+              >
+                <RotateCcw className="w-3 h-3 mr-1" /> 🔄 Reenviar dados
+              </Button>
+              <Button size="sm" variant="outline" className="text-xs" onClick={handleImprimir}>
+                <Printer className="w-3 h-3 mr-1" /> 🖨️ Imprimir
               </Button>
             </div>
           )}
@@ -285,7 +455,7 @@ export default function PixPagamento({ value, courseName, studentName, studentPh
           {isExpired && (
             <Button
               className="w-full bg-gray-700 hover:bg-gray-800"
-              onClick={() => { setGerado(false); setPixCode(""); }}
+              onClick={() => { setGerado(false); setPixCode(""); setEmailSentAt(null); setWhatsappSentAt(null); }}
             >
               🔄 Gerar Novo PIX
             </Button>
