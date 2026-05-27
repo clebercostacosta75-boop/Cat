@@ -1,23 +1,20 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Award, PenLine, Shield, Palette, Users, BookOpen, ClipboardList } from "lucide-react";
+import { Award, PenLine, Shield, Palette, Users, ClipboardList, LayoutDashboard } from "lucide-react";
 
-// Importa os conteúdos de cada sub-aba
+import CertificacoesDashboard from "@/components/certificates/CertificacoesDashboard";
 import Certificates from "./Certificates";
+import CertificateControlPanel from "@/components/certificates/CertificateControlPanel";
 import DigitalSignatures from "./DigitalSignatures";
 import CertificateAuditPanel from "./CertificateAuditPanel";
 import CertDesigner from "./CertDesigner";
-import StudentList from "@/components/students/StudentList";
-import EnrollmentList from "@/components/enrollment/EnrollmentList";
-import CertificateControlPanel from "@/components/certificates/CertificateControlPanel";
-
+import StudentListCertificacoes from "@/components/certificates/StudentListCertificacoes";
 
 export default function Certificacoes() {
-  const [activeTab, setActiveTab] = useState("certificados");
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   return (
     <div className="p-6 space-y-4">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <Award className="w-6 h-6 text-emerald-600" />
@@ -30,6 +27,9 @@ export default function Certificacoes() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="flex flex-wrap gap-1 h-auto bg-gray-100 p-1 rounded-lg">
+          <TabsTrigger value="dashboard" className="flex items-center gap-1.5 text-xs">
+            <LayoutDashboard className="w-3.5 h-3.5" /> Dashboard
+          </TabsTrigger>
           <TabsTrigger value="certificados" className="flex items-center gap-1.5 text-xs">
             <Award className="w-3.5 h-3.5" /> Certificados
           </TabsTrigger>
@@ -38,9 +38,6 @@ export default function Certificacoes() {
           </TabsTrigger>
           <TabsTrigger value="controle" className="flex items-center gap-1.5 text-xs">
             <ClipboardList className="w-3.5 h-3.5" /> Controle de Certificados
-          </TabsTrigger>
-          <TabsTrigger value="realizacoes" className="flex items-center gap-1.5 text-xs">
-            <BookOpen className="w-3.5 h-3.5" /> Realização de Cursos
           </TabsTrigger>
           <TabsTrigger value="assinaturas" className="flex items-center gap-1.5 text-xs">
             <PenLine className="w-3.5 h-3.5" /> Assinaturas Digitais
@@ -53,33 +50,13 @@ export default function Certificacoes() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="certificados" className="mt-4">
-          <Certificates />
-        </TabsContent>
-
-        <TabsContent value="alunos" className="mt-4">
-          <StudentList />
-        </TabsContent>
-
-        <TabsContent value="controle" className="mt-4">
-          <CertificateControlPanel />
-        </TabsContent>
-
-        <TabsContent value="realizacoes" className="mt-4">
-          <EnrollmentList />
-        </TabsContent>
-
-        <TabsContent value="assinaturas" className="mt-4">
-          <DigitalSignatures />
-        </TabsContent>
-
-        <TabsContent value="auditoria" className="mt-4">
-          <CertificateAuditPanel />
-        </TabsContent>
-
-        <TabsContent value="designer" className="mt-4">
-          <CertDesigner />
-        </TabsContent>
+        <TabsContent value="dashboard" className="mt-4"><CertificacoesDashboard onNavigate={setActiveTab} /></TabsContent>
+        <TabsContent value="certificados" className="mt-4"><Certificates /></TabsContent>
+        <TabsContent value="alunos" className="mt-4"><StudentListCertificacoes /></TabsContent>
+        <TabsContent value="controle" className="mt-4"><CertificateControlPanel /></TabsContent>
+        <TabsContent value="assinaturas" className="mt-4"><DigitalSignatures /></TabsContent>
+        <TabsContent value="auditoria" className="mt-4"><CertificateAuditPanel /></TabsContent>
+        <TabsContent value="designer" className="mt-4"><CertDesigner /></TabsContent>
       </Tabs>
     </div>
   );
