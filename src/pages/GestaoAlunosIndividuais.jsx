@@ -1032,11 +1032,12 @@ function FinanceiroAlunos() {
 
   const FORMAS_MANUAL = ["À Vista", "Pix", "Cartão de Crédito", "Cartão de Débito", "Transferência Bancária", "Dinheiro em Espécie"];
 
-  const marcarPagoMutation = useMutation({
-    mutationFn: (id) => base44.entities.StudentCourseEnrollment.update(id, { status_pagamento: "Pago" }),
-    onSuccess: () => {
+  const atualizarStatusPagamentoMutation = useMutation({
+    mutationFn: ({ id, status_pagamento }) => base44.entities.StudentCourseEnrollment.update(id, { status_pagamento }),
+    onSuccess: (_, { status_pagamento }) => {
       queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] });
-      toast.success("Pagamento confirmado manualmente!");
+      const msgs = { "Pago": "Pagamento confirmado!", "Pendente": "Status alterado para Aguardando Pagamento.", "Inadimplente": "Matrícula marcada como Cancelada/Inadimplente." };
+      toast.success(msgs[status_pagamento] || "Status atualizado!");
     },
   });
 
@@ -1315,20 +1316,48 @@ function FinanceiroAlunos() {
                         <Badge className={pagamentoColors[e.status_pagamento] || "bg-gray-100 text-gray-800"}>
                           {e.status_pagamento || "Pendente"}
                         </Badge>
-                        {/* Botão Pagamento Realizado — apenas para formas manuais e não pagas */}
-                        {FORMAS_MANUAL.includes(e.forma_pagamento) && e.status_pagamento !== "Pago" && (
-                          <Button
-                            size="sm"
-                            className="text-xs h-7 bg-green-600 hover:bg-green-700 text-white w-full gap-1"
-                            onClick={() => {
-                              if (window.confirm(`Confirmar pagamento manual de ${e.student_name} — ${e.forma_pagamento}?`)) {
-                                marcarPagoMutation.mutate(e.id);
-                              }
-                            }}
-                            disabled={marcarPagoMutation.isPending}
-                          >
-                            <CheckCircle className="w-3 h-3" /> ✅ Pagamento Realizado
-                          </Button>
+                        {/* Controle manual de status de pagamento */}
+                        {FORMAS_MANUAL.includes(e.forma_pagamento) && (
+                          <div className="flex flex-col gap-1 w-full">
+                            <p className="text-xs text-gray-400 font-medium text-right">Alterar pagamento:</p>
+                            <div className="flex gap-1 justify-end flex-wrap">
+                              <Button
+                                size="sm"
+                                className="text-xs h-7 bg-green-600 hover:bg-green-700 text-white gap-1"
+                                disabled={e.status_pagamento === "Pago" || atualizarStatusPagamentoMutation.isPending}
+                                onClick={() => {
+                                  if (window.confirm(`Confirmar pagamento de ${e.student_name}?`))
+                                    atualizarStatusPagamentoMutation.mutate({ id: e.id, status_pagamento: "Pago" });
+                                }}
+                              >
+                                <CheckCircle className="w-3 h-3" /> Pago
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs h-7 border-yellow-400 text-yellow-700 hover:bg-yellow-50 gap-1"
+                                disabled={e.status_pagamento === "Pendente" || atualizarStatusPagamentoMutation.isPending}
+                                onClick={() => {
+                                  if (window.confirm(`Marcar pagamento de ${e.student_name} como Aguardando?`))
+                                    atualizarStatusPagamentoMutation.mutate({ id: e.id, status_pagamento: "Pendente" });
+                                }}
+                              >
+                                <Clock className="w-3 h-3" /> Aguardando
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs h-7 border-red-300 text-red-600 hover:bg-red-50 gap-1"
+                                disabled={e.status_pagamento === "Inadimplente" || atualizarStatusPagamentoMutation.isPending}
+                                onClick={() => {
+                                  if (window.confirm(`Cancelar/inadimplir pagamento de ${e.student_name}?`))
+                                    atualizarStatusPagamentoMutation.mutate({ id: e.id, status_pagamento: "Inadimplente" });
+                                }}
+                              >
+                                <XCircle className="w-3 h-3" /> Cancelar
+                              </Button>
+                            </div>
+                          </div>
                         )}
                         <Button
                           size="sm"
