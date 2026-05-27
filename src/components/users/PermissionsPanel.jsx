@@ -17,7 +17,7 @@ const PERMISSION_GROUPS = [
   {
     label: "Operacional",
     color: "bg-blue-100 text-blue-700",
-    items: ["Entrada de Propostas", "Gestão de BMM", "Instrutores", "Empresas", "Contratadas", "Cursos", "Importar Excel", "Alunos Individuais (PF)"],
+    items: ["Entrada de Propostas", "Gestão de BMM", "Instrutores", "Empresas", "Contratadas", "Cursos", "Importar Excel", "Alunos Individuais (PF)", "Gestão de Contratos", "Dashboard Operacional"],
   },
   {
     label: "Alunos Individuais (PF) — Seções",
@@ -57,7 +57,7 @@ const PERMISSION_GROUPS = [
   {
     label: "Administração",
     color: "bg-red-100 text-red-700",
-    items: ["Usuários", "Log de Auditoria", "Log de Acesso"],
+    items: ["Usuários", "Log de Auditoria", "Auditoria Completa", "Log de Acesso"],
   },
 ];
 
