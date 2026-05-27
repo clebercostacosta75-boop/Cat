@@ -11,6 +11,7 @@ import StudentList from "@/components/students/StudentList";
 import EnrollmentList from "@/components/enrollment/EnrollmentList";
 import CertificateControlPanel from "@/components/certificates/CertificateControlPanel";
 
+
 export default function Certificacoes() {
   const [activeTab, setActiveTab] = useState("certificados");
 
