@@ -1025,9 +1025,20 @@ function MatriculasCursos() {
 
 // ─── Aba: Financeiro (Dashboard Completo) ────────────────────────────────────
 function FinanceiroAlunos() {
+  const queryClient = useQueryClient();
   const [selectedEnrollmentForRecibo, setSelectedEnrollmentForRecibo] = useState(null);
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchAluno, setSearchAluno] = useState("");
+
+  const FORMAS_MANUAL = ["À Vista", "Pix", "Cartão de Crédito", "Cartão de Débito", "Transferência Bancária", "Dinheiro em Espécie"];
+
+  const marcarPagoMutation = useMutation({
+    mutationFn: (id) => base44.entities.StudentCourseEnrollment.update(id, { status_pagamento: "Pago" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] });
+      toast.success("Pagamento confirmado manualmente!");
+    },
+  });
 
   const { data: enrollments = [], isLoading } = useQuery({
     queryKey: ["enrollments-pf"],
@@ -1304,6 +1315,21 @@ function FinanceiroAlunos() {
                         <Badge className={pagamentoColors[e.status_pagamento] || "bg-gray-100 text-gray-800"}>
                           {e.status_pagamento || "Pendente"}
                         </Badge>
+                        {/* Botão Pagamento Realizado — apenas para formas manuais e não pagas */}
+                        {FORMAS_MANUAL.includes(e.forma_pagamento) && e.status_pagamento !== "Pago" && (
+                          <Button
+                            size="sm"
+                            className="text-xs h-7 bg-green-600 hover:bg-green-700 text-white w-full gap-1"
+                            onClick={() => {
+                              if (window.confirm(`Confirmar pagamento manual de ${e.student_name} — ${e.forma_pagamento}?`)) {
+                                marcarPagoMutation.mutate(e.id);
+                              }
+                            }}
+                            disabled={marcarPagoMutation.isPending}
+                          >
+                            <CheckCircle className="w-3 h-3" /> ✅ Pagamento Realizado
+                          </Button>
+                        )}
                         <Button
                           size="sm"
                           variant="outline"
