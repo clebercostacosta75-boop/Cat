@@ -24,7 +24,7 @@ const FULL_ACCESS_ROLES = ["admin", "Administrador Master", "gestor_master"];
 // Menus padrão por perfil (fallback quando sem permissões customizadas)
 const ROLE_MENUS = {
   Operacional: [
-    "Dashboard","Agenda de Treinamentos","Cronograma","Chamada Presencial",
+    "Dashboard","Dashboard Operacional","Agenda de Treinamentos","Cronograma","Chamada Presencial",
     "Entrada de Propostas","Gestão de BMM","Instrutores","Empresas","Contratadas",
     "Cursos","Importar Excel","Central de Comunicação","Config. Notificações",
     "Log de Notificações","Alunos Individuais (PF)","Dashboard Comercial",

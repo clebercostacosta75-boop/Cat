@@ -1,233 +1,280 @@
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import {
-  Calendar, Users, AlertTriangle, FileText, CheckSquare,
-  MapPin, Clock, UserCheck, Loader2
+  Plus, Upload, Download, MessageSquare, Bell, Loader2,
+  BarChart3, Table2, AlertTriangle, Calendar, Trophy, RefreshCw
 } from "lucide-react";
-import { format, isToday, addDays, parseISO, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
-function StatCard({ icon: Icon, label, value, color = "blue", loading }) {
-  const colors = {
-    blue: "bg-blue-50 text-blue-600",
-    green: "bg-green-50 text-green-600",
-    orange: "bg-orange-50 text-orange-600",
-    red: "bg-red-50 text-red-600",
-    purple: "bg-purple-50 text-purple-600",
-  };
-  return (
-    <Card>
-      <CardContent className="pt-5 pb-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">{label}</p>
-            {loading ? (
-              <div className="h-8 w-16 bg-gray-100 rounded animate-pulse mt-1" />
-            ) : (
-              <p className="text-3xl font-bold text-gray-900 mt-1">{value ?? "—"}</p>
-            )}
-          </div>
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colors[color]}`}>
-            <Icon className="w-5 h-5" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+import OpResumoCards from "@/components/operacional/OpResumoCards";
+import OpFiltros from "@/components/operacional/OpFiltros";
+import OpTabelaTreinamentos from "@/components/operacional/OpTabelaTreinamentos";
+import OpGraficos from "@/components/operacional/OpGraficos";
+import OpAlertas from "@/components/operacional/OpAlertas";
+import OpAgendaSemanal from "@/components/operacional/OpAgendaSemanal";
+import OpRankings from "@/components/operacional/OpRankings";
+
+const FILTROS_INICIAL = {
+  dataInicio: "", dataFim: "", empresa: "_all", instrutor: "_all",
+  status: "_all", modalidade: "_all", categoria: "_all", busca: "",
+};
 
 export default function DashboardOperacional() {
+  const qc = useQueryClient();
   const hoje = new Date();
 
-  const { data: schedules = [], isLoading: loadingSchedules } = useQuery({
-    queryKey: ["op-schedules"],
-    queryFn: () => base44.entities.ClassSchedule.list("-created_date", 500),
-    refetchInterval: 60000,
+  const [filtros, setFiltros] = useState(FILTROS_INICIAL);
+  const [filtrosAtivos, setFiltrosAtivos] = useState(FILTROS_INICIAL);
+  const [activeSection, setActiveSection] = useState("tabela");
+
+  const { data: allSchedules = [], isLoading: loadSch } = useQuery({
+    queryKey: ["op-schedules-v2"],
+    queryFn: () => base44.entities.ClassSchedule.list("-created_date", 1000),
+    refetchInterval: 90000,
   });
 
-  const { data: bmms = [], isLoading: loadingBMMs } = useQuery({
-    queryKey: ["op-bmms"],
-    queryFn: () => base44.entities.BMMRecord.list("-created_date", 200),
+  const { data: companies = [], isLoading: loadCo } = useQuery({
+    queryKey: ["op-companies"],
+    queryFn: () => base44.entities.Company.list(),
+    staleTime: 300000,
   });
 
-  const mesAtual = format(hoje, "yyyy-MM");
+  const { data: instructors = [], isLoading: loadIn } = useQuery({
+    queryKey: ["op-instructors"],
+    queryFn: () => base44.entities.Instructor.list(),
+    staleTime: 300000,
+  });
 
-  // Cards de resumo
-  const agendadosMes = schedules.filter(s =>
-    (s.status === "Agendado" || s.status === "Em Andamento") &&
-    s.realization_dates?.some(d => d?.startsWith(mesAtual))
-  ).length;
+  const { data: certificates = [] } = useQuery({
+    queryKey: ["op-certs"],
+    queryFn: () => base44.entities.Certificate.filter({ status: "pending_signature" }),
+    staleTime: 300000,
+  });
 
-  const hojeStr = format(hoje, "yyyy-MM-dd");
-  const cursosHoje = schedules.filter(s =>
-    s.realization_dates?.includes(hojeStr)
-  );
+  const loading = loadSch || loadCo || loadIn;
 
-  const totalAlunos = schedules.reduce((sum, s) => sum + (s.students_count || 0), 0);
+  // Aplicar filtros
+  const schedules = useMemo(() => {
+    return allSchedules.filter(s => {
+      if (filtrosAtivos.empresa !== "_all" && s.company_id !== filtrosAtivos.empresa) return false;
+      if (filtrosAtivos.instrutor !== "_all" && s.instructor_id !== filtrosAtivos.instrutor) return false;
+      if (filtrosAtivos.status !== "_all" && s.status !== filtrosAtivos.status) return false;
+      if (filtrosAtivos.modalidade !== "_all" && s.modality !== filtrosAtivos.modalidade) return false;
+      if (filtrosAtivos.categoria !== "_all" && s.category !== filtrosAtivos.categoria) return false;
+      if (filtrosAtivos.dataInicio || filtrosAtivos.dataFim) {
+        const dates = s.realization_dates || [];
+        const hasDate = dates.some(d => {
+          if (filtrosAtivos.dataInicio && d < filtrosAtivos.dataInicio) return false;
+          if (filtrosAtivos.dataFim && d > filtrosAtivos.dataFim) return false;
+          return true;
+        });
+        if (!hasDate && dates.length > 0) return false;
+      }
+      if (filtrosAtivos.busca) {
+        const q = filtrosAtivos.busca.toLowerCase();
+        const hay = [s.training_name, s.company_name, s.instructor_name, s.location, s.status]
+          .filter(Boolean).join(" ").toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [allSchedules, filtrosAtivos]);
 
-  const bmmsMes = bmms.filter(b => b.created_date?.startsWith(mesAtual)).length;
+  const handleFiltrar = () => setFiltrosAtivos({ ...filtros });
+  const handleLimpar = () => { setFiltros(FILTROS_INICIAL); setFiltrosAtivos(FILTROS_INICIAL); };
 
-  // Agenda do dia
-  const agendaDia = cursosHoje.map(s => ({
-    id: s.id,
-    nome: s.training_name,
-    empresa: s.company_name,
-    instrutor: s.instructor_name || "Não definido",
-    local: s.location || "—",
-    modalidade: s.category || "Presencial",
-    alunos: s.students_count || 0,
-    horario: s.training_schedule || "—",
-    status: s.status,
-  }));
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.ClassSchedule.update(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["op-schedules-v2"] }),
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.ClassSchedule.delete(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["op-schedules-v2"] }); toast.success("Turma excluída."); },
+  });
 
-  // Programação da semana (próximos 7 dias)
-  const semanaRange = Array.from({ length: 7 }, (_, i) => format(addDays(hoje, i), "yyyy-MM-dd"));
-  const programacaoSemana = semanaRange.map(dia => ({
-    dia,
-    label: format(parseISO(dia), "EEE dd/MM", { locale: ptBR }),
-    cursos: schedules.filter(s => s.realization_dates?.includes(dia)),
-  })).filter(d => d.cursos.length > 0);
+  const handleConcluir = (s) => {
+    if (window.confirm(`Marcar "${s.training_name}" como Concluído?`)) {
+      updateMutation.mutate({ id: s.id, data: { status: "Concluído" } });
+      toast.success("Turma marcada como Concluída.");
+    }
+  };
+  const handleDelete = (s) => {
+    if (window.confirm(`Excluir a turma "${s.training_name}"? Esta ação não pode ser desfeita.`)) {
+      deleteMutation.mutate(s.id);
+    }
+  };
 
-  // Alertas operacionais
-  const semInstrutor = schedules.filter(s =>
-    !s.instructor_name && (s.status === "Agendado" || s.status === "Em Andamento")
-  );
-  const semAlunos = schedules.filter(s =>
-    (!s.students_count || s.students_count === 0) && s.status === "Agendado"
-  );
+  const handleExportExcel = () => {
+    const headers = ["Treinamento","Modalidade","Categoria","Empresa","Alunos","Local","Status","CH","Mês","Instrutor"];
+    const rows = schedules.map(s => [
+      s.training_name, s.modality, s.category, s.company_name,
+      s.students_count, s.location, s.status, s.duration_hours, s.month, s.instructor_name
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(v => `"${v ?? ""}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url;
+    a.download = `treinamentos_${format(hoje, "yyyy-MM-dd")}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exportado com sucesso!");
+  };
 
-  const loading = loadingSchedules || loadingBMMs;
+  const handleExportPDF = () => {
+    const w = window.open("", "_blank");
+    const rows = schedules.map(s => `
+      <tr>
+        <td>${s.training_name || ""}</td><td>${s.company_name || ""}</td>
+        <td>${s.status || ""}</td><td>${s.students_count || 0}</td>
+        <td>${s.instructor_name || ""}</td><td>${s.location || ""}</td>
+        <td>${s.duration_hours || ""}h</td>
+      </tr>`).join("");
+    w.document.write(`
+      <html><head><title>Relatório de Treinamentos</title>
+      <style>body{font-family:Arial;font-size:11px;padding:20px}
+      table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:5px}
+      th{background:#1e3a5f;color:white}h2{color:#1e3a5f}</style></head>
+      <body><h2>CAT Cursos — Relatório de Treinamentos</h2>
+      <p>Gerado em: ${format(hoje, "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
+      <table><thead><tr><th>Treinamento</th><th>Empresa</th><th>Status</th>
+      <th>Alunos</th><th>Instrutor</th><th>Local</th><th>CH</th></tr></thead>
+      <tbody>${rows}</tbody></table></body></html>`);
+    w.document.close(); w.print();
+  };
+
+  const sections = [
+    { key: "tabela", label: "Tabela", icon: Table2 },
+    { key: "graficos", label: "Gráficos", icon: BarChart3 },
+    { key: "alertas", label: "Alertas", icon: AlertTriangle },
+    { key: "agenda", label: "Agenda", icon: Calendar },
+    { key: "rankings", label: "Rankings", icon: Trophy },
+  ];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard Operacional</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          {format(hoje, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-        </p>
+    <div className="p-4 md:p-6 space-y-5 max-w-[1600px] mx-auto">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <BarChart3 className="w-6 h-6 text-blue-600" /> Dashboard Operacional
+          </h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {format(hoje, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            {" · "}{schedules.length} registro(s) exibido(s)
+          </p>
+        </div>
+        {/* Acesso Rápido */}
+        <div className="flex flex-wrap gap-2">
+          <Link to="/AgendaTreinamentos">
+            <Button size="sm" className="bg-blue-700 hover:bg-blue-800 gap-1">
+              <Plus className="w-3.5 h-3.5" /> Nova Turma
+            </Button>
+          </Link>
+          <Link to={createPageUrl("Import")}>
+            <Button size="sm" variant="outline" className="gap-1">
+              <Upload className="w-3.5 h-3.5" /> Importar Excel
+            </Button>
+          </Link>
+          <Button size="sm" variant="outline" className="gap-1" onClick={handleExportExcel}>
+            <Download className="w-3.5 h-3.5" /> Exportar
+          </Button>
+          <Button
+            size="sm" variant="ghost" className="gap-1"
+            onClick={() => qc.invalidateQueries({ queryKey: ["op-schedules-v2"] })}
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </Button>
+        </div>
       </div>
 
-      {/* Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard icon={Calendar} label="Cursos Agendados no Mês" value={agendadosMes} color="blue" loading={loadingSchedules} />
-        <StatCard icon={CheckSquare} label="Cursos Hoje" value={cursosHoje.length} color="green" loading={loadingSchedules} />
-        <StatCard icon={Users} label="Alunos em Treinamento" value={totalAlunos} color="purple" loading={loadingSchedules} />
-        <StatCard icon={FileText} label="BMMs Gerados no Mês" value={bmmsMes} color="orange" loading={loadingBMMs} />
+      {/* CARDS DE RESUMO */}
+      <OpResumoCards
+        schedules={allSchedules}
+        companies={companies}
+        instructors={instructors}
+        loading={loading}
+      />
+
+      {/* FILTROS */}
+      <OpFiltros
+        filtros={filtros}
+        setFiltros={setFiltros}
+        companies={companies}
+        instructors={instructors}
+        onFiltrar={handleFiltrar}
+        onLimpar={handleLimpar}
+      />
+
+      {/* SEÇÃO TABS */}
+      <div className="flex flex-wrap gap-1 border-b border-gray-200 pb-1">
+        {sections.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setActiveSection(key)}
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-t transition-colors ${
+              activeSection === key
+                ? "bg-blue-700 text-white"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            <Icon className="w-3.5 h-3.5" /> {label}
+          </button>
+        ))}
       </div>
 
-      {/* Acesso Rápido */}
-      <div className="flex flex-wrap gap-3">
-        <Link to="/AgendaTreinamentos"><Button variant="outline" className="gap-2"><Calendar className="w-4 h-4" />Agenda de Treinamentos</Button></Link>
-        <Link to={createPageUrl("Schedule")}><Button variant="outline" className="gap-2"><Calendar className="w-4 h-4" />Cronograma</Button></Link>
-        <Link to={createPageUrl("AttendanceCall")}><Button variant="outline" className="gap-2"><UserCheck className="w-4 h-4" />Chamada Presencial</Button></Link>
-        <Link to={createPageUrl("BMMGenerator")}><Button variant="outline" className="gap-2"><FileText className="w-4 h-4" />Gerar BMM</Button></Link>
-      </div>
-
-      {/* Agenda do Dia */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-blue-500" /> Agenda do Dia
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      {/* TABELA */}
+      {activeSection === "tabela" && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600 font-medium">{schedules.length} treinamento(s)</span>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={handleExportExcel}>
+                <Download className="w-3 h-3" /> Excel
+              </Button>
+              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={handleExportPDF}>
+                <Download className="w-3 h-3" /> PDF
+              </Button>
+            </div>
+          </div>
           {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
-          ) : agendaDia.length === 0 ? (
-            <p className="text-sm text-gray-400 py-4 text-center">Nenhum curso agendado para hoje.</p>
-          ) : (
-            <div className="space-y-3">
-              {agendaDia.map(c => (
-                <div key={c.id} className="flex items-start justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                  <div className="space-y-1">
-                    <p className="font-semibold text-gray-900 text-sm">{c.nome}</p>
-                    <p className="text-xs text-gray-500">{c.empresa}</p>
-                    <div className="flex flex-wrap gap-3 text-xs text-gray-600 mt-1">
-                      <span className="flex items-center gap-1"><UserCheck className="w-3 h-3" />{c.instrutor}</span>
-                      <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{c.local}</span>
-                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{c.horario}</span>
-                      <span className="flex items-center gap-1"><Users className="w-3 h-3" />{c.alunos} alunos</span>
-                    </div>
-                  </div>
-                  <Badge className={c.status === "Em Andamento" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}>
-                    {c.modalidade}
-                  </Badge>
-                </div>
-              ))}
+            <div className="flex justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Programação da Semana */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-purple-500" /> Programação dos Próximos 7 Dias
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {programacaoSemana.length === 0 ? (
-            <p className="text-sm text-gray-400 py-4 text-center">Nenhum curso programado para os próximos 7 dias.</p>
           ) : (
-            <div className="space-y-2">
-              {programacaoSemana.map(({ dia, label, cursos }) => (
-                <div key={dia} className="flex items-start gap-4 p-3 rounded-lg border border-gray-100">
-                  <div className="min-w-[80px] text-xs font-semibold text-gray-700 capitalize pt-0.5">{label}</div>
-                  <div className="flex flex-wrap gap-2">
-                    {cursos.map(c => (
-                      <Badge key={c.id} variant="outline" className="text-xs">
-                        {c.training_name} — {c.company_name}
-                        <span className={`ml-1 ${c.status === "Confirmado" ? "text-green-600" : "text-orange-500"}`}>
-                          ● {c.status}
-                        </span>
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <OpTabelaTreinamentos
+              schedules={schedules}
+              onConcluir={handleConcluir}
+              onDelete={handleDelete}
+              onEdit={(s) => window.location.href = `/AgendaTreinamentos?id=${s.id}`}
+            />
           )}
-        </CardContent>
-      </Card>
+        </div>
+      )}
 
-      {/* Alertas Operacionais */}
-      {(semInstrutor.length > 0 || semAlunos.length > 0) && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2 text-orange-700">
-              <AlertTriangle className="w-4 h-4" /> Alertas Operacionais
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {semInstrutor.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-red-700 mb-1">Cursos sem instrutor definido ({semInstrutor.length})</p>
-                {semInstrutor.slice(0, 5).map(s => (
-                  <div key={s.id} className="text-xs text-gray-700 bg-white rounded px-3 py-1.5 mb-1 border border-red-100">
-                    {s.training_name} — {s.company_name}
-                  </div>
-                ))}
-              </div>
-            )}
-            {semAlunos.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-orange-700 mb-1">Turmas sem alunos cadastrados ({semAlunos.length})</p>
-                {semAlunos.slice(0, 5).map(s => (
-                  <div key={s.id} className="text-xs text-gray-700 bg-white rounded px-3 py-1.5 mb-1 border border-orange-100">
-                    {s.training_name} — {s.company_name}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* GRÁFICOS */}
+      {activeSection === "graficos" && (
+        <OpGraficos schedules={schedules} />
+      )}
+
+      {/* ALERTAS */}
+      {activeSection === "alertas" && (
+        <OpAlertas schedules={allSchedules} certificates={certificates} />
+      )}
+
+      {/* AGENDA SEMANAL */}
+      {activeSection === "agenda" && (
+        <OpAgendaSemanal schedules={allSchedules} />
+      )}
+
+      {/* RANKINGS */}
+      {activeSection === "rankings" && (
+        <OpRankings schedules={schedules} />
       )}
     </div>
   );

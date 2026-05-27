@@ -28,6 +28,7 @@ import CertificateAuditPanel from './pages/CertificateAuditPanel';
 import Certificacoes from './pages/Certificacoes';
 import CompanyPortal from './pages/CompanyPortal';
 import DashboardOperacional from './pages/DashboardOperacional';
+import DashboardOperacionalV2 from './pages/DashboardOperacional';
 import DashboardFinanceiro from './pages/DashboardFinanceiro';
 import DashboardCertificacao from './pages/DashboardCertificacao';
 import DashboardMaster from './pages/DashboardMaster';
@@ -165,6 +166,7 @@ const AuthenticatedApp = () => {
       <Route path="/Certificacoes" element={<LayoutWrapper currentPageName="Certificacoes"><ProtectedRoute pageKey="Certificações"><Certificacoes /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardMaster" element={<LayoutWrapper currentPageName="DashboardMaster"><ProtectedRoute pageKey="Dashboard"><DashboardMaster /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardOperacional" element={<LayoutWrapper currentPageName="DashboardOperacional"><ProtectedRoute pageKey="Dashboard"><DashboardOperacional /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/DashboardOperacionalV2" element={<LayoutWrapper currentPageName="DashboardOperacionalV2"><ProtectedRoute pageKey="Dashboard Operacional"><DashboardOperacionalV2 /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardFinanceiro" element={<LayoutWrapper currentPageName="DashboardFinanceiro"><ProtectedRoute pageKey="Dashboard Financeiro"><DashboardFinanceiro /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardCertificacao" element={<LayoutWrapper currentPageName="DashboardCertificacao"><ProtectedRoute pageKey="Dashboard"><DashboardCertificacao /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardInstrutor" element={<LayoutWrapper currentPageName="DashboardInstrutor"><ProtectedRoute pageKey="Dashboard"><DashboardInstrutor /></ProtectedRoute></LayoutWrapper>} />
