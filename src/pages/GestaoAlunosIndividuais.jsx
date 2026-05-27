@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Users, UserPlus, BookOpen, DollarSign, Shield, Search, Edit, Trash2,
-  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, FileText, Copy, LayoutDashboard, Bell, PenLine, TrendingUp, Calendar, XCircle
+  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, FileText, Copy, LayoutDashboard, Bell, PenLine, TrendingUp, Calendar, XCircle, ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 import PagamentosAsaas from "@/components/alunos/PagamentosAsaas";
@@ -22,6 +22,8 @@ import ContratoAssinaturaTab from "@/components/contratos/ContratoAssinaturaTab"
 import ReciboPagamento from "@/components/financeiro/ReciboPagamento";
 import DashboardPF from "@/components/alunos/DashboardPF";
 import CadastroUnificado from "@/components/alunos/CadastroUnificado";
+import NovoCursoModal from "@/components/alunos/NovoCursoModal";
+import NovaMatriculaModal from "@/components/alunos/NovaMatriculaModal";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -698,10 +700,13 @@ function MatriculasCursos() {
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [userRole, setUserRole] = useState(null);
-  const [contratoGeradoInfo, setContratoGeradoInfo] = useState(null); // { enrollment, contractNumber }
   const [selectedEnrollmentForContract, setSelectedEnrollmentForContract] = useState(null);
+  const [novoCursoEnrollment, setNovoCursoEnrollment] = useState(null);
   const [filterCourseId, setFilterCourseId] = useState("all");
+  const [filterStatusMatricula, setFilterStatusMatricula] = useState("all");
+  const [filterStatusPagamento, setFilterStatusPagamento] = useState("all");
   const [searchAluno, setSearchAluno] = useState("");
+  const [financeiroEnrollment, setFinanceiroEnrollment] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
@@ -719,43 +724,12 @@ function MatriculasCursos() {
     gcTime: 0,
   });
 
-  const { data: students = [] } = useQuery({
-    queryKey: ["students-pf"],
-    queryFn: () => base44.entities.Student.list("-created_date", 500),
-    initialData: [],
-  });
-
   const { data: courses = [] } = useQuery({
     queryKey: ["courses"],
     queryFn: () => base44.entities.Course.list("-name", 200),
     initialData: [],
     staleTime: 0,
     gcTime: 0,
-  });
-
-  const createMutation = useMutation({
-    mutationFn: async (data) => {
-      const enrollment = await base44.entities.StudentCourseEnrollment.create(data);
-      // Geração automática do contrato
-      try {
-        const result = await base44.functions.invoke("gerarContrato", {
-          student_id: enrollment.student_id,
-          enrollment_id: enrollment.id,
-          force_regen: false,
-        });
-        if (result.data?.contract_number) {
-          setContratoGeradoInfo({ enrollment, contractNumber: result.data.contract_number });
-        }
-      } catch (e) {
-        console.warn("Contrato não gerado automaticamente:", e);
-      }
-      return enrollment;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] });
-      toast.success("Matrícula criada! Contrato gerado automaticamente.");
-      setModalOpen(false);
-    },
   });
 
   const updateStatusMutation = useMutation({
@@ -769,10 +743,10 @@ function MatriculasCursos() {
   });
 
   const statusColors = {
-    "Aguardando Autorização": "bg-yellow-100 text-yellow-800",
-    "Autorizado": "bg-blue-100 text-blue-800",
-    "Certificado Gerado": "bg-green-100 text-green-800",
-    "Assinado": "bg-emerald-100 text-emerald-800",
+    "Aguardando Autorização": "bg-blue-100 text-blue-800",
+    "Autorizado": "bg-green-100 text-green-800",
+    "Certificado Gerado": "bg-emerald-100 text-emerald-800",
+    "Assinado": "bg-purple-100 text-purple-800",
     "Vencido": "bg-red-100 text-red-800",
     "Revogado": "bg-gray-100 text-gray-800",
   };
@@ -786,11 +760,13 @@ function MatriculasCursos() {
 
   const norm = (v) => (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").trim();
 
-  // Filtros
+  // Filtros combinados
   const filteredEnrollments = enrollments.filter(e => {
     const byCourse = filterCourseId === "all" || e.course_id === filterCourseId;
-    const byAluno = !searchAluno || norm(e.student_name).includes(norm(searchAluno)) || norm(e.student_cpf).includes(norm(searchAluno));
-    return byCourse && byAluno;
+    const byStatus = filterStatusMatricula === "all" || e.status === filterStatusMatricula;
+    const byPagamento = filterStatusPagamento === "all" || e.status_pagamento === filterStatusPagamento;
+    const byAluno = !searchAluno || norm(e.student_name).includes(norm(searchAluno)) || (e.student_cpf || "").replace(/\D/g,"").includes(searchAluno.replace(/\D/g,"")) || norm(e.student_cpf || "").includes(norm(searchAluno));
+    return byCourse && byStatus && byPagamento && byAluno;
   });
 
   // Contagem por curso
@@ -799,43 +775,24 @@ function MatriculasCursos() {
     if (e.course_id) countByCourse[e.course_id] = (countByCourse[e.course_id] || 0) + 1;
   });
 
+  const hasFilters = filterCourseId !== "all" || filterStatusMatricula !== "all" || filterStatusPagamento !== "all" || searchAluno;
+
   return (
     <div className="space-y-4">
-      {/* Modal de contrato gerado automaticamente */}
-      {contratoGeradoInfo && (
-        <Dialog open={!!contratoGeradoInfo} onOpenChange={() => setContratoGeradoInfo(null)}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-emerald-700">
-                <CheckCircle className="w-5 h-5" /> Matrícula Finalizada com Sucesso!
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                <p className="text-sm font-semibold text-emerald-800">
-                  O contrato digital foi gerado automaticamente.
-                </p>
-                <p className="text-xs text-emerald-700 mt-1">Contrato Nº <strong>{contratoGeradoInfo.contractNumber}</strong> — Pronto para envio ao aluno.</p>
-              </div>
-              <p className="text-sm text-gray-600">O que deseja fazer agora?</p>
-              <div className="grid grid-cols-1 gap-2">
-                <Button
-                  className="bg-blue-700 hover:bg-blue-800 justify-start gap-2"
-                  onClick={() => {
-                    setSelectedEnrollmentForContract(contratoGeradoInfo.enrollment);
-                    setContratoGeradoInfo(null);
-                  }}
-                >
-                  <PenLine className="w-4 h-4" />Visualizar Contrato e Enviar para Assinatura
-                </Button>
-                <Button variant="outline" className="justify-start gap-2" onClick={() => setContratoGeradoInfo(null)}>
-                  <BookOpen className="w-4 h-4" />Voltar para Matrículas
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* Modal Novo Curso (rematrícula) */}
+      <NovoCursoModal
+        open={!!novoCursoEnrollment}
+        onClose={() => setNovoCursoEnrollment(null)}
+        enrollment={novoCursoEnrollment}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] })}
+      />
+
+      {/* Modal Nova Matrícula com busca de aluno */}
+      <NovaMatriculaModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] })}
+      />
 
       {/* Painel de contrato da matrícula selecionada */}
       {selectedEnrollmentForContract && (
@@ -856,11 +813,26 @@ function MatriculasCursos() {
         </Card>
       )}
 
+      {/* Painel financeiro inline */}
+      {financeiroEnrollment && (
+        <Card className="border-2 border-green-300">
+          <CardHeader className="pb-2 bg-green-50">
+            <CardTitle className="text-sm font-bold text-green-900 flex items-center justify-between">
+              <span className="flex items-center gap-2"><DollarSign className="w-4 h-4" />Financeiro — {financeiroEnrollment.student_name} / {financeiroEnrollment.course_name}</span>
+              <Button size="sm" variant="ghost" onClick={() => setFinanceiroEnrollment(null)} className="text-gray-400 hover:text-gray-700 text-xs">Fechar</Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <ReciboPagamento enrollment={financeiroEnrollment} />
+          </CardContent>
+        </Card>
+      )}
+
       {/* Barra de filtros + botão */}
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-        <div className="flex flex-col sm:flex-row gap-2 flex-1">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
           {/* Busca por aluno */}
-          <div className="relative flex-1 max-w-xs">
+          <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
               placeholder="Buscar aluno por nome ou CPF..."
@@ -869,42 +841,69 @@ function MatriculasCursos() {
               className="pl-10"
             />
           </div>
-          {/* Filtro por curso */}
-          <div className="min-w-[220px]">
-            <Select value={filterCourseId} onValueChange={setFilterCourseId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filtrar por curso" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os cursos ({enrollments.length} alunos)</SelectItem>
-                {courses.map(c => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name} {countByCourse[c.id] ? `(${countByCourse[c.id]})` : "(0)"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Button onClick={() => setModalOpen(true)} className="bg-gray-900 hover:bg-gray-800 flex-shrink-0">
+            <Plus className="w-4 h-4 mr-2" /> Nova Matrícula
+          </Button>
         </div>
-        <Button onClick={() => setModalOpen(true)} className="bg-gray-900 hover:bg-gray-800 flex-shrink-0">
-          <Plus className="w-4 h-4 mr-2" /> Nova Matrícula
-        </Button>
-      </div>
 
-      {/* Card de resumo do curso filtrado */}
-      {filterCourseId !== "all" && (
-        <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <BookOpen className="w-5 h-5 text-blue-600 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-semibold text-blue-900">
-              {courses.find(c => c.id === filterCourseId)?.name}
-            </p>
-            <p className="text-xs text-blue-700">
-              {filteredEnrollments.length} aluno(s) inscrito(s) neste curso
-            </p>
-          </div>
+        {/* Filtros avançados */}
+        <div className="flex flex-wrap gap-2">
+          <Select value={filterCourseId} onValueChange={setFilterCourseId}>
+            <SelectTrigger className="w-52">
+              <SelectValue placeholder="Filtrar por curso" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os cursos</SelectItem>
+              {courses.map(c => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name} {countByCourse[c.id] ? `(${countByCourse[c.id]})` : "(0)"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterStatusMatricula} onValueChange={setFilterStatusMatricula}>
+            <SelectTrigger className="w-52">
+              <SelectValue placeholder="Status da Matrícula" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              <SelectItem value="Aguardando Autorização">🔵 Aguardando Autorização</SelectItem>
+              <SelectItem value="Autorizado">🟢 Autorizado</SelectItem>
+              <SelectItem value="Certificado Gerado">🟢 Certificado Gerado</SelectItem>
+              <SelectItem value="Assinado">🟣 Assinado</SelectItem>
+              <SelectItem value="Vencido">🔴 Vencido</SelectItem>
+              <SelectItem value="Revogado">⚫ Revogado</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={filterStatusPagamento} onValueChange={setFilterStatusPagamento}>
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Status Pagamento" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos pagamentos</SelectItem>
+              <SelectItem value="Pago">🟢 Pago</SelectItem>
+              <SelectItem value="Pendente">🟡 Pendente</SelectItem>
+              <SelectItem value="Parcialmente Pago">🔵 Parcialmente Pago</SelectItem>
+              <SelectItem value="Inadimplente">🔴 Inadimplente</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {hasFilters && (
+            <Button variant="outline" size="sm" className="text-xs h-9" onClick={() => {
+              setFilterCourseId("all"); setFilterStatusMatricula("all");
+              setFilterStatusPagamento("all"); setSearchAluno("");
+            }}>
+              Limpar filtros
+            </Button>
+          )}
+
+          <span className="text-xs text-gray-500 self-center ml-auto">
+            {filteredEnrollments.length} de {enrollments.length} resultado(s)
+          </span>
         </div>
-      )}
+      </div>
 
       <Card className="border border-gray-200">
         <CardContent className="p-0">
@@ -913,72 +912,113 @@ function MatriculasCursos() {
           ) : filteredEnrollments.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <BookOpen className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>{filterCourseId !== "all" || searchAluno ? "Nenhuma matrícula encontrada para o filtro aplicado" : "Nenhuma matrícula individual encontrada"}</p>
+              <p>{hasFilters ? "Nenhuma matrícula encontrada para os filtros aplicados" : "Nenhuma matrícula individual encontrada"}</p>
+              {hasFilters && (
+                <Button variant="outline" size="sm" className="mt-3 text-xs" onClick={() => {
+                  setFilterCourseId("all"); setFilterStatusMatricula("all");
+                  setFilterStatusPagamento("all"); setSearchAluno("");
+                }}>
+                  Limpar filtros
+                </Button>
+              )}
             </div>
           ) : (
             <div className="divide-y">
               {filteredEnrollments.map(e => (
-                <div key={e.id} className="flex items-center justify-between p-4 hover:bg-gray-50">
-                  <div>
-                    <p className="font-semibold text-gray-900">{e.student_name}</p>
-                    <p className="text-sm text-gray-500">{e.course_name}</p>
-                    <p className="text-xs text-gray-400">{e.start_date} → {e.end_date}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      {e.unit_value ? (
-                        <span className="text-xs font-semibold text-green-700">
-                          R$ {parseFloat(e.unit_value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-400">Sem valor cadastrado</span>
+                <div key={e.id} className="p-4 hover:bg-gray-50">
+                  <div className="flex items-start justify-between gap-4">
+                    {/* Info do aluno e curso */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-gray-900">{e.student_name}</p>
+                        {e.student_cpf && <span className="text-xs text-gray-400 font-mono">{e.student_cpf}</span>}
+                      </div>
+                      <p className="text-sm text-gray-600 font-medium mt-0.5">{e.course_name}</p>
+                      <p className="text-xs text-gray-400">{e.start_date} → {e.end_date}</p>
+                      <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                        {e.unit_value ? (
+                          <span className="text-xs font-semibold text-emerald-700">
+                            R$ {parseFloat(e.unit_value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">Sem valor</span>
+                        )}
+                        {e.forma_pagamento && (
+                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                            <CreditCard className="w-3 h-3" /> {e.forma_pagamento}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <Badge className={`text-xs ${statusColors[e.status] || "bg-gray-100 text-gray-800"}`}>{e.status}</Badge>
+                        {e.status_pagamento && (
+                          <Badge className={`text-xs ${pagamentoColors[e.status_pagamento] || "bg-gray-100 text-gray-800"}`}>
+                            💰 {e.status_pagamento}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Botões de ação */}
+                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                      {/* Ver Contrato */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7 border-blue-300 text-blue-700 hover:bg-blue-50 w-full"
+                        onClick={() => setSelectedEnrollmentForContract(selectedEnrollmentForContract?.id === e.id ? null : e)}
+                      >
+                        <PenLine className="w-3 h-3 mr-1" />
+                        {selectedEnrollmentForContract?.id === e.id ? "Fechar" : "📄 Contrato"}
+                      </Button>
+
+                      {/* Ver Financeiro */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7 border-green-300 text-green-700 hover:bg-green-50 w-full"
+                        onClick={() => setFinanceiroEnrollment(financeiroEnrollment?.id === e.id ? null : e)}
+                      >
+                        <DollarSign className="w-3 h-3 mr-1" />
+                        {financeiroEnrollment?.id === e.id ? "Fechar" : "💰 Financeiro"}
+                      </Button>
+
+                      {/* Novo Curso */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7 border-purple-300 text-purple-700 hover:bg-purple-50 w-full"
+                        onClick={() => setNovoCursoEnrollment(e)}
+                      >
+                        <Plus className="w-3 h-3 mr-1" /> ➕ Novo Curso
+                      </Button>
+
+                      {/* Autorizar */}
+                      {e.status === "Aguardando Autorização" && (
+                        <Button
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white text-xs h-7 w-full"
+                          onClick={() => updateStatusMutation.mutate({ id: e.id, status: "Autorizado" })}
+                        >
+                          <CheckCircle className="w-3 h-3 mr-1" /> ✅ Autorizar
+                        </Button>
                       )}
-                      {e.forma_pagamento && (
-                        <span className="text-xs text-gray-500 flex items-center gap-1">
-                          <CreditCard className="w-3 h-3" /> {e.forma_pagamento}
-                        </span>
+
+                      {/* Excluir */}
+                      {isMaster && (
+                        <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700 h-7 w-full"
+                          onClick={() => { if (window.confirm(`Excluir a matrícula de "${e.student_name}" em "${e.course_name}"?`)) deleteEnrollmentMutation.mutate(e.id); }}>
+                          <Trash2 className="w-3 h-3 mr-1" /> 🗑️ Excluir
+                        </Button>
                       )}
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
-                     <Badge className={statusColors[e.status] || "bg-gray-100 text-gray-800"}>{e.status}</Badge>
-                     {e.status_pagamento && (
-                       <Badge className={pagamentoColors[e.status_pagamento] || "bg-gray-100 text-gray-800"}>
-                         {e.status_pagamento}
-                       </Badge>
-                     )}
-                     <Button
-                       size="sm"
-                       variant="outline"
-                       className="text-xs h-7 border-blue-300 text-blue-700 hover:bg-blue-50"
-                       onClick={() => setSelectedEnrollmentForContract(selectedEnrollmentForContract?.id === e.id ? null : e)}
-                     >
-                       <PenLine className="w-3 h-3 mr-1" />
-                       {selectedEnrollmentForContract?.id === e.id ? "Fechar Contrato" : "Ver Contrato"}
-                     </Button>
-                     {e.status === "Aguardando Autorização" && (
-                       <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white text-xs" onClick={() => updateStatusMutation.mutate({ id: e.id, status: "Autorizado" })}>
-                         <CheckCircle className="w-3 h-3 mr-1" /> Autorizar
-                       </Button>
-                     )}
-                     {isMaster && (
-                       <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700"
-                         onClick={() => { if (window.confirm(`Excluir a matrícula de "${e.student_name}" em "${e.course_name}"? Esta ação não pode ser desfeita.`)) deleteEnrollmentMutation.mutate(e.id); }}>
-                         <Trash2 className="w-3 h-3" />
-                       </Button>
-                     )}
-                   </div>
                 </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
-
-      <MatriculaModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={(form) => createMutation.mutate(form)}
-        isPending={createMutation.isPending}
-      />
     </div>
   );
 }
