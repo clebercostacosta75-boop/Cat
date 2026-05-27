@@ -1023,20 +1023,118 @@ function MatriculasCursos() {
   );
 }
 
+// ─── Modal de Confirmação Manual de Pagamento ────────────────────────────────
+function ModalConfirmarPagamento({ enrollment, onClose, onConfirmed }) {
+  const [dataRecebimento, setDataRecebimento] = useState(new Date().toISOString().split("T")[0]);
+  const [observacao, setObservacao] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(u => setCurrentUser(u)).catch(() => {});
+  }, []);
+
+  const handleConfirmar = async () => {
+    if (!dataRecebimento) { toast.error("Informe a data do recebimento."); return; }
+    setSaving(true);
+    try {
+      const agora = new Date().toLocaleString("pt-BR");
+      const confirmedBy = currentUser?.full_name || currentUser?.email || "Usuário";
+      const notesUpdate = `Pago - Confirmação manual por ${confirmedBy} em ${agora}. Data recebimento: ${dataRecebimento}.${observacao ? ` Obs: ${observacao}` : ""}`;
+
+      await base44.entities.StudentCourseEnrollment.update(enrollment.id, {
+        status_pagamento: "Pago",
+        notes: [enrollment.notes, notesUpdate].filter(Boolean).join(" | "),
+      });
+
+      // LOG de auditoria
+      await base44.entities.AuditLog.create({
+        user_email: currentUser?.email || "desconhecido",
+        user_name: confirmedBy,
+        action: "update",
+        entity_type: "StudentCourseEnrollment",
+        entity_id: enrollment.id,
+        entity_name: `${enrollment.student_name} — ${enrollment.course_name}`,
+        details: `Pagamento confirmado manualmente. Forma: ${enrollment.forma_pagamento}. Valor: R$ ${enrollment.unit_value}. Data recebimento: ${dataRecebimento}.${observacao ? ` Obs: ${observacao}` : ""} — ${agora}`,
+      });
+
+      toast.success("Pagamento confirmado e registrado no LOG!");
+      onConfirmed();
+      onClose();
+    } catch (e) {
+      toast.error("Erro ao confirmar: " + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-green-800">
+            <CheckCircle className="w-5 h-5 text-green-600" /> Confirmar Pagamento Manual
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-1">
+          <div className="bg-gray-50 border rounded-md p-3 text-sm space-y-1">
+            <p><span className="text-gray-500">Aluno:</span> <strong>{enrollment.student_name}</strong></p>
+            <p><span className="text-gray-500">Curso:</span> {enrollment.course_name}</p>
+            <p><span className="text-gray-500">Valor:</span> <strong className="text-emerald-700">R$ {parseFloat(enrollment.unit_value || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong></p>
+            <p><span className="text-gray-500">Forma:</span> 👤 {enrollment.forma_pagamento}</p>
+          </div>
+          <div className="flex items-start gap-2 p-2.5 bg-amber-50 border border-amber-200 rounded-md">
+            <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-800">⚠️ Esta confirmação é <strong>manual</strong>. Verifique o comprovante antes de confirmar!</p>
+          </div>
+          <div>
+            <Label>Data do recebimento *</Label>
+            <Input type="date" value={dataRecebimento} onChange={e => setDataRecebimento(e.target.value)} className="mt-1" />
+          </div>
+          <div>
+            <Label>Comprovante / Observação <span className="text-gray-400 font-normal">(opcional)</span></Label>
+            <Input value={observacao} onChange={e => setObservacao(e.target.value)} placeholder="Ex: PIX confirmado, comprovante #12345" className="mt-1" />
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-2 text-xs text-blue-700">
+            👤 Confirmado por: <strong>{currentUser?.full_name || currentUser?.email || "..."}</strong>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={onClose} disabled={saving}>❌ Cancelar</Button>
+            <Button className="bg-green-600 hover:bg-green-700" onClick={handleConfirmar} disabled={saving}>
+              {saving ? "Salvando..." : "✅ Confirmar"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Aba: Financeiro (Dashboard Completo) ────────────────────────────────────
 function FinanceiroAlunos() {
   const queryClient = useQueryClient();
   const [selectedEnrollmentForRecibo, setSelectedEnrollmentForRecibo] = useState(null);
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchAluno, setSearchAluno] = useState("");
+  const [confirmandoPagamento, setConfirmandoPagamento] = useState(null);
+  const [userRole, setUserRole] = useState(null);
 
-  const FORMAS_MANUAL = ["À Vista", "Pix", "Cartão de Crédito", "Cartão de Débito", "Transferência Bancária", "Dinheiro em Espécie"];
+  // Formas manuais (confirmação manual obrigatória)
+  const FORMAS_MANUAL = ["À Vista", "Pix", "Cartão de Crédito", "Cartão de Débito", "Transferência Bancária", "Dinheiro em Espécie", "Parcelado 2x", "Parcelado 3x", "Parcelado 4x", "Parcelado 5x", "Parcelado 6x"];
+  // Formas Asaas (confirmação automática — NÃO alterar)
+  const FORMAS_ASAAS = ["PIX Asaas", "Boleto Asaas", "Boleto"];
+
+  useEffect(() => {
+    base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
+  }, []);
+
+  const canConfirmManual = ["admin", "gestor_master", "Administrador Master", "Financeiro"].includes(userRole);
 
   const atualizarStatusPagamentoMutation = useMutation({
-    mutationFn: ({ id, status_pagamento }) => base44.entities.StudentCourseEnrollment.update(id, { status_pagamento }),
+    mutationFn: ({ id, status_pagamento, notes }) => base44.entities.StudentCourseEnrollment.update(id, { status_pagamento, ...(notes ? { notes } : {}) }),
     onSuccess: (_, { status_pagamento }) => {
       queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] });
-      const msgs = { "Pago": "Pagamento confirmado!", "Pendente": "Status alterado para Aguardando Pagamento.", "Inadimplente": "Matrícula marcada como Cancelada/Inadimplente." };
+      const msgs = { "Pendente": "Status alterado para Aguardando Pagamento.", "Inadimplente": "Matrícula marcada como Cancelada/Inadimplente." };
       toast.success(msgs[status_pagamento] || "Status atualizado!");
     },
   });
@@ -1072,15 +1170,16 @@ function FinanceiroAlunos() {
   // KPIs
   const total = enrollments.length;
   const totalReceita = enrollments.reduce((acc, e) => acc + (parseFloat(e.unit_value) || 0), 0);
-  const totalRecebido = receipts
-    .filter(r => r.status === "Emitido")
-    .reduce((acc, r) => acc + (parseFloat(r.amount) || 0), 0);
-  const totalPendente = enrollments
-    .filter(e => ["Pendente", "Parcialmente Pago"].includes(e.status_pagamento))
-    .reduce((acc, e) => acc + (parseFloat(e.unit_value) || 0), 0);
+  const totalRecebido = receipts.filter(r => r.status === "Emitido").reduce((acc, r) => acc + (parseFloat(r.amount) || 0), 0);
+  const totalPendente = enrollments.filter(e => ["Pendente", "Parcialmente Pago"].includes(e.status_pagamento)).reduce((acc, e) => acc + (parseFloat(e.unit_value) || 0), 0);
   const inadimplentes = enrollments.filter(e => e.status_pagamento === "Inadimplente").length;
   const pagos = enrollments.filter(e => e.status_pagamento === "Pago").length;
   const pendentes = enrollments.filter(e => e.status_pagamento === "Pendente").length;
+  // Recebido via Asaas vs Manual
+  const pagosAsaas = enrollments.filter(e => e.status_pagamento === "Pago" && FORMAS_ASAAS.includes(e.forma_pagamento));
+  const pagosManual = enrollments.filter(e => e.status_pagamento === "Pago" && !FORMAS_ASAAS.includes(e.forma_pagamento));
+  const totalAsaas = pagosAsaas.reduce((acc, e) => acc + (parseFloat(e.unit_value) || 0), 0);
+  const totalManual = pagosManual.reduce((acc, e) => acc + (parseFloat(e.unit_value) || 0), 0);
 
   // Vencimentos próximos (próximos 7 dias)
   const proximosVencimentos = enrollments.filter(e => {
@@ -1118,49 +1217,51 @@ function FinanceiroAlunos() {
     <div className="space-y-6">
 
       {/* KPIs principais */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <BookOpen className="w-5 h-5 text-blue-600 mb-1" />
-            <p className="text-xl font-bold text-black">{total}</p>
-            <p className="text-xs text-gray-500">Matrículas PF</p>
-          </CardContent>
-        </Card>
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <TrendingUp className="w-5 h-5 text-emerald-600 mb-1" />
-            <p className="text-xl font-bold text-emerald-700">{formatCurrency(totalReceita)}</p>
-            <p className="text-xs text-gray-500">Receita Total</p>
-          </CardContent>
-        </Card>
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <CheckCircle className="w-5 h-5 text-green-600 mb-1" />
-            <p className="text-xl font-bold text-green-700">{formatCurrency(totalRecebido)}</p>
-            <p className="text-xs text-gray-500">Total Recebido</p>
-          </CardContent>
-        </Card>
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <Clock className="w-5 h-5 text-yellow-600 mb-1" />
-            <p className="text-xl font-bold text-yellow-700">{formatCurrency(totalPendente)}</p>
-            <p className="text-xs text-gray-500">A Receber</p>
-          </CardContent>
-        </Card>
-        <Card className={`border ${vencidos.length > 0 ? "border-red-300 bg-red-50" : "border-gray-200"}`}>
-          <CardContent className="p-4">
-            <XCircle className={`w-5 h-5 mb-1 ${vencidos.length > 0 ? "text-red-600" : "text-gray-400"}`} />
-            <p className={`text-xl font-bold ${vencidos.length > 0 ? "text-red-700" : "text-black"}`}>{vencidos.length}</p>
-            <p className="text-xs text-gray-500">Vencidos/Atraso</p>
-          </CardContent>
-        </Card>
-        <Card className={`border ${proximosVencimentos.length > 0 ? "border-orange-300 bg-orange-50" : "border-gray-200"}`}>
-          <CardContent className="p-4">
-            <Calendar className={`w-5 h-5 mb-1 ${proximosVencimentos.length > 0 ? "text-orange-600" : "text-gray-400"}`} />
-            <p className={`text-xl font-bold ${proximosVencimentos.length > 0 ? "text-orange-700" : "text-black"}`}>{proximosVencimentos.length}</p>
-            <p className="text-xs text-gray-500">Vencem em 7 dias</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="border border-gray-200"><CardContent className="p-4">
+          <BookOpen className="w-5 h-5 text-blue-600 mb-1" />
+          <p className="text-xl font-bold text-black">{total}</p>
+          <p className="text-xs text-gray-500">💰 Receita Total (prevista)</p>
+          <p className="text-xs font-semibold text-emerald-700 mt-0.5">{formatCurrency(totalReceita)}</p>
+        </CardContent></Card>
+        <Card className="border border-emerald-200 bg-emerald-50"><CardContent className="p-4">
+          <span className="text-lg">🏦</span>
+          <p className="text-xl font-bold text-emerald-800">{formatCurrency(totalAsaas)}</p>
+          <p className="text-xs text-emerald-700">✅ Recebido via Asaas</p>
+          <p className="text-xs text-emerald-600">{pagosAsaas.length} pagamento(s)</p>
+        </CardContent></Card>
+        <Card className="border border-green-200 bg-green-50"><CardContent className="p-4">
+          <span className="text-lg">👤</span>
+          <p className="text-xl font-bold text-green-800">{formatCurrency(totalManual)}</p>
+          <p className="text-xs text-green-700">✅ Recebido Manual</p>
+          <p className="text-xs text-green-600">{pagosManual.length} pagamento(s)</p>
+        </CardContent></Card>
+        <Card className="border border-yellow-200 bg-yellow-50"><CardContent className="p-4">
+          <Clock className="w-5 h-5 text-yellow-600 mb-1" />
+          <p className="text-xl font-bold text-yellow-700">{formatCurrency(totalPendente)}</p>
+          <p className="text-xs text-yellow-700">🟡 A Receber</p>
+          <p className="text-xs text-yellow-600">{pendentes} aguardando</p>
+        </CardContent></Card>
+        <Card className={`border ${vencidos.length > 0 ? "border-red-300 bg-red-50" : "border-gray-200"}`}><CardContent className="p-4">
+          <XCircle className={`w-5 h-5 mb-1 ${vencidos.length > 0 ? "text-red-600" : "text-gray-400"}`} />
+          <p className={`text-xl font-bold ${vencidos.length > 0 ? "text-red-700" : "text-black"}`}>{vencidos.length}</p>
+          <p className="text-xs text-gray-500">🔴 Vencidos/Atraso</p>
+        </CardContent></Card>
+        <Card className={`border ${proximosVencimentos.length > 0 ? "border-orange-300 bg-orange-50" : "border-gray-200"}`}><CardContent className="p-4">
+          <Calendar className={`w-5 h-5 mb-1 ${proximosVencimentos.length > 0 ? "text-orange-600" : "text-gray-400"}`} />
+          <p className={`text-xl font-bold ${proximosVencimentos.length > 0 ? "text-orange-700" : "text-black"}`}>{proximosVencimentos.length}</p>
+          <p className="text-xs text-gray-500">📅 Vencem em 7 dias</p>
+        </CardContent></Card>
+        <Card className="border border-gray-200"><CardContent className="p-4">
+          <span className="text-lg">🏦</span>
+          <p className="text-xl font-bold text-gray-800">{pagosAsaas.length + enrollments.filter(e => FORMAS_ASAAS.includes(e.forma_pagamento)).length > 0 ? enrollments.filter(e => FORMAS_ASAAS.includes(e.forma_pagamento)).length : 0}</p>
+          <p className="text-xs text-gray-500">📊 Total via Asaas</p>
+        </CardContent></Card>
+        <Card className="border border-gray-200"><CardContent className="p-4">
+          <span className="text-lg">👤</span>
+          <p className="text-xl font-bold text-gray-800">{enrollments.filter(e => FORMAS_MANUAL.includes(e.forma_pagamento)).length}</p>
+          <p className="text-xs text-gray-500">📊 Total Manual</p>
+        </CardContent></Card>
       </div>
 
       {/* Alertas de vencimentos */}
@@ -1313,51 +1414,50 @@ function FinanceiroAlunos() {
                             <p className="font-semibold text-orange-700">{formatCurrency(saldo)}</p>
                           </div>
                         )}
-                        <Badge className={pagamentoColors[e.status_pagamento] || "bg-gray-100 text-gray-800"}>
-                          {e.status_pagamento || "Pendente"}
-                        </Badge>
-                        {/* Controle manual de status de pagamento */}
-                        {FORMAS_MANUAL.includes(e.forma_pagamento) && (
+                        {/* Badge diferenciado: Asaas vs Manual */}
+                        {e.status_pagamento === "Pago" ? (
+                          FORMAS_ASAAS.includes(e.forma_pagamento) ? (
+                            <Badge className="bg-emerald-700 text-white text-xs">🏦 Pago - Asaas</Badge>
+                          ) : (
+                            <Badge className="bg-green-100 text-green-800 text-xs">👤 Pago - Manual</Badge>
+                          )
+                        ) : e.status_pagamento === "Inadimplente" ? (
+                          <Badge className="bg-red-100 text-red-800 text-xs">❌ Cancelado/Inadimplente</Badge>
+                        ) : (
+                          <Badge className={pagamentoColors[e.status_pagamento] || "bg-gray-100 text-gray-800"}>
+                            🟡 {e.status_pagamento || "Aguardando Pagamento"}
+                          </Badge>
+                        )}
+
+                        {/* Controles manuais — apenas formas manuais + usuário autorizado */}
+                        {FORMAS_MANUAL.includes(e.forma_pagamento) && canConfirmManual && (
                           <div className="flex flex-col gap-1 w-full">
                             <p className="text-xs text-gray-400 font-medium text-right">Alterar pagamento:</p>
                             <div className="flex gap-1 justify-end flex-wrap">
-                              <Button
-                                size="sm"
-                                className="text-xs h-7 bg-green-600 hover:bg-green-700 text-white gap-1"
-                                disabled={e.status_pagamento === "Pago" || atualizarStatusPagamentoMutation.isPending}
-                                onClick={() => {
-                                  if (window.confirm(`Confirmar pagamento de ${e.student_name}?`))
-                                    atualizarStatusPagamentoMutation.mutate({ id: e.id, status_pagamento: "Pago" });
-                                }}
-                              >
-                                <CheckCircle className="w-3 h-3" /> Pago
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
+                              {e.status_pagamento !== "Pago" && (
+                                <Button size="sm" className="text-xs h-7 bg-green-600 hover:bg-green-700 text-white gap-1"
+                                  onClick={() => setConfirmandoPagamento(e)}>
+                                  <CheckCircle className="w-3 h-3" /> Confirmar
+                                </Button>
+                              )}
+                              <Button size="sm" variant="outline"
                                 className="text-xs h-7 border-yellow-400 text-yellow-700 hover:bg-yellow-50 gap-1"
                                 disabled={e.status_pagamento === "Pendente" || atualizarStatusPagamentoMutation.isPending}
-                                onClick={() => {
-                                  if (window.confirm(`Marcar pagamento de ${e.student_name} como Aguardando?`))
-                                    atualizarStatusPagamentoMutation.mutate({ id: e.id, status_pagamento: "Pendente" });
-                                }}
-                              >
+                                onClick={() => { if (window.confirm(`Marcar como Aguardando?`)) atualizarStatusPagamentoMutation.mutate({ id: e.id, status_pagamento: "Pendente" }); }}>
                                 <Clock className="w-3 h-3" /> Aguardando
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
+                              <Button size="sm" variant="outline"
                                 className="text-xs h-7 border-red-300 text-red-600 hover:bg-red-50 gap-1"
                                 disabled={e.status_pagamento === "Inadimplente" || atualizarStatusPagamentoMutation.isPending}
-                                onClick={() => {
-                                  if (window.confirm(`Cancelar/inadimplir pagamento de ${e.student_name}?`))
-                                    atualizarStatusPagamentoMutation.mutate({ id: e.id, status_pagamento: "Inadimplente" });
-                                }}
-                              >
+                                onClick={() => { if (window.confirm(`Cancelar/inadimplir pagamento de ${e.student_name}?`)) atualizarStatusPagamentoMutation.mutate({ id: e.id, status_pagamento: "Inadimplente" }); }}>
                                 <XCircle className="w-3 h-3" /> Cancelar
                               </Button>
                             </div>
                           </div>
+                        )}
+                        {/* Asaas: não permite alteração manual */}
+                        {FORMAS_ASAAS.includes(e.forma_pagamento) && (
+                          <p className="text-xs text-emerald-700 text-right">🏦 Confirmação automática</p>
                         )}
                         <Button
                           size="sm"
@@ -1384,6 +1484,15 @@ function FinanceiroAlunos() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal confirmação manual */}
+      {confirmandoPagamento && (
+        <ModalConfirmarPagamento
+          enrollment={confirmandoPagamento}
+          onClose={() => setConfirmandoPagamento(null)}
+          onConfirmed={() => queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] })}
+        />
+      )}
     </div>
   );
 }
