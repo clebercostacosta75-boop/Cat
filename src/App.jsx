@@ -137,7 +137,7 @@ const AuthenticatedApp = () => {
       <Route path="/CompanyPortal" element={<CompanyPortal />} />
       <Route path="/AcessoNegado" element={<AcessoNegado />} />
       <Route path="/AutoCadastroAluno" element={<AutoCadastroAluno />} />
-      <Route path="/GestaoContratos" element={<LayoutWrapper currentPageName="GestaoContratos"><GestaoContratos /></LayoutWrapper>} />
+      <Route path="/GestaoContratos" element={<LayoutWrapper currentPageName="GestaoContratos"><ProtectedRoute pageKey="Gestão de Contratos"><GestaoContratos /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
       <Route path="/DashboardComercial" element={<LayoutWrapper currentPageName="DashboardComercial"><ProtectedRoute pageKey="Dashboard Comercial"><DashboardComercial /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/GestaoLeads" element={<LayoutWrapper currentPageName="GestaoLeads"><ProtectedRoute pageKey="Gestão de Leads"><GestaoLeads /></ProtectedRoute></LayoutWrapper>} />

@@ -48,6 +48,9 @@ const ROLE_MENUS = {
   Instrutor: ["Dashboard"],
   "Coordenador de Operações": ["Dashboard","Cronograma","Agenda de Treinamentos","Chamada Presencial"],
   PortalEmpresa: [],
+  // Roles sem permissões configuradas = acesso mínimo (admin deve configurar explicitamente)
+  editor: ["Dashboard"],
+  cliente: ["Dashboard"],
 };
 
 export function usePermissions() {
@@ -75,10 +78,11 @@ export function usePermissions() {
           profile = profiles[0];
         } else {
           // Cria UserProfile automaticamente com role padrão se não existir
+          // role "cliente" = acesso mínimo, admin deve configurar permissões explicitamente
           profile = await base44.entities.UserProfile.create({
             user_email: u.email,
             user_name: u.full_name || u.email,
-            role: "editor",
+            role: "cliente",
             status: "active",
           });
         }
@@ -118,12 +122,12 @@ export function usePermissions() {
       }
 
       // Fallback: menu padrão do perfil por role
-      // Se não tiver mapeamento específico, usa menu do Operacional (acesso amplo mas não total)
-      const menuFallback = ROLE_MENUS[profileRole] ?? ROLE_MENUS["Operacional"];
+      // Se não tiver mapeamento específico, acesso mínimo (somente Dashboard)
+      const menuFallback = ROLE_MENUS[profileRole] ?? ["Dashboard"];
       setAllowedKeys(menuFallback);
     } catch {
-      // Em qualquer erro inesperado, libera acesso para não bloquear
-      setAllowedKeys(null);
+      // Em qualquer erro inesperado, acesso mínimo (não libera tudo)
+      setAllowedKeys(["Dashboard"]);
     } finally {
       setLoading(false);
     }
