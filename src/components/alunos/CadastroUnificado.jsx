@@ -7,8 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { User, MapPin, Shield, BookOpen, CheckCircle, ChevronRight, ChevronLeft, Loader2, Plus, Printer, Send, Mail, FileText, Receipt } from "lucide-react";
+import { User, MapPin, Shield, BookOpen, CheckCircle, ChevronRight, ChevronLeft, Loader2, Plus, Printer, Send, Mail, FileText, Receipt, Copy } from "lucide-react";
 import { toast } from "sonner";
+import { QRCodeSVG } from "qrcode.react";
+
+const PIX_CNPJ = "07238084000145";
+const PIX_BENEFICIARIO = "V.S. NUNES CURSOS E TREINAMENTO LTDA";
+const PIX_CNPJ_FORMATADO = "07.238.084/0001-45";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -63,7 +68,10 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
   };
 
   const isParcelado = enrollment.forma_pagamento?.startsWith("Parcelado");
-  const isAVista = enrollment.forma_pagamento === "À Vista" || enrollment.forma_pagamento === "Pix" || enrollment.forma_pagamento === "Dinheiro em Espécie";
+  const isPix = enrollment.forma_pagamento === "Pix";
+  // PIX manual NUNCA é automático. Apenas "À Vista" em dinheiro gera recibo automático.
+  const isAVistaAutomatico = enrollment.forma_pagamento === "À Vista" || enrollment.forma_pagamento === "Dinheiro em Espécie";
+  const isAVista = isAVistaAutomatico; // manter compatibilidade
 
   const handleSave = async () => {
     if (!enrollment.course_id || !enrollment.start_date) { toast.error("Selecione o curso e a data de início"); return; }
@@ -73,6 +81,8 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
       const student = await base44.entities.Student.create(form);
 
       // 2. Criar matrícula
+      // PIX manual NUNCA marca como Pago automaticamente
+      const statusPagamentoInicial = isAVistaAutomatico ? "Pago" : "Pendente";
       const enrollmentData = {
         student_id: student.id,
         student_name: student.full_name,
@@ -88,9 +98,9 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
         status: "Aguardando Autorização",
         unit_value: parseFloat(enrollment.unit_value) || 0,
         forma_pagamento: enrollment.forma_pagamento,
-        status_pagamento: isAVista ? "Pago" : "Pendente",
+        status_pagamento: statusPagamentoInicial,
         data_vencimento_pagamento: enrollment.data_vencimento_pagamento,
-        notes: "",
+        notes: isPix ? "Aguardando confirmação manual do pagamento PIX." : "",
       };
       const newEnrollment = await base44.entities.StudentCourseEnrollment.create(enrollmentData);
 
@@ -103,10 +113,10 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
         });
       } catch (e) { console.warn("Contrato:", e); }
 
-      // 4. Se à vista, gerar recibo via função backend (para obter HTML)
+      // 4. Se à vista (dinheiro/cartão), gerar recibo. PIX manual NUNCA gera recibo automático.
       let receiptHtml = null;
       let receiptNumber = null;
-      if (isAVista && enrollment.unit_value) {
+      if (isAVistaAutomatico && enrollment.unit_value) {
         try {
           const res = await base44.functions.invoke("gerarRecibo", {
             enrollment_id: newEnrollment.id,
@@ -156,13 +166,20 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
       onSaved && onSaved(student, newEnrollment);
 
       // Mostrar modal de conclusão com ações (não fechar ainda)
+      // Montar payload PIX para QR Code
+      const pixAmount = parseFloat(enrollment.unit_value) || 0;
+      const pixDescricao = `Matricula - ${enrollment.course_name} - ${student.full_name}`.substring(0, 40);
+
       setSuccessData({
         student, enrollment: newEnrollment,
         contractNumber, contractId, contractAuthCode,
         studentPhone, studentEmail,
         receiptHtml, receiptNumber,
         courseName: enrollment.course_name,
-        isAVista,
+        isAVista: isAVistaAutomatico,
+        isPix,
+        pixAmount,
+        pixDescricao,
       });
     } catch (e) {
       toast.error("Erro ao salvar: " + e.message);
@@ -207,8 +224,48 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
     toast.success("Link de assinatura copiado!");
   };
 
+  // Gerar payload Pix Copia e Cola (formato EMV simplificado)
+  const gerarPixCopiaCola = (cnpj, beneficiario, valor, descricao) => {
+    const cnpjLimpo = cnpj.replace(/\D/g, "");
+    const valorStr = valor.toFixed(2);
+    const cidade = "BELEM";
+    const txid = "***";
+
+    const campo = (id, valor) => {
+      const len = String(valor.length).padStart(2, "0");
+      return `${id}${len}${valor}`;
+    };
+
+    const merchantAccountInfo = campo("00", "BR.GOV.BCB.PIX") + campo("01", cnpjLimpo);
+    const pixPayload =
+      campo("00", "01") +
+      campo("26", merchantAccountInfo) +
+      campo("52", "0000") +
+      campo("53", "986") +
+      campo("54", valorStr) +
+      campo("58", "BR") +
+      campo("59", beneficiario.substring(0, 25)) +
+      campo("60", cidade) +
+      campo("62", campo("05", txid)) +
+      "6304";
+
+    // CRC16 simples
+    let crc = 0xFFFF;
+    for (let i = 0; i < pixPayload.length; i++) {
+      crc ^= pixPayload.charCodeAt(i) << 8;
+      for (let j = 0; j < 8; j++) {
+        crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
+      }
+    }
+    return pixPayload + (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, "0");
+  };
+
   // Modal de conclusão pós-cadastro
   if (successData) {
+    const pixCopiaCola = successData.isPix && successData.pixAmount > 0
+      ? gerarPixCopiaCola(PIX_CNPJ, PIX_BENEFICIARIO, successData.pixAmount, successData.pixDescricao)
+      : null;
+
     return (
       <Dialog open={open} onOpenChange={() => { setSuccessData(null); onClose(); }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -225,12 +282,78 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
               <p className="text-emerald-700 text-xs">CPF: {successData.student.cpf} · Curso: {successData.courseName}</p>
               <p className="text-emerald-600 text-xs mt-1">
                 ✓ Aluno cadastrado &nbsp;·&nbsp; ✓ Matrícula criada &nbsp;·&nbsp;
-                {successData.contractNumber ? `✓ Contrato ${successData.contractNumber} gerado` : "⚠ Contrato não gerado"}&nbsp;·&nbsp;
-                {successData.isAVista && successData.receiptNumber ? `✓ Recibo ${successData.receiptNumber} emitido` : ""}
+                {successData.contractNumber ? `✓ Contrato ${successData.contractNumber} gerado` : "⚠ Contrato não gerado"}
+                {successData.isAVista && successData.receiptNumber ? ` · ✓ Recibo ${successData.receiptNumber} emitido` : ""}
+                {successData.isPix ? " · 🟡 Aguardando Pagamento PIX" : ""}
               </p>
             </div>
 
-            {/* RECIBO - Imprimir */}
+            {/* BLOCO PIX — aparece quando forma de pagamento é Pix */}
+            {successData.isPix && (
+              <div className="border-2 border-yellow-300 rounded-xl p-4 bg-yellow-50 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">💳</span>
+                  <p className="font-bold text-yellow-900 text-sm">DADOS PARA PAGAMENTO PIX</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <p className="text-gray-500">Beneficiário</p>
+                    <p className="font-semibold text-gray-800">{PIX_BENEFICIARIO}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">CNPJ</p>
+                    <p className="font-semibold text-gray-800">{PIX_CNPJ_FORMATADO}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Valor</p>
+                    <p className="font-bold text-emerald-700 text-base">
+                      R$ {successData.pixAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Status</p>
+                    <Badge className="bg-yellow-100 text-yellow-800 text-xs">🟡 Aguardando PIX</Badge>
+                  </div>
+                </div>
+
+                {/* QR Code */}
+                {pixCopiaCola && (
+                  <div className="flex flex-col items-center gap-2 py-2">
+                    <QRCodeSVG value={pixCopiaCola} size={160} level="M" />
+                    <p className="text-xs text-gray-500 text-center">Escaneie com o app do banco</p>
+                  </div>
+                )}
+
+                {/* Chave PIX */}
+                <div className="bg-white border border-yellow-200 rounded-lg p-2">
+                  <p className="text-xs text-gray-500 mb-1">Chave PIX (CNPJ):</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-mono text-sm font-bold text-gray-800 flex-1">{PIX_CNPJ_FORMATADO}</p>
+                    <Button size="sm" variant="outline" className="h-7 text-xs"
+                      onClick={() => { navigator.clipboard.writeText(PIX_CNPJ_FORMATADO); toast.success("Chave PIX copiada!"); }}>
+                      <Copy className="w-3 h-3 mr-1" /> Copiar
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Pix Copia e Cola */}
+                {pixCopiaCola && (
+                  <Button variant="outline" className="w-full border-yellow-400 text-yellow-800 hover:bg-yellow-100 gap-2"
+                    onClick={() => { navigator.clipboard.writeText(pixCopiaCola); toast.success("Código PIX copiado!"); }}>
+                    <Copy className="w-4 h-4" /> 📋 Copiar Código PIX
+                  </Button>
+                )}
+
+                <div className="flex items-start gap-2 p-2 bg-amber-100 border border-amber-300 rounded-lg">
+                  <span className="text-sm">⚠️</span>
+                  <p className="text-xs text-amber-800 font-medium">
+                    O pagamento será confirmado <strong>manualmente</strong> pela equipe após verificação do comprovante.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* RECIBO - Imprimir (apenas para pagamentos à vista automáticos, NÃO PIX) */}
             {successData.isAVista && successData.receiptHtml && (
               <div className="border border-green-200 rounded-lg p-3 bg-green-50">
                 <div className="flex items-center justify-between">
@@ -463,18 +586,31 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
             </div>
             {isParcelado && (
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-xs font-semibold text-blue-800 mb-2">Parcelamento</p>
+                <p className="text-xs font-semibold text-blue-800 mb-2">📋 Parcelamento</p>
                 <p className="text-xs text-blue-700">
                   {enrollment.forma_pagamento} de {enrollment.unit_value
                     ? `R$ ${(parseFloat(enrollment.unit_value) / parseInt(enrollment.forma_pagamento.match(/\d+/)?.[0] || 1)).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} cada`
                     : "—"}
                 </p>
+                <p className="text-xs text-blue-600 mt-1">⚠️ Cada parcela confirmada manualmente.</p>
               </div>
             )}
-            {isAVista && enrollment.unit_value && (
+            {isPix && enrollment.unit_value && (
+              <div className="p-3 bg-yellow-50 border border-yellow-300 rounded-lg space-y-1">
+                <p className="text-xs font-bold text-yellow-900">💳 Pagamento via PIX</p>
+                <p className="text-xs text-yellow-800">Chave PIX (CNPJ): <strong>{PIX_CNPJ_FORMATADO}</strong></p>
+                <p className="text-xs text-yellow-800">Beneficiário: <strong>{PIX_BENEFICIARIO}</strong></p>
+                <p className="text-xs text-amber-800 font-medium mt-1">⚠️ O pagamento será confirmado manualmente pela equipe após verificação do comprovante.</p>
+              </div>
+            )}
+            {isAVistaAutomatico && enrollment.unit_value && (
               <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <CheckCircle className="w-4 h-4 text-green-600" />
-                <p className="text-xs text-green-800 font-medium">Pagamento à vista — recibo será gerado automaticamente ao salvar.</p>
+                <p className="text-xs text-green-800 font-medium">
+                  {enrollment.forma_pagamento === "Dinheiro em Espécie"
+                    ? "💵 Pagamento em dinheiro. ⚠️ Confirmação manual necessária."
+                    : "Pagamento à vista — recibo será gerado automaticamente ao salvar."}
+                </p>
               </div>
             )}
 
@@ -490,7 +626,12 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
                 <span className="font-medium">Valor:</span><span>{enrollment.unit_value ? `R$ ${parseFloat(enrollment.unit_value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}</span>
               </div>
               <div className="mt-2 pt-2 border-t border-gray-200">
-                <p className="text-xs text-gray-500">Ao salvar serão gerados automaticamente: ✓ Cadastro ✓ Matrícula ✓ Contrato {isAVista ? "✓ Recibo" : ""} ✓ Histórico</p>
+                <p className="text-xs text-gray-500">
+                  Ao salvar serão gerados automaticamente: ✓ Cadastro ✓ Matrícula ✓ Contrato
+                  {isAVistaAutomatico && !isPix ? " ✓ Recibo" : ""}
+                  {isPix ? " ✓ QR Code PIX" : ""}
+                  {" "}✓ Histórico
+                </p>
               </div>
             </div>
           </div>

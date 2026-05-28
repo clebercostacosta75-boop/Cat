@@ -707,6 +707,7 @@ function MatriculasCursos() {
   const [filterStatusPagamento, setFilterStatusPagamento] = useState("all");
   const [searchAluno, setSearchAluno] = useState("");
   const [financeiroEnrollment, setFinanceiroEnrollment] = useState(null);
+  const [confirmandoPix, setConfirmandoPix] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
@@ -779,6 +780,15 @@ function MatriculasCursos() {
 
   return (
     <div className="space-y-4">
+      {/* Modal Confirmação PIX */}
+      {confirmandoPix && (
+        <ModalConfirmarPagamento
+          enrollment={confirmandoPix}
+          onClose={() => setConfirmandoPix(null)}
+          onConfirmed={() => queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] })}
+        />
+      )}
+
       {/* Modal Novo Curso (rematrícula) */}
       <NovoCursoModal
         open={!!novoCursoEnrollment}
@@ -952,8 +962,14 @@ function MatriculasCursos() {
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         <Badge className={`text-xs ${statusColors[e.status] || "bg-gray-100 text-gray-800"}`}>{e.status}</Badge>
                         {e.status_pagamento && (
-                          <Badge className={`text-xs ${pagamentoColors[e.status_pagamento] || "bg-gray-100 text-gray-800"}`}>
-                            💰 {e.status_pagamento}
+                          <Badge className={`text-xs ${
+                            e.forma_pagamento === "Pix" && e.status_pagamento === "Pendente"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : pagamentoColors[e.status_pagamento] || "bg-gray-100 text-gray-800"
+                          }`}>
+                            {e.forma_pagamento === "Pix" && e.status_pagamento === "Pendente"
+                              ? "🟡 Aguardando Pagamento PIX"
+                              : `💰 ${e.status_pagamento}`}
                           </Badge>
                         )}
                       </div>
@@ -992,6 +1008,17 @@ function MatriculasCursos() {
                       >
                         <Plus className="w-3 h-3 mr-1" /> ➕ Novo Curso
                       </Button>
+
+                      {/* Confirmar PIX manual */}
+                      {e.forma_pagamento === "Pix" && e.status_pagamento !== "Pago" && isMaster && (
+                        <Button
+                          size="sm"
+                          className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs h-7 w-full"
+                          onClick={() => setConfirmandoPix(e)}
+                        >
+                          <CheckCircle className="w-3 h-3 mr-1" /> ✅ Confirmar PIX
+                        </Button>
+                      )}
 
                       {/* Autorizar */}
                       {e.status === "Aguardando Autorização" && (
