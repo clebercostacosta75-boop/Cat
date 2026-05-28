@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Users, BookOpen, FileText, DollarSign, AlertTriangle, Award,
-  Bell, CheckCircle, Clock, TrendingUp, Calendar, BarChart3
+  Bell, CheckCircle, Clock, TrendingUp, Calendar, BarChart3,
+  XCircle, CreditCard, ChevronRight
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -18,13 +19,32 @@ const fmt = (v) => `R$ ${(parseFloat(v) || 0).toLocaleString("pt-BR", { minimumF
 const fmtDate = (d) => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
 const todayStr = () => new Date().toISOString().split("T")[0];
 
-const COLORS = ["#6366f1", "#22c55e", "#f59e0b", "#ef4444", "#3b82f6", "#8b5cf6"];
+const COLORS = ["#8b5cf6", "#3b82f6", "#f59e0b", "#22c55e", "#ef4444", "#6366f1", "#ec4899"];
+
+const PAG_COLORS = {
+  "Pix": "#8b5cf6",
+  "PIX Asaas": "#3b82f6",
+  "Boleto": "#f59e0b",
+  "À Vista": "#22c55e",
+  "Dinheiro em Espécie": "#16a34a",
+  "Parcelado 2x": "#ef4444",
+  "Parcelado 3x": "#dc2626",
+  "Parcelado 4x": "#b91c1c",
+  "Parcelado 5x": "#991b1b",
+  "Parcelado 6x": "#7f1d1d",
+  "Cartão de Crédito": "#06b6d4",
+  "Cartão de Débito": "#0891b2",
+  "Transferência Bancária": "#64748b",
+};
 
 export default function DashboardPF() {
   const today = todayStr();
-  const [dateFrom, setDateFrom] = useState(today);
+
+  // Período inicial: mês atual
+  const firstOfMonth = today.slice(0, 7) + "-01";
+  const [dateFrom, setDateFrom] = useState(firstOfMonth);
   const [dateTo, setDateTo] = useState(today);
-  const [filterFrom, setFilterFrom] = useState(today);
+  const [filterFrom, setFilterFrom] = useState(firstOfMonth);
   const [filterTo, setFilterTo] = useState(today);
 
   const { data: students = [] } = useQuery({
@@ -61,235 +81,515 @@ export default function DashboardPF() {
   });
 
   const inRange = (dateField, item) => {
-    const d = (item[dateField] || item.created_date || "").slice(0, 10);
+    const d = ((item[dateField] || item.created_date || "").slice(0, 10));
     return d >= filterFrom && d <= filterTo;
   };
 
-  // KPIs do período
+  // ─── KPIs do período ──────────────────────────────────────────────────────
   const studentsInPeriod = students.filter(s => inRange("created_date", s));
   const enrollmentsInPeriod = enrollments.filter(e => inRange("created_date", e));
   const contractsInPeriod = contracts.filter(c => inRange("created_date", c));
-  const receiptsInPeriod = receipts.filter(r => inRange("created_date", r));
+  const receiptsInPeriod = receipts.filter(r => inRange("created_date", r) && r.status === "Emitido");
   const certsInPeriod = certificates.filter(c => inRange("created_date", c));
 
-  const totalRecebido = receiptsInPeriod
-    .filter(r => r.status === "Emitido")
-    .reduce((a, r) => a + (parseFloat(r.amount) || 0), 0);
-
-  const inadimplentes = enrollments.filter(e => e.status_pagamento === "Inadimplente").length;
-  const totalInadimplencia = enrollments
-    .filter(e => e.status_pagamento === "Inadimplente")
+  const totalRecebidoRecibos = receiptsInPeriod.reduce((a, r) => a + (parseFloat(r.amount) || 0), 0);
+  const totalRecebidoAsaas = enrollments
+    .filter(e => e.status_pagamento === "Pago" && ["PIX Asaas", "Boleto Asaas", "Boleto"].includes(e.forma_pagamento) && inRange("created_date", e))
     .reduce((a, e) => a + (parseFloat(e.unit_value) || 0), 0);
+  const totalRecebido = totalRecebidoRecibos + totalRecebidoAsaas;
 
+  // ─── KPIs gerais ──────────────────────────────────────────────────────────
   const ativos = students.filter(s => s.status === "Ativo").length;
   const inativos = students.filter(s => s.status === "Inativo").length;
+
+  const receitaTotalPrevista = enrollments.reduce((a, e) => a + (parseFloat(e.unit_value) || 0), 0);
+  const totalPagoGeral = receipts.filter(r => r.status === "Emitido").reduce((a, r) => a + (parseFloat(r.amount) || 0), 0);
+  const aguardandoPagamento = enrollments.filter(e => ["Pendente", "Parcialmente Pago"].includes(e.status_pagamento)).length;
+  const aguardandoValor = enrollments.filter(e => ["Pendente", "Parcialmente Pago"].includes(e.status_pagamento)).reduce((a, e) => a + (parseFloat(e.unit_value) || 0), 0);
+  const inadimplentes = enrollments.filter(e => e.status_pagamento === "Inadimplente").length;
+  const inadimplentesValor = enrollments.filter(e => e.status_pagamento === "Inadimplente").reduce((a, e) => a + (parseFloat(e.unit_value) || 0), 0);
+
   const contratosAssinados = contracts.filter(c => c.status === "Assinado_Todas_Partes").length;
   const contratosPendentes = contracts.filter(c =>
     ["Gerado_Automaticamente", "Gerado_Manualmente", "Enviado_Assinatura", "Aguardando_Assinatura_Aluno"].includes(c.status)
   ).length;
+  const matriculasAutorizadas = enrollments.filter(e => ["Autorizado", "Certificado Gerado", "Assinado"].includes(e.status)).length;
+  const matriculasAguardando = enrollments.filter(e => e.status === "Aguardando Autorização").length;
 
-  // Matrículas por curso
+  // ─── Alertas ──────────────────────────────────────────────────────────────
+  const pixAguardando = enrollments.filter(e => e.forma_pagamento === "Pix" && e.status_pagamento === "Pendente");
+  const pixUrgente = pixAguardando.filter(e => {
+    const d = new Date(e.created_date);
+    return (new Date() - d) / (1000 * 60 * 60 * 24) > 3;
+  });
+
+  const vencidos = enrollments.filter(e => {
+    if (!e.data_vencimento_pagamento || e.status_pagamento === "Pago") return false;
+    return e.data_vencimento_pagamento < today;
+  });
+
+  const vence7dias = enrollments.filter(e => {
+    if (!e.data_vencimento_pagamento || e.status_pagamento === "Pago") return false;
+    const diff = (new Date(e.data_vencimento_pagamento + "T00:00:00") - new Date()) / (1000 * 60 * 60 * 24);
+    return diff >= 0 && diff <= 7;
+  });
+
+  const contratosSemAssinar7dias = contracts.filter(c => {
+    if (c.status === "Assinado_Todas_Partes") return false;
+    const d = (new Date() - new Date(c.created_date)) / (1000 * 60 * 60 * 24);
+    return d > 7 && ["Gerado_Automaticamente", "Gerado_Manualmente", "Enviado_Assinatura", "Aguardando_Assinatura_Aluno"].includes(c.status);
+  });
+
+  const novosHoje = students.filter(s => (s.created_date || "").slice(0, 10) === today);
+  const contratosAssinadosHoje = contracts.filter(c => c.status === "Assinado_Todas_Partes" && (c.updated_date || "").slice(0, 10) === today);
+  const pagamentosHoje = receipts.filter(r => r.status === "Emitido" && (r.created_date || "").slice(0, 10) === today);
+
+  // ─── Gráficos ─────────────────────────────────────────────────────────────
+  // Matrículas por curso (todos)
   const byCourse = {};
-  enrollments.forEach(e => {
-    if (e.course_name) byCourse[e.course_name] = (byCourse[e.course_name] || 0) + 1;
-  });
-  const courseData = Object.entries(byCourse)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
-    .map(([name, value]) => ({ name: name.length > 12 ? name.slice(0, 12) + "…" : name, value }));
+  enrollments.forEach(e => { if (e.course_name) byCourse[e.course_name] = (byCourse[e.course_name] || 0) + 1; });
+  const courseData = Object.entries(byCourse).sort((a, b) => b[1] - a[1]).slice(0, 8)
+    .map(([name, value]) => ({ name: name.length > 15 ? name.slice(0, 15) + "…" : name, value }));
 
-  // Formas de pagamento
+  // Formas de pagamento (todos)
   const byPayment = {};
-  enrollments.forEach(e => {
-    const k = e.forma_pagamento || "Não informado";
-    byPayment[k] = (byPayment[k] || 0) + 1;
-  });
+  enrollments.forEach(e => { const k = e.forma_pagamento || "Não informado"; byPayment[k] = (byPayment[k] || 0) + 1; });
   const paymentData = Object.entries(byPayment).map(([name, value]) => ({ name, value }));
 
-  // Evolução de matrículas por dia (últimos 30 dias)
-  const last30 = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const ds = d.toISOString().split("T")[0];
-    const count = enrollments.filter(e => (e.created_date || "").slice(0, 10) === ds).length;
-    last30.push({ day: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }), matrículas: count });
+  // Status de matrículas
+  const statusMatData = [
+    { name: "Aguardando Auth.", value: enrollments.filter(e => e.status === "Aguardando Autorização").length, color: "#f59e0b" },
+    { name: "Autorizado", value: enrollments.filter(e => e.status === "Autorizado").length, color: "#22c55e" },
+    { name: "Certificado", value: enrollments.filter(e => e.status === "Certificado Gerado").length, color: "#3b82f6" },
+    { name: "Assinado", value: enrollments.filter(e => e.status === "Assinado").length, color: "#8b5cf6" },
+    { name: "Vencido", value: enrollments.filter(e => e.status === "Vencido").length, color: "#ef4444" },
+    { name: "Revogado", value: enrollments.filter(e => e.status === "Revogado").length, color: "#6b7280" },
+  ].filter(d => d.value > 0);
+
+  // Receita mensal (últimos 6 meses)
+  const last6Months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(); d.setMonth(d.getMonth() - i);
+    const ym = d.toISOString().slice(0, 7);
+    const label = d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
+    const previsto = enrollments.filter(e => (e.created_date || "").slice(0, 7) === ym).reduce((a, e) => a + (parseFloat(e.unit_value) || 0), 0);
+    const recebido = receipts.filter(r => r.status === "Emitido" && (r.created_date || "").slice(0, 7) === ym).reduce((a, r) => a + (parseFloat(r.amount) || 0), 0);
+    last6Months.push({ mes: label, Previsto: previsto, Recebido: recebido });
   }
 
+  // Tabela: 10 mais recentes ou urgentes
+  const tabelaAlunos = [...enrollments]
+    .sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""))
+    .slice(0, 10);
+
+  // ─── Handlers de período ──────────────────────────────────────────────────
   const handleBuscar = () => { setFilterFrom(dateFrom); setFilterTo(dateTo); };
   const handleHoje = () => { const t = todayStr(); setDateFrom(t); setDateTo(t); setFilterFrom(t); setFilterTo(t); };
+  const handleSemana = () => {
+    const d = new Date(); d.setDate(d.getDate() - d.getDay());
+    const ini = d.toISOString().split("T")[0];
+    setDateFrom(ini); setDateTo(today); setFilterFrom(ini); setFilterTo(today);
+  };
+  const handleMes = () => {
+    const ini = today.slice(0, 7) + "-01";
+    setDateFrom(ini); setDateTo(today); setFilterFrom(ini); setFilterTo(today);
+  };
+  const handleAno = () => {
+    const ini = today.slice(0, 4) + "-01-01";
+    setDateFrom(ini); setDateTo(today); setFilterFrom(ini); setFilterTo(today);
+  };
 
-  const isToday = filterFrom === today && filterTo === today;
+  const pagBg = { Pago: "bg-green-100 text-green-800", Pendente: "bg-yellow-100 text-yellow-800", Inadimplente: "bg-red-100 text-red-800", "Parcialmente Pago": "bg-blue-100 text-blue-800" };
+  const statusBg = { "Aguardando Autorização": "bg-blue-100 text-blue-800", Autorizado: "bg-green-100 text-green-800", "Certificado Gerado": "bg-emerald-100 text-emerald-800", Assinado: "bg-purple-100 text-purple-800", Vencido: "bg-red-100 text-red-800", Revogado: "bg-gray-100 text-gray-700" };
 
   return (
     <div className="space-y-6">
-      {/* Filtro de Data */}
+
+      {/* ── Filtro de Período ─────────────────────────────────────────────── */}
       <Card className="border border-gray-200">
         <CardContent className="p-4">
-          <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-wrap items-end gap-2">
             <div>
               <p className="text-xs text-gray-500 mb-1">Data Início</p>
-              <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-40" />
+              <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-36" />
             </div>
             <div>
               <p className="text-xs text-gray-500 mb-1">Data Fim</p>
-              <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-40" />
+              <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-36" />
             </div>
             <Button onClick={handleBuscar} className="bg-gray-900 hover:bg-gray-800">Buscar</Button>
-            <Button variant="outline" onClick={handleHoje}>Hoje</Button>
-            {isToday && <Badge className="bg-blue-100 text-blue-700 h-8 px-3">Exibindo dados de hoje</Badge>}
+            <Button variant="outline" size="sm" onClick={handleHoje}>Hoje</Button>
+            <Button variant="outline" size="sm" onClick={handleSemana}>Esta Semana</Button>
+            <Button variant="outline" size="sm" onClick={handleMes}>Este Mês</Button>
+            <Button variant="outline" size="sm" onClick={handleAno}>Este Ano</Button>
+            <Badge className="bg-blue-100 text-blue-700 h-8 px-3 text-xs">
+              {filterFrom === filterTo ? fmtDate(filterFrom) : `${fmtDate(filterFrom)} → ${fmtDate(filterTo)}`}
+            </Badge>
           </div>
         </CardContent>
       </Card>
 
-      {/* Cards do Período */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { icon: Users, color: "text-blue-600", bg: "bg-blue-50", value: studentsInPeriod.length, label: "Novos Alunos" },
-          { icon: BookOpen, color: "text-indigo-600", bg: "bg-indigo-50", value: enrollmentsInPeriod.length, label: "Matrículas" },
-          { icon: FileText, color: "text-purple-600", bg: "bg-purple-50", value: contractsInPeriod.length, label: "Contratos Gerados" },
-          { icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50", value: fmt(totalRecebido), label: "Valor Recebido" },
-          { icon: AlertTriangle, color: "text-red-600", bg: "bg-red-50", value: inadimplentes, label: "Inadimplentes" },
-          { icon: Award, color: "text-yellow-600", bg: "bg-yellow-50", value: certsInPeriod.length, label: "Certificados" },
-          { icon: Bell, color: "text-orange-600", bg: "bg-orange-50", value: receiptsInPeriod.length, label: "Recibos Emitidos" },
-          { icon: CheckCircle, color: "text-green-600", bg: "bg-green-50", value: contratosAssinados, label: "Contratos Assinados" },
-        ].map((kpi, i) => (
-          <Card key={i} className="border border-gray-200">
-            <CardContent className={`p-4 ${kpi.bg} rounded-lg`}>
-              <kpi.icon className={`w-5 h-5 ${kpi.color} mb-1`} />
-              <p className={`text-xl font-bold ${kpi.color}`}>{kpi.value}</p>
-              <p className="text-xs text-gray-600">{kpi.label}</p>
+      {/* ── LINHA 1: Alunos ───────────────────────────────────────────────── */}
+      <div>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1"><Users className="w-3 h-3" /> Alunos</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="border border-gray-200 bg-blue-50">
+            <CardContent className="p-4">
+              <Users className="w-5 h-5 text-blue-600 mb-1" />
+              <p className="text-2xl font-bold text-blue-700">{ativos}</p>
+              <p className="text-xs text-gray-600">👥 Total Alunos Ativos</p>
+              {inativos > 0 && <p className="text-xs text-gray-400 mt-0.5">{inativos} inativos</p>}
             </CardContent>
           </Card>
-        ))}
+          <Card className="border border-gray-200 bg-indigo-50">
+            <CardContent className="p-4">
+              <Users className="w-5 h-5 text-indigo-600 mb-1" />
+              <p className="text-2xl font-bold text-indigo-700">{studentsInPeriod.length}</p>
+              <p className="text-xs text-gray-600">🆕 Novos Alunos (período)</p>
+            </CardContent>
+          </Card>
+          <Card className="border border-gray-200 bg-purple-50">
+            <CardContent className="p-4">
+              <BookOpen className="w-5 h-5 text-purple-600 mb-1" />
+              <p className="text-2xl font-bold text-purple-700">{enrollments.length}</p>
+              <p className="text-xs text-gray-600">📋 Total de Matrículas</p>
+              <p className="text-xs text-gray-400 mt-0.5">{enrollmentsInPeriod.length} no período</p>
+            </CardContent>
+          </Card>
+          <Card className="border border-gray-200 bg-green-50">
+            <CardContent className="p-4">
+              <CheckCircle className="w-5 h-5 text-green-600 mb-1" />
+              <p className="text-2xl font-bold text-green-700">{matriculasAutorizadas}</p>
+              <p className="text-xs text-gray-600">✅ Matrículas Concluídas</p>
+              <p className="text-xs text-gray-400 mt-0.5">{matriculasAguardando} aguardando auth.</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      {/* Cards secundários */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <p className="text-xs text-gray-500 mb-1">Alunos Ativos / Inativos</p>
-            <p className="text-xl font-bold text-green-700">{ativos} <span className="text-sm font-normal text-gray-400">/ {inativos}</span></p>
-          </CardContent>
-        </Card>
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <p className="text-xs text-gray-500 mb-1">Contratos Assinados / Pendentes</p>
-            <p className="text-xl font-bold text-blue-700">{contratosAssinados} <span className="text-sm font-normal text-gray-400">/ {contratosPendentes}</span></p>
-          </CardContent>
-        </Card>
-        <Card className="border border-red-200 bg-red-50">
-          <CardContent className="p-4">
-            <p className="text-xs text-gray-500 mb-1">Valor em Inadimplência</p>
-            <p className="text-xl font-bold text-red-700">{fmt(totalInadimplencia)}</p>
-          </CardContent>
-        </Card>
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <p className="text-xs text-gray-500 mb-1">Total de Certificados (mês)</p>
-            <p className="text-xl font-bold text-yellow-700">{certificates.filter(c => {
-              const d = (c.created_date || "").slice(0, 7);
-              return d === today.slice(0, 7);
-            }).length}</p>
-          </CardContent>
-        </Card>
+      {/* ── LINHA 2: Financeiro ───────────────────────────────────────────── */}
+      <div>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1"><DollarSign className="w-3 h-3" /> Financeiro</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="border border-gray-200 bg-gray-50">
+            <CardContent className="p-4">
+              <TrendingUp className="w-5 h-5 text-gray-600 mb-1" />
+              <p className="text-xl font-bold text-gray-800">{fmt(receitaTotalPrevista)}</p>
+              <p className="text-xs text-gray-600">💰 Receita Total Prevista</p>
+            </CardContent>
+          </Card>
+          <Card className="border border-emerald-200 bg-emerald-50">
+            <CardContent className="p-4">
+              <CheckCircle className="w-5 h-5 text-emerald-600 mb-1" />
+              <p className="text-xl font-bold text-emerald-700">{fmt(totalRecebido)}</p>
+              <p className="text-xs text-gray-600">✅ Total Recebido (período)</p>
+              <p className="text-xs text-gray-400 mt-0.5">{receiptsInPeriod.length} recibo(s)</p>
+            </CardContent>
+          </Card>
+          <Card className="border border-yellow-200 bg-yellow-50">
+            <CardContent className="p-4">
+              <Clock className="w-5 h-5 text-yellow-600 mb-1" />
+              <p className="text-xl font-bold text-yellow-700">{fmt(aguardandoValor)}</p>
+              <p className="text-xs text-gray-600">🟡 Aguardando Pagamento</p>
+              <p className="text-xs text-gray-400 mt-0.5">{aguardandoPagamento} matrículas</p>
+            </CardContent>
+          </Card>
+          <Card className="border border-red-200 bg-red-50">
+            <CardContent className="p-4">
+              <XCircle className="w-5 h-5 text-red-600 mb-1" />
+              <p className="text-xl font-bold text-red-700">{inadimplentes}</p>
+              <p className="text-xs text-gray-600">🔴 Inadimplentes</p>
+              <p className="text-xs text-red-500 mt-0.5">{fmt(inadimplentesValor)}</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      {/* Gráficos */}
+      {/* ── LINHA 3: Documentos ───────────────────────────────────────────── */}
+      <div>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1"><FileText className="w-3 h-3" /> Documentos</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="border border-gray-200 bg-blue-50">
+            <CardContent className="p-4">
+              <FileText className="w-5 h-5 text-blue-600 mb-1" />
+              <p className="text-2xl font-bold text-blue-700">{contractsInPeriod.length}</p>
+              <p className="text-xs text-gray-600">📄 Contratos Gerados (período)</p>
+              <p className="text-xs text-gray-400 mt-0.5">{contracts.length} no total</p>
+            </CardContent>
+          </Card>
+          <Card className="border border-gray-200 bg-green-50">
+            <CardContent className="p-4">
+              <CheckCircle className="w-5 h-5 text-green-600 mb-1" />
+              <p className="text-2xl font-bold text-green-700">{contratosAssinados}</p>
+              <p className="text-xs text-gray-600">✍️ Contratos Assinados</p>
+            </CardContent>
+          </Card>
+          <Card className="border border-gray-200 bg-orange-50">
+            <CardContent className="p-4">
+              <Clock className="w-5 h-5 text-orange-600 mb-1" />
+              <p className="text-2xl font-bold text-orange-700">{contratosPendentes}</p>
+              <p className="text-xs text-gray-600">⏳ Contratos Pendentes</p>
+            </CardContent>
+          </Card>
+          <Card className="border border-gray-200 bg-yellow-50">
+            <CardContent className="p-4">
+              <Award className="w-5 h-5 text-yellow-600 mb-1" />
+              <p className="text-2xl font-bold text-yellow-700">{certsInPeriod.length}</p>
+              <p className="text-xs text-gray-600">🎓 Certificados (período)</p>
+              <p className="text-xs text-gray-400 mt-0.5">{certificates.length} no total</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* ── LINHA 4: Alertas ──────────────────────────────────────────────── */}
+      <div>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1"><Bell className="w-3 h-3" /> Alertas</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className={`border ${pixAguardando.length > 0 ? "border-purple-300 bg-purple-50" : "border-gray-200"}`}>
+            <CardContent className="p-4">
+              <CreditCard className={`w-5 h-5 mb-1 ${pixAguardando.length > 0 ? "text-purple-600" : "text-gray-400"}`} />
+              <p className={`text-2xl font-bold ${pixAguardando.length > 0 ? "text-purple-700" : "text-gray-800"}`}>{pixAguardando.length}</p>
+              <p className="text-xs text-gray-600">⚠️ PIX Aguardando Confirmação</p>
+              {pixUrgente.length > 0 && <p className="text-xs text-red-500 mt-0.5">{pixUrgente.length} há mais de 3 dias!</p>}
+            </CardContent>
+          </Card>
+          <Card className={`border ${vence7dias.length > 0 ? "border-orange-300 bg-orange-50" : "border-gray-200"}`}>
+            <CardContent className="p-4">
+              <Calendar className={`w-5 h-5 mb-1 ${vence7dias.length > 0 ? "text-orange-600" : "text-gray-400"}`} />
+              <p className={`text-2xl font-bold ${vence7dias.length > 0 ? "text-orange-700" : "text-gray-800"}`}>{vence7dias.length}</p>
+              <p className="text-xs text-gray-600">📅 Vencem em 7 dias</p>
+            </CardContent>
+          </Card>
+          <Card className={`border ${matriculasAguardando > 0 ? "border-blue-300 bg-blue-50" : "border-gray-200"}`}>
+            <CardContent className="p-4">
+              <BookOpen className={`w-5 h-5 mb-1 ${matriculasAguardando > 0 ? "text-blue-600" : "text-gray-400"}`} />
+              <p className={`text-2xl font-bold ${matriculasAguardando > 0 ? "text-blue-700" : "text-gray-800"}`}>{matriculasAguardando}</p>
+              <p className="text-xs text-gray-600">📋 Aguardando Autorização</p>
+            </CardContent>
+          </Card>
+          <Card className={`border ${vencidos.length > 0 ? "border-red-300 bg-red-50" : "border-gray-200"}`}>
+            <CardContent className="p-4">
+              <XCircle className={`w-5 h-5 mb-1 ${vencidos.length > 0 ? "text-red-600" : "text-gray-400"}`} />
+              <p className={`text-2xl font-bold ${vencidos.length > 0 ? "text-red-700" : "text-gray-800"}`}>{vencidos.length}</p>
+              <p className="text-xs text-gray-600">🔴 Pagamentos Vencidos</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* ── Seção de Alertas Prioritários ─────────────────────────────────── */}
+      {(pixUrgente.length > 0 || vencidos.length > 0 || contratosSemAssinar7dias.length > 0 || vence7dias.length > 0 || novosHoje.length > 0) && (
+        <Card className="border border-gray-200">
+          <CardHeader className="pb-2 bg-gray-50 border-b">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-orange-500" /> ⚠️ Requer Atenção
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 space-y-3">
+            {/* URGENTE */}
+            {(pixUrgente.length > 0 || vencidos.length > 0 || contratosSemAssinar7dias.length > 0) && (
+              <div>
+                <p className="text-xs font-bold text-red-700 mb-2">🔴 URGENTE</p>
+                <div className="space-y-1">
+                  {pixUrgente.map(e => (
+                    <div key={e.id} className="flex items-center justify-between p-2 bg-red-50 border border-red-200 rounded-md text-xs">
+                      <span><strong>{e.student_name}</strong> — PIX aguardando há mais de 3 dias</span>
+                      <Badge className="bg-red-100 text-red-700">{fmt(e.unit_value)}</Badge>
+                    </div>
+                  ))}
+                  {vencidos.slice(0, 5).map(e => (
+                    <div key={e.id} className="flex items-center justify-between p-2 bg-red-50 border border-red-200 rounded-md text-xs">
+                      <span><strong>{e.student_name}</strong> — Pagamento vencido em {fmtDate(e.data_vencimento_pagamento)}</span>
+                      <Badge className="bg-red-100 text-red-700">{fmt(e.unit_value)}</Badge>
+                    </div>
+                  ))}
+                  {contratosSemAssinar7dias.slice(0, 3).map(c => (
+                    <div key={c.id} className="flex items-center justify-between p-2 bg-red-50 border border-red-200 rounded-md text-xs">
+                      <span><strong>{c.student_name}</strong> — Contrato {c.contract_number} sem assinatura há mais de 7 dias</span>
+                      <Badge className="bg-orange-100 text-orange-700">{c.status?.replace(/_/g, " ")}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ATENÇÃO */}
+            {(vence7dias.length > 0 || matriculasAguardando > 0) && (
+              <div>
+                <p className="text-xs font-bold text-yellow-700 mb-2">🟡 ATENÇÃO</p>
+                <div className="space-y-1">
+                  {vence7dias.slice(0, 5).map(e => (
+                    <div key={e.id} className="flex items-center justify-between p-2 bg-yellow-50 border border-yellow-200 rounded-md text-xs">
+                      <span><strong>{e.student_name}</strong> — {e.course_name} — vence em {fmtDate(e.data_vencimento_pagamento)}</span>
+                      <Badge className="bg-yellow-100 text-yellow-700">{fmt(e.unit_value)}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* INFORMATIVO */}
+            {(novosHoje.length > 0 || contratosAssinadosHoje.length > 0 || pagamentosHoje.length > 0) && (
+              <div>
+                <p className="text-xs font-bold text-green-700 mb-2">🟢 INFORMATIVO HOJE</p>
+                <div className="flex flex-wrap gap-2">
+                  {novosHoje.length > 0 && (
+                    <Badge className="bg-green-100 text-green-800">🆕 {novosHoje.length} novo(s) cadastro(s)</Badge>
+                  )}
+                  {contratosAssinadosHoje.length > 0 && (
+                    <Badge className="bg-emerald-100 text-emerald-800">✍️ {contratosAssinadosHoje.length} contrato(s) assinado(s)</Badge>
+                  )}
+                  {pagamentosHoje.length > 0 && (
+                    <Badge className="bg-blue-100 text-blue-800">💰 {pagamentosHoje.length} pagamento(s) confirmado(s)</Badge>
+                  )}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Gráficos ──────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Matrículas por Curso */}
         <Card className="border border-gray-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2"><BarChart3 className="w-4 h-4" /> Matrículas por Curso</CardTitle>
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" /> Matrículas por Curso
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={courseData}>
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Bar dataKey="value" fill="#6366f1" radius={[4,4,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {courseData.length === 0 ? (
+              <div className="text-center py-8 text-gray-400 text-sm">Sem dados</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={courseData} layout="vertical" margin={{ left: 10 }}>
+                  <XAxis type="number" tick={{ fontSize: 10 }} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={90} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} label={{ position: "right", fontSize: 10 }} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
+        {/* Formas de Pagamento */}
         <Card className="border border-gray-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2"><DollarSign className="w-4 h-4" /> Formas de Pagamento</CardTitle>
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <CreditCard className="w-4 h-4" /> Formas de Pagamento
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie data={paymentData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} label={({ name, percent }) => `${name.slice(0,8)} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
-                  {paymentData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {paymentData.length === 0 ? (
+              <div className="text-center py-8 text-gray-400 text-sm">Sem dados</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie data={paymentData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}
+                    label={({ name, percent }) => `${name.slice(0, 8)} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                    {paymentData.map((entry, i) => (
+                      <Cell key={i} fill={PAG_COLORS[entry.name] || COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
-        <Card className="border border-gray-200 md:col-span-2">
+        {/* Receita Mensal */}
+        <Card className="border border-gray-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2"><TrendingUp className="w-4 h-4" /> Evolução de Matrículas (últimos 30 dias)</CardTitle>
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" /> Receita Mensal (últimos 6 meses)
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={180}>
-              <LineChart data={last30}>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={last6Months}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" tick={{ fontSize: 9 }} interval={4} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Line type="monotone" dataKey="matrículas" stroke="#6366f1" strokeWidth={2} dot={false} />
+                <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 9 }} tickFormatter={v => `R$${(v/1000).toFixed(0)}k`} />
+                <Tooltip formatter={(v) => fmt(v)} />
+                <Legend />
+                <Line type="monotone" dataKey="Previsto" stroke="#94a3b8" strokeWidth={2} strokeDasharray="4 4" dot={false} />
+                <Line type="monotone" dataKey="Recebido" stroke="#22c55e" strokeWidth={2} dot={true} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
+
+        {/* Status de Matrículas */}
+        <Card className="border border-gray-200">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <BookOpen className="w-4 h-4" /> Status das Matrículas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {statusMatData.length === 0 ? (
+              <div className="text-center py-8 text-gray-400 text-sm">Sem dados</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie data={statusMatData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}
+                    label={({ name, value }) => `${name}: ${value}`} labelLine={false}>
+                    {statusMatData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Tabela do período */}
+      {/* ── Lista Resumida de Alunos ───────────────────────────────────────── */}
       <Card className="border border-gray-200">
         <CardHeader className="bg-gray-50 border-b">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            Matrículas do Período
-            <span className="ml-auto text-xs font-normal text-gray-500">{enrollmentsInPeriod.length} registro(s)</span>
+          <CardTitle className="text-sm font-semibold flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" /> Últimas Matrículas
+            </span>
+            <span className="text-xs font-normal text-gray-500">{tabelaAlunos.length} de {enrollments.length}</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          {enrollmentsInPeriod.length === 0 ? (
-            <div className="text-center py-8 text-gray-400 text-sm">Nenhuma matrícula no período selecionado</div>
+          {tabelaAlunos.length === 0 ? (
+            <div className="text-center py-8 text-gray-400 text-sm">Nenhuma matrícula encontrada</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    {["Aluno", "CPF", "Curso", "Data Matrícula", "Pagamento", "Valor", "Status Pagamento", "Status Contrato"].map(h => (
-                      <th key={h} className="text-left px-3 py-2 text-xs font-semibold text-gray-600">{h}</th>
+                    {["Aluno", "Curso", "Status Matrícula", "Status Pagamento", "Vencimento", "Forma Pag."].map(h => (
+                      <th key={h} className="text-left px-3 py-2 text-xs font-semibold text-gray-600 whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {enrollmentsInPeriod.map(e => {
-                    const contract = contracts.find(c => c.enrollment_id === e.id);
-                    const pagBg = { Pago: "bg-green-100 text-green-800", Pendente: "bg-yellow-100 text-yellow-800", Inadimplente: "bg-red-100 text-red-800", "Parcialmente Pago": "bg-blue-100 text-blue-800" };
+                  {tabelaAlunos.map(e => {
+                    const isPixPend = e.forma_pagamento === "Pix" && e.status_pagamento === "Pendente";
                     return (
                       <tr key={e.id} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 font-medium text-gray-900 whitespace-nowrap">{e.student_name}</td>
-                        <td className="px-3 py-2 text-gray-500 whitespace-nowrap">{e.student_cpf}</td>
-                        <td className="px-3 py-2 text-gray-600">{e.course_name}</td>
-                        <td className="px-3 py-2 text-gray-500 whitespace-nowrap">{fmtDate(e.created_date?.slice(0,10))}</td>
-                        <td className="px-3 py-2 text-gray-600">{e.forma_pagamento || "—"}</td>
-                        <td className="px-3 py-2 font-semibold text-gray-900 whitespace-nowrap">{e.unit_value ? fmt(e.unit_value) : "—"}</td>
+                        <td className="px-3 py-2 font-medium text-gray-900 whitespace-nowrap max-w-[140px] truncate">{e.student_name}</td>
+                        <td className="px-3 py-2 text-gray-600 max-w-[120px] truncate">{e.course_name}</td>
                         <td className="px-3 py-2">
-                          <Badge className={pagBg[e.status_pagamento] || "bg-gray-100 text-gray-700"}>{e.status_pagamento || "Pendente"}</Badge>
+                          <Badge className={`text-xs ${statusBg[e.status] || "bg-gray-100 text-gray-700"}`}>{e.status}</Badge>
                         </td>
                         <td className="px-3 py-2">
-                          {contract ? (
-                            <Badge className="bg-blue-100 text-blue-700 text-xs">{contract.status?.replace(/_/g, " ")}</Badge>
-                          ) : (
-                            <Badge className="bg-red-100 text-red-600 text-xs">Sem contrato</Badge>
-                          )}
+                          <Badge className={`text-xs ${isPixPend ? "bg-purple-100 text-purple-800" : pagBg[e.status_pagamento] || "bg-gray-100 text-gray-700"}`}>
+                            {isPixPend ? "🟡 Aguard. PIX" : (e.status_pagamento || "Pendente")}
+                          </Badge>
                         </td>
+                        <td className="px-3 py-2 text-xs text-gray-500 whitespace-nowrap">{fmtDate(e.data_vencimento_pagamento)}</td>
+                        <td className="px-3 py-2 text-xs text-gray-500 whitespace-nowrap">{e.forma_pagamento || "—"}</td>
                       </tr>
                     );
                   })}
@@ -299,6 +599,7 @@ export default function DashboardPF() {
           )}
         </CardContent>
       </Card>
+
     </div>
   );
 }
