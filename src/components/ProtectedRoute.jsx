@@ -18,7 +18,7 @@ export default function ProtectedRoute({ pageKey, children }) {
   if (allowedKeys === null) return children;
 
   if (!allowedKeys.includes(pageKey)) {
-    return <Navigate to="/AcessoNegado" replace />;
+    return <Navigate to="/Dashboard" replace />;
   }
 
   return children;

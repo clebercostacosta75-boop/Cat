@@ -49,9 +49,25 @@ const ROLE_MENUS = {
   Instrutor: ["Dashboard"],
   "Coordenador de Operações": ["Dashboard","Cronograma","Agenda de Treinamentos","Chamada Presencial"],
   PortalEmpresa: [],
-  // editor e cliente: sem fallback — acesso apenas ao que foi explicitamente configurado
-  editor: [],
-  Editor: [],
+  // editor: lista padrão de módulos operacionais permitidos
+  editor: [
+    "Dashboard","Cronograma","Agenda de Treinamentos","Chamada Presencial",
+    "Entrada de Propostas","Gestão de BMM","Instrutores","Empresas","Contratadas",
+    "Cursos","Importar Excel","Dashboard Financeiro","Alunos Individuais (PF)",
+    "Gestão de Contratos","Certificações","Alertas de Vencimento",
+    "Designer de Certificados","Assinaturas Digitais","Auditoria de Certificados",
+    "Config. Notificações","Log de Notificações","Modelos E-mail",
+    "Central de Comunicação","Log de Auditoria","Auditoria Completa","Log de Acesso",
+  ],
+  Editor: [
+    "Dashboard","Cronograma","Agenda de Treinamentos","Chamada Presencial",
+    "Entrada de Propostas","Gestão de BMM","Instrutores","Empresas","Contratadas",
+    "Cursos","Importar Excel","Dashboard Financeiro","Alunos Individuais (PF)",
+    "Gestão de Contratos","Certificações","Alertas de Vencimento",
+    "Designer de Certificados","Assinaturas Digitais","Auditoria de Certificados",
+    "Config. Notificações","Log de Notificações","Modelos E-mail",
+    "Central de Comunicação","Log de Auditoria","Auditoria Completa","Log de Acesso",
+  ],
   cliente: [],
 };
 
