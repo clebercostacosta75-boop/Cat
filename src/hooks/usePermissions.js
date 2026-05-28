@@ -19,7 +19,7 @@ const normalize = (perms) => {
 };
 
 // Perfis que têm acesso total (null = sem restrição)
-const FULL_ACCESS_ROLES = ["admin", "Administrador Master", "gestor_master"];
+const FULL_ACCESS_ROLES = ["admin", "Administrador Master", "gestor_master", "editor", "Editor"];
 
 // Menus padrão por perfil (fallback quando sem permissões customizadas)
 const ROLE_MENUS = {
