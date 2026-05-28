@@ -22,6 +22,7 @@ const normalize = (perms) => {
 const FULL_ACCESS_ROLES = ["admin", "Administrador Master", "gestor_master"];
 
 // Menus padrão por perfil (fallback quando sem permissões customizadas)
+// IMPORTANTE: editor e cliente não têm fallback — dependem exclusivamente das permissões individuais configuradas
 const ROLE_MENUS = {
   Operacional: [
     "Dashboard","Dashboard Operacional","Agenda de Treinamentos","Cronograma","Chamada Presencial",
@@ -48,9 +49,10 @@ const ROLE_MENUS = {
   Instrutor: ["Dashboard"],
   "Coordenador de Operações": ["Dashboard","Cronograma","Agenda de Treinamentos","Chamada Presencial"],
   PortalEmpresa: [],
-  // Roles sem permissões configuradas = acesso mínimo (admin deve configurar explicitamente)
-  editor: ["Dashboard"],
-  cliente: ["Dashboard"],
+  // editor e cliente: sem fallback — acesso apenas ao que foi explicitamente configurado
+  editor: [],
+  Editor: [],
+  cliente: [],
 };
 
 export function usePermissions() {
@@ -122,12 +124,12 @@ export function usePermissions() {
       }
 
       // Fallback: menu padrão do perfil por role
-      // Se não tiver mapeamento específico, acesso mínimo (somente Dashboard)
-      const menuFallback = ROLE_MENUS[profileRole] ?? ["Dashboard"];
+      // Se não tiver mapeamento específico, lista vazia (admin deve configurar permissões)
+      const menuFallback = ROLE_MENUS[profileRole] ?? [];
       setAllowedKeys(menuFallback);
     } catch {
-      // Em qualquer erro inesperado, acesso mínimo (não libera tudo)
-      setAllowedKeys(["Dashboard"]);
+      // Em qualquer erro inesperado, lista vazia (não libera tudo, não quebra)
+      setAllowedKeys([]);
     } finally {
       setLoading(false);
     }

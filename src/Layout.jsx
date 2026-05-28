@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import {
   LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText,
   Building2, UserCog, Mail, Bell, Award,
-  TrendingUp, PenLine, Settings, Target, Instagram, MessageSquare, ShieldAlert, Bot
+  TrendingUp, PenLine, Settings, Target, Instagram, MessageSquare, ShieldAlert, Bot, Shield
 } from "lucide-react";
 
 import NotificationBell from "./components/notifications/NotificationBell";
@@ -108,21 +108,28 @@ export default function Layout({ children }) {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {navigationItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        asChild
-                        className={`hover:bg-gray-100 transition-colors duration-150 rounded-md mb-1 ${
-                          location.pathname === item.url ? "bg-gray-100 text-gray-900" : "text-gray-700"
-                        }`}
-                      >
-                        <Link to={item.url} className="flex items-center gap-3 px-3 py-2">
-                          <item.icon className="w-4 h-4" />
-                          <span className="font-normal text-sm">{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                  {navigationItems.length === 0 ? (
+                    <div className="px-3 py-4 text-center">
+                      <Shield className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-xs text-gray-400 leading-relaxed">Nenhum módulo liberado.<br />Solicite ao administrador.</p>
+                    </div>
+                  ) : (
+                    navigationItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          className={`hover:bg-gray-100 transition-colors duration-150 rounded-md mb-1 ${
+                            location.pathname === item.url ? "bg-gray-100 text-gray-900" : "text-gray-700"
+                          }`}
+                        >
+                          <Link to={item.url} className="flex items-center gap-3 px-3 py-2">
+                            <item.icon className="w-4 h-4" />
+                            <span className="font-normal text-sm">{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))
+                  )}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
