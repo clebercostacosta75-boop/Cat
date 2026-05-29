@@ -19,7 +19,7 @@ import { usePermissions } from "@/lib/PermissionsContext";
 import { Loader2 } from "lucide-react";
 
 const ALL_ITEMS = [
-  { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, key: "Dashboard" },
+  { title: "Dashboard", url: "/Dashboard", icon: LayoutDashboard, key: "Dashboard" },
   { title: "Cronograma", url: createPageUrl("Schedule"), icon: Calendar, key: "Cronograma" },
   { title: "Agenda de Treinamentos", url: "/AgendaTreinamentos", icon: Calendar, key: "Agenda de Treinamentos" },
   { title: "Chamada Presencial", url: createPageUrl("AttendanceCall"), icon: Users, key: "Chamada Presencial" },
@@ -29,7 +29,8 @@ const ALL_ITEMS = [
   { title: "Empresas", url: createPageUrl("Companies"), icon: Building2, key: "Empresas" },
   { title: "Contratadas", url: createPageUrl("Contractors"), icon: Building2, key: "Contratadas" },
   { title: "Cursos", url: createPageUrl("Courses"), icon: BookOpen, key: "Cursos" },
-  { title: "Dashboard Financeiro", url: "/DashboardFinanceiro", icon: TrendingUp, key: "Dashboard Financeiro" },
+  // Dashboard Financeiro acessível via aba no Dashboard Central
+  // { title: "Dashboard Financeiro", url: "/DashboardFinanceiro", icon: TrendingUp, key: "Dashboard Financeiro" },
   { title: "Alunos Individuais (PF)", url: "/GestaoAlunosIndividuais", icon: Users, key: "Alunos Individuais (PF)" },
   { title: "Gestão de Contratos", url: "/GestaoContratos", icon: FileText, key: "Gestão de Contratos" },
   { title: "Certificações", url: "/Certificacoes", icon: Award, key: "Certificações" },
@@ -43,8 +44,6 @@ const ALL_ITEMS = [
   { title: "Auditoria Completa", url: "/AuditoriaCompleta", icon: FileText, key: "Auditoria Completa" },
   { title: "Log de Acesso", url: "/AccessLog", icon: ShieldAlert, key: "Log de Acesso" },
   { title: "Dashboard Operacional", url: "/DashboardOperacionalV2", icon: BarChart3, key: "Dashboard Operacional" },
-  { title: "Dashboard Admin", url: "/AdminDashboard", icon: TrendingUp, key: "Dashboard Admin" },
-  { title: "Dashboard Comercial", url: "/DashboardComercial", icon: Target, key: "Dashboard Comercial" },
   { title: "Dashboard de Relatórios", url: "/Analytics", icon: BarChart3, key: "Dashboard de Relatórios" },
 ];
 
