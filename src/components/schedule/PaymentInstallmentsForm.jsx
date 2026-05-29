@@ -31,9 +31,9 @@ export default function PaymentInstallmentsForm({ installments, onChange, instru
     }
   };
 
-  // Efeito: se valor >= 500, dividir automaticamente em 2x
+  // Efeito: se valor > 500, dividir automaticamente em 2x
   useEffect(() => {
-    if (instructorPaymentValue >= 500 && installments.length === 0) {
+    if (instructorPaymentValue > 500 && installments.length === 0) {
       const today = new Date();
       const firstDueDate = new Date(today);
       firstDueDate.setDate(today.getDate() + 30);
