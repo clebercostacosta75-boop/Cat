@@ -204,8 +204,8 @@ export default function CompanyCoursesForm({ companyCourses, courses, onChange }
                        <Input
                          type="number"
                          step="0.01"
-                         value={course.class_fixed_value || 0}
-                         onChange={(e) => handleCourseChange(index, 'class_fixed_value', parseFloat(e.target.value.replace(',', '.')) || 0)}
+                         value={course.class_fixed_value || ''}
+                         onChange={(e) => handleCourseChange(index, 'class_fixed_value', e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                          placeholder="Ex: 2000.00"
                          required
                        />
