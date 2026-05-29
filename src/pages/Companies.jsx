@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Building2, MapPin, Users, Mail, Phone, Search, Edit2, Trash2, TrendingUp, DollarSign } from "lucide-react";
+import { Plus, Building2, MapPin, Users, Mail, Phone, Search, Edit2, Trash2, TrendingUp, DollarSign, BookOpen } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import CompanyForm from "@/components/company/CompanyForm";
@@ -17,6 +17,12 @@ export default function CompaniesPage() {
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ['companies'],
     queryFn: () => base44.entities.Company.list(),
+    initialData: [],
+  });
+
+  const { data: classSchedules = [] } = useQuery({
+    queryKey: ['classSchedules'],
+    queryFn: () => base44.entities.ClassSchedule.list(),
     initialData: [],
   });
 
@@ -79,6 +85,10 @@ export default function CompaniesPage() {
     active: companies.filter(c => c.status === 'Ativo').length,
     totalUnits: companies.reduce((sum, c) => sum + (c.units?.length || 0), 0),
     totalContacts: companies.reduce((sum, c) => sum + (c.contacts?.length || 0), 0),
+  };
+
+  const getCompanyCourses = (companyId) => {
+    return classSchedules.filter(cs => cs.company_id === companyId);
   };
 
   return (
@@ -213,6 +223,32 @@ export default function CompaniesPage() {
                           <p className="text-xs text-gray-600">{contact.role}</p>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {getCompanyCourses(company.id).length > 0 && (
+                  <div className="border-t pt-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BookOpen className="w-4 h-4 text-blue-600" />
+                      <p className="text-xs text-gray-500 font-semibold">
+                        {getCompanyCourses(company.id).length} {getCompanyCourses(company.id).length === 1 ? 'Curso' : 'Cursos'}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      {getCompanyCourses(company.id).slice(0, 5).map((course, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-xs">
+                          <span className="text-gray-700 font-medium">{course.training_name}</span>
+                          <Badge variant="outline" className="text-xs bg-blue-50">
+                            {course.students_count || 0} alunos
+                          </Badge>
+                        </div>
+                      ))}
+                      {getCompanyCourses(company.id).length > 5 && (
+                        <p className="text-xs text-gray-500 italic mt-1">
+                          +{getCompanyCourses(company.id).length - 5} cursos
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
