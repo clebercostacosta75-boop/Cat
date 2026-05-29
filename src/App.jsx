@@ -23,7 +23,6 @@ import AlertasConfig from './pages/AlertasConfig';
 import AgendaTreinamentos from './pages/AgendaTreinamentos';
 import ConfigNotificacoes from './pages/ConfigNotificacoes';
 import AdminDashboard from './pages/AdminDashboard';
-import LogNotificacoes from './pages/LogNotificacoes';
 import CertificateAuditPanel from './pages/CertificateAuditPanel';
 import Certificacoes from './pages/Certificacoes';
 import CompanyPortal from './pages/CompanyPortal';
@@ -38,11 +37,8 @@ import ProposalEntry from './pages/ProposalEntry';
 import DashboardComercial from './pages/DashboardComercial.jsx';
 import GestaoBMM from './pages/GestaoBMM.jsx';
 import GestaoAlunosIndividuais from './pages/GestaoAlunosIndividuais.jsx';
-import GestaoLeads from './pages/GestaoLeads.jsx';
 import AutoCadastroAluno from './pages/AutoCadastroAluno.jsx';
 import GestaoContratos from './pages/GestaoContratos.jsx';
-import ContasSociais from './pages/ContasSociais.jsx';
-import BaseConhecimento from './pages/BaseConhecimento.jsx';
 import CaixaEntrada from './pages/CaixaEntrada.jsx';
 import ConsentForm from './pages/ConsentForm.jsx';
 import TrocarSenha from './pages/TrocarSenha.jsx';
@@ -52,7 +48,6 @@ import AccessLog from './pages/AccessLog.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
 import { PermissionsProvider } from '@/lib/PermissionsContext';
 import AuditoriaCompleta from './pages/AuditoriaCompleta.jsx';
-import AssistenteCadastros from './pages/AssistenteCadastros.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -141,14 +136,10 @@ const AuthenticatedApp = () => {
       <Route path="/GestaoContratos" element={<LayoutWrapper currentPageName="GestaoContratos"><ProtectedRoute pageKey="Gestão de Contratos"><GestaoContratos /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
       <Route path="/DashboardComercial" element={<LayoutWrapper currentPageName="DashboardComercial"><ProtectedRoute pageKey="Dashboard Comercial"><DashboardComercial /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/GestaoLeads" element={<LayoutWrapper currentPageName="GestaoLeads"><ProtectedRoute pageKey="Gestão de Leads"><GestaoLeads /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/ContasSociais" element={<LayoutWrapper currentPageName="ContasSociais"><ProtectedRoute pageKey="Contas Sociais"><ContasSociais /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/BaseConhecimento" element={<LayoutWrapper currentPageName="BaseConhecimento"><ProtectedRoute pageKey="Base de Conhecimento"><BaseConhecimento /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/CaixaEntrada" element={<LayoutWrapper currentPageName="CaixaEntrada"><ProtectedRoute pageKey="Caixa de Entrada"><CaixaEntrada /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/Analytics" element={<LayoutWrapper currentPageName="Analytics"><ProtectedRoute pageKey="Dashboard de Relatórios"><Analytics /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AccessLog" element={<LayoutWrapper currentPageName="AccessLog"><ProtectedRoute pageKey="Log de Acesso"><AccessLog /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AuditoriaCompleta" element={<LayoutWrapper currentPageName="AuditoriaCompleta"><ProtectedRoute pageKey="Auditoria Completa"><AuditoriaCompleta /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/AssistenteCadastros" element={<LayoutWrapper currentPageName="AssistenteCadastros"><ProtectedRoute pageKey="Assistente de Cadastros"><AssistenteCadastros /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/ProposalEntry" element={<LayoutWrapper currentPageName="ProposalEntry"><ProtectedRoute pageKey="Entrada de Propostas"><ProposalEntry /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/GestaoBMM" element={<LayoutWrapper currentPageName="GestaoBMM"><ProtectedRoute pageKey="Gestão de BMM"><GestaoBMM /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/GestaoAlunosIndividuais" element={<LayoutWrapper currentPageName="GestaoAlunosIndividuais"><ProtectedRoute pageKey="Alunos Individuais (PF)"><GestaoAlunosIndividuais /></ProtectedRoute></LayoutWrapper>} />
@@ -162,7 +153,6 @@ const AuthenticatedApp = () => {
       <Route path="/AgendaTreinamentos" element={<LayoutWrapper currentPageName="AgendaTreinamentos"><ProtectedRoute pageKey="Agenda de Treinamentos"><AgendaTreinamentos /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/ConfigNotificacoes" element={<LayoutWrapper currentPageName="ConfigNotificacoes"><ProtectedRoute pageKey="Config. Notificações"><ConfigNotificacoes /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AdminDashboard" element={<LayoutWrapper currentPageName="AdminDashboard"><ProtectedRoute pageKey="Dashboard Admin"><AdminDashboard /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/LogNotificacoes" element={<LayoutWrapper currentPageName="LogNotificacoes"><ProtectedRoute pageKey="Log de Notificações"><LogNotificacoes /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/CertificateAuditPanel" element={<LayoutWrapper currentPageName="CertificateAuditPanel"><ProtectedRoute pageKey="Auditoria de Certificados"><CertificateAuditPanel /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/Certificacoes" element={<LayoutWrapper currentPageName="Certificacoes"><ProtectedRoute pageKey="Certificações"><Certificacoes /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardMaster" element={<LayoutWrapper currentPageName="DashboardMaster"><ProtectedRoute pageKey="Dashboard"><DashboardMaster /></ProtectedRoute></LayoutWrapper>} />
@@ -183,8 +173,6 @@ const AuthenticatedApp = () => {
           Companies: "Empresas",
           Contractors: "Contratadas",
           Courses: "Cursos",
-          EmailTemplates: "Modelos E-mail",
-          Import: "Importar Excel",
           Instructors: "Instrutores",
           Users: "Usuários",
         };

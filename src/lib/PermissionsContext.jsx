@@ -15,11 +15,9 @@ export const ALL_MODULES = [
   "Empresas",
   "Contratadas",
   "Cursos",
-  "Importar Excel",
   "Alunos Individuais (PF)",
   "Gestão de Contratos",
   "Dashboard Operacional",
-  // Financeiro
   "Dashboard Financeiro",
   // Certificações
   "Certificações",
@@ -29,16 +27,10 @@ export const ALL_MODULES = [
   "Auditoria de Certificados",
   // Comercial
   "Dashboard Comercial",
-  "Gestão de Leads",
-  "Assistente de Cadastros",
   "Caixa de Entrada",
-  "Base de Conhecimento",
-  "Contas Sociais",
   // Comunicação
-  "Modelos E-mail",
   "Central de Comunicação",
   "Config. Notificações",
-  "Log de Notificações",
   // Relatórios
   "Dashboard de Relatórios",
   "Dashboard Admin",

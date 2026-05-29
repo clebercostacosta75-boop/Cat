@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import {
   LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText,
   Building2, UserCog, Mail, Bell, Award,
-  TrendingUp, PenLine, Settings, Target, Instagram, MessageSquare, ShieldAlert, Bot, Shield
+  TrendingUp, PenLine, Settings, Target, MessageSquare, ShieldAlert, Shield
 } from "lucide-react";
 
 import NotificationBell from "./components/notifications/NotificationBell";
@@ -29,7 +29,6 @@ const ALL_ITEMS = [
   { title: "Empresas", url: createPageUrl("Companies"), icon: Building2, key: "Empresas" },
   { title: "Contratadas", url: createPageUrl("Contractors"), icon: Building2, key: "Contratadas" },
   { title: "Cursos", url: createPageUrl("Courses"), icon: BookOpen, key: "Cursos" },
-  { title: "Importar Excel", url: createPageUrl("Import"), icon: Upload, key: "Importar Excel" },
   { title: "Dashboard Financeiro", url: "/DashboardFinanceiro", icon: TrendingUp, key: "Dashboard Financeiro" },
   { title: "Alunos Individuais (PF)", url: "/GestaoAlunosIndividuais", icon: Users, key: "Alunos Individuais (PF)" },
   { title: "Gestão de Contratos", url: "/GestaoContratos", icon: FileText, key: "Gestão de Contratos" },
@@ -39,8 +38,6 @@ const ALL_ITEMS = [
   { title: "Assinaturas Digitais", url: createPageUrl("DigitalSignatures"), icon: PenLine, key: "Assinaturas Digitais" },
   { title: "Auditoria de Certificados", url: "/CertificateAuditPanel", icon: FileText, key: "Auditoria de Certificados" },
   { title: "Config. Notificações", url: "/ConfigNotificacoes", icon: Settings, key: "Config. Notificações" },
-  { title: "Log de Notificações", url: "/LogNotificacoes", icon: FileText, key: "Log de Notificações" },
-  { title: "Modelos E-mail", url: createPageUrl("EmailTemplates"), icon: Mail, key: "Modelos E-mail" },
   { title: "Central de Comunicação", url: createPageUrl("CommunicationCenter"), icon: Mail, key: "Central de Comunicação" },
   { title: "Usuários", url: createPageUrl("Users"), icon: UserCog, key: "Usuários" },
   { title: "Log de Auditoria", url: createPageUrl("AuditLog"), icon: FileText, key: "Log de Auditoria" },
@@ -49,11 +46,7 @@ const ALL_ITEMS = [
   { title: "Dashboard Operacional", url: "/DashboardOperacionalV2", icon: BarChart3, key: "Dashboard Operacional" },
   { title: "Dashboard Admin", url: "/AdminDashboard", icon: TrendingUp, key: "Dashboard Admin" },
   { title: "Dashboard Comercial", url: "/DashboardComercial", icon: Target, key: "Dashboard Comercial" },
-  { title: "Gestão de Leads", url: "/GestaoLeads", icon: Users, key: "Gestão de Leads" },
-  { title: "Assistente de Cadastros", url: "/AssistenteCadastros", icon: Bot, key: "Assistente de Cadastros" },
   { title: "Caixa de Entrada", url: "/CaixaEntrada", icon: MessageSquare, key: "Caixa de Entrada" },
-  { title: "Base de Conhecimento", url: "/BaseConhecimento", icon: BookOpen, key: "Base de Conhecimento" },
-  { title: "Contas Sociais", url: "/ContasSociais", icon: Instagram, key: "Contas Sociais" },
   { title: "Dashboard de Relatórios", url: "/Analytics", icon: BarChart3, key: "Dashboard de Relatórios" },
 ];
 
