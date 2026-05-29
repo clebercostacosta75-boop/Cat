@@ -1,13 +1,29 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter, X } from "lucide-react";
+import { Filter, X, ChevronDown, Building2 } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export default function OpFiltros({ filtros, setFiltros, companies, instructors, onFiltrar, onLimpar }) {
+  const [openCompany, setOpenCompany] = useState(false);
+  const [searchCompany, setSearchCompany] = useState("");
+
   const locais = [...new Set(
     (companies || []).map(c => c.city).filter(Boolean)
   )];
+
+  const filteredCompanies = (companies || []).filter(c =>
+    (c.company_name || c.nome_fantasia || c.name || "")
+      .toLowerCase()
+      .includes(searchCompany.toLowerCase()) ||
+    (c.cnpj || "").includes(searchCompany)
+  );
+
+  const selectedCompanyName = companies?.find(c => c.id === filtros.empresa)
+    ?.company_name || companies?.find(c => c.id === filtros.empresa)?.nome_fantasia
+    || companies?.find(c => c.id === filtros.empresa)?.name || "Selecione uma empresa";
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
@@ -37,15 +53,64 @@ export default function OpFiltros({ filtros, setFiltros, companies, instructors,
         </div>
         <div>
           <label className="text-xs text-gray-500 mb-1 block">Empresa</label>
-          <Select value={filtros.empresa} onValueChange={v => setFiltros(f => ({ ...f, empresa: v }))}>
-            <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todas" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="_all">Todas</SelectItem>
-              {(companies || []).map(c => (
-                <SelectItem key={c.id} value={c.id}>{c.company_name || c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={openCompany} onOpenChange={setOpenCompany}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-8 text-sm w-full justify-between px-2"
+                onClick={() => setOpenCompany(true)}
+              >
+                <span className="truncate text-left">
+                  {filtros.empresa === "_all" ? "Todas" : selectedCompanyName}
+                </span>
+                <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 w-72" align="start">
+              <Command>
+                <CommandInput
+                  placeholder="Buscar empresa..."
+                  value={searchCompany}
+                  onValueChange={setSearchCompany}
+                  className="text-xs h-7"
+                />
+                <CommandEmpty>
+                  <div className="text-xs text-gray-500 py-2">Nenhuma empresa encontrada</div>
+                </CommandEmpty>
+                <CommandGroup className="max-h-64 overflow-auto">
+                  <CommandItem
+                    value="_all"
+                    onSelect={() => {
+                      setFiltros(f => ({ ...f, empresa: "_all" }));
+                      setOpenCompany(false);
+                      setSearchCompany("");
+                    }}
+                    className="text-xs cursor-pointer"
+                  >
+                    <span className="font-medium">Todas as Empresas</span>
+                  </CommandItem>
+                  {filteredCompanies.map(c => (
+                    <CommandItem
+                      key={c.id}
+                      value={c.id}
+                      onSelect={() => {
+                        setFiltros(f => ({ ...f, empresa: c.id }));
+                        setOpenCompany(false);
+                        setSearchCompany("");
+                      }}
+                      className="text-xs cursor-pointer flex items-start gap-2"
+                    >
+                      <Building2 className="w-3 h-3 mt-0.5 flex-shrink-0 text-blue-600" />
+                      <div className="flex-1">
+                        <div className="font-medium">{c.company_name || c.nome_fantasia || c.name}</div>
+                        {c.cnpj && <div className="text-gray-500 text-xs">{c.cnpj}</div>}
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
         <div>
           <label className="text-xs text-gray-500 mb-1 block">Instrutor</label>
