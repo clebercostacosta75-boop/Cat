@@ -27,7 +27,6 @@ export const ALL_MODULES = [
   "Auditoria de Certificados",
   // Comercial
   "Dashboard Comercial",
-  "Caixa de Entrada",
   // Comunicação
   "Central de Comunicação",
   // Relatórios

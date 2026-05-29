@@ -45,7 +45,6 @@ const ALL_ITEMS = [
   { title: "Dashboard Operacional", url: "/DashboardOperacionalV2", icon: BarChart3, key: "Dashboard Operacional" },
   { title: "Dashboard Admin", url: "/AdminDashboard", icon: TrendingUp, key: "Dashboard Admin" },
   { title: "Dashboard Comercial", url: "/DashboardComercial", icon: Target, key: "Dashboard Comercial" },
-  { title: "Caixa de Entrada", url: "/CaixaEntrada", icon: MessageSquare, key: "Caixa de Entrada" },
   { title: "Dashboard de Relatórios", url: "/Analytics", icon: BarChart3, key: "Dashboard de Relatórios" },
 ];
 

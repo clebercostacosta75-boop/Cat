@@ -38,7 +38,6 @@ import GestaoBMM from './pages/GestaoBMM.jsx';
 import GestaoAlunosIndividuais from './pages/GestaoAlunosIndividuais.jsx';
 import AutoCadastroAluno from './pages/AutoCadastroAluno.jsx';
 import GestaoContratos from './pages/GestaoContratos.jsx';
-import CaixaEntrada from './pages/CaixaEntrada.jsx';
 import ConsentForm from './pages/ConsentForm.jsx';
 import TrocarSenha from './pages/TrocarSenha.jsx';
 import PrivacyPolicy from './pages/PrivacyPolicy.jsx';
@@ -135,7 +134,6 @@ const AuthenticatedApp = () => {
       <Route path="/GestaoContratos" element={<LayoutWrapper currentPageName="GestaoContratos"><ProtectedRoute pageKey="Gestão de Contratos"><GestaoContratos /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
       <Route path="/DashboardComercial" element={<LayoutWrapper currentPageName="DashboardComercial"><ProtectedRoute pageKey="Dashboard Comercial"><DashboardComercial /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/CaixaEntrada" element={<LayoutWrapper currentPageName="CaixaEntrada"><ProtectedRoute pageKey="Caixa de Entrada"><CaixaEntrada /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/Analytics" element={<LayoutWrapper currentPageName="Analytics"><ProtectedRoute pageKey="Dashboard de Relatórios"><Analytics /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AccessLog" element={<LayoutWrapper currentPageName="AccessLog"><ProtectedRoute pageKey="Log de Acesso"><AccessLog /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AuditoriaCompleta" element={<LayoutWrapper currentPageName="AuditoriaCompleta"><ProtectedRoute pageKey="Auditoria Completa"><AuditoriaCompleta /></ProtectedRoute></LayoutWrapper>} />
