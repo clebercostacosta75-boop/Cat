@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,41 @@ export default function PaymentInstallmentsForm({ installments, onChange, instru
       toast.error("Máximo de 2 parcelas permitido");
     }
   };
+
+  // Efeito: se valor >= 500, dividir automaticamente em 2x
+  useEffect(() => {
+    if (instructorPaymentValue >= 500 && installments.length === 0) {
+      const today = new Date();
+      const firstDueDate = new Date(today);
+      firstDueDate.setDate(today.getDate() + 30);
+      
+      const secondDueDate = new Date(today);
+      secondDueDate.setDate(today.getDate() + 60);
+
+      const halfAmount = instructorPaymentValue / 2;
+
+      onChange([
+        {
+          installment_number: 1,
+          amount: halfAmount,
+          due_date: firstDueDate.toISOString().split('T')[0],
+          status: "Pendente",
+          paid_date: "",
+          proof_of_payment_url: "",
+          notes: ""
+        },
+        {
+          installment_number: 2,
+          amount: halfAmount,
+          due_date: secondDueDate.toISOString().split('T')[0],
+          status: "Pendente",
+          paid_date: "",
+          proof_of_payment_url: "",
+          notes: ""
+        }
+      ]);
+    }
+  }, [instructorPaymentValue]);
 
   const handleRemoveInstallment = (index) => {
     const updated = installments.filter((_, i) => i !== index);
