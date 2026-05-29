@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Users, UserPlus, BookOpen, DollarSign, Shield, Search, Edit, Trash2,
-  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, FileText, Copy, LayoutDashboard, Bell, PenLine, TrendingUp, Calendar, XCircle, ChevronRight
+  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, FileText, Copy, LayoutDashboard, Bell, PenLine, TrendingUp, Calendar, XCircle, ChevronRight, Lightbulb
 } from "lucide-react";
 import { toast } from "sonner";
 import PagamentosAsaas from "@/components/alunos/PagamentosAsaas";
@@ -24,6 +24,7 @@ import DashboardPF from "@/components/alunos/DashboardPF";
 import CadastroUnificado from "@/components/alunos/CadastroUnificado";
 import NovoCursoModal from "@/components/alunos/NovoCursoModal";
 import NovaMatriculaModal from "@/components/alunos/NovaMatriculaModal";
+import BaseConhecimentoTab from "@/components/alunos/BaseConhecimentoTab";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -1827,7 +1828,7 @@ export default function GestaoAlunosIndividuais() {
         </div>
 
         <Tabs defaultValue="dashboard">
-          <TabsList className="grid w-full grid-cols-9 mb-6 bg-gray-100 p-1 h-auto">
+          <TabsList className="grid w-full grid-cols-10 mb-6 bg-gray-100 p-1 h-auto">
             <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-indigo-700 data-[state=active]:text-white py-3">
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -1860,6 +1861,10 @@ export default function GestaoAlunosIndividuais() {
               <Bell className="w-4 h-4" />
               <span className="hidden sm:inline">Pendências</span>
             </TabsTrigger>
+            <TabsTrigger value="conhecimento" className="flex items-center gap-2 data-[state=active]:bg-purple-700 data-[state=active]:text-white py-3">
+              <Lightbulb className="w-4 h-4" />
+              <span className="hidden sm:inline">Base Conhec.</span>
+            </TabsTrigger>
             <TabsTrigger value="contratos" className="flex items-center gap-2 data-[state=active]:bg-blue-700 data-[state=active]:text-white py-3">
               <PenLine className="w-4 h-4" />
               <span className="hidden sm:inline">Contratos</span>
@@ -1874,6 +1879,7 @@ export default function GestaoAlunosIndividuais() {
           <TabsContent value="pagamentos"><PagamentosAsaas /></TabsContent>
           <TabsContent value="gargalos"><GargalosDashboard /></TabsContent>
           <TabsContent value="pendencias"><PainelPendenciasFinanceiras /></TabsContent>
+          <TabsContent value="conhecimento"><BaseConhecimentoTab /></TabsContent>
           <TabsContent value="contratos"><ContratosGeral /></TabsContent>
         </Tabs>
       </div>
