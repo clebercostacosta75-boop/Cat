@@ -75,6 +75,18 @@ export function PermissionsProvider({ children }) {
         return;
       }
 
+      // Verifica antecipadamente se é gestor_master pelo UserProfile (antes de qualquer filtro)
+      // Isso evita que gestores_master sejam bloqueados por ter role "user" na plataforma Base44
+      try {
+        const earlyProfiles = await base44.entities.UserProfile.filter({ user_email: u.email });
+        if (earlyProfiles.length > 0 && FULL_ACCESS_ROLES.includes(earlyProfiles[0].role)) {
+          setRole(earlyProfiles[0].role);
+          setAllowedKeys(null);
+          setLoading(false);
+          return;
+        }
+      } catch {}
+
       // Busca UserProfile pelo email para obter role e permissões reais do servidor
       let profile = null;
       try {

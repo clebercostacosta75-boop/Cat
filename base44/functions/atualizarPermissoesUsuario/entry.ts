@@ -8,7 +8,19 @@ Deno.serve(async (req) => {
 
     const allowedRoles = ['admin', 'Administrador Master', 'gestor_master'];
     const userRole = user.role || user.custom_role || '';
-    if (!allowedRoles.includes(userRole)) {
+
+    // Verifica também no UserProfile (gestor_master tem role "user" na plataforma)
+    let callerProfileRole = userRole;
+    if (!allowedRoles.includes(callerProfileRole)) {
+      try {
+        const callerProfiles = await base44.asServiceRole.entities.UserProfile.filter({ user_email: user.email });
+        if (callerProfiles.length > 0) {
+          callerProfileRole = callerProfiles[0].role || userRole;
+        }
+      } catch {}
+    }
+
+    if (!allowedRoles.includes(callerProfileRole)) {
       return Response.json({ error: 'Sem permissão' }, { status: 403 });
     }
 
