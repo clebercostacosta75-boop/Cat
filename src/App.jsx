@@ -35,6 +35,8 @@ import DashboardCentral from './pages/DashboardCentral';
 import AcessoNegado from './pages/AcessoNegado';
 import ProposalEntry from './pages/ProposalEntry';
 import DashboardComercial from './pages/DashboardComercial.jsx';
+import GestaoLeads from './pages/GestaoLeads.jsx';
+import BaseConhecimento from './pages/BaseConhecimento.jsx';
 import GestaoBMM from './pages/GestaoBMM.jsx';
 import GestaoAlunosIndividuais from './pages/GestaoAlunosIndividuais.jsx';
 import AutoCadastroAluno from './pages/AutoCadastroAluno.jsx';
@@ -135,6 +137,8 @@ const AuthenticatedApp = () => {
       <Route path="/GestaoContratos" element={<LayoutWrapper currentPageName="GestaoContratos"><ProtectedRoute pageKey="Gestão de Contratos"><GestaoContratos /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
       <Route path="/DashboardComercial" element={<LayoutWrapper currentPageName="DashboardComercial"><ProtectedRoute pageKey="Dashboard Comercial"><DashboardComercial /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/GestaoLeads" element={<LayoutWrapper currentPageName="DashboardComercial"><ProtectedRoute pageKey="Dashboard Comercial"><DashboardComercial /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/BaseConhecimento" element={<LayoutWrapper currentPageName="DashboardComercial"><ProtectedRoute pageKey="Dashboard Comercial"><DashboardComercial /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/Analytics" element={<LayoutWrapper currentPageName="Analytics"><ProtectedRoute pageKey="Dashboard de Relatórios"><Analytics /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AccessLog" element={<LayoutWrapper currentPageName="AccessLog"><ProtectedRoute pageKey="Log de Acesso"><AccessLog /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AuditoriaCompleta" element={<LayoutWrapper currentPageName="AuditoriaCompleta"><ProtectedRoute pageKey="Auditoria Completa"><AuditoriaCompleta /></ProtectedRoute></LayoutWrapper>} />
