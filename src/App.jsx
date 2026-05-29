@@ -86,7 +86,7 @@ const AuthenticatedApp = () => {
         const profile = profiles[0];
         if (!profile || !profile.consent_accepted_at) {
           setNeedsConsent(true);
-        } else if (profile.status === "pending_password_change") {
+        } else if (profile.status === "pending_password_change" && !profile.password_changed) {
           setNeedsPasswordChange(true);
         }
       } catch {}
