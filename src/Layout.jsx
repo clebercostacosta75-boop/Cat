@@ -37,7 +37,6 @@ const ALL_ITEMS = [
   { title: "Designer de Certificados", url: createPageUrl("CertDesigner"), icon: Award, key: "Designer de Certificados" },
   { title: "Assinaturas Digitais", url: createPageUrl("DigitalSignatures"), icon: PenLine, key: "Assinaturas Digitais" },
   { title: "Auditoria de Certificados", url: "/CertificateAuditPanel", icon: FileText, key: "Auditoria de Certificados" },
-  { title: "Config. Notificações", url: "/ConfigNotificacoes", icon: Settings, key: "Config. Notificações" },
   { title: "Central de Comunicação", url: createPageUrl("CommunicationCenter"), icon: Mail, key: "Central de Comunicação" },
   { title: "Usuários", url: createPageUrl("Users"), icon: UserCog, key: "Usuários" },
   { title: "Log de Auditoria", url: createPageUrl("AuditLog"), icon: FileText, key: "Log de Auditoria" },

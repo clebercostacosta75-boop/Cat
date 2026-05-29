@@ -30,7 +30,6 @@ export const ALL_MODULES = [
   "Caixa de Entrada",
   // Comunicação
   "Central de Comunicação",
-  "Config. Notificações",
   // Relatórios
   "Dashboard de Relatórios",
   "Dashboard Admin",

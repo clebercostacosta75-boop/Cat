@@ -21,7 +21,6 @@ import AttendanceConfirm from './pages/AttendanceConfirm';
 import DigitalSignatures from './pages/DigitalSignatures';
 import AlertasConfig from './pages/AlertasConfig';
 import AgendaTreinamentos from './pages/AgendaTreinamentos';
-import ConfigNotificacoes from './pages/ConfigNotificacoes';
 import AdminDashboard from './pages/AdminDashboard';
 import CertificateAuditPanel from './pages/CertificateAuditPanel';
 import Certificacoes from './pages/Certificacoes';
@@ -151,7 +150,6 @@ const AuthenticatedApp = () => {
       <Route path="/DigitalSignatures" element={<LayoutWrapper currentPageName="DigitalSignatures"><ProtectedRoute pageKey="Assinaturas Digitais"><DigitalSignatures /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AlertasConfig" element={<LayoutWrapper currentPageName="AlertasConfig"><AlertasConfig /></LayoutWrapper>} />
       <Route path="/AgendaTreinamentos" element={<LayoutWrapper currentPageName="AgendaTreinamentos"><ProtectedRoute pageKey="Agenda de Treinamentos"><AgendaTreinamentos /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/ConfigNotificacoes" element={<LayoutWrapper currentPageName="ConfigNotificacoes"><ProtectedRoute pageKey="Config. Notificações"><ConfigNotificacoes /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AdminDashboard" element={<LayoutWrapper currentPageName="AdminDashboard"><ProtectedRoute pageKey="Dashboard Admin"><AdminDashboard /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/CertificateAuditPanel" element={<LayoutWrapper currentPageName="CertificateAuditPanel"><ProtectedRoute pageKey="Auditoria de Certificados"><CertificateAuditPanel /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/Certificacoes" element={<LayoutWrapper currentPageName="Certificacoes"><ProtectedRoute pageKey="Certificações"><Certificacoes /></ProtectedRoute></LayoutWrapper>} />
