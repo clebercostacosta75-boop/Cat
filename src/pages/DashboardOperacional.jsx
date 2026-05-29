@@ -191,7 +191,17 @@ export default function DashboardOperacional() {
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
             {format(hoje, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-            {" · "}{schedules.length} registro(s) exibido(s)
+            {" · "}
+            {Object.entries(filtrosAtivos).some(([k, v]) => k !== "busca" && v !== "" && v !== "_all") ? (
+              <span className="text-blue-600 font-medium">
+                {schedules.length} treinamento(s) encontrado(s)
+                {filtrosAtivos.empresa !== "_all" && companies.find(c => c.id === filtrosAtivos.empresa) && (
+                  <> para {companies.find(c => c.id === filtrosAtivos.empresa).company_name || companies.find(c => c.id === filtrosAtivos.empresa).nome_fantasia}</>
+                )}
+              </span>
+            ) : (
+              <span>{schedules.length} registro(s) exibido(s)</span>
+            )}
           </p>
         </div>
         {/* Acesso Rápido */}
@@ -257,7 +267,14 @@ export default function DashboardOperacional() {
       {activeSection === "tabela" && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 font-medium">{schedules.length} treinamento(s)</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600 font-medium">{schedules.length} treinamento(s)</span>
+              {Object.entries(filtrosAtivos).some(([k, v]) => k !== "busca" && v !== "" && v !== "_all") && (
+                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                  Filtrado
+                </Badge>
+              )}
+            </div>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={handleExportExcel}>
                 <Download className="w-3 h-3" /> Excel
