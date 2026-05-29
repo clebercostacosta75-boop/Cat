@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import {
-  Users, MessageSquare, TrendingUp, Target, BookOpen, Instagram,
-  ArrowRight, UserCheck, Clock, CheckCircle, XCircle
+  Users, TrendingUp, Target, Instagram,
+  ArrowRight, Clock, CheckCircle, XCircle
 } from "lucide-react";
 
 const STATUS_COLORS = {
@@ -45,15 +45,7 @@ export default function DashboardComercial() {
     queryFn: () => base44.entities.Lead.list("-created_date", 500),
   });
 
-  const { data: conversations = [] } = useQuery({
-    queryKey: ["conversations"],
-    queryFn: () => base44.entities.Conversation.list("-last_message_at", 200),
-  });
 
-  const { data: knowledgeEntries = [] } = useQuery({
-    queryKey: ["knowledgeBase"],
-    queryFn: () => base44.entities.KnowledgeBaseEntry.list("-created_date", 200),
-  });
 
   // KPIs
   const totalLeads = leads.length;
@@ -63,8 +55,7 @@ export default function DashboardComercial() {
   const perdidos = leads.filter(l => l.status === "Perdido").length;
   const taxaConversao = totalLeads > 0 ? ((matriculados / totalLeads) * 100).toFixed(1) : 0;
 
-  const convAberta = conversations.filter(c => ["Aberta", "Em Atendimento IA", "Aguardando Humano"].includes(c.status)).length;
-  const convAguardando = conversations.filter(c => c.status === "Aguardando Humano").length;
+
 
   // Funil
   const funilStatuses = ["Novo", "Em Atendimento", "Qualificado", "Proposta Enviada", "Matriculado"];
@@ -88,15 +79,9 @@ export default function DashboardComercial() {
           <p className="text-sm text-gray-500 mt-1">Funil de vendas e atendimento multicanal da CAT Cursos</p>
         </div>
         <div className="flex gap-2">
-          <Link to="/GestaoLeads">
+          <Link to="/ProposalEntry">
             <Button variant="outline" size="sm" className="gap-1">
-              <Users className="w-4 h-4" /> Ver Leads
-            </Button>
-          </Link>
-          <Link to="/CaixaEntrada">
-            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1">
-              <MessageSquare className="w-4 h-4" /> Caixa de Entrada
-              {convAguardando > 0 && <Badge className="bg-red-500 text-white text-xs ml-1">{convAguardando}</Badge>}
+              <Users className="w-4 h-4" /> Entrada de Propostas
             </Button>
           </Link>
         </div>
@@ -106,14 +91,8 @@ export default function DashboardComercial() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard title="Total de Leads" value={totalLeads} icon={Users} color="bg-blue-100 text-blue-600" sub={`${novos} novos`} />
         <StatCard title="Em Atendimento" value={emAtendimento} icon={Clock} color="bg-yellow-100 text-yellow-600" />
-        <StatCard title="Matriculados" value={matriculados} icon={CheckCircle} color="bg-green-100 text-green-600" sub={`${taxaConversao}% de conversão`} />
+        <StatCard title="Matriculados" value={matriculados} icon={CheckCircle} color="bg-green-100 text-green-600" sub={`${taxaConversao}% conversão`} />
         <StatCard title="Perdidos" value={perdidos} icon={XCircle} color="bg-red-100 text-red-600" />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard title="Conversas Ativas" value={convAberta} icon={MessageSquare} color="bg-purple-100 text-purple-600" sub={`${convAguardando} aguardando humano`} />
-        <StatCard title="Base de Conhecimento" value={knowledgeEntries.filter(e => e.is_active !== false).length} icon={BookOpen} color="bg-indigo-100 text-indigo-600" sub="entradas ativas" />
-        <StatCard title="Taxa de Conversão" value={`${taxaConversao}%`} icon={TrendingUp} color="bg-emerald-100 text-emerald-600" sub="leads → matriculados" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -181,12 +160,11 @@ export default function DashboardComercial() {
       </div>
 
       {/* Atalhos */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {[
-          { label: "Gestão de Leads", to: "/GestaoLeads", icon: Users, color: "text-blue-600" },
-          { label: "Caixa de Entrada", to: "/CaixaEntrada", icon: MessageSquare, color: "text-purple-600" },
-          { label: "Base de Conhecimento", to: "/BaseConhecimento", icon: BookOpen, color: "text-indigo-600" },
+          { label: "Entrada de Propostas", to: "/ProposalEntry", icon: Target, color: "text-blue-600" },
           { label: "Contas Sociais", to: "/ContasSociais", icon: Instagram, color: "text-pink-600" },
+          { label: "Dashboard Financeiro", to: "/DashboardFinanceiro", icon: TrendingUp, color: "text-green-600" },
         ].map(({ label, to, icon: Icon, color }) => (
           <Link key={to} to={to}>
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
