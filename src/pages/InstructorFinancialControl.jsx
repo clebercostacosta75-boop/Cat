@@ -88,7 +88,11 @@ export default function InstructorFinancialControl() {
       filtered = filtered.filter(cls => cls.payment_status === paymentStatusFilter);
     }
 
-    return filtered.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+    return filtered.sort((a, b) => {
+      const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
+      const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
+      return dateB - dateA;
+    });
   }, [classSchedules, selectedInstructorId, paymentStatusFilter]);
 
   const financialSummary = React.useMemo(() => {
@@ -453,7 +457,7 @@ export default function InstructorFinancialControl() {
                               </span>
                               <span className="flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
-                                {format(new Date(cls.start_date), 'dd/MM/yyyy')}
+                                {cls.start_date ? format(new Date(cls.start_date), 'dd/MM/yyyy') : 'Data não definida'}
                               </span>
                             </div>
                             {(() => {
@@ -494,7 +498,7 @@ export default function InstructorFinancialControl() {
                                           Parcela {inst.installment_number} - R$ {(inst.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                         </p>
                                         <p className="text-xs text-gray-600 mt-1">
-                                          Vencimento: {format(new Date(inst.due_date), 'dd/MM/yyyy')}
+                                          Vencimento: {inst.due_date ? format(new Date(inst.due_date), 'dd/MM/yyyy') : 'Data não definida'}
                                         </p>
 
                                         {/* Status e Data de Pagamento */}
@@ -530,7 +534,7 @@ export default function InstructorFinancialControl() {
 
                                         {inst.paid_date && (
                                           <p className="text-xs text-green-600 mt-1">
-                                            Pago em: {format(new Date(inst.paid_date), 'dd/MM/yyyy')}
+                                            Pago em: {inst.paid_date ? format(new Date(inst.paid_date), 'dd/MM/yyyy') : 'Data não definida'}
                                           </p>
                                         )}
                                       </div>
