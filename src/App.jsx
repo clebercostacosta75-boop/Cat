@@ -50,6 +50,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy.jsx';
 import Analytics from './pages/Analytics.jsx';
 import AccessLog from './pages/AccessLog.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
+import { PermissionsProvider } from '@/lib/PermissionsContext';
 import AuditoriaCompleta from './pages/AuditoriaCompleta.jsx';
 import AssistenteCadastros from './pages/AssistenteCadastros.jsx';
 
@@ -217,7 +218,9 @@ function App() {
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <NavigationTracker />
-          <AuthenticatedApp />
+          <PermissionsProvider>
+            <AuthenticatedApp />
+          </PermissionsProvider>
         </Router>
         <Toaster />
         <VisualEditAgent />

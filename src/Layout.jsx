@@ -15,7 +15,8 @@ import {
   SidebarProvider, SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Toaster } from "sonner";
-import { usePermissions } from "@/hooks/usePermissions";
+import { usePermissions } from "@/lib/PermissionsContext";
+import { Loader2 } from "lucide-react";
 
 const ALL_ITEMS = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, key: "Dashboard" },
@@ -72,7 +73,7 @@ const ROLE_LABEL = {
 
 export default function Layout({ children }) {
   const location = useLocation();
-  const { role, allowedKeys } = usePermissions();
+  const { role, allowedKeys, loading } = usePermissions();
 
   // null = acesso total, array = filtro
   const navigationItems = allowedKeys === null
@@ -107,30 +108,37 @@ export default function Layout({ children }) {
                 Navegação
               </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
-                  {navigationItems.length === 0 ? (
-                    <div className="px-3 py-4 text-center">
-                      <Shield className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                      <p className="text-xs text-gray-400 leading-relaxed">Nenhum módulo liberado.<br />Solicite ao administrador.</p>
-                    </div>
-                  ) : (
-                    navigationItems.map((item) => (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
-                          asChild
-                          className={`hover:bg-gray-100 transition-colors duration-150 rounded-md mb-1 ${
-                            location.pathname === item.url ? "bg-gray-100 text-gray-900" : "text-gray-700"
-                          }`}
-                        >
-                          <Link to={item.url} className="flex items-center gap-3 px-3 py-2">
-                            <item.icon className="w-4 h-4" />
-                            <span className="font-normal text-sm">{item.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))
-                  )}
-                </SidebarMenu>
+                {loading ? (
+                  <div className="px-3 py-6 flex flex-col items-center justify-center gap-2">
+                    <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                    <p className="text-xs text-gray-400">Carregando permissões...</p>
+                  </div>
+                ) : (
+                  <SidebarMenu>
+                    {navigationItems.length === 0 ? (
+                      <div className="px-3 py-4 text-center">
+                        <Shield className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                        <p className="text-xs text-gray-400 leading-relaxed">Nenhum módulo liberado.<br />Solicite ao administrador.</p>
+                      </div>
+                    ) : (
+                      navigationItems.map((item) => (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton
+                            asChild
+                            className={`hover:bg-gray-100 transition-colors duration-150 rounded-md mb-1 ${
+                              location.pathname === item.url ? "bg-gray-100 text-gray-900" : "text-gray-700"
+                            }`}
+                          >
+                            <Link to={item.url} className="flex items-center gap-3 px-3 py-2">
+                              <item.icon className="w-4 h-4" />
+                              <span className="font-normal text-sm">{item.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))
+                    )}
+                  </SidebarMenu>
+                )}
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>

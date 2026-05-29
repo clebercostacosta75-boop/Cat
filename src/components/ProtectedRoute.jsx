@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
-import { usePermissions } from "@/hooks/usePermissions";
+import { usePermissions } from "@/lib/PermissionsContext";
 
 // pageKey: chave exata do item no menu (ex: "Dashboard Financeiro")
 export default function ProtectedRoute({ pageKey, children }) {
