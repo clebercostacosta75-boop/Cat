@@ -1,73 +1,99 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 
-// Mapeamento de permissões legadas para atuais
-const LEGACY_MAP = {
-  "Gerar BMM": "Gestão de BMM",
-  "Histórico BMM": "Gestão de BMM",
-  "Relatórios": "Dashboard de Relatórios",
-  "Alertas de Reciclagem": "Alertas de Vencimento",
-  "Análise de Lucratividade": "Dashboard Financeiro",
-  "Analytics": "Dashboard de Relatórios",
-};
+// ─── TODOS OS MÓDULOS DO SISTEMA ────────────────────────────────────────────
+export const ALL_MODULES = [
+  // Geral
+  "Dashboard",
+  "Cronograma",
+  "Agenda de Treinamentos",
+  "Chamada Presencial",
+  // Operacional
+  "Entrada de Propostas",
+  "Gestão de BMM",
+  "Instrutores",
+  "Empresas",
+  "Contratadas",
+  "Cursos",
+  "Importar Excel",
+  "Alunos Individuais (PF)",
+  "Gestão de Contratos",
+  "Dashboard Operacional",
+  // Financeiro
+  "Dashboard Financeiro",
+  // Certificações
+  "Certificações",
+  "Alertas de Vencimento",
+  "Designer de Certificados",
+  "Assinaturas Digitais",
+  "Auditoria de Certificados",
+  // Comercial
+  "Dashboard Comercial",
+  "Gestão de Leads",
+  "Assistente de Cadastros",
+  "Caixa de Entrada",
+  "Base de Conhecimento",
+  "Contas Sociais",
+  // Comunicação
+  "Modelos E-mail",
+  "Central de Comunicação",
+  "Config. Notificações",
+  "Log de Notificações",
+  // Relatórios
+  "Dashboard de Relatórios",
+  "Dashboard Admin",
+  // Administração
+  "Usuários",
+  "Log de Auditoria",
+  "Auditoria Completa",
+  "Log de Acesso",
+];
 
-const normalize = (perms) => {
-  if (!perms) return null;
-  const set = new Set();
-  perms.forEach(p => set.add(LEGACY_MAP[p] || p));
-  return Array.from(set);
-};
+// Módulos bloqueados para perfil Editor
+const ADMIN_MODULES = [
+  "Usuários",
+  "Log de Auditoria",
+  "Auditoria Completa",
+  "Log de Acesso",
+  "Dashboard Admin",
+];
 
-// Perfis com acesso total irrestrito
-const FULL_ACCESS_ROLES = ["admin", "Administrador Master", "gestor_master"];
+// Módulos do perfil Cliente
+const CLIENT_MODULES = ["Dashboard", "Certificações", "Alertas de Vencimento"];
 
-// Menus padrão por perfil (fallback SOMENTE quando UserProfile.permissions está vazio)
-// Editor e Cliente dependem EXCLUSIVAMENTE das permissões individuais configuradas pelo Gestor Master
-const ROLE_MENUS = {
-  Operacional: [
-    "Dashboard","Dashboard Operacional","Agenda de Treinamentos","Cronograma","Chamada Presencial",
-    "Entrada de Propostas","Gestão de BMM","Instrutores","Empresas","Contratadas",
-    "Cursos","Importar Excel","Central de Comunicação","Config. Notificações",
-    "Log de Notificações","Alunos Individuais (PF)","Dashboard Comercial",
-    "Gestão de Leads","Caixa de Entrada","Base de Conhecimento","Contas Sociais","Dashboard de Relatórios",
-  ],
-  Financeiro: ["Dashboard","Dashboard Financeiro","Dashboard de Relatórios"],
-  Certificacao: [
-    "Dashboard","Certificações","Alertas de Vencimento","Designer de Certificados",
-    "Assinaturas Digitais","Auditoria de Certificados","Agenda de Treinamentos",
-    "Cronograma","Chamada Presencial","Modelos E-mail","Central de Comunicação",
-  ],
-  "Certificação": [
-    "Dashboard","Certificações","Alertas de Vencimento","Designer de Certificados",
-    "Assinaturas Digitais","Auditoria de Certificados","Agenda de Treinamentos",
-    "Cronograma","Chamada Presencial","Modelos E-mail","Central de Comunicação",
-  ],
-  Atendimento: [
-    "Dashboard","Caixa de Entrada","Gestão de Leads","Base de Conhecimento",
-    "Contas Sociais","Dashboard Comercial","Central de Comunicação",
-  ],
-  Instrutor: ["Dashboard"],
-  "Coordenador de Operações": ["Dashboard","Cronograma","Agenda de Treinamentos","Chamada Presencial"],
-  PortalEmpresa: [],
-  // editor/Editor/cliente: lista vazia — permissões definidas exclusivamente pelo Gestor Master
-  editor: [],
-  Editor: [],
-  cliente: [],
-};
+// Módulos do perfil Editor (tudo exceto Administração)
+const EDITOR_MODULES = ALL_MODULES.filter(m => !ADMIN_MODULES.includes(m));
 
+// ─── CONTEXT ────────────────────────────────────────────────────────────────
 const PermissionsContext = createContext(null);
 
 export function PermissionsProvider({ children }) {
   const [role, setRole] = useState(null);
-  const [allowedKeys, setAllowedKeys] = useState(null); // null = loading ainda não resolvido
+  // null = acesso total (gestor_master / admin da plataforma)
+  // array = lista exata de módulos permitidos
+  const [allowedKeys, setAllowedKeys] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const u = await base44.auth.me();
+      // PASSO 1: Verificar autenticação
+      let u;
+      try {
+        u = await base44.auth.me();
+      } catch {
+        setAllowedKeys([]);
+        setLoading(false);
+        return;
+      }
 
-      // Administrador da plataforma = acesso total imediato
+      if (!u) {
+        setAllowedKeys([]);
+        setLoading(false);
+        return;
+      }
+
+      // PASSO 2: Admin da plataforma Base44 = acesso total
       if (u.role === "admin") {
         setRole("admin");
         setAllowedKeys(null);
@@ -75,75 +101,49 @@ export function PermissionsProvider({ children }) {
         return;
       }
 
-      // Verifica antecipadamente se é gestor_master pelo UserProfile (antes de qualquer filtro)
-      // Isso evita que gestores_master sejam bloqueados por ter role "user" na plataforma Base44
-      try {
-        const earlyProfiles = await base44.entities.UserProfile.filter({ user_email: u.email });
-        if (earlyProfiles.length > 0 && FULL_ACCESS_ROLES.includes(earlyProfiles[0].role)) {
-          setRole(earlyProfiles[0].role);
-          setAllowedKeys(null);
-          setLoading(false);
-          return;
-        }
-      } catch {}
-
-      // Busca UserProfile pelo email para obter role e permissões reais do servidor
+      // PASSO 3: Buscar perfil SEMPRE do servidor, sem cache
       let profile = null;
       try {
         const profiles = await base44.entities.UserProfile.filter({ user_email: u.email });
-        if (profiles.length > 0) {
-          profile = profiles[0];
-        } else {
-          // Cria perfil padrão se não existir — admin deve configurar permissões
-          profile = await base44.entities.UserProfile.create({
-            user_email: u.email,
-            user_name: u.full_name || u.email,
-            role: "cliente",
-            status: "active",
-          });
-        }
+        profile = profiles[0] || null;
       } catch {
-        // Se falhar ao buscar/criar, continua sem profile
+        // Se falhar a busca, nega acesso por segurança
+        setAllowedKeys([]);
+        setLoading(false);
+        return;
       }
 
-      const profileRole = profile?.role || "cliente";
+      if (!profile) {
+        // Usuário sem perfil = acesso mínimo
+        setRole("cliente");
+        setAllowedKeys(CLIENT_MODULES);
+        setLoading(false);
+        return;
+      }
+
+      const profileRole = profile.role || "cliente";
       setRole(profileRole);
 
-      // Roles com acesso total
-      if (FULL_ACCESS_ROLES.includes(profileRole)) {
+      // PASSO 4: Aplicar regras por perfil
+      if (profileRole === "gestor_master") {
+        // Acesso total irrestrito
         setAllowedKeys(null);
-        setLoading(false);
-        return;
+      } else if (profileRole === "editor") {
+        // Tudo exceto Administração
+        setAllowedKeys(EDITOR_MODULES);
+      } else if (profileRole === "cliente") {
+        // Apenas Dashboard, Certificações, Alertas
+        setAllowedKeys(CLIENT_MODULES);
+      } else if (profileRole === "personalizado") {
+        // Lista definida manualmente pelo admin
+        const perms = profile.permissions || [];
+        setAllowedKeys(perms.length > 0 ? perms : []);
+      } else {
+        // Qualquer outro perfil legado: usar permissões salvas ou lista vazia
+        const perms = profile.permissions || [];
+        setAllowedKeys(perms.length > 0 ? perms : []);
       }
-
-      // Verifica se é instrutor
-      try {
-        const insts = await base44.entities.Instructor.filter({ email: u.email });
-        if (insts.length > 0) {
-          setRole("Instrutor");
-          setAllowedKeys(["Dashboard"]);
-          setLoading(false);
-          return;
-        }
-      } catch {
-        // ignora falha na busca de instrutor
-      }
-
-      // FONTE ÚNICA: permissões customizadas salvas no UserProfile pelo Gestor Master
-      // Esta é a fonte de verdade — sempre tem prioridade
-      const profilePerms = normalize(profile?.permissions);
-      if (profilePerms && profilePerms.length > 0) {
-        setAllowedKeys(profilePerms);
-        setLoading(false);
-        return;
-      }
-
-      // Fallback: menu padrão do perfil (para roles como Operacional, Financeiro, etc.)
-      // Editor, cliente → lista vazia (Gestor Master deve configurar manualmente)
-      const menuFallback = ROLE_MENUS[profileRole] ?? [];
-      setAllowedKeys(menuFallback);
     } catch {
-      // Em qualquer erro inesperado, lista vazia (não libera acesso indevido)
       setAllowedKeys([]);
     } finally {
       setLoading(false);
@@ -152,15 +152,14 @@ export function PermissionsProvider({ children }) {
 
   useEffect(() => {
     load();
-
-    // Escuta evento disparado após salvar permissões no painel de usuários
+    // Recarrega quando admin salvar permissões
     const handler = () => load();
     window.addEventListener("permissions-updated", handler);
     return () => window.removeEventListener("permissions-updated", handler);
   }, [load]);
 
   const hasPermission = useCallback((key) => {
-    if (allowedKeys === null) return true; // acesso total
+    if (allowedKeys === null) return true;
     return allowedKeys.includes(key);
   }, [allowedKeys]);
 

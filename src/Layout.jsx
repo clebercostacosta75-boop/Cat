@@ -58,6 +58,12 @@ const ALL_ITEMS = [
 ];
 
 const ROLE_LABEL = {
+  admin: "Administrador",
+  gestor_master: "Gestor Master",
+  editor: "Editor",
+  cliente: "Cliente",
+  personalizado: "Personalizado",
+  // legados
   Instrutor: "Instrutor",
   "Coordenador de Operações": "Coordenador",
   Financeiro: "Financeiro",
@@ -65,9 +71,7 @@ const ROLE_LABEL = {
   Certificacao: "Certificação",
   "Certificação": "Certificação",
   Atendimento: "Atendimento",
-  admin: "Administrador",
   "Administrador Master": "Administrador",
-  gestor_master: "Gestor Master",
   PortalEmpresa: "Portal Empresa",
 };
 

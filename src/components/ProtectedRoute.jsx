@@ -1,10 +1,19 @@
-import React from "react";
-import { Navigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import { usePermissions } from "@/lib/PermissionsContext";
+import { toast } from "sonner";
 
-// pageKey: chave exata do item no menu (ex: "Dashboard Financeiro")
 export default function ProtectedRoute({ pageKey, children }) {
   const { allowedKeys, loading } = usePermissions();
+  const location = useLocation();
+
+  const hasAccess = allowedKeys === null || (Array.isArray(allowedKeys) && allowedKeys.includes(pageKey));
+
+  useEffect(() => {
+    if (!loading && !hasAccess) {
+      toast.warning(`Você não tem acesso ao módulo "${pageKey}".`);
+    }
+  }, [loading, hasAccess, pageKey]);
 
   if (loading) {
     return (
@@ -14,10 +23,7 @@ export default function ProtectedRoute({ pageKey, children }) {
     );
   }
 
-  // null = acesso total
-  if (allowedKeys === null) return children;
-
-  if (!allowedKeys.includes(pageKey)) {
+  if (!hasAccess) {
     return <Navigate to="/Dashboard" replace />;
   }
 

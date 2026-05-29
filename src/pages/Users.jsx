@@ -4,45 +4,43 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserCog, Plus, Search, Shield, Edit, Mail, Phone, X, Check, Send, CheckCircle, Clock, Trash2, Key } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { UserCog, Plus, Search, Shield, Edit, Mail, Phone, X, Check, Send, Trash2, Clock, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 import PermissionsPanel from "@/components/users/PermissionsPanel";
 import CredentialsModal from "@/components/users/CredentialsModal";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
 
 const ROLE_OPTIONS = [
   { value: "gestor_master", label: "Gestor Master" },
   { value: "editor", label: "Editor" },
   { value: "cliente", label: "Cliente" },
+  { value: "personalizado", label: "Personalizado" },
 ];
 
 const ROLE_COLORS = {
   gestor_master: "bg-purple-100 text-purple-800",
   editor: "bg-blue-100 text-blue-800",
   cliente: "bg-green-100 text-green-800",
+  personalizado: "bg-orange-100 text-orange-800",
 };
 
-const STATUS_COLORS = {
-  active: "bg-green-100 text-green-800",
-  pending_password_change: "bg-yellow-100 text-yellow-800",
+const ROLE_LABELS = {
+  gestor_master: "Gestor Master",
+  editor: "Editor",
+  cliente: "Cliente",
+  personalizado: "Personalizado",
 };
 
-const STATUS_LABELS = {
-  active: "Ativo",
-  pending_password_change: "Aguardando 1º acesso",
-};
-
-// Formulário isolado para evitar conflitos com o Dialog
 function UserForm({ profile, onSave, onCancel }) {
   const isNew = !profile;
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     user_name: profile?.user_name || "",
     user_email: profile?.user_email || "",
     phone: profile?.phone || "",
@@ -50,88 +48,51 @@ function UserForm({ profile, onSave, onCancel }) {
     initial_password: "",
   });
 
-  const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
+    onSave(form);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="user_name">Nome completo</Label>
-        <Input
-          id="user_name"
-          value={formData.user_name}
-          onChange={e => handleChange("user_name", e.target.value)}
-          placeholder="Nome completo"
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="user_email">E-mail</Label>
-        <Input
-          id="user_email"
-          type="email"
-          value={formData.user_email}
-          onChange={e => handleChange("user_email", e.target.value)}
-          placeholder="email@exemplo.com"
-          required
-          disabled={!!profile}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="phone">Telefone</Label>
-        <Input
-          id="phone"
-          value={formData.phone}
-          onChange={e => handleChange("phone", e.target.value)}
-          placeholder="(00) 00000-0000"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="role">Perfil de Acesso</Label>
-        <select
-          id="role"
-          value={formData.role}
-          onChange={e => handleChange("role", e.target.value)}
-          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-        >
-          {ROLE_OPTIONS.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <Label>Nome completo</Label>
+          <Input value={form.user_name} onChange={e => set("user_name", e.target.value)} placeholder="Nome completo" required />
+        </div>
+        <div className="space-y-1">
+          <Label>E-mail</Label>
+          <Input type="email" value={form.user_email} onChange={e => set("user_email", e.target.value)} placeholder="email@exemplo.com" required disabled={!!profile} />
+        </div>
+        <div className="space-y-1">
+          <Label>Telefone</Label>
+          <Input value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="(00) 00000-0000" />
+        </div>
+        <div className="space-y-1">
+          <Label>Perfil de Acesso</Label>
+          <select
+            value={form.role}
+            onChange={e => set("role", e.target.value)}
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            {ROLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </div>
       </div>
 
       {isNew && (
-        <div className="space-y-2">
-          <Label htmlFor="initial_password">
-            Senha inicial <span className="text-gray-400 font-normal">(sugestão: o e-mail do usuário)</span>
-          </Label>
-          <Input
-            id="initial_password"
-            type="text"
-            value={formData.initial_password}
-            onChange={e => handleChange("initial_password", e.target.value)}
-            placeholder="Ex: usuario@empresa.com"
-          />
-          <p className="text-xs text-gray-500">Esta senha será exibida no modal para você comunicar ao usuário. O usuário deverá trocá-la no primeiro acesso.</p>
+        <div className="space-y-1">
+          <Label>Senha inicial <span className="text-gray-400 font-normal">(opcional — padrão: e-mail do usuário)</span></Label>
+          <Input value={form.initial_password} onChange={e => set("initial_password", e.target.value)} placeholder="Ex: usuario@empresa.com" />
+          <p className="text-xs text-gray-500">O usuário deverá trocar a senha no primeiro acesso.</p>
         </div>
       )}
 
       <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          <X className="w-4 h-4 mr-1" /> Cancelar
-        </Button>
-        <Button type="submit">
-          <Check className="w-4 h-4 mr-1" /> {isNew ? "Criar Usuário" : "Salvar"}
-        </Button>
+        <Button type="button" variant="outline" onClick={onCancel}><X className="w-4 h-4 mr-1" /> Cancelar</Button>
+        <Button type="submit"><Check className="w-4 h-4 mr-1" /> {isNew ? "Criar Usuário" : "Salvar"}</Button>
       </div>
     </form>
   );
@@ -143,51 +104,50 @@ export default function UsersPage() {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingProfile, setEditingProfile] = useState(null);
-  const [saving, setSaving] = useState(false);
   const [deletingProfile, setDeletingProfile] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
   const [credentialsModal, setCredentialsModal] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(u => setCurrentUser(u)).catch(() => {});
   }, []);
-
-  const canDelete = currentUser?.role === "admin" || currentUser?.role === "gestor_master";
 
   const loadProfiles = async () => {
     setLoading(true);
     try {
       const data = await base44.entities.UserProfile.list("-created_date", 200);
       setProfiles(data);
-    } catch (err) {
+    } catch {
       toast.error("Erro ao carregar usuários");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadProfiles();
-  }, []);
-
-
+  useEffect(() => { loadProfiles(); }, []);
 
   const handleSave = async (formData) => {
-    setSaving(true);
     try {
       if (editingProfile) {
-        const { initial_password, ...updateData } = formData;
-        await base44.entities.UserProfile.update(editingProfile.id, updateData);
+        // Atualizar perfil existente
+        await base44.entities.UserProfile.update(editingProfile.id, {
+          user_name: formData.user_name,
+          phone: formData.phone,
+          role: formData.role,
+        });
+
+        // Se mudou o role, notifica o contexto de permissões
+        window.dispatchEvent(new Event("permissions-updated"));
         toast.success("Usuário atualizado com sucesso!");
       } else {
-        // Verifica se já existe
+        // Verificar duplicidade
         const existing = profiles.find(p => p.user_email?.toLowerCase() === formData.user_email?.toLowerCase());
         if (existing) {
           toast.warning(`O e-mail ${formData.user_email} já está cadastrado.`);
-          setSaving(false);
           return;
         }
-        // Cria perfil já ativo
+
+        // Criar perfil
         await base44.entities.UserProfile.create({
           user_name: formData.user_name,
           user_email: formData.user_email,
@@ -197,15 +157,17 @@ export default function UsersPage() {
           initial_password: formData.initial_password || formData.user_email,
           credentials_sent_at: new Date().toISOString(),
           credentials_sent_via: "manual",
+          password_changed: false,
         });
-        // Convida no sistema Base44
+
+        // Convidar no sistema Base44
         await base44.functions.invoke("convidarUsuario", {
           email: formData.user_email,
           user_name: formData.user_name,
           role: formData.role,
         });
 
-        // Envia credenciais por WhatsApp se tiver telefone
+        // Enviar WhatsApp se tiver telefone
         if (formData.phone) {
           try {
             await base44.functions.invoke("enviarNotificacaoWhatsApp", {
@@ -217,10 +179,9 @@ export default function UsersPage() {
               credential_password: formData.initial_password || formData.user_email,
               app_url: window.location.origin,
             });
-            toast.success(`Usuário ${formData.user_name} criado! Credenciais enviadas por WhatsApp.`);
+            toast.success(`Usuário criado! Credenciais enviadas por WhatsApp.`);
           } catch {
             toast.success(`Usuário ${formData.user_name} criado com sucesso!`);
-            toast.warning("Não foi possível enviar o WhatsApp. Compartilhe as credenciais manualmente.");
           }
         } else {
           toast.success(`Usuário ${formData.user_name} criado com sucesso!`);
@@ -232,29 +193,13 @@ export default function UsersPage() {
           password: formData.initial_password || formData.user_email,
         });
       }
+
       setShowForm(false);
       setEditingProfile(null);
       await loadProfiles();
     } catch (err) {
-      toast.error("Erro ao salvar usuário");
-    } finally {
-      setSaving(false);
+      toast.error("Erro ao salvar usuário: " + (err?.message || ""));
     }
-  };
-
-  const handleEdit = (profile) => {
-    setEditingProfile(profile);
-    setShowForm(true);
-  };
-
-  const handleNew = () => {
-    setEditingProfile(null);
-    setShowForm(true);
-  };
-
-  const handleCancel = () => {
-    setShowForm(false);
-    setEditingProfile(null);
   };
 
   const handleResendInvite = async (profile) => {
@@ -265,7 +210,6 @@ export default function UsersPage() {
         profile_id: profile.id,
       });
       if (res.data?.success) {
-        // Envia por WhatsApp se tiver telefone
         if (profile.phone) {
           try {
             await base44.functions.invoke("enviarNotificacaoWhatsApp", {
@@ -277,25 +221,20 @@ export default function UsersPage() {
               credential_password: profile.initial_password || "",
               app_url: window.location.origin,
             });
-            toast.success("Convite reenviado! Credenciais enviadas por WhatsApp.");
-          } catch {
-            toast.success("Convite reenviado por e-mail.");
-            toast.warning("Não foi possível enviar o WhatsApp.");
-          }
-        } else {
-          toast.success("Convite reenviado por e-mail.");
+          } catch {}
         }
         setCredentialsModal({
           name: profile.user_name,
           email: profile.user_email,
           password: profile.initial_password || "",
         });
+        toast.success("Convite reenviado!");
         await loadProfiles();
       } else {
         toast.error(res.data?.error || "Erro ao reenviar convite");
       }
-    } catch (err) {
-      toast.error(err?.response?.data?.error || "Erro ao reenviar convite");
+    } catch {
+      toast.error("Erro ao reenviar convite");
     }
   };
 
@@ -304,7 +243,7 @@ export default function UsersPage() {
     try {
       await base44.entities.UserProfile.delete(deletingProfile.id);
       setProfiles(prev => prev.filter(p => p.id !== deletingProfile.id));
-      toast.success(`Usuário ${deletingProfile.user_name || deletingProfile.user_email} excluído com sucesso.`);
+      toast.success(`Usuário ${deletingProfile.user_name || deletingProfile.user_email} excluído.`);
     } catch {
       toast.error("Erro ao excluir usuário");
     } finally {
@@ -312,16 +251,12 @@ export default function UsersPage() {
     }
   };
 
+  const canDelete = currentUser?.role === "admin";
+
   const filtered = profiles.filter(p => {
     const q = search.toLowerCase();
-    return (
-      !q ||
-      (p.user_name || "").toLowerCase().includes(q) ||
-      (p.user_email || "").toLowerCase().includes(q)
-    );
+    return !q || (p.user_name || "").toLowerCase().includes(q) || (p.user_email || "").toLowerCase().includes(q);
   });
-
-  const roleLabel = (r) => ROLE_OPTIONS.find(o => o.value === r)?.label || r;
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -335,7 +270,7 @@ export default function UsersPage() {
           </div>
         </div>
         {!showForm && (
-          <Button onClick={handleNew}>
+          <Button onClick={() => { setEditingProfile(null); setShowForm(true); }}>
             <Plus className="w-4 h-4 mr-2" /> Novo Usuário
           </Button>
         )}
@@ -344,17 +279,13 @@ export default function UsersPage() {
       {/* Formulário inline */}
       {showForm && (
         <Card className="mb-6 border-2 border-blue-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">
-              {editingProfile ? "Editar Usuário" : "Novo Usuário"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
+            <h3 className="text-base font-semibold mb-4">{editingProfile ? "Editar Usuário" : "Novo Usuário"}</h3>
             <UserForm
               key={editingProfile?.id || "new"}
               profile={editingProfile}
               onSave={handleSave}
-              onCancel={handleCancel}
+              onCancel={() => { setShowForm(false); setEditingProfile(null); }}
             />
           </CardContent>
         </Card>
@@ -366,17 +297,11 @@ export default function UsersPage() {
           <TabsTrigger value="permissoes">Permissões de Acesso</TabsTrigger>
         </TabsList>
 
-        {/* Aba: lista de usuários */}
+        {/* Aba: Usuários */}
         <TabsContent value="usuarios">
-          {/* Busca */}
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              className="pl-9"
-              placeholder="Buscar por nome ou e-mail..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+            <Input className="pl-9" placeholder="Buscar por nome ou e-mail..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
 
           {loading ? (
@@ -413,38 +338,32 @@ export default function UsersPage() {
                           {profile.credentials_sent_at ? (
                             <div className="flex items-center gap-1 text-xs text-green-600 mt-0.5">
                               <CheckCircle className="w-3 h-3" />
-                              <span>Convite enviado em {format(new Date(profile.credentials_sent_at), "dd/MM/yy HH:mm", { locale: ptBR })}</span>
+                              <span>Convite em {format(new Date(profile.credentials_sent_at), "dd/MM/yy HH:mm", { locale: ptBR })}</span>
                             </div>
                           ) : (
                             <div className="flex items-center gap-1 text-xs text-orange-500 mt-0.5">
                               <Clock className="w-3 h-3" />
-                              <span>Convite não enviado ainda</span>
+                              <span>Convite não enviado</span>
                             </div>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
                         <Badge className={ROLE_COLORS[profile.role] || "bg-gray-100 text-gray-800"}>
-                          {roleLabel(profile.role)}
+                          {ROLE_LABELS[profile.role] || profile.role || "—"}
                         </Badge>
-                        <Badge className={STATUS_COLORS[profile.status] || "bg-gray-100 text-gray-800"}>
-                          {STATUS_LABELS[profile.status] || profile.status}
+                        <Badge className={profile.status === "active" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                          {profile.status === "active" ? "Ativo" : profile.status === "pending_password_change" ? "Aguardando 1º acesso" : profile.status || "—"}
                         </Badge>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleResendInvite(profile)}
-                          title="Reenviar convite por e-mail"
-                          className="text-xs text-blue-600 border-blue-200 hover:bg-blue-50 gap-1"
-                        >
+                        <Button size="sm" variant="outline" onClick={() => handleResendInvite(profile)} className="text-xs gap-1 text-blue-600 border-blue-200 hover:bg-blue-50">
                           <Send className="w-3 h-3" /> Reenviar
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => handleEdit(profile)} title="Editar">
+                        <Button size="icon" variant="ghost" onClick={() => { setEditingProfile(profile); setShowForm(true); }} title="Editar">
                           <Edit className="w-4 h-4" />
                         </Button>
                         {canDelete && (
-                          <Button size="icon" variant="ghost" onClick={() => setDeletingProfile(profile)} title="Excluir usuário">
+                          <Button size="icon" variant="ghost" onClick={() => setDeletingProfile(profile)} title="Excluir">
                             <Trash2 className="w-4 h-4 text-red-500" />
                           </Button>
                         )}
@@ -457,7 +376,7 @@ export default function UsersPage() {
           )}
         </TabsContent>
 
-        {/* Aba: permissões de acesso */}
+        {/* Aba: Permissões */}
         <TabsContent value="permissoes">
           {loading ? (
             <div className="flex justify-center py-12">
@@ -468,24 +387,20 @@ export default function UsersPage() {
           )}
         </TabsContent>
       </Tabs>
-      <CredentialsModal
-        isOpen={!!credentialsModal}
-        credentials={credentialsModal}
-        onClose={() => setCredentialsModal(null)}
-      />
+
+      <CredentialsModal isOpen={!!credentialsModal} credentials={credentialsModal} onClose={() => setCredentialsModal(null)} />
+
       <AlertDialog open={!!deletingProfile} onOpenChange={open => !open && setDeletingProfile(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir usuário</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir o usuário <strong>{deletingProfile?.user_name || deletingProfile?.user_email}</strong>? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir <strong>{deletingProfile?.user_name || deletingProfile?.user_email}</strong>? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-              Excluir
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">Excluir</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
