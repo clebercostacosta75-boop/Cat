@@ -31,16 +31,18 @@ export default function PaymentInstallmentsForm({ installments, onChange, instru
     }
   };
 
-  // Efeito: se valor > 500, dividir automaticamente em 2x
+  // Efeito: auto-criar parcelas conforme valor
   useEffect(() => {
-    if (instructorPaymentValue > 500 && installments.length === 0) {
-      const today = new Date();
-      const firstDueDate = new Date(today);
-      firstDueDate.setDate(today.getDate() + 30);
-      
+    if (!instructorPaymentValue || installments.length > 0) return;
+
+    const today = new Date();
+    const firstDueDate = new Date(today);
+    firstDueDate.setDate(today.getDate() + 30);
+
+    if (instructorPaymentValue > 500) {
+      // Valores > R$ 500: 2 parcelas
       const secondDueDate = new Date(today);
       secondDueDate.setDate(today.getDate() + 60);
-
       const halfAmount = instructorPaymentValue / 2;
 
       onChange([
@@ -57,6 +59,19 @@ export default function PaymentInstallmentsForm({ installments, onChange, instru
           installment_number: 2,
           amount: halfAmount,
           due_date: secondDueDate.toISOString().split('T')[0],
+          status: "Pendente",
+          paid_date: "",
+          proof_of_payment_url: "",
+          notes: ""
+        }
+      ]);
+    } else {
+      // Valores <= R$ 500: 1 parcela à vista
+      onChange([
+        {
+          installment_number: 1,
+          amount: instructorPaymentValue,
+          due_date: firstDueDate.toISOString().split('T')[0],
           status: "Pendente",
           paid_date: "",
           proof_of_payment_url: "",
@@ -141,27 +156,7 @@ export default function PaymentInstallmentsForm({ installments, onChange, instru
       <div className="flex items-center justify-between">
         <Label className="text-base font-semibold">Parcelamento do Pagamento (até 2x)</Label>
         <div className="flex gap-2">
-          {instructorPaymentValue > 0 && installments.length === 0 && (
-            <Button
-              type="button"
-              onClick={splitEqually}
-              size="sm"
-              variant="outline"
-            >
-              Dividir em 2x
-            </Button>
-          )}
-          {installments.length < 2 && (
-            <Button
-              type="button"
-              onClick={handleAddInstallment}
-              size="sm"
-              variant="outline"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Adicionar Parcela
-            </Button>
-          )}
+          {/* Sem botões: parcelamento é automático */}
         </div>
       </div>
 
