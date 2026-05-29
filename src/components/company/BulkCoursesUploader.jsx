@@ -15,10 +15,10 @@ export default function BulkCoursesUploader({ companyId, onSuccess }) {
 
   const downloadTemplate = () => {
     const templateData = [
-      ['course_id', 'course_name', 'workload_hours', 'modality', 'theoretical_hours', 'practical_hours', 'specific_price'],
-      ['ID_DO_CURSO', 'Nome do Curso', '8', 'Presencial', '0', '0', '150.00'],
-      ['ID_DO_CURSO', 'Nome do Curso', '8', 'Híbrido', '4', '4', '180.00'],
-      ['ID_DO_CURSO', 'Nome do Curso', '16', 'Online', '0', '0', '120.00']
+      ['course_id', 'course_name', 'workload_hours', 'modality', 'theoretical_hours', 'practical_hours', 'billing_type', 'specific_price', 'class_fixed_value', 'included_students_limit', 'extra_student_unit_value'],
+      ['ID_CURSO', 'Nome do Curso', '8', 'Presencial', '', '', 'per_student', '150.00', '', '', ''],
+      ['ID_CURSO', 'Nome do Curso', '8', 'Híbrido', '4', '4', 'per_student', '180.00', '', '', ''],
+      ['ID_CURSO', 'Nome do Curso', '16', 'Online', '', '', 'per_closed_class', '', '2000.00', '15', '133.33']
     ];
 
     const htmlContent = `
@@ -218,12 +218,26 @@ export default function BulkCoursesUploader({ companyId, onSuccess }) {
 
           <div className="space-y-2">
             <div className="text-xs text-stone-500 space-y-1">
-              <p><strong>Instruções:</strong></p>
+              <p><strong>Instruções de Preenchimento:</strong></p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li><strong>course_id:</strong> ID do curso (obtenha na página de Cursos)</li>
-                <li><strong>modality:</strong> Use apenas: Presencial, Híbrido ou Online</li>
-                <li><strong>theoretical_hours e practical_hours:</strong> Apenas para modalidade Híbrido</li>
-                <li>Linhas 2-4 são exemplos, podem ser removidas</li>
+                <li><strong>course_name:</strong> Nome do curso (referência)</li>
+                <li><strong>workload_hours:</strong> Carga horária total</li>
+                <li><strong>modality:</strong> Presencial, Híbrido ou Online</li>
+                <li><strong>theoretical_hours/practical_hours:</strong> Apenas para modalidade Híbrido</li>
+                <li><strong>billing_type:</strong> per_student (unitário) ou per_closed_class (turma fechada)</li>
+              </ul>
+              <p className="mt-2"><strong>Cobrança por Aluno (billing_type = per_student):</strong></p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>Preencha apenas: specific_price (valor unitário)</li>
+                <li>Deixe em branco: class_fixed_value, included_students_limit, extra_student_unit_value</li>
+              </ul>
+              <p className="mt-2"><strong>Turma Fechada (billing_type = per_closed_class):</strong></p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>class_fixed_value: Valor fixo da turma</li>
+                <li>included_students_limit: Quantidade máxima de alunos inclusos (padrão: 15)</li>
+                <li>extra_student_unit_value: Valor por aluno acima do limite</li>
+                <li>Deixe em branco: specific_price</li>
               </ul>
             </div>
           </div>
