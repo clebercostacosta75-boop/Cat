@@ -202,11 +202,10 @@ export default function CompanyCoursesForm({ companyCourses, courses, onChange }
                      <div className="space-y-2">
                        <Label>Valor da Turma Fechada (R$) *</Label>
                        <Input
-                         type="number"
-                         step="0.01"
+                         type="text"
                          value={course.class_fixed_value || ''}
-                         onChange={(e) => handleCourseChange(index, 'class_fixed_value', e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
-                         placeholder="Ex: 2000.00"
+                         onChange={(e) => handleCourseChange(index, 'class_fixed_value', e.target.value === '' ? 0 : parseFloat(e.target.value.replace(',', '.')) || 0)}
+                         placeholder="Ex: 2000.00 ou 2000,00"
                          required
                        />
                      </div>
