@@ -102,10 +102,15 @@ export function PermissionsProvider({ children }) {
       }
 
       // PASSO 3: Buscar perfil SEMPRE do servidor, sem cache
+      // Pega o mais recente (updated_date desc) para evitar usar perfil duplicado/antigo
       let profile = null;
       try {
-        const profiles = await base44.entities.UserProfile.filter({ user_email: u.email });
-        profile = profiles[0] || null;
+        const profiles = await base44.entities.UserProfile.filter({ user_email: u.email }, "-updated_date", 10);
+        // Prioriza perfil com role definido e status active; fallback para o mais recente
+        profile = profiles.find(p => p.role && p.status === "active")
+          || profiles.find(p => p.role)
+          || profiles[0]
+          || null;
       } catch {
         // Se falhar a busca, nega acesso por segurança
         setAllowedKeys([]);
