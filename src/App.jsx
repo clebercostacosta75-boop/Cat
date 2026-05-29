@@ -195,11 +195,9 @@ const AuthenticatedApp = () => {
             path={`/${path}`}
             element={
               <LayoutWrapper currentPageName={path}>
-                {pageKey ? (
-                  <ProtectedRoute pageKey={pageKey}><Page /></ProtectedRoute>
-                ) : (
+                <ProtectedRoute pageKey={pageKey || path}>
                   <Page />
-                )}
+                </ProtectedRoute>
               </LayoutWrapper>
             }
           />
