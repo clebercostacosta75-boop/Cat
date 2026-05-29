@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, MessageCircle, Pencil, CheckCircle, Trash2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, MessageCircle, Pencil, CheckCircle, Trash2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Clock, AlertCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -10,6 +10,8 @@ const STATUS_COLORS = {
   "Em Andamento": "bg-yellow-100 text-yellow-700 border-yellow-200",
   "Concluído": "bg-green-100 text-green-700 border-green-200",
   "Cancelado": "bg-red-100 text-red-700 border-red-200",
+  "Pendente": "bg-orange-100 text-orange-700 border-orange-200",
+  "Aguardando": "bg-purple-100 text-purple-700 border-purple-200",
 };
 
 const PAGE_SIZE = 20;
@@ -38,7 +40,7 @@ function formatDate(d) {
   try { return format(parseISO(d), "dd/MM/yy", { locale: ptBR }); } catch { return d; }
 }
 
-export default function OpTabelaTreinamentos({ schedules, onView, onEdit, onConcluir, onDelete, onWhatsApp }) {
+export default function OpTabelaTreinamentos({ schedules, onView, onEdit, onConcluir, onDelete, onWhatsApp, onPendente, onAguardando }) {
   const [sortField, setSortField] = useState("created_date");
   const [sortDir, setSortDir] = useState("desc");
   const [page, setPage] = useState(0);
@@ -141,6 +143,16 @@ export default function OpTabelaTreinamentos({ schedules, onView, onEdit, onConc
                       {onConcluir && s.status !== "Concluído" && s.status !== "Cancelado" && (
                         <button onClick={() => onConcluir(s)} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded" title="Concluir">
                           <CheckCircle className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {onPendente && s.status !== "Cancelado" && (
+                        <button onClick={() => onPendente(s)} className="p-1 text-orange-600 hover:bg-orange-50 rounded" title="Marcar como Pendente">
+                          <Clock className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {onAguardando && s.status !== "Cancelado" && (
+                        <button onClick={() => onAguardando(s)} className="p-1 text-purple-600 hover:bg-purple-50 rounded" title="Marcar como Aguardando">
+                          <AlertCircle className="w-3.5 h-3.5" />
                         </button>
                       )}
                       {onDelete && (

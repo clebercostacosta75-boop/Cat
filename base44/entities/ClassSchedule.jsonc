@@ -1,0 +1,173 @@
+{
+  "name": "ClassSchedule",
+  "type": "object",
+  "properties": {
+    "training_name": {
+      "type": "string",
+      "description": "Nome do treinamento (curso)"
+    },
+    "training_id": {
+      "type": "string",
+      "description": "ID do treinamento (curso)"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Nome da empresa"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "location": {
+      "type": "string",
+      "description": "Local (Ex: Tail\u00e2ndia, Bel\u00e9m)"
+    },
+    "students_count": {
+      "type": "number",
+      "description": "N\u00famero de alunos"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Agendado",
+        "Em Andamento",
+        "Conclu\u00eddo",
+        "Cancelado",
+        "Pendente",
+        "Aguardando"
+      ],
+      "default": "Agendado",
+      "description": "Status da turma"
+    },
+    "realization_dates": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "date"
+      },
+      "description": "Datas espec\u00edficas em que o treinamento foi/ser\u00e1 realizado (ex: 25/01/2026, 27/01/2026, 29/01/2026)"
+    },
+    "specific_days": {
+      "type": "string",
+      "description": "Dias espec\u00edficos do treinamento (texto livre complementar)"
+    },
+    "training_schedule": {
+      "type": "string",
+      "description": "Hor\u00e1rio do treinamento (Ex: 07:00 \u00e0s 12:00)"
+    },
+    "instructor_name": {
+      "type": "string",
+      "description": "Nome do instrutor"
+    },
+    "instructor_id": {
+      "type": "string",
+      "description": "ID do instrutor"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Parcialmente Pago",
+        "Pago"
+      ],
+      "default": "Pendente",
+      "description": "Status de pagamento do instrutor"
+    },
+    "modality": {
+      "type": "string",
+      "enum": [
+        "Forma\u00e7\u00e3o",
+        "Peri\u00f3dico"
+      ],
+      "description": "Modalidade (Forma\u00e7\u00e3o ou Peri\u00f3dico)"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Presencial",
+        "H\u00edbrido",
+        "Online"
+      ],
+      "description": "Categoria (Presencial, H\u00edbrido ou Online)"
+    },
+    "duration_hours": {
+      "type": "number",
+      "description": "HR - Carga hor\u00e1ria (preenchido automaticamente do curso)"
+    },
+    "month": {
+      "type": "string",
+      "description": "M\u00eas (calculado automaticamente da primeira data de realiza\u00e7\u00e3o)"
+    },
+    "unit_value": {
+      "type": "number",
+      "description": "Valor unit\u00e1rio do curso para esta turma"
+    },
+    "total_value": {
+      "type": "number",
+      "description": "Valor total da turma (unit_value * students_count)"
+    },
+    "instructor_payment_value": {
+      "type": "number",
+      "description": "Valor total a ser pago ao instrutor"
+    },
+    "payment_installments": {
+      "type": "array",
+      "description": "Parcelas de pagamento do instrutor (at\u00e9 2x)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "installment_number": {
+            "type": "number",
+            "description": "N\u00famero da parcela (1 ou 2)"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Valor da parcela"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Data de vencimento da parcela"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Pendente",
+              "Pago",
+              "Atrasado"
+            ],
+            "default": "Pendente",
+            "description": "Status da parcela"
+          },
+          "paid_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Data de pagamento da parcela"
+          },
+          "proof_of_payment_url": {
+            "type": "string",
+            "description": "URL do comprovante de pagamento da parcela"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Observa\u00e7\u00f5es sobre a parcela"
+          }
+        },
+        "required": [
+          "installment_number",
+          "amount",
+          "due_date",
+          "status"
+        ]
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es gerais"
+    }
+  },
+  "required": [
+    "training_name",
+    "company_name"
+  ]
+}

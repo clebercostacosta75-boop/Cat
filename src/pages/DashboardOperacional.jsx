@@ -105,10 +105,35 @@ export default function DashboardOperacional() {
       toast.success("Turma marcada como Concluída.");
     }
   };
+
+  const handlePendente = (s) => {
+    if (window.confirm(`Marcar "${s.training_name}" como Pendente?`)) {
+      updateMutation.mutate({ id: s.id, data: { status: "Pendente" } });
+      toast.success("Turma marcada como Pendente.");
+    }
+  };
+
+  const handleAguardando = (s) => {
+    if (window.confirm(`Marcar "${s.training_name}" como Aguardando?`)) {
+      updateMutation.mutate({ id: s.id, data: { status: "Aguardando" } });
+      toast.success("Turma marcada como Aguardando.");
+    }
+  };
+
   const handleDelete = (s) => {
     if (window.confirm(`Excluir a turma "${s.training_name}"? Esta ação não pode ser desfeita.`)) {
       deleteMutation.mutate(s.id);
     }
+  };
+
+  // Verificar status automático: se ultrapassou 8h após data final, marcar como Concluído
+  const checkAutoCompleted = (s) => {
+    if (s.status === "Concluído" || s.status === "Cancelado") return s.status;
+    const lastDate = s.realization_dates?.[s.realization_dates.length - 1];
+    if (!lastDate) return s.status;
+    const endTime = new Date(lastDate);
+    endTime.setHours(endTime.getHours() + 8);
+    return new Date() > endTime ? "Concluído" : s.status;
   };
 
   const handleExportExcel = () => {
@@ -248,8 +273,10 @@ export default function DashboardOperacional() {
             </div>
           ) : (
             <OpTabelaTreinamentos
-              schedules={schedules}
+              schedules={schedules.map(s => ({ ...s, status: checkAutoCompleted(s) }))}
               onConcluir={handleConcluir}
+              onPendente={handlePendente}
+              onAguardando={handleAguardando}
               onDelete={handleDelete}
               onEdit={(s) => window.location.href = `/AgendaTreinamentos?id=${s.id}`}
             />
