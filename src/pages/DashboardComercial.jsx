@@ -1,7 +1,8 @@
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Target, Users, BookOpen } from "lucide-react";
+import { Target, Users, BookOpen, GraduationCap } from "lucide-react";
 import ComercialOverview from "@/components/comercial/ComercialOverview";
+import AlunosPFResumo from "@/components/comercial/AlunosPFResumo";
 import GestaoLeads from "./GestaoLeads";
 import BaseConhecimento from "./BaseConhecimento";
 
@@ -13,7 +14,7 @@ export default function DashboardComercial() {
           <Target className="w-7 h-7 text-indigo-600" />
           Comercial
         </h1>
-        <p className="text-gray-500 text-sm mt-1">Funil de vendas, leads e base de conhecimento da IA</p>
+        <p className="text-gray-500 text-sm mt-1">Funil de vendas, leads, alunos individuais e base de conhecimento da IA</p>
       </div>
 
       <Tabs defaultValue="overview">
@@ -33,6 +34,13 @@ export default function DashboardComercial() {
             <span>Gestão de Leads</span>
           </TabsTrigger>
           <TabsTrigger
+            value="alunos-pf"
+            className="flex items-center gap-2 data-[state=active]:bg-indigo-700 data-[state=active]:text-white py-2 px-4 text-sm"
+          >
+            <GraduationCap className="w-4 h-4" />
+            <span>Alunos Individuais</span>
+          </TabsTrigger>
+          <TabsTrigger
             value="knowledge"
             className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-2 px-4 text-sm"
           >
@@ -46,6 +54,9 @@ export default function DashboardComercial() {
         </TabsContent>
         <TabsContent value="leads" className="mt-0">
           <GestaoLeads />
+        </TabsContent>
+        <TabsContent value="alunos-pf" className="mt-0">
+          <AlunosPFResumo />
         </TabsContent>
         <TabsContent value="knowledge" className="mt-0">
           <BaseConhecimento />
