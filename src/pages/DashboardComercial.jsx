@@ -1,12 +1,16 @@
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Target, Users, BookOpen, GraduationCap } from "lucide-react";
+import { Target, Users, BookOpen, GraduationCap, Lock } from "lucide-react";
+import { usePermissions } from "@/lib/PermissionsContext";
 import ComercialOverview from "@/components/comercial/ComercialOverview";
 import AlunosPFResumo from "@/components/comercial/AlunosPFResumo";
 import GestaoLeads from "./GestaoLeads";
 import BaseConhecimento from "./BaseConhecimento";
 
 export default function DashboardComercial() {
+  const { hasPermission, allowedKeys } = usePermissions();
+  const canAccessAlunosPF = allowedKeys === null || hasPermission("Dashboard Comercial");
+
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <div className="mb-5">
@@ -33,13 +37,15 @@ export default function DashboardComercial() {
             <Users className="w-4 h-4" />
             <span>Gestão de Leads</span>
           </TabsTrigger>
-          <TabsTrigger
-            value="alunos-pf"
-            className="flex items-center gap-2 data-[state=active]:bg-indigo-700 data-[state=active]:text-white py-2 px-4 text-sm"
-          >
-            <GraduationCap className="w-4 h-4" />
-            <span>Alunos Individuais</span>
-          </TabsTrigger>
+          {canAccessAlunosPF && (
+            <TabsTrigger
+              value="alunos-pf"
+              className="flex items-center gap-2 data-[state=active]:bg-indigo-700 data-[state=active]:text-white py-2 px-4 text-sm"
+            >
+              <GraduationCap className="w-4 h-4" />
+              <span>Alunos Individuais</span>
+            </TabsTrigger>
+          )}
           <TabsTrigger
             value="knowledge"
             className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-2 px-4 text-sm"
@@ -55,9 +61,20 @@ export default function DashboardComercial() {
         <TabsContent value="leads" className="mt-0">
           <GestaoLeads />
         </TabsContent>
-        <TabsContent value="alunos-pf" className="mt-0">
-          <AlunosPFResumo />
-        </TabsContent>
+        {canAccessAlunosPF && (
+          <TabsContent value="alunos-pf" className="mt-0">
+            <AlunosPFResumo />
+          </TabsContent>
+        )}
+        {!canAccessAlunosPF && (
+          <TabsContent value="alunos-pf" className="mt-0">
+            <div className="flex flex-col items-center justify-center py-24 text-center gap-3">
+              <Lock className="w-12 h-12 text-gray-300" />
+              <p className="font-semibold text-gray-500">Acesso bloqueado</p>
+              <p className="text-sm text-gray-400">Você não tem permissão para acessar <strong>Alunos Individuais</strong>.<br/>Solicite ao Gestor Master a liberação desta seção.</p>
+            </div>
+          </TabsContent>
+        )}
         <TabsContent value="knowledge" className="mt-0">
           <BaseConhecimento />
         </TabsContent>
