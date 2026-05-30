@@ -130,14 +130,12 @@ export default function BMMGenerator() {
             billing_type: companyCourse.billing_type || 'per_student',
             specific_price: parseFloat(companyCourse.specific_price) || 0,
             class_fixed_value: parseFloat(String(companyCourse.class_fixed_value || '0').replace(',', '.')) || 0,
-            included_students_limit: parseInt(companyCourse.included_students_limit) || 15,
-            extra_student_unit_value: parseFloat(companyCourse.extra_student_unit_value) || 0,
           };
 
           if (normalizedCourse.billing_type === 'per_closed_class') {
-            // Turma fechada: valor fixo + excedentes
-            unitValue = normalizedCourse.class_fixed_value; // Valor da turma fechada na coluna "Unit."
-            totalValue = calculateCourseBilling(normalizedCourse, studentsCount);
+            // Turma fechada: valor fixo independente da quantidade de alunos
+            unitValue = normalizedCourse.class_fixed_value;
+            totalValue = normalizedCourse.class_fixed_value;
           } else {
             // Por aluno
             unitValue = normalizedCourse.specific_price;

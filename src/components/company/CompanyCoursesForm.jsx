@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, X, BookOpen, AlertCircle } from "lucide-react";
+import { Plus, X, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 // Garante que cada curso tem todos os campos de billing com defaults corretos
@@ -14,13 +14,10 @@ function normalizeCourse(course) {
     specific_price: 0,
     class_fixed_value: 0,
     included_students_limit: 15,
-    extra_student_unit_value: 0,
     ...course,
-    // Forçar conversão numérica dos campos críticos
     specific_price: parseFloat(course.specific_price) || 0,
     class_fixed_value: parseFloat(String(course.class_fixed_value).replace(',', '.')) || 0,
     included_students_limit: parseInt(course.included_students_limit) || 15,
-    extra_student_unit_value: parseFloat(course.extra_student_unit_value) || 0,
   };
 }
 
@@ -42,7 +39,6 @@ export default function CompanyCoursesForm({ companyCourses, courses, onChange }
         specific_price: 0,
         class_fixed_value: 0,
         included_students_limit: 15,
-        extra_student_unit_value: 0
       }
     ]);
   };
@@ -69,13 +65,12 @@ export default function CompanyCoursesForm({ companyCourses, courses, onChange }
           specific_price: selectedCourse.standard_value || 0,
           class_fixed_value: 0,
           included_students_limit: 15,
-          extra_student_unit_value: 0
         });
       }
     } else if (field === 'class_fixed_value') {
       // Aceita digitação livre (vírgula ou ponto), converte ao sair
       updated[index] = { ...updated[index], [field]: value };
-    } else if (['specific_price', 'extra_student_unit_value', 'workload_hours', 'theoretical_hours', 'practical_hours'].includes(field)) {
+    } else if (['specific_price', 'workload_hours', 'theoretical_hours', 'practical_hours'].includes(field)) {
       updated[index] = { ...updated[index], [field]: parseFloat(String(value).replace(',', '.')) || 0 };
     } else if (field === 'included_students_limit') {
       updated[index] = { ...updated[index], [field]: parseInt(value) || 15 };
@@ -245,35 +240,17 @@ export default function CompanyCoursesForm({ companyCourses, courses, onChange }
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Quantidade Máxima de Alunos *</Label>
+                      <Label>Quantidade Máxima de Alunos</Label>
                       <Input
                         type="number"
                         value={course.included_students_limit || 15}
                         onChange={(e) => handleCourseChange(index, 'included_students_limit', e.target.value)}
                         placeholder="Ex: 15"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Valor por Aluno Excedente (R$) *</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={course.extra_student_unit_value || 0}
-                        onChange={(e) => handleCourseChange(index, 'extra_student_unit_value', e.target.value)}
-                        placeholder="Ex: 133.33"
-                        required
                       />
                     </div>
                   </div>
-                  {/* Preview do valor calculado */}
                   <div className="p-2 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-800">
-                    <strong>Valor configurado:</strong> R$ {parseFloat(String(course.class_fixed_value).replace(',', '.')) || 0} para até {course.included_students_limit || 15} alunos.
-                    {(course.extra_student_unit_value || 0) > 0 && ` Excedente: R$ ${course.extra_student_unit_value}/aluno.`}
-                  </div>
-                  <div className="p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
-                    <AlertCircle className="w-3 h-3 inline mr-1" />
-                    <strong>Exemplo:</strong> Turma de R$ 2.000 com até 15 alunos. Se tiver 18 alunos, será cobrado R$ 2.000 + (3 × valor excedente).
+                    <strong>Valor configurado:</strong> R$ {parseFloat(String(course.class_fixed_value).replace(',', '.')) || 0} fixo para até {course.included_students_limit || 15} alunos — independente da quantidade.
                   </div>
                 </div>
               )}

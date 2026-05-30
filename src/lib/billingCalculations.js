@@ -16,19 +16,8 @@ export function calculateCourseBilling(course, participantCount) {
 
   // Tipo 2: Valor por turma fechada
   if (billingType === 'per_closed_class') {
-    const classFixedValue = course.class_fixed_value || 0;
-    const includedLimit = course.included_students_limit || 15;
-    const extraUnitValue = course.extra_student_unit_value || 0;
-
-    // Se participantes <= limite, cobra apenas o valor fixo
-    if (participantCount <= includedLimit) {
-      return classFixedValue;
-    }
-
-    // Se participantes > limite, cobra o valor fixo + excedentes
-    const excessParticipants = participantCount - includedLimit;
-    const excessCost = excessParticipants * extraUnitValue;
-    return classFixedValue + excessCost;
+    // Valor fixo independente da quantidade de alunos
+    return course.class_fixed_value || 0;
   }
 
   return 0;
@@ -44,7 +33,6 @@ export function getBillingConfig(course) {
     specificPrice: course.specific_price || 0,
     classFixedValue: course.class_fixed_value || 0,
     includedStudentsLimit: course.included_students_limit || 15,
-    extraStudentUnitValue: course.extra_student_unit_value || 0,
   };
 }
 
@@ -64,8 +52,7 @@ export function validateBillingFields(course) {
   if (billingType === 'per_closed_class') {
     const errors = [];
     if ((course.class_fixed_value || 0) <= 0) errors.push('Valor da turma fechada deve ser maior que 0');
-    if ((course.included_students_limit || 0) <= 0) errors.push('Limite de alunos deve ser maior que 0');
-    if ((course.extra_student_unit_value || 0) < 0) errors.push('Valor por aluno excedente não pode ser negativo');
+    if ((course.included_students_limit || 0) <= 0) errors.push('Quantidade máxima de alunos deve ser maior que 0');
 
     return {
       valid: errors.length === 0,
