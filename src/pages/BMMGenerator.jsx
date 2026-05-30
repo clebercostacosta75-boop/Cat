@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import BMMPreview from "@/components/bmm/BMMPreview";
 import BMMEmailSender from "@/components/bmm/BMMEmailSender";
 import { exportBMMPDF } from "@/components/bmm/BMMExporter";
+import { calculateCourseBilling } from "@/lib/billingCalculations";
 
 export default function BMMGenerator() {
   const queryClient = useQueryClient();
@@ -109,22 +110,41 @@ export default function BMMGenerator() {
       const template = templates.find(t => t.id === selectedTemplate);
       const contractor = contractors.find(c => c.id === selectedContractor) || contractors[0];
 
-      // Calcular dados das turmas, priorizando specific_price da empresa
+      // Calcular dados das turmas usando a lógica de cobrança configurada na empresa
       const classesData = filteredClasses.map(classItem => {
         const studentsCount = classItem.students_count || 1;
         const courseData = courses.find(c => c.id === classItem.training_id);
 
-        // Buscar o valor específico definido para este curso na empresa
+        // Buscar configuração do curso na empresa
         const companyCourse = company?.company_courses?.find(
           cc => cc.course_id === classItem.training_id || cc.course_name === classItem.training_name
         );
-        const unitValue = companyCourse?.specific_price || classItem.unit_value || 0;
-        const totalValue = unitValue * studentsCount;
+
+        let unitValue = 0;
+        let totalValue = 0;
+
+        if (companyCourse) {
+          const billingType = companyCourse.billing_type || 'per_student';
+          if (billingType === 'per_closed_class') {
+            // Turma fechada: valor fixo + excedentes
+            totalValue = calculateCourseBilling(companyCourse, studentsCount);
+            unitValue = totalValue; // exibe o total como "valor" na coluna
+          } else {
+            // Por aluno
+            unitValue = companyCourse.specific_price || classItem.unit_value || 0;
+            totalValue = unitValue * studentsCount;
+          }
+        } else {
+          // Sem configuração específica: usa o valor cadastrado na turma
+          unitValue = classItem.unit_value || 0;
+          totalValue = unitValue * studentsCount;
+        }
 
         return {
           ...classItem,
           unit_value: unitValue,
           total_value: totalValue,
+          billing_type: companyCourse?.billing_type || 'per_student',
           course_data: courseData
         };
       });

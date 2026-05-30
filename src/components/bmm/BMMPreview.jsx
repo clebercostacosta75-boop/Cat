@@ -198,7 +198,7 @@ export default function BMMPreview({ content }) {
                 <th className="border border-emerald-700 px-3 py-2 text-left">Treinamento / Datas de Realização</th>
                 <th className="border border-emerald-700 px-3 py-2 text-center">C.H.</th>
                 <th className="border border-emerald-700 px-3 py-2 text-center">Qtd. Alunos</th>
-                <th className="border border-emerald-700 px-3 py-2 text-right">Valor Unit.</th>
+                <th className="border border-emerald-700 px-3 py-2 text-right">Valor Unit. / Turma</th>
                 <th className="border border-emerald-700 px-3 py-2 text-right">Valor Total</th>
               </tr>
             </thead>
@@ -221,7 +221,10 @@ export default function BMMPreview({ content }) {
                     {classItem.students_count || 0}
                   </td>
                   <td className="border border-stone-300 px-3 py-2 text-right">
-                    {formatCurrency(classItem.unit_value)}
+                    {classItem.billing_type === 'per_closed_class'
+                      ? <span className="text-xs text-emerald-700 font-medium">Turma Fechada</span>
+                      : formatCurrency(classItem.unit_value)
+                    }
                   </td>
                   <td className="border border-stone-300 px-3 py-2 text-right font-semibold">
                     {formatCurrency(classItem.total_value)}
