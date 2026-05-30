@@ -59,12 +59,8 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
     contract_manager_name: company?.contract_manager_name || "",
     contract_manager_role: company?.contract_manager_role || "",
     company_courses: (company?.company_courses || []).map(c => ({
-      billing_type: 'per_student',
-      specific_price: 0,
-      class_fixed_value: 0,
-      included_students_limit: 15,
-      extra_student_unit_value: 0,
       ...c,
+      billing_type: c.billing_type || 'per_student',
       specific_price: parseFloat(c.specific_price) || 0,
       class_fixed_value: parseFloat(String(c.class_fixed_value || '0').replace(',', '.')) || 0,
       included_students_limit: parseInt(c.included_students_limit) || 15,
