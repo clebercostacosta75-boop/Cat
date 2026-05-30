@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,56 +30,6 @@ export default function PaymentInstallmentsForm({ installments, onChange, instru
       toast.error("Máximo de 2 parcelas permitido");
     }
   };
-
-  // Efeito: auto-criar parcelas conforme valor
-  useEffect(() => {
-    if (!instructorPaymentValue || installments.length > 0) return;
-
-    const today = new Date();
-    const firstDueDate = new Date(today);
-    firstDueDate.setDate(today.getDate() + 30);
-
-    if (instructorPaymentValue > 500) {
-      // Valores > R$ 500: 2 parcelas
-      const secondDueDate = new Date(today);
-      secondDueDate.setDate(today.getDate() + 60);
-      const halfAmount = instructorPaymentValue / 2;
-
-      onChange([
-        {
-          installment_number: 1,
-          amount: halfAmount,
-          due_date: firstDueDate.toISOString().split('T')[0],
-          status: "Pendente",
-          paid_date: "",
-          proof_of_payment_url: "",
-          notes: ""
-        },
-        {
-          installment_number: 2,
-          amount: halfAmount,
-          due_date: secondDueDate.toISOString().split('T')[0],
-          status: "Pendente",
-          paid_date: "",
-          proof_of_payment_url: "",
-          notes: ""
-        }
-      ]);
-    } else {
-      // Valores <= R$ 500: 1 parcela à vista
-      onChange([
-        {
-          installment_number: 1,
-          amount: instructorPaymentValue,
-          due_date: firstDueDate.toISOString().split('T')[0],
-          status: "Pendente",
-          paid_date: "",
-          proof_of_payment_url: "",
-          notes: ""
-        }
-      ]);
-    }
-  }, [instructorPaymentValue]);
 
   const handleRemoveInstallment = (index) => {
     const updated = installments.filter((_, i) => i !== index);
@@ -156,7 +106,27 @@ export default function PaymentInstallmentsForm({ installments, onChange, instru
       <div className="flex items-center justify-between">
         <Label className="text-base font-semibold">Parcelamento do Pagamento (até 2x)</Label>
         <div className="flex gap-2">
-          {/* Sem botões: parcelamento é automático */}
+          {instructorPaymentValue > 0 && installments.length === 0 && (
+            <Button
+              type="button"
+              onClick={splitEqually}
+              size="sm"
+              variant="outline"
+            >
+              Dividir em 2x
+            </Button>
+          )}
+          {installments.length < 2 && (
+            <Button
+              type="button"
+              onClick={handleAddInstallment}
+              size="sm"
+              variant="outline"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Adicionar Parcela
+            </Button>
+          )}
         </div>
       </div>
 

@@ -110,31 +110,24 @@ export default function BMMGenerator() {
       const contractor = contractors.find(c => c.id === selectedContractor) || contractors[0];
 
       // Calcular dados das turmas, priorizando specific_price da empresa
-       const classesData = filteredClasses.map(classItem => {
-         const studentsCount = classItem.students_count || 1;
-         const courseData = courses.find(c => c.id === classItem.training_id);
+      const classesData = filteredClasses.map(classItem => {
+        const studentsCount = classItem.students_count || 1;
+        const courseData = courses.find(c => c.id === classItem.training_id);
 
-         // Buscar o valor específico definido para este curso na empresa
-         const companyCourse = company?.company_courses?.find(
-           cc => cc.course_id === classItem.training_id || cc.course_name === classItem.training_name
-         );
+        // Buscar o valor específico definido para este curso na empresa
+        const companyCourse = company?.company_courses?.find(
+          cc => cc.course_id === classItem.training_id || cc.course_name === classItem.training_name
+        );
+        const unitValue = companyCourse?.specific_price || classItem.unit_value || 0;
+        const totalValue = unitValue * studentsCount;
 
-         let unitValue = companyCourse?.specific_price || classItem.unit_value || 0;
-         let totalValue = unitValue * studentsCount;
-
-         // Se o total for zero mas existir instructor_payment_value, usar esse valor
-         if (totalValue === 0 && classItem.instructor_payment_value) {
-           totalValue = classItem.instructor_payment_value;
-           unitValue = classItem.instructor_payment_value / studentsCount;
-         }
-
-         return {
-           ...classItem,
-           unit_value: unitValue,
-           total_value: totalValue,
-           course_data: courseData
-         };
-       });
+        return {
+          ...classItem,
+          unit_value: unitValue,
+          total_value: totalValue,
+          course_data: courseData
+        };
+      });
 
       const totalValue = classesData.reduce((sum, c) => sum + c.total_value, 0);
       const totalStudents = classesData.reduce((sum, c) => sum + (c.students_count || 0), 0);
