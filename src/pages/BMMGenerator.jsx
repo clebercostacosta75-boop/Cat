@@ -195,34 +195,28 @@ export default function BMMGenerator() {
         );
         const billingType = companyCourse?.billing_type || 'per_student';
         const includedLimit = parseFloat(companyCourse?.included_students_limit) || 15;
-        const specificPrice = parseFloat(companyCourse?.specific_price) || 0;
+        const classFixedValue = parseFloat(companyCourse?.class_fixed_value) || 0;
 
-        if (billingType === 'per_closed_class') {
+        if (billingType === 'per_closed_class' && classFixedValue > 0) {
           // Turma fechada: calcular excedente de alunos
-          const excedente = studentsCount - includedLimit;
+          const excedente = Math.max(0, studentsCount - includedLimit);
 
           if (excedente > 0) {
-            // Linha de alunos excedentes (valor por aluno adicional)
-            if (specificPrice > 0) {
-              additionalItems.push({
-                type: 'excedente_alunos',
-                description: `Alunos excedentes — ${classItem.training_name} (${excedente} acima do limite de ${includedLimit})`,
-                unit_value: specificPrice,
-                quantity: excedente,
-                total_value: specificPrice * excedente,
-                class_id: classItem.id,
-              });
-            } else {
-              // Sem valor unitário cadastrado: registra o excedente sem valor para visibilidade
-              additionalItems.push({
-                type: 'excedente_alunos',
-                description: `Alunos excedentes — ${classItem.training_name} (${excedente} acima do limite de ${includedLimit}) — valor unitário a definir`,
-                unit_value: 0,
-                quantity: excedente,
-                total_value: 0,
-                class_id: classItem.id,
-              });
-            }
+            // Valor unitário do excedente = valor da turma fechada ÷ limite de participantes
+            const valorUnitarioExcedente = classFixedValue / includedLimit;
+
+            // Linha de alunos excedentes
+            additionalItems.push({
+              type: 'excedente_alunos',
+              description: `Participantes Excedentes — ${classItem.training_name}`,
+              unit_value: valorUnitarioExcedente,
+              quantity: excedente,
+              total_value: valorUnitarioExcedente * excedente,
+              class_id: classItem.id,
+              limite_contratado: includedLimit,
+              participantes_realizados: studentsCount,
+              valor_turma_fechada: classFixedValue,
+            });
 
             // Serviços adicionais apenas sobre os alunos EXCEDENTES
             for (const svc of serviceTypes) {
@@ -231,15 +225,16 @@ export default function BMMGenerator() {
               if (unitVal <= 0) continue;
               additionalItems.push({
                 type: svc.key,
-                description: `${svc.description} excedente — ${classItem.training_name} (${excedente} aluno(s))`,
+                description: `${svc.description} Excedente — ${classItem.training_name}`,
                 unit_value: unitVal,
                 quantity: excedente,
                 total_value: unitVal * excedente,
                 class_id: classItem.id,
+                parent_excedente_id: classItem.id, // Vincular ao excedente pai
               });
             }
           }
-        } else {
+        } else if (billingType !== 'per_closed_class') {
           // Cobrança por aluno: serviços adicionais sobre TODOS os alunos
           for (const svc of serviceTypes) {
             if (!additionalServices[svc.enabledKey]) continue;

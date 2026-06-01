@@ -1,5 +1,6 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
+import ExcedentesDetailBlock from "@/components/bmm/ExcedentesDetailBlock";
 
 export default function BMMPreview({ content }) {
   // Adicionar estilos de impressão A4 Paisagem
@@ -195,79 +196,8 @@ export default function BMMPreview({ content }) {
         </div>
       </div>
 
-      {/* Resumo de Excedentes por Treinamento */}
-      {(() => {
-        // Agrupar excedentes por treinamento
-        const excedentesPorTreinamento = {};
-        for (const item of additionalItems) {
-          if (item.type === 'excedente_alunos') {
-            const classItem = classes.find(c => c.id === item.class_id);
-            const trainingName = classItem?.training_name || 'Treinamento desconhecido';
-            if (!excedentesPorTreinamento[trainingName]) {
-              excedentesPorTreinamento[trainingName] = {
-                excedentes: 0,
-                servicosPorAluno: {},
-                valorTrainamento: 0
-              };
-            }
-            excedentesPorTreinamento[trainingName].excedentes = item.quantity;
-            excedentesPorTreinamento[trainingName].valorTrainamento = item.unit_value;
-          }
-        }
-        
-        // Agrupar serviços por treinamento e tipo
-        for (const item of additionalItems) {
-          if (item.type !== 'excedente_alunos') {
-            const classItem = classes.find(c => c.id === item.class_id);
-            const trainingName = classItem?.training_name || 'Treinamento desconhecido';
-            if (excedentesPorTreinamento[trainingName]) {
-              const serviceKey = item.type === 'coffee_break_morning' ? 'café_manhã' : 
-                               item.type === 'coffee_break_afternoon' ? 'café_tarde' : 'almoço';
-              excedentesPorTreinamento[trainingName].servicosPorAluno[serviceKey] = item.unit_value;
-            }
-          }
-        }
-
-        const temExcedentes = Object.keys(excedentesPorTreinamento).length > 0;
-        if (temExcedentes) {
-          return (
-            <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-              <h2 className="text-lg font-bold text-orange-900 mb-4">DETALHAMENTO DE EXCEDENTES</h2>
-              <div className="space-y-3 text-sm text-stone-700">
-                {Object.entries(excedentesPorTreinamento).map(([trainingName, dados], idx) => {
-                  const parts = [];
-                  parts.push(`No treinamento <strong>${trainingName}</strong> realizado, tivemos excedente de <strong>${dados.excedentes} aluno(s)</strong>`);
-                  
-                  if (dados.valorTrainamento > 0) {
-                    parts.push(`valor do treinamento individual ${formatCurrency(dados.valorTrainamento)}`);
-                  }
-                  
-                  const services = [];
-                  if (dados.servicosPorAluno['café_manhã']) {
-                    services.push(`café manhã ${formatCurrency(dados.servicosPorAluno['café_manhã'])}`);
-                  }
-                  if (dados.servicosPorAluno['almoço']) {
-                    services.push(`almoço ${formatCurrency(dados.servicosPorAluno['almoço'])}`);
-                  }
-                  if (dados.servicosPorAluno['café_tarde']) {
-                    services.push(`café tarde ${formatCurrency(dados.servicosPorAluno['café_tarde'])}`);
-                  }
-                  
-                  if (services.length > 0) {
-                    parts.push(services.join(', '));
-                  }
-                  
-                  const text = parts.join(', sendo ');
-                  return (
-                    <p key={idx} dangerouslySetInnerHTML={{ __html: text + '.' }} />
-                  );
-                })}
-              </div>
-            </div>
-          );
-        }
-        return null;
-      })()}
+      {/* Bloco de Detalhamento de Excedentes */}
+      <ExcedentesDetailBlock classes={classes} additionalItems={additionalItems} />
 
       {/* Tabela de Treinamentos */}
       <div className="mb-6">
@@ -285,35 +215,115 @@ export default function BMMPreview({ content }) {
               </tr>
             </thead>
             <tbody>
-              {classes.map((classItem, index) => (
-                <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-stone-50'}>
-                  <td className="border border-stone-300 px-3 py-2">{index + 1}</td>
-                  <td className="border border-stone-300 px-3 py-2 font-medium">
-                    <div>{classItem.training_name}</div>
-                    {classItem.realization_dates && classItem.realization_dates.length > 0 && (
-                      <div className="text-xs text-stone-600 mt-1">
-                        📅 {classItem.realization_dates.map(d => formatDate(d)).join(', ')}
-                      </div>
-                    )}
-                  </td>
-                  <td className="border border-stone-300 px-3 py-2 text-center">
-                    {classItem.duration_hours || '-'}h
-                  </td>
-                  <td className="border border-stone-300 px-3 py-2 text-center">
-                    {classItem.billing_type === 'per_closed_class' ? 'QTD. ' + (classItem.students_count || 0) : classItem.students_count || 0}
-                  </td>
-                  <td className="border border-stone-300 px-3 py-2 text-right">
-                    {formatCurrency(classItem.unit_value)}
-                  </td>
-                  <td className="border border-stone-300 px-3 py-2 text-right font-semibold">
-                    {formatCurrency(classItem.total_value)}
-                  </td>
-                </tr>
-              ))}
-              {/* Serviços adicionais - agrupados por tipo */}
+              {classes.map((classItem, index) => {
+                // Excedentes desta turma
+                const excedentesDaTurma = additionalItems.filter(
+                  item => item.class_id === classItem.id && item.type === 'excedente_alunos'
+                );
+                
+                // Serviços excedentes desta turma
+                const servicosExcedentesDaTurma = additionalItems.filter(
+                  item => item.parent_excedente_id === classItem.id
+                );
+
+                return (
+                  <React.Fragment key={index}>
+                    {/* Treinamento principal */}
+                    <tr className={index % 2 === 0 ? 'bg-white' : 'bg-stone-50'}>
+                      <td className="border border-stone-300 px-3 py-2">{index + 1}</td>
+                      <td className="border border-stone-300 px-3 py-2 font-medium">
+                        <div>{classItem.training_name}</div>
+                        {classItem.realization_dates && classItem.realization_dates.length > 0 && (
+                          <div className="text-xs text-stone-600 mt-1">
+                            📅 {classItem.realization_dates.map(d => formatDate(d)).join(', ')}
+                          </div>
+                        )}
+                      </td>
+                      <td className="border border-stone-300 px-3 py-2 text-center">
+                        {classItem.duration_hours || '-'}h
+                      </td>
+                      <td className="border border-stone-300 px-3 py-2 text-center">
+                        {classItem.students_count || 0}
+                      </td>
+                      <td className="border border-stone-300 px-3 py-2 text-right">
+                        {formatCurrency(classItem.unit_value)}
+                      </td>
+                      <td className="border border-stone-300 px-3 py-2 text-right font-semibold">
+                        {formatCurrency(classItem.total_value)}
+                      </td>
+                    </tr>
+
+                    {/* Excedentes desta turma com recuo */}
+                    {excedentesDaTurma.map((excedente, excIdx) => (
+                      <React.Fragment key={`exc-${index}-${excIdx}`}>
+                        <tr className="bg-orange-50">
+                          <td className="border border-stone-300 px-3 py-2 text-stone-500">↳</td>
+                          <td className="border border-stone-300 px-3 py-2 font-medium text-orange-800 pl-6">
+                            {excedente.description}
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2 text-center text-stone-500">—</td>
+                          <td className="border border-stone-300 px-3 py-2 text-center text-orange-700">
+                            {excedente.quantity}
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2 text-right text-orange-700">
+                            {formatCurrency(excedente.unit_value)}
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2 text-right font-semibold text-orange-700">
+                            {formatCurrency(excedente.total_value)}
+                          </td>
+                        </tr>
+
+                        {/* Serviços excedentes com recuo maior */}
+                        {servicosExcedentesDaTurma.map((servico, svcIdx) => (
+                          <tr key={`svc-${index}-${svcIdx}`} className="bg-orange-50">
+                            <td className="border border-stone-300 px-3 py-2 text-stone-400">  ↳</td>
+                            <td className="border border-stone-300 px-3 py-2 font-medium text-orange-700 pl-12">
+                              {servico.description}
+                            </td>
+                            <td className="border border-stone-300 px-3 py-2 text-center text-stone-500">—</td>
+                            <td className="border border-stone-300 px-3 py-2 text-center text-orange-700 text-sm">
+                              {servico.quantity}
+                            </td>
+                            <td className="border border-stone-300 px-3 py-2 text-right text-orange-700 text-sm">
+                              {formatCurrency(servico.unit_value)}
+                            </td>
+                            <td className="border border-stone-300 px-3 py-2 text-right font-semibold text-orange-700 text-sm">
+                              {formatCurrency(servico.total_value)}
+                            </td>
+                          </tr>
+                        ))}
+
+                        {/* Subtotal de excedentes se houver serviços */}
+                        {servicosExcedentesDaTurma.length > 0 && (
+                          <tr className="bg-orange-100">
+                            <td colSpan={4} className="border border-stone-300 px-3 py-2 text-right font-bold text-orange-900 pl-12">
+                              Subtotal dos Excedentes:
+                            </td>
+                            <td className="border border-stone-300 px-3 py-2 text-right"></td>
+                            <td className="border border-stone-300 px-3 py-2 text-right font-bold text-orange-900">
+                              {formatCurrency(
+                                excedente.total_value + 
+                                servicosExcedentesDaTurma.reduce((sum, s) => sum + s.total_value, 0)
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </React.Fragment>
+                );
+              })}
+
+              {/* Serviços adicionais de cobrança por aluno (não-excedentes) */}
               {(() => {
+                const servicosPorAluno = additionalItems.filter(
+                  item => !item.parent_excedente_id && item.type !== 'excedente_alunos'
+                );
+                
+                if (servicosPorAluno.length === 0) return null;
+
                 const grouped = {};
-                for (const item of additionalItems) {
+                for (const item of servicosPorAluno) {
                   if (!grouped[item.type]) {
                     grouped[item.type] = {
                       type: item.type,
@@ -326,6 +336,7 @@ export default function BMMPreview({ content }) {
                   grouped[item.type].quantity += item.quantity;
                   grouped[item.type].total_value += item.total_value;
                 }
+
                 return Object.values(grouped).map((item, idx) => (
                   <tr key={`add-${idx}`} className="bg-amber-50">
                     <td className="border border-stone-300 px-3 py-2 text-stone-500">{classes.length + idx + 1}</td>
