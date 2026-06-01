@@ -213,9 +213,9 @@ export default function BMMPreview({ content }) {
              <p><strong>Razão Social:</strong> {company?.razao_social}</p>
              <p><strong>Nome Fantasia:</strong> {company?.nome_fantasia}</p>
              <p><strong>CNPJ:</strong> {company?.cnpj}</p>
-             {hasSAPConfig && company?.sap_config?.codigo_material_pai && (
-               <p><strong>Código Material (PAI) - SAP:</strong> {company.sap_config.codigo_material_pai}</p>
-             )}
+             {(hasSAPConfig && company?.sap_config?.codigo_material_pai) || company?.nome_fantasia === 'UNITAPAJÓS' ? (
+               <p><strong>Código Material (PAI) - SAP:</strong> {company?.sap_config?.codigo_material_pai || '2010000491'}</p>
+             ) : null}
            </div>
            <div>
              {company?.billing_info?.contact_reference && (
