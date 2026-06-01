@@ -216,100 +216,135 @@ export default function BMMPreview({ content }) {
             </thead>
             <tbody>
               {classes.map((classItem, index) => {
-                // Excedentes desta turma
                 const excedentesDaTurma = additionalItems.filter(
                   item => item.class_id === classItem.id && item.type === 'excedente_alunos'
                 );
                 
-                // Serviços excedentes desta turma
                 const servicosExcedentesDaTurma = additionalItems.filter(
                   item => item.parent_excedente_id === classItem.id
                 );
 
+                const totalExcedentes = excedentesDaTurma.reduce((sum, e) => sum + e.total_value, 0) +
+                                       servicosExcedentesDaTurma.reduce((sum, s) => sum + s.total_value, 0);
+
+                const totalGeral = classItem.total_value + totalExcedentes;
+
                 return (
                   <React.Fragment key={index}>
                     {/* Treinamento principal */}
-                    <tr className={index % 2 === 0 ? 'bg-white' : 'bg-stone-50'}>
-                      <td className="border border-stone-300 px-3 py-2">{index + 1}</td>
-                      <td className="border border-stone-300 px-3 py-2 font-medium">
-                        <div>{classItem.training_name}</div>
+                    <tr className="bg-white">
+                      <td className="border border-stone-300 px-3 py-2 font-bold">{index + 1}</td>
+                      <td className="border border-stone-300 px-3 py-2 font-bold text-stone-900">
+                        <div>{classItem.training_name} – Turma Fechada</div>
                         {classItem.realization_dates && classItem.realization_dates.length > 0 && (
                           <div className="text-xs text-stone-600 mt-1">
                             📅 {classItem.realization_dates.map(d => formatDate(d)).join(', ')}
                           </div>
                         )}
                       </td>
-                      <td className="border border-stone-300 px-3 py-2 text-center">
-                        {classItem.duration_hours || '-'}h
-                      </td>
-                      <td className="border border-stone-300 px-3 py-2 text-center">
+                      <td className="border border-stone-300 px-3 py-2 text-center font-bold">
                         {classItem.students_count || 0}
                       </td>
-                      <td className="border border-stone-300 px-3 py-2 text-right">
+                      <td className="border border-stone-300 px-3 py-2 text-right font-bold">
                         {formatCurrency(classItem.unit_value)}
                       </td>
-                      <td className="border border-stone-300 px-3 py-2 text-right font-semibold">
+                      <td className="border border-stone-300 px-3 py-2 text-right font-bold">
                         {formatCurrency(classItem.total_value)}
                       </td>
                     </tr>
 
-                    {/* Excedentes desta turma com recuo */}
-                    {excedentesDaTurma.map((excedente, excIdx) => (
-                      <React.Fragment key={`exc-${index}-${excIdx}`}>
+                    {/* Subtotal Turma Fechada */}
+                    <tr className="bg-stone-100">
+                      <td colSpan={2} className="border border-stone-300 px-3 py-2 font-bold text-stone-900">
+                        Subtotal Turma Fechada
+                      </td>
+                      <td className="border border-stone-300 px-3 py-2 text-center font-bold">
+                        {classItem.students_count || 0}
+                      </td>
+                      <td className="border border-stone-300 px-3 py-2"></td>
+                      <td className="border border-stone-300 px-3 py-2 text-right font-bold">
+                        {formatCurrency(classItem.total_value)}
+                      </td>
+                    </tr>
+
+                    {/* Excedentes Aplicados - Seção */}
+                    {excedentesDaTurma.length > 0 && (
+                      <>
                         <tr className="bg-orange-50">
-                          <td className="border border-stone-300 px-3 py-2 text-stone-500">↳</td>
-                          <td className="border border-stone-300 px-3 py-2 font-medium text-orange-800 pl-6">
-                            {excedente.description}
-                          </td>
-                          <td className="border border-stone-300 px-3 py-2 text-center text-stone-500">—</td>
-                          <td className="border border-stone-300 px-3 py-2 text-center text-orange-700">
-                            {excedente.quantity}
-                          </td>
-                          <td className="border border-stone-300 px-3 py-2 text-right text-orange-700">
-                            {formatCurrency(excedente.unit_value)}
-                          </td>
-                          <td className="border border-stone-300 px-3 py-2 text-right font-semibold text-orange-700">
-                            {formatCurrency(excedente.total_value)}
+                          <td colSpan={5} className="border border-stone-300 px-3 py-2 font-bold text-orange-900">
+                            Excedentes Aplicados
                           </td>
                         </tr>
 
-                        {/* Serviços excedentes com recuo maior */}
+                        {/* Participantes Excedentes */}
+                        {excedentesDaTurma.map((excedente, excIdx) => (
+                          <tr key={`exc-${index}-${excIdx}`} className="bg-white">
+                            <td className="border border-stone-300 px-3 py-2"></td>
+                            <td className="border border-stone-300 px-3 py-2 text-stone-900">
+                              {excedente.description}
+                            </td>
+                            <td className="border border-stone-300 px-3 py-2 text-center text-orange-700 font-semibold">
+                              {excedente.quantity}
+                            </td>
+                            <td className="border border-stone-300 px-3 py-2 text-right text-orange-700">
+                              {formatCurrency(excedente.unit_value)}
+                            </td>
+                            <td className="border border-stone-300 px-3 py-2 text-right font-semibold text-orange-700">
+                              {formatCurrency(excedente.total_value)}
+                            </td>
+                          </tr>
+                        ))}
+
+                        {/* Serviços excedentes */}
                         {servicosExcedentesDaTurma.map((servico, svcIdx) => (
-                          <tr key={`svc-${index}-${svcIdx}`} className="bg-orange-50">
-                            <td className="border border-stone-300 px-3 py-2 text-stone-400">  ↳</td>
-                            <td className="border border-stone-300 px-3 py-2 font-medium text-orange-700 pl-12">
+                          <tr key={`svc-${index}-${svcIdx}`} className="bg-white">
+                            <td className="border border-stone-300 px-3 py-2"></td>
+                            <td className="border border-stone-300 px-3 py-2 text-stone-700">
                               {servico.description}
                             </td>
-                            <td className="border border-stone-300 px-3 py-2 text-center text-stone-500">—</td>
-                            <td className="border border-stone-300 px-3 py-2 text-center text-orange-700 text-sm">
+                            <td className="border border-stone-300 px-3 py-2 text-center text-orange-700">
                               {servico.quantity}
                             </td>
-                            <td className="border border-stone-300 px-3 py-2 text-right text-orange-700 text-sm">
+                            <td className="border border-stone-300 px-3 py-2 text-right text-orange-700">
                               {formatCurrency(servico.unit_value)}
                             </td>
-                            <td className="border border-stone-300 px-3 py-2 text-right font-semibold text-orange-700 text-sm">
+                            <td className="border border-stone-300 px-3 py-2 text-right font-semibold text-orange-700">
                               {formatCurrency(servico.total_value)}
                             </td>
                           </tr>
                         ))}
 
-                        {/* Subtotal de excedentes se houver serviços */}
-                        {servicosExcedentesDaTurma.length > 0 && (
-                          <tr className="bg-orange-100">
-                            <td colSpan={4} className="border border-stone-300 px-3 py-2 text-right font-bold text-orange-900 pl-12">
-                              Subtotal dos Excedentes:
-                            </td>
-                            <td className="border border-stone-300 px-3 py-2 text-right"></td>
-                            <td className="border border-stone-300 px-3 py-2 text-right font-bold text-orange-900">
-                              {formatCurrency(
-                                excedente.total_value + 
-                                servicosExcedentesDaTurma.reduce((sum, s) => sum + s.total_value, 0)
-                              )}
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
-                    ))}
+                        {/* Subtotal Excedentes */}
+                        <tr className="bg-orange-100">
+                          <td colSpan={2} className="border border-stone-300 px-3 py-2 font-bold text-orange-900">
+                            Subtotal Excedentes
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2 text-center font-bold text-orange-700">
+                            {excedentesDaTurma[0]?.quantity || 0}
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2"></td>
+                          <td className="border border-stone-300 px-3 py-2 text-right font-bold text-orange-900">
+                            {formatCurrency(totalExcedentes)}
+                          </td>
+                        </tr>
+                      </>
+                    )}
+
+                    {/* Total de Participantes Realizados */}
+                    <tr className="bg-emerald-100">
+                      <td colSpan={2} className="border border-stone-300 px-3 py-2 font-bold text-emerald-900">
+                        TOTAL DE PARTICIPANTES REALIZADOS
+                      </td>
+                      <td className="border border-stone-300 px-3 py-2 text-center font-bold text-emerald-900">
+                        {classItem.students_count || 0}
+                      </td>
+                      <td className="border border-stone-300 px-3 py-2 font-bold text-emerald-900">
+                        TOTAL GERAL
+                      </td>
+                      <td className="border border-stone-300 px-3 py-2 text-right font-bold text-emerald-900">
+                        {formatCurrency(totalGeral)}
+                      </td>
+                    </tr>
                   </React.Fragment>
                 );
               })}
@@ -339,11 +374,10 @@ export default function BMMPreview({ content }) {
 
                 return Object.values(grouped).map((item, idx) => (
                   <tr key={`add-${idx}`} className="bg-amber-50">
-                    <td className="border border-stone-300 px-3 py-2 text-stone-500">{classes.length + idx + 1}</td>
+                    <td className="border border-stone-300 px-3 py-2"></td>
                     <td className="border border-stone-300 px-3 py-2 font-medium text-amber-800">
                       {item.description}
                     </td>
-                    <td className="border border-stone-300 px-3 py-2 text-center text-stone-500">—</td>
                     <td className="border border-stone-300 px-3 py-2 text-center">
                       {item.quantity}
                     </td>
