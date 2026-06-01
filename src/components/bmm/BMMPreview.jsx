@@ -317,8 +317,7 @@ export default function BMMPreview({ content }) {
                   if (!grouped[item.type]) {
                     grouped[item.type] = {
                       type: item.type,
-                      description: item.type === 'coffee_break_morning' ? 'Coffee break manhã' :
-                                   item.type === 'coffee_break_afternoon' ? 'Coffee break tarde' : 'Almoço',
+                      description: item.description,
                       unit_value: item.unit_value,
                       quantity: 0,
                       total_value: 0,
