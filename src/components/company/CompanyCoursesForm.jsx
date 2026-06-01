@@ -82,17 +82,22 @@ export default function CompanyCoursesForm({ companyCourses, courses, onChange }
   };
 
   // Ao perder foco do campo class_fixed_value, converter para número
-  const handleClassFixedValueBlur = (index) => {
-    const updated = [...normalizedCourses];
-    const rawValue = String(updated[index].class_fixed_value).replace(',', '.');
-    updated[index] = { ...updated[index], class_fixed_value: parseFloat(rawValue) || 0 };
-    onChange(updated);
-  };
-
   const formatCurrency = (value) => {
     const num = parseFloat(String(value).replace(',', '.')) || 0;
     return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
+
+  // Formata dígitos como moeda enquanto digita (apenas números → R$ X.XXX,XX)
+  const handleClassFixedValueChange = (index, rawInput) => {
+    // Remove tudo que não é dígito
+    const digits = rawInput.replace(/\D/g, '');
+    const num = parseInt(digits || '0', 10) / 100;
+    const updated = [...normalizedCourses];
+    updated[index] = { ...updated[index], class_fixed_value: num };
+    onChange(updated);
+  };
+
+  const handleClassFixedValueBlur = () => {}; // mantido por compatibilidade
 
   return (
     <div className="space-y-4">
@@ -235,16 +240,12 @@ export default function CompanyCoursesForm({ companyCourses, courses, onChange }
                     <Label>Valor da Turma Fechada (R$) *</Label>
                     <Input
                       type="text"
-                      inputMode="decimal"
-                      value={course.class_fixed_value ?? ''}
-                      onChange={(e) => handleCourseChange(index, 'class_fixed_value', e.target.value)}
-                      onBlur={() => handleClassFixedValueBlur(index)}
-                      placeholder="Ex: 2.000,00"
+                      inputMode="numeric"
+                      value={course.class_fixed_value > 0 ? formatCurrency(course.class_fixed_value) : ''}
+                      onChange={(e) => handleClassFixedValueChange(index, e.target.value)}
+                      placeholder="R$ 0,00"
                       required
                     />
-                    {parseFloat(String(course.class_fixed_value).replace(',', '.')) > 0 && (
-                      <p className="text-xs text-stone-500">Valor: {formatCurrency(course.class_fixed_value)}</p>
-                    )}
                   </div>
                   <div className="p-2 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-800">
                     <strong>Valor configurado:</strong> {formatCurrency(course.class_fixed_value)} fixo por turma — independente da quantidade de alunos.
