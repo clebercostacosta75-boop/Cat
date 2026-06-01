@@ -285,7 +285,7 @@ export default function BMMPreview({ content }) {
                             {classItem.duration_hours || 0}h
                           </td>
                           <td className="border border-stone-300 px-3 py-2 text-center font-bold">
-                            {15}
+                            {classItem.students_count || 0}
                           </td>
                           <td className="border border-stone-300 px-3 py-2 text-right font-bold">
                             {formatCurrency(classItem.unit_value)}
@@ -366,7 +366,7 @@ export default function BMMPreview({ content }) {
                     {/* Subtotal Turma Fechada */}
                     {(() => {
                       const additionalServices = content?.company?.additional_services || {};
-                      const limiteContratado = 15;
+                      const limiteContratado = classItem.students_count || 0;
                       let subtotal = classItem.total_value;
                       
                       if (additionalServices.coffee_break_morning_enabled && additionalServices.coffee_break_morning_unit_value > 0) {
@@ -567,8 +567,8 @@ export default function BMMPreview({ content }) {
 
           // Serviços da turma fechada
           const additionalServices = content?.company?.additional_services || {};
-          const limiteContratado = 15;
-          
+          const limiteContratado = classItem.students_count || 0;
+
           if (additionalServices.coffee_break_morning_enabled && additionalServices.coffee_break_morning_unit_value > 0) {
             totalServicos += limiteContratado * additionalServices.coffee_break_morning_unit_value;
           }
