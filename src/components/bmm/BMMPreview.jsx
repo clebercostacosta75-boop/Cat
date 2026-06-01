@@ -178,7 +178,10 @@ export default function BMMPreview({ content }) {
   if (!content) return null;
 
   const { company, contractor, period, classes, totals, template, additionalItems = [] } = content;
-  const o = content.overrides || {};
+  
+  // Somente UNITAPAJÓS usa override de campos e SAP automático
+  const isUnitapajos = company?.nome_fantasia === 'UNITAPAJÓS' || company?.razao_social?.includes('UNITAPAJÓS');
+  const o = isUnitapajos ? (content.overrides || {}) : {};
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -263,16 +266,15 @@ export default function BMMPreview({ content }) {
   const contractManagerName = o.contract_manager_name ?? company?.contract_manager_name;
   const contractManagerRole = o.contract_manager_role ?? company?.contract_manager_role;
 
-  // Detectar se empresa tem SAP habilitado (UNITAPAJÓS ou outra com config)
-  const isUnitapajos = company?.nome_fantasia === 'UNITAPAJÓS' || company?.razao_social?.includes('UNITAPAJÓS');
-  const hasSAPConfig = company?.sap_config?.enabled || isUnitapajos;
+  // SAP habilitado APENAS para UNITAPAJÓS
+  const hasSAPConfig = isUnitapajos && (company?.bmm_editor_config?.sap_config?.enabled || company?.sap_config?.enabled);
 
-  // Função para obter dados SAP baseado na modalidade
+  // Função para obter dados SAP baseado na modalidade (EXCLUSIVO UNITAPAJÓS)
   const getSAPData = (classItem) => {
-    if (!hasSAPConfig) return null;
+    if (!hasSAPConfig || !isUnitapajos) return null;
 
-    // Padrões SAP para UNITAPAJÓS
-    const unitapajosDefaults = {
+    // Usar configuração armazenada da UNITAPAJÓS ou padrões
+    const sapCfg = company?.bmm_editor_config?.sap_config || company?.sap_config || {
       codigo_material_pai: '2010000491',
       presencial: {
         codigo_servico_filho: '3012507',
@@ -284,7 +286,6 @@ export default function BMMPreview({ content }) {
       }
     };
 
-    const sapCfg = company?.sap_config || (isUnitapajos ? unitapajosDefaults : {});
     const codigoMaterialPai = sapCfg.codigo_material_pai || '2010000491';
     
     // Normalizar modalidade (comparar presencial vs ead)
@@ -391,6 +392,22 @@ export default function BMMPreview({ content }) {
            </div>
          </div>
        </div>
+
+       {/* Mostrar SAP apenas para UNITAPAJÓS */}
+       {isUnitapajos && hasSAPConfig && (
+         <div className="bg-stone-50 rounded-lg p-4 mb-6">
+           <h2 className="text-sm font-bold text-stone-900 mb-2">CONFIGURAÇÃO SAP - UNITAPAJÓS</h2>
+           <div className="grid md:grid-cols-2 gap-4 text-xs">
+             <div>
+               <p><strong>Código Material (PAI):</strong> {company?.bmm_editor_config?.sap_config?.codigo_material_pai || '2010000491'}</p>
+             </div>
+             <div>
+               <p><strong>Código Serviço Presencial:</strong> {company?.bmm_editor_config?.sap_config?.presencial?.codigo_servico_filho || '3012507'}</p>
+               <p><strong>Código Serviço EAD:</strong> {company?.bmm_editor_config?.sap_config?.ead?.codigo_servico_filho || '3012506'}</p>
+             </div>
+           </div>
+         </div>
+       )}
 
       {/* Bloco de Detalhamento de Excedentes */}
       <ExcedentesDetailBlock classes={classes} additionalItems={additionalItems} />

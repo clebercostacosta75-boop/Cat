@@ -258,6 +258,88 @@
           "end_date"
         ]
       }
+    },
+    "bmm_editor_config": {
+      "type": "object",
+      "description": "Configura\u00e7\u00e3o exclusiva do BMM para UNITAPAJ\u00d3S (n\u00e3o afeta outros clientes)",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "T\u00edtulo do documento"
+        },
+        "bmm_number": {
+          "type": "string",
+          "description": "N\u00famero do BMM (ex: BMM-001/2025)"
+        },
+        "contract_number": {
+          "type": "string",
+          "description": "N\u00famero do contrato"
+        },
+        "amendment_number": {
+          "type": "string",
+          "description": "N\u00famero do aditivo"
+        },
+        "contract_object": {
+          "type": "string",
+          "description": "Objeto do contrato"
+        },
+        "fiscal_name": {
+          "type": "string",
+          "description": "Nome do fiscal"
+        },
+        "fiscal_role": {
+          "type": "string",
+          "description": "Cargo do fiscal"
+        },
+        "contract_manager_name": {
+          "type": "string",
+          "description": "Nome do gestor do contrato"
+        },
+        "contract_manager_role": {
+          "type": "string",
+          "description": "Cargo do gestor do contrato"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Observa\u00e7\u00f5es gerais"
+        },
+        "sap_config": {
+          "type": "object",
+          "description": "Configura\u00e7\u00e3o SAP para UNITAPAJ\u00d3S",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "codigo_material_pai": {
+              "type": "string",
+              "description": "C\u00f3digo Material (PAI) - SAP"
+            },
+            "presencial": {
+              "type": "object",
+              "properties": {
+                "codigo_servico_filho": {
+                  "type": "string"
+                },
+                "descricao": {
+                  "type": "string"
+                }
+              }
+            },
+            "ead": {
+              "type": "object",
+              "properties": {
+                "codigo_servico_filho": {
+                  "type": "string"
+                },
+                "descricao": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "required": [

@@ -111,6 +111,13 @@ export default function BMMGenerator() {
       const template = templates.find(t => t.id === selectedTemplate);
       const contractor = contractors.find(c => c.id === selectedContractor) || contractors[0];
 
+      // Carregar automaticamente configuração do BMM para UNITAPAJÓS
+      const isUnitapajos = company?.nome_fantasia === 'UNITAPAJÓS' || company?.razao_social?.includes('UNITAPAJÓS');
+      const overrides = {};
+      if (isUnitapajos && company?.bmm_editor_config) {
+        Object.assign(overrides, company.bmm_editor_config);
+      }
+
       // Calcular dados das turmas usando a lógica de cobrança configurada na empresa
       const classesData = filteredClasses.map(classItem => {
         const studentsCount = classItem.students_count || 1;
@@ -262,6 +269,7 @@ export default function BMMGenerator() {
         period: selectedPeriod,
         classes: classesData,
         additionalItems,
+        overrides, // Pré-popular com config da UNITAPAJÓS se aplicável
         totals: {
           value: grandTotal,
           trainingValue: totalValue,
@@ -315,6 +323,51 @@ export default function BMMGenerator() {
   };
 
   const selectedCompanyData = companies.find(c => c.id === selectedCompany);
+
+  // Salvar configuração BMM na UNITAPAJÓS
+  const handleSaveBMMConfig = async (updatedContent) => {
+    const isUnitapajos = updatedContent?.company?.nome_fantasia === 'UNITAPAJÓS' || updatedContent?.company?.razao_social?.includes('UNITAPAJÓS');
+    if (!isUnitapajos || !selectedCompany) return;
+
+    try {
+      const overrides = updatedContent.overrides || {};
+      
+      // Extrair SAP config se presente
+      const sapConfig = overrides.sap_config ? {
+        sap_config: overrides.sap_config
+      } : {};
+
+      // Preparar dados para salvar em bmm_editor_config
+      const configToSave = {
+        title: overrides.title,
+        bmm_number: overrides.bmm_number,
+        contract_number: overrides.contract_number,
+        amendment_number: overrides.amendment_number,
+        contract_object: overrides.contract_object,
+        fiscal_name: overrides.fiscal_name,
+        fiscal_role: overrides.fiscal_role,
+        contract_manager_name: overrides.contract_manager_name,
+        contract_manager_role: overrides.contract_manager_role,
+        notes: overrides.notes,
+        ...sapConfig
+      };
+
+      // Remover valores undefined
+      Object.keys(configToSave).forEach(key => {
+        if (configToSave[key] === undefined) delete configToSave[key];
+      });
+
+      // Salvar na empresa
+      await base44.entities.Company.update(selectedCompany, {
+        bmm_editor_config: configToSave
+      });
+
+      toast.success('Configuração do BMM salva para UNITAPAJÓS!');
+    } catch (error) {
+      console.error('Erro ao salvar configuração:', error);
+      toast.error('Erro ao salvar configuração do BMM');
+    }
+  };
 
   return (
     <div className="p-4 md:p-8">
@@ -519,7 +572,10 @@ export default function BMMGenerator() {
                 {/* Editor de campos */}
                 <BMMEditor
                   content={generatedContent}
-                  onChange={setGeneratedContent}
+                  onChange={(updatedContent) => {
+                    setGeneratedContent(updatedContent);
+                    handleSaveBMMConfig(updatedContent);
+                  }}
                 />
                 
                 <div ref={previewRef}>
