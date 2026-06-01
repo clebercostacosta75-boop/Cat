@@ -269,7 +269,7 @@ export default function BMMPreview({ content }) {
   const contractManagerRole = o.contract_manager_role ?? company?.contract_manager_role;
 
   // SAP habilitado APENAS para UNITAPAJÓS
-  const hasSAPConfig = isUnitapajos && (company?.bmm_editor_config?.sap_config || company?.sap_config);
+  const hasSAPConfig = isUnitapajos;
 
   // Função para obter dados SAP baseado na modalidade (EXCLUSIVO UNITAPAJÓS)
   const getSAPData = (classItem) => {
