@@ -436,8 +436,9 @@ export default function SchedulePage() {
         item.instrutor_nome?.toLowerCase().includes(q) ||
         item.local?.toLowerCase().includes(q);
       const matchStatus = filterStatus === "todos" || item.status === filterStatus;
-      // Filtro de mês: só exibe itens cujo data_inicio pertence ao mês selecionado
-      const matchMonth = !filterMonth || (item.data_inicio && item.data_inicio.substring(0, 7) === filterMonth);
+      // Filtro de mês: ignorado quando um status específico está selecionado
+      const matchMonth = !filterMonth || filterStatus !== "todos" ||
+        (item.data_inicio && item.data_inicio.substring(0, 7) === filterMonth);
       return matchSearch && matchStatus && matchMonth;
     });
   }, [allItems, search, filterStatus, filterMonth]);
