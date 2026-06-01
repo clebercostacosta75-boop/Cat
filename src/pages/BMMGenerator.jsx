@@ -360,31 +360,6 @@ export default function BMMGenerator() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>Modelo de BMM</Label>
-                      <a
-                        href="/BMMTemplates"
-                        className="text-xs text-blue-600 hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        + Gerenciar modelos
-                      </a>
-                    </div>
-                    <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o modelo (opcional)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {templates.map(template => (
-                          <SelectItem key={template.id} value={template.id}>
-                            📄 {template.name} {template.is_default ? '⭐' : ''}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
 
                   <Button 
                     onClick={handleGenerate}
