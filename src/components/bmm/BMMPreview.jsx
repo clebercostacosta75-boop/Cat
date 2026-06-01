@@ -136,13 +136,13 @@ export default function BMMPreview({ content }) {
       return {
         codigo_material: codigoMaterialPai,
         codigo_servico: sapCfg.presencial?.codigo_servico_filho || '3012507',
-        descricao: sapCfg.presencial?.descricao || ''
+        descricao: sapCfg.presencial?.descricao || 'Serv. Treinamento\nFuncionário / Serv.\nTreinamento de NR'
       };
     } else {
       return {
         codigo_material: codigoMaterialPai,
         codigo_servico: sapCfg.ead?.codigo_servico_filho || '3012506',
-        descricao: sapCfg.ead?.descricao || ''
+        descricao: sapCfg.ead?.descricao || 'Serv. Treinamento\nFuncionário / Serv.\nTreinamento de NR'
       };
     }
   };
