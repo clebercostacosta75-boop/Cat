@@ -314,7 +314,7 @@ export default function BMMPreview({ content }) {
                     {(() => {
                       const servicos = [];
                       const additionalServices = content?.company?.additional_services || {};
-                      const limiteContratado = 15;
+                      const limiteContratado = classItem.students_count || 15;
                       
                       if (additionalServices.coffee_break_morning_enabled && additionalServices.coffee_break_morning_unit_value > 0) {
                         servicos.push({
@@ -381,13 +381,13 @@ export default function BMMPreview({ content }) {
                       
                       return (
                         <tr className="bg-stone-100">
-                          <td colSpan={2} className="border border-stone-300 px-3 py-2 font-bold text-stone-900">
-                            Subtotal Turma Fechada
-                          </td>
-                          <td className="border border-stone-300 px-3 py-2"></td>
-                          <td className="border border-stone-300 px-3 py-2 text-center font-bold">
-                            {15}
-                          </td>
+                              <td colSpan={2} className="border border-stone-300 px-3 py-2 font-bold text-stone-900">
+                                Subtotal Turma Fechada
+                              </td>
+                              <td className="border border-stone-300 px-3 py-2"></td>
+                              <td className="border border-stone-300 px-3 py-2 text-center font-bold">
+                                {classItem.students_count || 0}
+                              </td>
                           <td className="border border-stone-300 px-3 py-2"></td>
                           <td className="border border-stone-300 px-3 py-2 text-right font-bold">
                             {formatCurrency(subtotal)}
@@ -465,7 +465,7 @@ export default function BMMPreview({ content }) {
                     {/* Total de Participantes Realizados */}
                     {(() => {
                       const additionalServices = content?.company?.additional_services || {};
-                      const limiteContratado = 15;
+                      const limiteContratado = classItem.students_count || 15;
                       let subtotalBase = classItem.total_value;
                       
                       if (additionalServices.coffee_break_morning_enabled && additionalServices.coffee_break_morning_unit_value > 0) {
@@ -487,8 +487,8 @@ export default function BMMPreview({ content }) {
                           </td>
                           <td className="border border-stone-300 px-3 py-2"></td>
                           <td className="border border-stone-300 px-3 py-2 text-center font-bold text-emerald-900">
-                            {(classItem.students_count || 0)}
-                          </td>
+                             {classItem.students_count || 0}
+                           </td>
                           <td className="border border-stone-300 px-3 py-2 font-bold text-emerald-900">
                             TOTAL GERAL
                           </td>
