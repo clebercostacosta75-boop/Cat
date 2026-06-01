@@ -119,14 +119,14 @@ export default function BMMPreview({ content }) {
   const contractManagerRole = o.contract_manager_role ?? company?.contract_manager_role;
 
   // Detectar se empresa tem SAP habilitado (UNITAPAJÓS ou outra com config)
-  const hasSAPConfig = company?.sap_config?.enabled;
+  const hasSAPConfig = company?.sap_config?.enabled || company?.nome_fantasia === 'UNITAPAJÓS';
 
   // Função para obter dados SAP baseado na modalidade
   const getSAPData = (classItem) => {
     if (!hasSAPConfig) return null;
 
-    const sapCfg = company.sap_config;
-    const codigoMaterialPai = sapCfg.codigo_material_pai || '';
+    const sapCfg = company?.sap_config || {};
+    const codigoMaterialPai = sapCfg.codigo_material_pai || '2010000491';
     
     // Normalizar modalidade (comparar presencial vs ead)
     const modality = (classItem.category || classItem.modality || '').toLowerCase();
@@ -135,13 +135,13 @@ export default function BMMPreview({ content }) {
     if (isPresencial) {
       return {
         codigo_material: codigoMaterialPai,
-        codigo_servico: sapCfg.presencial?.codigo_servico_filho || '',
+        codigo_servico: sapCfg.presencial?.codigo_servico_filho || '3012507',
         descricao: sapCfg.presencial?.descricao || ''
       };
     } else {
       return {
         codigo_material: codigoMaterialPai,
-        codigo_servico: sapCfg.ead?.codigo_servico_filho || '',
+        codigo_servico: sapCfg.ead?.codigo_servico_filho || '3012506',
         descricao: sapCfg.ead?.descricao || ''
       };
     }
