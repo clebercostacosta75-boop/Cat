@@ -88,6 +88,7 @@ export default function BMMPreview({ content }) {
   if (!content) return null;
 
   const { company, contractor, period, classes, totals, template, additionalItems = [] } = content;
+  const o = content.overrides || {};
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -105,8 +106,16 @@ export default function BMMPreview({ content }) {
     }
   };
 
-  // Buscar contrato ativo da empresa
-  const activeContract = company?.company_contracts?.find(c => c.status === 'Ativo');
+  // Buscar contrato ativo da empresa (overrides têm prioridade)
+  const activeContract = company?.company_contracts?.find(c => c.status === 'Ativo') || {};
+  const contractNumber = o.contract_number ?? activeContract.contract_number;
+  const amendmentNumber = o.amendment_number ?? activeContract.amendment_number;
+  const contractObject = o.contract_object ?? company?.billing_info?.contract_object;
+  const bmmTitle = o.title ?? "BOLETIM MENSAL DE MEDIÇÃO - BMM";
+  const fiscalName = o.fiscal_name ?? company?.fiscal_name;
+  const fiscalRole = o.fiscal_role ?? company?.fiscal_role;
+  const contractManagerName = o.contract_manager_name ?? company?.contract_manager_name;
+  const contractManagerRole = o.contract_manager_role ?? company?.contract_manager_role;
 
   return (
     <Card id="bmm-print-container" className="border-none shadow-xl bg-white p-8">
@@ -149,19 +158,18 @@ export default function BMMPreview({ content }) {
 
         <div className="mt-6 text-center">
           <h1 className="text-2xl font-bold text-emerald-800">
-            BOLETIM MENSAL DE MEDIÇÃO - BMM
+            {bmmTitle}
           </h1>
           <p className="text-lg text-stone-600 mt-1">
             Período: <strong>{period}</strong>
           </p>
-          {activeContract && (
+          {(contractNumber || amendmentNumber) && (
             <div className="text-sm text-stone-600 mt-2">
               <p>
-                <strong>Contrato:</strong> {activeContract.contract_number}
-                {activeContract.amendment_number && (
-                  <span> | <strong>Aditivo:</strong> {activeContract.amendment_number}</span>
-                )}
+                {contractNumber && <><strong>Contrato:</strong> {contractNumber}</>}
+                {amendmentNumber && <span> | <strong>Aditivo:</strong> {amendmentNumber}</span>}
               </p>
+              {contractObject && <p><strong>Objeto:</strong> {contractObject}</p>}
             </div>
           )}
         </div>
@@ -326,23 +334,26 @@ export default function BMMPreview({ content }) {
           <div className="text-center">
             <div className="border-t-2 border-stone-400 w-64 mx-auto pt-2">
               <p className="font-semibold text-stone-900">FISCALIZAÇÃO</p>
-              <p className="text-sm text-stone-600">{company?.fiscal_name || '______________________________'}</p>
-              {company?.fiscal_role && (
-                <p className="text-xs text-stone-500 mt-1">{company.fiscal_role}</p>
-              )}
+              <p className="text-sm text-stone-600">{fiscalName || '______________________________'}</p>
+              {fiscalRole && <p className="text-xs text-stone-500 mt-1">{fiscalRole}</p>}
             </div>
           </div>
           <div className="text-center">
             <div className="border-t-2 border-stone-400 w-64 mx-auto pt-2">
               <p className="font-semibold text-stone-900">GESTOR DO CONTRATO</p>
-              <p className="text-sm text-stone-600">{company?.contract_manager_name || '______________________________'}</p>
-              {company?.contract_manager_role && (
-                <p className="text-xs text-stone-500 mt-1">{company.contract_manager_role}</p>
-              )}
+              <p className="text-sm text-stone-600">{contractManagerName || '______________________________'}</p>
+              {contractManagerRole && <p className="text-xs text-stone-500 mt-1">{contractManagerRole}</p>}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Observações do editor */}
+      {o.notes && (
+        <div className="mt-4 p-3 bg-stone-50 rounded border border-stone-200 text-sm text-stone-700">
+          <strong>Observações:</strong> {o.notes}
+        </div>
+      )}
 
       {/* Rodapé */}
       <div className="mt-8 pt-4 border-t border-stone-200 text-center text-xs text-stone-500">

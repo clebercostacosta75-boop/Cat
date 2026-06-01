@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import BMMPreview from "@/components/bmm/BMMPreview";
+import BMMEditor from "@/components/bmm/BMMEditor";
 import BMMEmailSender from "@/components/bmm/BMMEmailSender";
 import { exportBMMPDF } from "@/components/bmm/BMMExporter";
 import { calculateCourseBilling } from "@/lib/billingCalculations";
@@ -493,6 +494,12 @@ export default function BMMGenerator() {
                     Enviar por E-mail
                   </Button>
                 </div>
+
+                {/* Editor de campos */}
+                <BMMEditor
+                  content={generatedContent}
+                  onChange={setGeneratedContent}
+                />
                 
                 <div ref={previewRef}>
                   <BMMPreview content={generatedContent} />
