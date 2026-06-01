@@ -59,40 +59,43 @@ export default function BMMPreview({ content }) {
           padding: 0 !important;
         }
         
-        /* Fontes - ABNT/NBR */
+        /* Fontes - Padronizadas para A4 */
         h1 {
           font-family: Arial, sans-serif !important;
-          font-size: 14pt !important;
+          font-size: 12pt !important;
           font-weight: bold !important;
           text-align: center !important;
-          margin: 0 0 8px 0 !important;
+          margin: 0 0 4px 0 !important;
+          padding: 0 !important;
           page-break-after: avoid !important;
         }
         
         h2 {
           font-family: Arial, sans-serif !important;
-          font-size: 11pt !important;
+          font-size: 10pt !important;
           font-weight: bold !important;
           text-transform: uppercase !important;
-          margin: 12px 0 8px 0 !important;
+          margin: 6px 0 3px 0 !important;
+          padding: 0 !important;
           page-break-after: avoid !important;
         }
         
         p {
           font-family: Arial, sans-serif !important;
           font-size: 10pt !important;
-          margin: 2px 0 2px 0 !important;
-          line-height: 1.15 !important;
+          margin: 1px 0 1px 0 !important;
+          padding: 0 !important;
+          line-height: 1.1 !important;
         }
         
-        /* Tabelas - ABNT: 8-9pt */
+        /* Tabelas - 10pt cabeçalho, 10pt conteúdo */
         table {
           width: 100% !important;
           font-family: Arial, sans-serif !important;
-          font-size: 8.5pt !important;
+          font-size: 10pt !important;
           border-collapse: collapse !important;
           page-break-inside: avoid !important;
-          margin: 8px 0 8px 0 !important;
+          margin: 3px 0 3px 0 !important;
         }
         
         thead {
@@ -103,24 +106,24 @@ export default function BMMPreview({ content }) {
         }
         
         th {
-          padding: 3px 4px !important;
+          padding: 2px 3px !important;
           border: 1px solid #333 !important;
           text-align: left !important;
           font-weight: bold !important;
-          font-size: 8.5pt !important;
+          font-size: 10pt !important;
         }
         
         td {
-          padding: 2px 4px !important;
+          padding: 2px 3px !important;
           border: 0.5px solid #666 !important;
-          font-size: 8.5pt !important;
+          font-size: 10pt !important;
         }
         
         /* Seções de dados */
         .bg-stone-50 {
           page-break-inside: avoid !important;
-          margin: 8px 0 8px 0 !important;
-          padding: 6px !important;
+          margin: 2px 0 2px 0 !important;
+          padding: 3px !important;
           font-family: Arial, sans-serif !important;
           font-size: 10pt !important;
         }
@@ -128,7 +131,7 @@ export default function BMMPreview({ content }) {
         /* Grid de totais */
         .grid {
           page-break-inside: avoid !important;
-          margin: 8px 0 8px 0 !important;
+          margin: 2px 0 2px 0 !important;
         }
         
         /* Imagens */
@@ -137,11 +140,25 @@ export default function BMMPreview({ content }) {
           page-break-inside: avoid !important;
         }
         
+        /* Indicadores - Números em 16pt, Labels em 9pt */
+        .indicator-number {
+          font-family: Arial, sans-serif !important;
+          font-size: 16pt !important;
+          font-weight: bold !important;
+          display: block !important;
+        }
+        
+        .indicator-label {
+          font-family: Arial, sans-serif !important;
+          font-size: 9pt !important;
+          display: block !important;
+        }
+        
         /* Assinaturas */
         .signature-section {
           page-break-inside: avoid !important;
-          margin: 12px 0 0 0 !important;
-          padding-top: 8px !important;
+          margin: 4px 0 0 0 !important;
+          padding-top: 3px !important;
           border-top: 1px solid #ccc !important;
           font-family: Arial, sans-serif !important;
           font-size: 10pt !important;
@@ -150,8 +167,8 @@ export default function BMMPreview({ content }) {
         /* Rodapé */
         footer, .mt-8 {
           page-break-before: avoid !important;
-          margin-top: 8px !important;
-          padding-top: 6px !important;
+          margin-top: 2px !important;
+          padding-top: 2px !important;
           border-top: 1px solid #ccc !important;
           font-family: Arial, sans-serif !important;
           font-size: 8pt !important;
@@ -159,10 +176,10 @@ export default function BMMPreview({ content }) {
         }
         
         /* Desativar margens padrão */
-        .mb-6 { margin-bottom: 8px !important; }
-        .mt-4 { margin-top: 8px !important; }
-        .pt-6 { padding-top: 6px !important; }
-        .pb-6 { padding-bottom: 6px !important; }
+        .mb-6 { margin-bottom: 2px !important; }
+        .mt-4 { margin-top: 2px !important; }
+        .pt-6 { padding-top: 2px !important; }
+        .pb-6 { padding-bottom: 2px !important; }
       }
     `;
     document.head.appendChild(style);
