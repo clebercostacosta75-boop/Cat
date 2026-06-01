@@ -264,13 +264,27 @@ export default function BMMPreview({ content }) {
   const contractManagerRole = o.contract_manager_role ?? company?.contract_manager_role;
 
   // Detectar se empresa tem SAP habilitado (UNITAPAJÓS ou outra com config)
-  const hasSAPConfig = company?.sap_config?.enabled || company?.nome_fantasia === 'UNITAPAJÓS';
+  const isUnitapajos = company?.nome_fantasia === 'UNITAPAJÓS' || company?.razao_social?.includes('UNITAPAJÓS');
+  const hasSAPConfig = company?.sap_config?.enabled || isUnitapajos;
 
   // Função para obter dados SAP baseado na modalidade
   const getSAPData = (classItem) => {
     if (!hasSAPConfig) return null;
 
-    const sapCfg = company?.sap_config || {};
+    // Padrões SAP para UNITAPAJÓS
+    const unitapajosDefaults = {
+      codigo_material_pai: '2010000491',
+      presencial: {
+        codigo_servico_filho: '3012507',
+        descricao: 'Serv. Treinamento\nFuncionário / Serv.\nTreinamento de NR'
+      },
+      ead: {
+        codigo_servico_filho: '3012506',
+        descricao: 'Serv. Treinamento\nFuncionário / Serv.\nTreinamento de NR'
+      }
+    };
+
+    const sapCfg = company?.sap_config || (isUnitapajos ? unitapajosDefaults : {});
     const codigoMaterialPai = sapCfg.codigo_material_pai || '2010000491';
     
     // Normalizar modalidade (comparar presencial vs ead)
