@@ -89,6 +89,7 @@ const STATUS_COLORS = {
   "Em Andamento":"bg-yellow-100 text-yellow-800 border-yellow-200",
   Concluído:     "bg-gray-100 text-gray-700 border-gray-200",
   Cancelado:     "bg-red-100 text-red-700 border-red-200",
+  Aguardando:    "bg-orange-100 text-orange-800 border-orange-200",
 };
 
 const STATUS_DOT = {
@@ -97,6 +98,7 @@ const STATUS_DOT = {
   "Em Andamento":"bg-yellow-500",
   Concluído:     "bg-gray-400",
   Cancelado:     "bg-red-500",
+  Aguardando:    "bg-orange-400",
 };
 
 // ─── Componente: Calendário mensal ───────────────────────────────────────────
@@ -264,16 +266,19 @@ function CardItem({ item, onEdit, onDelete, onWhatsApp, sendingWhatsApp, onConcl
         <div className="flex flex-col lg:flex-row justify-between gap-4">
           <div className="flex-1 space-y-3">
             <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${STATUS_DOT[item.status] || "bg-gray-400"}`} />
-                  <h3 className="text-base font-bold text-gray-900">{item.titulo}</h3>
-                </div>
-                <p className="text-sm text-gray-500 ml-4">{item.empresa_nome}</p>
-              </div>
-              <Badge className={`text-xs border flex-shrink-0 ${STATUS_COLORS[item.status] || "bg-gray-100"}`}>
-                {item.status}
-              </Badge>
+            <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${STATUS_DOT[item.status] || "bg-gray-400"}`} />
+              <h3 className="text-base font-bold text-gray-900">{item.titulo}</h3>
+              {item._raw?.notes?.startsWith('📋 Proposta:') && (
+                <span className="text-xs bg-orange-50 text-orange-700 border border-orange-200 rounded px-1.5 py-0.5">📋 Da Proposta</span>
+              )}
+            </div>
+            <p className="text-sm text-gray-500 ml-4">{item.empresa_nome}</p>
+            </div>
+            <Badge className={`text-xs border flex-shrink-0 ${STATUS_COLORS[item.status] || "bg-gray-100"}`}>
+            {item.status}
+            </Badge>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pt-2 border-t border-gray-100">
@@ -545,7 +550,7 @@ export default function SchedulePage() {
     { key: "calendar", label: "Calendário", icon: Calendar },
   ];
 
-  const STATUS_OPTIONS = ["todos", "Agendado", "Confirmado", "Em Andamento", "Concluído", "Cancelado"];
+  const STATUS_OPTIONS = ["todos", "Aguardando", "Agendado", "Confirmado", "Em Andamento", "Concluído", "Cancelado"];
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-5">

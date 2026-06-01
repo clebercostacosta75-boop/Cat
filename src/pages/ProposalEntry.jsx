@@ -15,9 +15,11 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
 const STATUS_CONFIG = {
-  "Processando":        { color: "bg-blue-100 text-blue-800",   icon: <Loader2 className="w-3 h-3 animate-spin" /> },
+  "Processando":        { color: "bg-blue-100 text-blue-800",    icon: <Loader2 className="w-3 h-3 animate-spin" /> },
   "Aguardando Revisão": { color: "bg-yellow-100 text-yellow-800", icon: <Clock className="w-3 h-3" /> },
   "Revisado":           { color: "bg-purple-100 text-purple-800", icon: <Eye className="w-3 h-3" /> },
+  "Aprovada":           { color: "bg-green-100 text-green-800",   icon: <CheckCircle className="w-3 h-3" /> },
+  "Rejeitada":          { color: "bg-red-100 text-red-800",       icon: <AlertCircle className="w-3 h-3" /> },
   "Finalizado":         { color: "bg-green-100 text-green-800",   icon: <CheckCircle className="w-3 h-3" /> },
   "Erro":               { color: "bg-red-100 text-red-800",       icon: <AlertCircle className="w-3 h-3" /> },
 };
@@ -47,6 +49,12 @@ export default function ProposalEntry() {
     queryKey: ['instructors'],
     queryFn: () => base44.entities.Instructor.list(),
   });
+
+  const STATUS_APPROVAL = {
+    "Pendente":  { color: "bg-orange-100 text-orange-800", icon: <Clock className="w-3 h-3" /> },
+    "Aprovada":  { color: "bg-green-100 text-green-800",   icon: <CheckCircle className="w-3 h-3" /> },
+    "Rejeitada": { color: "bg-red-100 text-red-800",       icon: <AlertCircle className="w-3 h-3" /> },
+  };
 
   const deleteProposalMutation = useMutation({
     mutationFn: (id) => base44.entities.Proposal.delete(id),
@@ -120,8 +128,7 @@ export default function ProposalEntry() {
       ...editData,
       courses: [...editData.courses, {
         course_name: '', workload_hours: '', students_count: '',
-        unit_value: '', total_value: '', start_date: '',
-        end_date: '', location: '', instructor_name: '', modality: 'Presencial',
+        unit_value: '', total_value: '', modality: 'Presencial',
         num_turmas: 1
       }]
     });
@@ -156,18 +163,16 @@ export default function ProposalEntry() {
   };
 
   const handleFinalize = async () => {
-    const missing = editData.courses.filter(c => !c.start_date || !c.end_date || !c.location);
-    if (missing.length > 0) {
-      toast.error('Preencha Data Início, Data Fim e Local em todos os cursos antes de finalizar.');
+    if (!editData.courses.length) {
+      toast.error('Adicione pelo menos um curso antes de aprovar.');
       return;
     }
 
     setFinalizing(true);
     try {
-      // Sincronizar dados da empresa revisados com a entidade Company
+      // Sincronizar empresa com a entidade Company
       let resolvedCompanyId = editData.company_id;
       if (editData.company_name) {
-        // Busca empresa existente por CNPJ ou nome
         let existingCompanies = [];
         if (editData.company_cnpj) {
           existingCompanies = await base44.entities.Company.filter({ cnpj: editData.company_cnpj });
@@ -181,12 +186,10 @@ export default function ProposalEntry() {
 
         if (existingCompanies.length > 0) {
           resolvedCompanyId = existingCompanies[0].id;
-          // Atualiza dados se CNPJ estava faltando
           if (editData.company_cnpj && !existingCompanies[0].cnpj) {
             await base44.entities.Company.update(resolvedCompanyId, { cnpj: editData.company_cnpj });
           }
         } else {
-          // Cria empresa nova com os dados revisados
           const newCompany = await base44.entities.Company.create({
             razao_social: editData.company_name,
             nome_fantasia: editData.company_name,
@@ -198,61 +201,42 @@ export default function ProposalEntry() {
         }
       }
 
+      // Cria turmas no Cronograma com status "Aguardando" — sem datas/instrutor/local
+      // O operador completa esses dados diretamente no Cronograma
       const classIds = [];
-      for (const course of editData.courses) {
-        // Garante datas no formato YYYY-MM-DD sem problemas de timezone
-        const startDate = course.start_date || null;
-        const endDate = course.end_date || startDate;
-
-        // realization_dates sempre tem início; adiciona fim só se diferente
-        const realizationDates = startDate ? [startDate] : [];
-        if (endDate && endDate !== startDate) realizationDates.push(endDate);
-
-        // Formata datas para exibição sem problema de timezone
-        const formatDateBR = (d) => {
-          if (!d) return '';
-          const [y, m, dia] = d.split('-');
-          return `${dia}/${m}/${y}`;
-        };
-
-        const periodoTexto = startDate
-          ? (endDate && endDate !== startDate
-              ? `De ${formatDateBR(startDate)} a ${formatDateBR(endDate)}`
-              : formatDateBR(startDate))
-          : '';
-
-        const cls = await base44.entities.ClassSchedule.create({
-          training_name: course.course_name,
-          company_name: editData.company_name,
-          company_id: resolvedCompanyId || null,
-          location: course.location || '',
-          students_count: parseInt(course.students_count) || 0,
-          instructor_name: course.instructor_name || '',
-          realization_dates: realizationDates,
-          specific_days: periodoTexto,
-          duration_hours: parseFloat(course.workload_hours) || 0,
-          unit_value: parseFloat(course.unit_value) || 0,
-          total_value: parseFloat(calculateTotalValue(course)) || 0,
-          category: course.modality === 'Online' ? 'Online' : course.modality === 'Híbrido' ? 'Híbrido' : 'Presencial',
-          status: 'Agendado',
-          notes: `Criado via Proposta: ${selectedProposal.file_name}`,
-        });
-        classIds.push(cls.id);
+      for (let i = 0; i < (editData.courses || []).length; i++) {
+        const course = editData.courses[i];
+        const numTurmas = parseInt(course.num_turmas) || 1;
+        for (let t = 1; t <= numTurmas; t++) {
+          const cls = await base44.entities.ClassSchedule.create({
+            training_name: course.course_name,
+            company_name: editData.company_name,
+            company_id: resolvedCompanyId || null,
+            students_count: parseInt(course.students_count) || 0,
+            duration_hours: parseFloat(course.workload_hours) || 0,
+            unit_value: parseFloat(course.unit_value) || 0,
+            total_value: parseFloat(course.unit_value || 0) * (parseInt(course.students_count) || 1),
+            category: course.modality === 'Online' ? 'Online' : course.modality === 'Híbrido' ? 'Híbrido' : 'Presencial',
+            status: 'Aguardando',
+            notes: `📋 Proposta: ${selectedProposal.file_name}${numTurmas > 1 ? ` — Turma ${t}/${numTurmas}` : ''}`,
+          });
+          classIds.push(cls.id);
+        }
       }
 
       await base44.entities.Proposal.update(selectedProposal.id, {
         ...editData,
         company_id: resolvedCompanyId || editData.company_id || null,
-        status: 'Finalizado',
+        status: 'Aprovada',
         class_schedule_ids: classIds,
       });
 
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
       queryClient.invalidateQueries({ queryKey: ['classSchedules'] });
-      toast.success(`${classIds.length} turma(s) criada(s) com sucesso!`);
+      toast.success(`✅ Proposta aprovada! ${classIds.length} turma(s) criada(s) no Cronograma. Complete datas e instrutor lá.`);
       setReviewOpen(false);
     } catch (err) {
-      toast.error('Erro ao finalizar: ' + err.message);
+      toast.error('Erro ao aprovar: ' + err.message);
     } finally {
       setFinalizing(false);
     }
@@ -280,7 +264,7 @@ export default function ProposalEntry() {
           { label: "Total", value: proposals.length, color: "text-gray-900" },
           { label: "Aguardando Revisão", value: statusCounts["Aguardando Revisão"] || 0, color: "text-yellow-600" },
           { label: "Revisado", value: statusCounts["Revisado"] || 0, color: "text-purple-600" },
-          { label: "Finalizado", value: statusCounts["Finalizado"] || 0, color: "text-green-600" },
+          { label: "Aprovadas", value: (statusCounts["Aprovada"] || 0) + (statusCounts["Finalizado"] || 0), color: "text-green-600" },
         ].map(s => (
           <Card key={s.label} className="border border-gray-200">
             <CardContent className="p-4">
@@ -383,7 +367,7 @@ export default function ProposalEntry() {
                           <Eye className="w-3 h-3 mr-1" /> Revisar
                         </Button>
                       )}
-                      {p.status === 'Finalizado' && (
+                      {(p.status === 'Aprovada' || p.status === 'Finalizado') && (
                         <Button size="sm" variant="ghost" onClick={() => openReview(p)}>
                           <Eye className="w-3 h-3 mr-1" /> Ver
                         </Button>
@@ -450,15 +434,10 @@ export default function ProposalEntry() {
                 </div>
 
                 {editData.courses.map((course, idx) => (
-                  <Card key={idx} className={`border-2 ${!course.start_date || !course.end_date || !course.location ? 'border-yellow-300 bg-yellow-50' : 'border-gray-200'}`}>
+                  <Card key={idx} className="border-2 border-gray-200">
                     <CardContent className="p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold text-gray-600">Curso #{idx + 1}</span>
-                        {(!course.start_date || !course.end_date || !course.location) && (
-                          <Badge className="bg-yellow-100 text-yellow-800 text-xs flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3" /> Preencher campos obrigatórios
-                          </Badge>
-                        )}
                         <Button size="sm" variant="ghost" className="text-red-500" onClick={() => removeCourse(idx)}>
                           <Trash2 className="w-3 h-3" />
                         </Button>
@@ -482,7 +461,7 @@ export default function ProposalEntry() {
                         </div>
                       </div>
 
-                      <div className="grid md:grid-cols-5 gap-3">
+                      <div className="grid md:grid-cols-4 gap-3">
                         <div className="space-y-1">
                           <Label>Carga Horária (h)</Label>
                           <Input type="number" value={course.workload_hours || ''} onChange={e => updateCourse(idx, 'workload_hours', parseFloat(e.target.value) || '')} placeholder="8" />
@@ -504,47 +483,10 @@ export default function ProposalEntry() {
                             placeholder="0,00"
                           />
                         </div>
-                        <div className="space-y-1">
-                          <Label>Valor Total (R$)</Label>
-                          <Input
-                            type="text"
-                            value={calculateTotalValue(course).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            disabled
-                            className="bg-gray-100 cursor-not-allowed"
-                          />
-                        </div>
                       </div>
 
-                      {/* Campos logísticos obrigatórios */}
-                      <div className="grid md:grid-cols-3 gap-3 pt-2 border-t border-yellow-200">
-                        <div className="space-y-1">
-                          <Label className="text-yellow-700 font-semibold">📅 Data Início *</Label>
-                          <Input type="date" value={course.start_date || ''} onChange={e => updateCourse(idx, 'start_date', e.target.value)} />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-yellow-700 font-semibold">📅 Data Fim *</Label>
-                          <Input type="date" value={course.end_date || ''} onChange={e => updateCourse(idx, 'end_date', e.target.value)} />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-yellow-700 font-semibold">📍 Local *</Label>
-                          <Input value={course.location || ''} onChange={e => updateCourse(idx, 'location', e.target.value)} placeholder="Ex: Belém/PA" />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <Label>Instrutor</Label>
-                        <input
-                          list={`instructors-list-${idx}`}
-                          value={course.instructor_name || ''}
-                          onChange={e => updateCourse(idx, 'instructor_name', e.target.value)}
-                          placeholder="Digite ou selecione o instrutor..."
-                          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        />
-                        <datalist id={`instructors-list-${idx}`}>
-                          {instructors.map(i => (
-                            <option key={i.id} value={i.name} />
-                          ))}
-                        </datalist>
+                      <div className="p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+                        📅 <strong>Datas, local e instrutor</strong> serão preenchidos no <strong>Cronograma de Turmas</strong> após a aprovação.
                       </div>
                     </CardContent>
                   </Card>
@@ -574,26 +516,24 @@ export default function ProposalEntry() {
                   {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null}
                   Salvar Rascunho
                 </Button>
-                {selectedProposal?.status !== 'Finalizado' && (
-                  <>
-                    <Button
-                      onClick={handleFinalize}
-                      disabled={finalizing}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      {finalizing ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
-                      Finalizar e Criar Turmas
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        window.location.href = `/AgendaTreinamentos?company_id=${editData.company_id || ''}&company_name=${encodeURIComponent(editData.company_name || '')}`;
-                      }}
-                      className="border-purple-300 text-purple-700"
-                    >
-                      📅 Agendar Treinamento
-                    </Button>
-                  </>
+                {selectedProposal?.status !== 'Aprovada' && selectedProposal?.status !== 'Finalizado' && (
+                  <Button
+                    onClick={handleFinalize}
+                    disabled={finalizing}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {finalizing ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
+                    Aprovar e Criar Turmas no Cronograma
+                  </Button>
+                )}
+                {(selectedProposal?.status === 'Aprovada' || selectedProposal?.status === 'Finalizado') && (
+                  <Button
+                    variant="outline"
+                    onClick={() => { window.location.href = `/Schedule`; }}
+                    className="border-green-300 text-green-700"
+                  >
+                    📅 Ver Turmas no Cronograma
+                  </Button>
                 )}
               </div>
             </div>
