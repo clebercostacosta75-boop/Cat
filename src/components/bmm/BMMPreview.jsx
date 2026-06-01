@@ -509,25 +509,67 @@ export default function BMMPreview({ content }) {
       </div>
 
       {/* Resumo */}
-      <div className="grid md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-emerald-50 rounded-lg p-4 text-center">
-          <p className="text-3xl font-bold text-emerald-600">{totals.classes}</p>
-          <p className="text-sm text-stone-600">Turmas Realizadas</p>
-        </div>
-        <div className="bg-blue-50 rounded-lg p-4 text-center">
-          <p className="text-3xl font-bold text-blue-600">{totals.students}</p>
-          <p className="text-sm text-stone-600">Total de Alunos</p>
-        </div>
-        <div className="bg-amber-50 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-amber-600">{formatCurrency(totals.value)}</p>
-          <p className="text-sm text-stone-600">Valor Total do BMM</p>
-          {totals.additionalValue > 0 && (
-            <p className="text-xs text-amber-500 mt-1">
-              Treinamentos: {formatCurrency(totals.trainingValue)} + Serviços: {formatCurrency(totals.additionalValue)}
-            </p>
-          )}
-        </div>
-      </div>
+      {(() => {
+        // Recalcular totais considerando Turma Fechada + Excedentes
+        let totalTreinamento = 0;
+        let totalServicos = 0;
+
+        classes.forEach(classItem => {
+          const excedentesDaTurma = additionalItems.filter(
+            item => item.class_id === classItem.id && item.type === 'excedente_alunos'
+          );
+          const servicosExcedentesDaTurma = additionalItems.filter(
+            item => item.parent_excedente_id === classItem.id
+          );
+
+          // Valor da turma base
+          totalTreinamento += classItem.total_value;
+
+          // Serviços da turma fechada
+          const additionalServices = content?.company?.additional_services || {};
+          const limiteContratado = 15;
+          
+          if (additionalServices.coffee_break_morning_enabled && additionalServices.coffee_break_morning_unit_value > 0) {
+            totalServicos += limiteContratado * additionalServices.coffee_break_morning_unit_value;
+          }
+          if (additionalServices.coffee_break_afternoon_enabled && additionalServices.coffee_break_afternoon_unit_value > 0) {
+            totalServicos += limiteContratado * additionalServices.coffee_break_afternoon_unit_value;
+          }
+          if (additionalServices.lunch_enabled && additionalServices.lunch_unit_value > 0) {
+            totalServicos += limiteContratado * additionalServices.lunch_unit_value;
+          }
+
+          // Excedentes (alunos + serviços)
+          excedentesDaTurma.forEach(exc => {
+            totalTreinamento += exc.total_value;
+          });
+          servicosExcedentesDaTurma.forEach(svc => {
+            totalServicos += svc.total_value;
+          });
+        });
+
+        const totalGeral = totalTreinamento + totalServicos;
+
+        return (
+          <div className="grid md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-emerald-50 rounded-lg p-4 text-center">
+              <p className="text-3xl font-bold text-emerald-600">{totals.classes}</p>
+              <p className="text-sm text-stone-600">Turmas Realizadas</p>
+            </div>
+            <div className="bg-blue-50 rounded-lg p-4 text-center">
+              <p className="text-3xl font-bold text-blue-600">{totals.students}</p>
+              <p className="text-sm text-stone-600">Total de Alunos</p>
+            </div>
+            <div className="bg-amber-50 rounded-lg p-4 text-center">
+              <p className="text-2xl font-bold text-amber-600">{formatCurrency(totalGeral)}</p>
+              <p className="text-sm text-stone-600">Valor Total do BMM</p>
+              <p className="text-xs text-amber-500 mt-1">
+                Treinamentos: {formatCurrency(totalTreinamento)} + Serviços: {formatCurrency(totalServicos)}
+              </p>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Assinaturas */}
       <div className="signature-section border-t-2 border-stone-200 pt-6 mt-8">
