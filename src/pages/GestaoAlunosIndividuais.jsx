@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -1814,8 +1814,34 @@ function SecaoBloqueada({ nome }) {
 // ─── Página Principal ────────────────────────────────────────────────────────
 export default function GestaoAlunosIndividuais() {
   const { hasPermission, allowedKeys } = usePermissions();
-  // null = acesso total (admin/master). Caso contrário, verifica permissão da seção.
-  const canAccess = (secao) => allowedKeys === null || hasPermission(secao);
+  // Verifica acesso ao módulo principal
+  const moduleAccess = allowedKeys === null || hasPermission("Alunos Individuais (PF)");
+  
+  // Permissões individuais das abas (estruturadas como sub-permissões)
+  const canAccessTab = useCallback((tabName) => {
+    // Se não tem acesso ao módulo, nega tudo
+    if (!moduleAccess) return false;
+    
+    // Se tem acesso total (admin/master), libera tudo
+    if (allowedKeys === null) return true;
+    
+    // Mapa de abas e suas permissões específicas
+    const tabPermissions = {
+      "dashboard": "Alunos Individuais (PF)",
+      "cadastro": "Alunos Individuais (PF)",
+      "matriculas": "Alunos Individuais (PF)",
+      "financeiro": "Alunos Individuais (PF)",
+      "acesso": "Alunos Individuais (PF)",
+      "pagamentos": "Alunos Individuais (PF)",
+      "gargalos": "Alunos Individuais (PF)",
+      "pendencias": "Alunos Individuais (PF)",
+      "conhecimento": "Alunos Individuais (PF)",
+      "contratos": "Alunos Individuais (PF)",
+    };
+    
+    const requiredPerm = tabPermissions[tabName] || tabName;
+    return hasPermission(requiredPerm);
+  }, [allowedKeys, hasPermission, moduleAccess]);
 
   return (
     <div className="p-4 md:p-8">
@@ -1871,16 +1897,16 @@ export default function GestaoAlunosIndividuais() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dashboard"><DashboardPF /></TabsContent>
-          <TabsContent value="cadastro">{canAccess("Alunos PF: Cadastro") ? <AlunosCadastro /> : <SecaoBloqueada nome="Cadastro" />}</TabsContent>
-          <TabsContent value="matriculas">{canAccess("Alunos PF: Matrículas") ? <MatriculasCursos /> : <SecaoBloqueada nome="Matrículas" />}</TabsContent>
-          <TabsContent value="financeiro">{canAccess("Alunos PF: Financeiro") ? <FinanceiroAlunos /> : <SecaoBloqueada nome="Financeiro" />}</TabsContent>
-          <TabsContent value="acesso">{canAccess("Alunos PF: Controle de Acesso") ? <AcessoPortal /> : <SecaoBloqueada nome="Controle de Acesso" />}</TabsContent>
-          <TabsContent value="pagamentos"><PagamentosAsaas /></TabsContent>
-          <TabsContent value="gargalos"><GargalosDashboard /></TabsContent>
-          <TabsContent value="pendencias"><PainelPendenciasFinanceiras /></TabsContent>
-          <TabsContent value="conhecimento"><BaseConhecimentoTab /></TabsContent>
-          <TabsContent value="contratos"><ContratosGeral /></TabsContent>
+          <TabsContent value="dashboard">{canAccessTab("dashboard") ? <DashboardPF /> : <SecaoBloqueada nome="Dashboard" />}</TabsContent>
+          <TabsContent value="cadastro">{canAccessTab("cadastro") ? <AlunosCadastro /> : <SecaoBloqueada nome="Cadastro" />}</TabsContent>
+          <TabsContent value="matriculas">{canAccessTab("matriculas") ? <MatriculasCursos /> : <SecaoBloqueada nome="Matrículas" />}</TabsContent>
+          <TabsContent value="financeiro">{canAccessTab("financeiro") ? <FinanceiroAlunos /> : <SecaoBloqueada nome="Financeiro" />}</TabsContent>
+          <TabsContent value="acesso">{canAccessTab("acesso") ? <AcessoPortal /> : <SecaoBloqueada nome="Controle de Acesso" />}</TabsContent>
+          <TabsContent value="pagamentos">{canAccessTab("pagamentos") ? <PagamentosAsaas /> : <SecaoBloqueada nome="Pagamentos Asaas" />}</TabsContent>
+          <TabsContent value="gargalos">{canAccessTab("gargalos") ? <GargalosDashboard /> : <SecaoBloqueada nome="Gargalos" />}</TabsContent>
+          <TabsContent value="pendencias">{canAccessTab("pendencias") ? <PainelPendenciasFinanceiras /> : <SecaoBloqueada nome="Pendências" />}</TabsContent>
+          <TabsContent value="conhecimento">{canAccessTab("conhecimento") ? <BaseConhecimentoTab /> : <SecaoBloqueada nome="Base de Conhecimento" />}</TabsContent>
+          <TabsContent value="contratos">{canAccessTab("contratos") ? <ContratosGeral /> : <SecaoBloqueada nome="Contratos" />}</TabsContent>
         </Tabs>
       </div>
     </div>
