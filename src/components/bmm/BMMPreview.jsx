@@ -490,20 +490,7 @@ export default function BMMPreview({ content }) {
                 ));
               })()}
             </tbody>
-            <tfoot>
-              <tr className="bg-emerald-100 font-bold">
-                <td colSpan={3} className="border border-stone-300 px-3 py-2 text-right">
-                  TOTAIS:
-                </td>
-                <td className="border border-stone-300 px-3 py-2 text-center">
-                  {classes.reduce((sum, c) => sum + (c.students_count || 0), 0)}
-                </td>
-                <td className="border border-stone-300 px-3 py-2"></td>
-                <td className="border border-stone-300 px-3 py-2 text-right text-emerald-700">
-                  {formatCurrency(totals.value)}
-                </td>
-              </tr>
-            </tfoot>
+
           </table>
         </div>
       </div>
