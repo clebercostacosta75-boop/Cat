@@ -206,24 +206,27 @@ export default function BMMPreview({ content }) {
       </div>
 
       {/* Dados da Empresa Cliente */}
-      <div className="bg-stone-50 rounded-lg p-4 mb-6">
-        <h2 className="text-lg font-bold text-stone-900 mb-3">DADOS DO CLIENTE</h2>
-        <div className="grid md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <p><strong>Razão Social:</strong> {company?.razao_social}</p>
-            <p><strong>Nome Fantasia:</strong> {company?.nome_fantasia}</p>
-            <p><strong>CNPJ:</strong> {company?.cnpj}</p>
-          </div>
-          <div>
-            {company?.billing_info?.contact_reference && (
-              <p><strong>Ref. Contato:</strong> {company.billing_info.contact_reference}</p>
-            )}
-            {company?.email_faturamento && (
-              <p><strong>E-mail:</strong> {company.email_faturamento}</p>
-            )}
-          </div>
-        </div>
-      </div>
+       <div className="bg-stone-50 rounded-lg p-4 mb-6">
+         <h2 className="text-lg font-bold text-stone-900 mb-3">DADOS DO CLIENTE</h2>
+         <div className="grid md:grid-cols-2 gap-4 text-sm">
+           <div>
+             <p><strong>Razão Social:</strong> {company?.razao_social}</p>
+             <p><strong>Nome Fantasia:</strong> {company?.nome_fantasia}</p>
+             <p><strong>CNPJ:</strong> {company?.cnpj}</p>
+             {hasSAPConfig && company?.sap_config?.codigo_material_pai && (
+               <p><strong>Código Material (PAI) - SAP:</strong> {company.sap_config.codigo_material_pai}</p>
+             )}
+           </div>
+           <div>
+             {company?.billing_info?.contact_reference && (
+               <p><strong>Ref. Contato:</strong> {company.billing_info.contact_reference}</p>
+             )}
+             {company?.email_faturamento && (
+               <p><strong>E-mail:</strong> {company.email_faturamento}</p>
+             )}
+           </div>
+         </div>
+       </div>
 
       {/* Bloco de Detalhamento de Excedentes */}
       <ExcedentesDetailBlock classes={classes} additionalItems={additionalItems} />
