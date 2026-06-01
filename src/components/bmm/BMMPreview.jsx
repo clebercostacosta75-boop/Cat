@@ -267,6 +267,59 @@ export default function BMMPreview({ content }) {
                       </td>
                     </tr>
 
+                    {/* Serviços adicionais da Turma Fechada (Coffee Break Manhã, Tarde, Almoço) */}
+                    {(() => {
+                      const servicos = [];
+                      const company_courses = content?.company?.company_courses || [];
+                      const coursePricing = company_courses.find(cc => cc.course_id === classItem.training_id) || {};
+                      const additionalServices = content?.company?.additional_services || {};
+                      
+                      if (additionalServices.coffee_break_morning_enabled && additionalServices.coffee_break_morning_unit_value > 0) {
+                        servicos.push({
+                          description: `Coffee Break Manhã — ${classItem.training_name}`,
+                          quantity: classItem.students_count,
+                          unit_value: additionalServices.coffee_break_morning_unit_value,
+                          total_value: (classItem.students_count || 0) * additionalServices.coffee_break_morning_unit_value
+                        });
+                      }
+                      
+                      if (additionalServices.coffee_break_afternoon_enabled && additionalServices.coffee_break_afternoon_unit_value > 0) {
+                        servicos.push({
+                          description: `Coffee Break Tarde — ${classItem.training_name}`,
+                          quantity: classItem.students_count,
+                          unit_value: additionalServices.coffee_break_afternoon_unit_value,
+                          total_value: (classItem.students_count || 0) * additionalServices.coffee_break_afternoon_unit_value
+                        });
+                      }
+                      
+                      if (additionalServices.lunch_enabled && additionalServices.lunch_unit_value > 0) {
+                        servicos.push({
+                          description: `Almoço — ${classItem.training_name}`,
+                          quantity: classItem.students_count,
+                          unit_value: additionalServices.lunch_unit_value,
+                          total_value: (classItem.students_count || 0) * additionalServices.lunch_unit_value
+                        });
+                      }
+                      
+                      return servicos.map((servico, svcIdx) => (
+                        <tr key={`svc-base-${index}-${svcIdx}`} className="bg-white">
+                          <td className="border border-stone-300 px-3 py-2"></td>
+                          <td className="border border-stone-300 px-3 py-2 text-stone-700">
+                            {servico.description}
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2 text-center">
+                            {servico.quantity}
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2 text-right">
+                            {formatCurrency(servico.unit_value)}
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2 text-right font-semibold">
+                            {formatCurrency(servico.total_value)}
+                          </td>
+                        </tr>
+                      ));
+                    })()}
+
                     {/* Excedentes Aplicados - Seção */}
                     {excedentesDaTurma.length > 0 && (
                       <>
