@@ -180,7 +180,9 @@ export default function BMMPreview({ content }) {
   const { company, contractor, period, classes, totals, template, additionalItems = [] } = content;
   
   // Somente UNITAPAJÓS usa override de campos e SAP automático
-  const isUnitapajos = company?.nome_fantasia === 'UNITAPAJÓS' || company?.razao_social?.includes('UNITAPAJÓS');
+  const isUnitapajos = company?.nome_fantasia?.toUpperCase?.() === 'UNITAPAJÓS' || 
+                       company?.razao_social?.toUpperCase?.().includes('UNITAPAJÓS') ||
+                       company?.id === content?.company?.id && content?.company?.nome_fantasia?.toUpperCase?.() === 'UNITAPAJÓS';
   const o = isUnitapajos ? (content.overrides || {}) : {};
 
   const formatCurrency = (value) => {
@@ -271,7 +273,7 @@ export default function BMMPreview({ content }) {
 
   // Função para obter dados SAP baseado na modalidade (EXCLUSIVO UNITAPAJÓS)
   const getSAPData = (classItem) => {
-    if (!hasSAPConfig || !isUnitapajos) return null;
+    if (!isUnitapajos) return null;
 
     // Usar configuração armazenada da UNITAPAJÓS ou padrões
     const sapCfg = company?.bmm_editor_config?.sap_config || company?.sap_config || {
