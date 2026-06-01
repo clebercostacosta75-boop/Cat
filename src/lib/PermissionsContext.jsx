@@ -163,23 +163,33 @@ export function PermissionsProvider({ children }) {
     // Recarrega quando admin salvar permissões (mesma janela)
     const handler = () => load();
     window.addEventListener("permissions-updated", handler);
+    
+    // Recarrega imediatamente quando permissões são alteradas
+    const forceReloadHandler = () => load(true);
+    window.addEventListener("permissions-force-reload", forceReloadHandler);
 
-    // Polling a cada 60 segundos para capturar permissões atualizadas por outro admin (sem spinner)
-    const interval = setInterval(() => load(false), 60000);
+    // Polling a cada 10 segundos (reduzido de 60s para resposta mais rápida)
+    const interval = setInterval(() => load(false), 10000);
 
     return () => {
       window.removeEventListener("permissions-updated", handler);
+      window.removeEventListener("permissions-force-reload", forceReloadHandler);
       clearInterval(interval);
     };
   }, [load]);
 
   const hasPermission = useCallback((key) => {
     if (allowedKeys === null) return true;
+    if (!Array.isArray(allowedKeys)) return false;
     return allowedKeys.includes(key);
   }, [allowedKeys]);
 
+  const refreshPermissions = useCallback(() => {
+    load(false);
+  }, [load]);
+
   return (
-    <PermissionsContext.Provider value={{ role, allowedKeys, loading, hasPermission, reload: load }}>
+    <PermissionsContext.Provider value={{ role, allowedKeys, loading, hasPermission, reload: load, refreshPermissions }}>
       {children}
     </PermissionsContext.Provider>
   );
