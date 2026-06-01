@@ -107,6 +107,43 @@
       "type": "string",
       "description": "ID da turma vinculada (opcional)"
     },
+    "unit_value": {
+      "type": "number",
+      "description": "Valor do curso para este aluno individual (PF)"
+    },
+    "forma_pagamento": {
+      "type": "string",
+      "enum": [
+        "\u00c0 Vista",
+        "Parcelado 2x",
+        "Parcelado 3x",
+        "Parcelado 4x",
+        "Parcelado 5x",
+        "Parcelado 6x",
+        "Boleto",
+        "Pix",
+        "Cart\u00e3o de Cr\u00e9dito",
+        "Cart\u00e3o de D\u00e9bito",
+        "Transfer\u00eancia Banc\u00e1ria"
+      ],
+      "description": "Forma de pagamento do curso"
+    },
+    "status_pagamento": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Pago",
+        "Parcialmente Pago",
+        "Inadimplente"
+      ],
+      "default": "Pendente",
+      "description": "Status do pagamento"
+    },
+    "data_vencimento_pagamento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de vencimento do pagamento"
+    },
     "notes": {
       "type": "string",
       "description": "Observa\u00e7\u00f5es"

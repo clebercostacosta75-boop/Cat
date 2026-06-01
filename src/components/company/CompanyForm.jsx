@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, X, MapPin, Users, BookOpen, MessageCircle, Loader2, FileText } from "lucide-react";
+import { Plus, X, MapPin, Users, BookOpen, MessageCircle, Loader2, FileText, Coffee, UtensilsCrossed } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -58,13 +58,20 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
     fiscal_role: company?.fiscal_role || "",
     contract_manager_name: company?.contract_manager_name || "",
     contract_manager_role: company?.contract_manager_role || "",
+    additional_services: company?.additional_services || {
+      coffee_break_morning_enabled: false,
+      coffee_break_morning_unit_value: 0,
+      coffee_break_afternoon_enabled: false,
+      coffee_break_afternoon_unit_value: 0,
+      lunch_enabled: false,
+      lunch_unit_value: 0,
+    },
     company_courses: (company?.company_courses || []).map(c => ({
       ...c,
       billing_type: c.billing_type || 'per_student',
       specific_price: parseFloat(c.specific_price) || 0,
       class_fixed_value: parseFloat(String(c.class_fixed_value || '0').replace(',', '.')) || 0,
       included_students_limit: parseInt(c.included_students_limit) || 15,
-      extra_student_unit_value: parseFloat(c.extra_student_unit_value) || 0,
     })),
     company_contracts: company?.company_contracts || []
   });
@@ -539,12 +546,126 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
         </CardContent>
       </Card>
 
-      {/* 5. Informações de Faturamento */}
+      {/* 5. Serviços Adicionais */}
+      <Card className="border-amber-200 bg-amber-50/30">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Coffee className="w-5 h-5 text-amber-600" />
+            5. Serviços Adicionais (Coffee Break / Almoço)
+          </CardTitle>
+          <p className="text-sm text-stone-500">Configure os serviços de alimentação fornecidos. Os valores serão incluídos automaticamente no BMM.</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Coffee Break Manhã */}
+          <div className="border rounded-lg p-4 bg-white">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Coffee className="w-4 h-4 text-amber-500" />
+                <span className="font-medium text-stone-800">Coffee Break Manhã</span>
+              </div>
+              <Switch
+                checked={formData.additional_services.coffee_break_morning_enabled}
+                onCheckedChange={(v) => setFormData({
+                  ...formData,
+                  additional_services: { ...formData.additional_services, coffee_break_morning_enabled: v }
+                })}
+              />
+            </div>
+            {formData.additional_services.coffee_break_morning_enabled && (
+              <div className="space-y-2">
+                <Label>Valor Unitário por Pessoa (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.additional_services.coffee_break_morning_unit_value || 0}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    additional_services: { ...formData.additional_services, coffee_break_morning_unit_value: parseFloat(e.target.value) || 0 }
+                  })}
+                  placeholder="Ex: 17.00"
+                  className="max-w-xs"
+                />
+                <p className="text-xs text-stone-500">Total = valor unitário × quantidade de alunos da turma</p>
+              </div>
+            )}
+          </div>
+
+          {/* Coffee Break Tarde */}
+          <div className="border rounded-lg p-4 bg-white">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Coffee className="w-4 h-4 text-orange-500" />
+                <span className="font-medium text-stone-800">Coffee Break Tarde</span>
+              </div>
+              <Switch
+                checked={formData.additional_services.coffee_break_afternoon_enabled}
+                onCheckedChange={(v) => setFormData({
+                  ...formData,
+                  additional_services: { ...formData.additional_services, coffee_break_afternoon_enabled: v }
+                })}
+              />
+            </div>
+            {formData.additional_services.coffee_break_afternoon_enabled && (
+              <div className="space-y-2">
+                <Label>Valor Unitário por Pessoa (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.additional_services.coffee_break_afternoon_unit_value || 0}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    additional_services: { ...formData.additional_services, coffee_break_afternoon_unit_value: parseFloat(e.target.value) || 0 }
+                  })}
+                  placeholder="Ex: 17.00"
+                  className="max-w-xs"
+                />
+                <p className="text-xs text-stone-500">Total = valor unitário × quantidade de alunos da turma</p>
+              </div>
+            )}
+          </div>
+
+          {/* Almoço */}
+          <div className="border rounded-lg p-4 bg-white">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <UtensilsCrossed className="w-4 h-4 text-red-500" />
+                <span className="font-medium text-stone-800">Almoço</span>
+              </div>
+              <Switch
+                checked={formData.additional_services.lunch_enabled}
+                onCheckedChange={(v) => setFormData({
+                  ...formData,
+                  additional_services: { ...formData.additional_services, lunch_enabled: v }
+                })}
+              />
+            </div>
+            {formData.additional_services.lunch_enabled && (
+              <div className="space-y-2">
+                <Label>Valor Unitário por Pessoa (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.additional_services.lunch_unit_value || 0}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    additional_services: { ...formData.additional_services, lunch_unit_value: parseFloat(e.target.value) || 0 }
+                  })}
+                  placeholder="Ex: 35.00"
+                  className="max-w-xs"
+                />
+                <p className="text-xs text-stone-500">Total = valor unitário × quantidade de alunos da turma</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 6. Informações de Faturamento */}
       <Card className="border-orange-200 bg-orange-50/30">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <span className="text-2xl">📄</span>
-            5. Informações de Faturamento e Assinaturas
+            6. Informações de Faturamento e Assinaturas
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

@@ -87,7 +87,7 @@ export default function BMMPreview({ content }) {
 
   if (!content) return null;
 
-  const { company, contractor, period, classes, totals, template } = content;
+  const { company, contractor, period, classes, totals, template, additionalItems = [] } = content;
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -218,16 +218,32 @@ export default function BMMPreview({ content }) {
                     {classItem.duration_hours || '-'}h
                   </td>
                   <td className="border border-stone-300 px-3 py-2 text-center">
-                    {classItem.students_count || 0}
+                    {classItem.billing_type === 'per_closed_class' ? 'QTD. ' + (classItem.students_count || 0) : classItem.students_count || 0}
                   </td>
                   <td className="border border-stone-300 px-3 py-2 text-right">
-                    {classItem.billing_type === 'per_closed_class'
-                      ? <span className="text-xs text-emerald-700 font-medium">Turma Fechada</span>
-                      : formatCurrency(classItem.unit_value)
-                    }
+                    {formatCurrency(classItem.unit_value)}
                   </td>
                   <td className="border border-stone-300 px-3 py-2 text-right font-semibold">
                     {formatCurrency(classItem.total_value)}
+                  </td>
+                </tr>
+              ))}
+              {/* Serviços adicionais */}
+              {additionalItems.map((item, idx) => (
+                <tr key={`add-${idx}`} className="bg-amber-50">
+                  <td className="border border-stone-300 px-3 py-2 text-stone-500">{classes.length + idx + 1}</td>
+                  <td className="border border-stone-300 px-3 py-2 font-medium text-amber-800">
+                    {item.description}
+                  </td>
+                  <td className="border border-stone-300 px-3 py-2 text-center text-stone-500">—</td>
+                  <td className="border border-stone-300 px-3 py-2 text-center">
+                    QTD. {item.quantity}
+                  </td>
+                  <td className="border border-stone-300 px-3 py-2 text-right">
+                    {formatCurrency(item.unit_value)}
+                  </td>
+                  <td className="border border-stone-300 px-3 py-2 text-right font-semibold text-amber-700">
+                    {formatCurrency(item.total_value)}
                   </td>
                 </tr>
               ))}
@@ -262,7 +278,12 @@ export default function BMMPreview({ content }) {
         </div>
         <div className="bg-amber-50 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-amber-600">{formatCurrency(totals.value)}</p>
-          <p className="text-sm text-stone-600">Valor Total</p>
+          <p className="text-sm text-stone-600">Valor Total do BMM</p>
+          {totals.additionalValue > 0 && (
+            <p className="text-xs text-amber-500 mt-1">
+              Treinamentos: {formatCurrency(totals.trainingValue)} + Serviços: {formatCurrency(totals.additionalValue)}
+            </p>
+          )}
         </div>
       </div>
 

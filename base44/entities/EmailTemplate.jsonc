@@ -1,0 +1,43 @@
+{
+  "name": "EmailTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome do modelo de e-mail"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do modelo"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Assunto padr\u00e3o do e-mail (suporta placeholders como {{empresa}}, {{periodo}})"
+    },
+    "body": {
+      "type": "string",
+      "description": "Corpo do e-mail em HTML (suporta placeholders)"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "BMM",
+        "Notifica\u00e7\u00e3o",
+        "Lembrete",
+        "Personalizado"
+      ],
+      "default": "BMM",
+      "description": "Tipo do modelo de e-mail"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Modelo padr\u00e3o para o tipo"
+    }
+  },
+  "required": [
+    "name",
+    "subject",
+    "body"
+  ]
+}

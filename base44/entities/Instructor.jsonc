@@ -1,0 +1,224 @@
+{
+  "name": "Instructor",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome completo do instrutor"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "URL da foto de perfil"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ativo",
+        "Inativo"
+      ],
+      "default": "Ativo",
+      "description": "Status do instrutor"
+    },
+    "internal_code": {
+      "type": "string",
+      "description": "C\u00f3digo interno do instrutor (Ex: 7083, 7772)"
+    },
+    "cpf": {
+      "type": "string",
+      "description": "CPF do instrutor"
+    },
+    "rg": {
+      "type": "string",
+      "description": "RG do instrutor"
+    },
+    "hourly_rate": {
+      "type": "number",
+      "description": "Valor por hora (Custo HP / HR Aula)"
+    },
+    "specialty": {
+      "type": "string",
+      "description": "Especialidade do instrutor"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email do instrutor"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Telefone de contato"
+    },
+    "linked_courses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "course_id": {
+            "type": "string",
+            "description": "ID do curso"
+          },
+          "course_name": {
+            "type": "string",
+            "description": "Nome do curso"
+          }
+        }
+      },
+      "description": "Cursos que o instrutor est\u00e1 habilitado a ministrar"
+    },
+    "address": {
+      "type": "object",
+      "properties": {
+        "street": {
+          "type": "string",
+          "description": "Logradouro"
+        },
+        "number": {
+          "type": "string",
+          "description": "N\u00famero"
+        },
+        "complement": {
+          "type": "string",
+          "description": "Complemento"
+        },
+        "neighborhood": {
+          "type": "string",
+          "description": "Bairro"
+        },
+        "city": {
+          "type": "string",
+          "description": "Cidade"
+        },
+        "state": {
+          "type": "string",
+          "description": "Estado"
+        },
+        "zip_code": {
+          "type": "string",
+          "description": "CEP"
+        }
+      }
+    },
+    "pix_keys": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "CPF/CNPJ",
+              "E-mail",
+              "Celular",
+              "Chave Aleat\u00f3ria"
+            ],
+            "description": "Tipo da chave PIX"
+          },
+          "key": {
+            "type": "string",
+            "description": "Chave PIX"
+          }
+        }
+      },
+      "description": "Chaves PIX do instrutor"
+    },
+    "bank_data": {
+      "type": "object",
+      "properties": {
+        "bank_name": {
+          "type": "string",
+          "description": "Nome do Banco"
+        },
+        "bank_code": {
+          "type": "string",
+          "description": "C\u00f3digo do Banco"
+        },
+        "agency": {
+          "type": "string",
+          "description": "Ag\u00eancia com d\u00edgito"
+        },
+        "account": {
+          "type": "string",
+          "description": "Conta com d\u00edgito"
+        },
+        "account_type": {
+          "type": "string",
+          "enum": [
+            "Corrente",
+            "Poupan\u00e7a"
+          ],
+          "description": "Tipo da conta"
+        }
+      }
+    },
+    "formations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "Curso Profissionalizante",
+              "Treinamento Normativo",
+              "N\u00edvel T\u00e9cnico",
+              "Gradua\u00e7\u00e3o",
+              "P\u00f3s-Gradua\u00e7\u00e3o",
+              "Mestrado",
+              "Doutorado"
+            ],
+            "description": "Categoria da forma\u00e7\u00e3o"
+          },
+          "title": {
+            "type": "string",
+            "description": "T\u00edtulo/Nome da forma\u00e7\u00e3o"
+          },
+          "institution": {
+            "type": "string",
+            "description": "Institui\u00e7\u00e3o"
+          },
+          "year": {
+            "type": "string",
+            "description": "Ano de conclus\u00e3o"
+          },
+          "description": {
+            "type": "string",
+            "description": "Descri\u00e7\u00e3o adicional"
+          }
+        }
+      },
+      "description": "Forma\u00e7\u00f5es e qualifica\u00e7\u00f5es"
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nome do documento"
+          },
+          "type": {
+            "type": "string",
+            "description": "Tipo (Diploma, Certificado, RG, CNH, etc)"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL do arquivo"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "description": "Data de upload"
+          }
+        }
+      },
+      "description": "Documentos vinculados"
+    },
+    "professional_profile": {
+      "type": "string",
+      "description": "Perfil profissional descritivo (gerado por IA ou editado manualmente)"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

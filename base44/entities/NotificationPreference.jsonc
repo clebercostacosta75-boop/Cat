@@ -1,0 +1,63 @@
+{
+  "name": "NotificationPreference",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio"
+    },
+    "course_expiring_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Notificar sobre cursos pr\u00f3ximos do vencimento"
+    },
+    "course_expiring_days_before": {
+      "type": "number",
+      "default": 30,
+      "description": "Dias antes do vencimento para notificar"
+    },
+    "class_slots_limited_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Notificar sobre turmas com vagas limitadas"
+    },
+    "class_slots_threshold": {
+      "type": "number",
+      "default": 5,
+      "description": "N\u00famero de vagas restantes para notificar"
+    },
+    "new_message_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Notificar sobre novas mensagens"
+    },
+    "class_scheduled_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Notificar quando uma nova turma for agendada"
+    },
+    "payment_pending_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Notificar sobre pagamentos pendentes"
+    },
+    "document_expiring_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Notificar sobre documentos pr\u00f3ximos do vencimento"
+    },
+    "email_notifications": {
+      "type": "boolean",
+      "default": false,
+      "description": "Receber notifica\u00e7\u00f5es por email"
+    },
+    "push_notifications": {
+      "type": "boolean",
+      "default": true,
+      "description": "Receber notifica\u00e7\u00f5es no sistema"
+    }
+  },
+  "required": [
+    "user_id"
+  ]
+}

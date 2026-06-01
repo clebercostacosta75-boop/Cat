@@ -31,5 +31,10 @@
       "default": false,
       "description": "Indica se o telefone \u00e9 WhatsApp"
     }
-  }
+  },
+  "required": [
+    "custom_role",
+    "permissions",
+    "phone"
+  ]
 }
