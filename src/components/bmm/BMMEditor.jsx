@@ -41,43 +41,51 @@ export default function BMMEditor({ content, onChange }) {
       <CardContent className="space-y-5">
 
         {/* Cabeçalho */}
-        <div>
-          <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">Cabeçalho</p>
-          <div className="grid md:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">Título do documento</Label>
-              <Input
-                value={o.title ?? "BOLETIM MENSAL DE MEDIÇÃO - BMM"}
-                onChange={e => update("overrides.title", e.target.value)}
-                placeholder="Ex: BOLETIM MENSAL DE MEDIÇÃO - BMM"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Número do Contrato</Label>
-              <Input
-                value={o.contract_number ?? contract.contract_number ?? ""}
-                onChange={e => update("overrides.contract_number", e.target.value)}
-                placeholder="Ex: 001/2025"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Número do Aditivo</Label>
-              <Input
-                value={o.amendment_number ?? contract.amendment_number ?? ""}
-                onChange={e => update("overrides.amendment_number", e.target.value)}
-                placeholder="Ex: 001/2026"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Objeto do Contrato</Label>
-              <Input
-                value={o.contract_object ?? c.billing_info?.contract_object ?? ""}
-                onChange={e => update("overrides.contract_object", e.target.value)}
-                placeholder="Ex: Prestação de serviços de treinamento"
-              />
-            </div>
-          </div>
-        </div>
+         <div>
+           <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">Cabeçalho</p>
+           <div className="grid md:grid-cols-2 gap-3">
+             <div className="space-y-1">
+               <Label className="text-xs">Título do documento</Label>
+               <Input
+                 value={o.title ?? "BOLETIM MENSAL DE MEDIÇÃO - BMM"}
+                 onChange={e => update("overrides.title", e.target.value)}
+                 placeholder="Ex: BOLETIM MENSAL DE MEDIÇÃO - BMM"
+               />
+             </div>
+             <div className="space-y-1">
+               <Label className="text-xs">Número do BMM</Label>
+               <Input
+                 value={o.bmm_number ?? ""}
+                 onChange={e => update("overrides.bmm_number", e.target.value)}
+                 placeholder="Ex: BMM-001/2025"
+               />
+             </div>
+             <div className="space-y-1">
+               <Label className="text-xs">Número do Contrato</Label>
+               <Input
+                 value={o.contract_number ?? contract.contract_number ?? ""}
+                 onChange={e => update("overrides.contract_number", e.target.value)}
+                 placeholder="Ex: 001/2025"
+               />
+             </div>
+             <div className="space-y-1">
+               <Label className="text-xs">Número do Aditivo</Label>
+               <Input
+                 value={o.amendment_number ?? contract.amendment_number ?? ""}
+                 onChange={e => update("overrides.amendment_number", e.target.value)}
+                 placeholder="Ex: 001/2026"
+               />
+             </div>
+             <div className="space-y-1">
+               <Label className="text-xs">Objeto do Contrato</Label>
+               <Input
+                 value={o.contract_object ?? c.billing_info?.contract_object ?? ""}
+                 onChange={e => update("overrides.contract_object", e.target.value)}
+                 placeholder="Ex: Prestação de serviços de treinamento"
+               />
+             </div>
+           </div>
+         </div>
 
         {/* Assinaturas */}
         <div>

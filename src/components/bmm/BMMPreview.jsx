@@ -109,6 +109,7 @@ export default function BMMPreview({ content }) {
 
   // Buscar contrato ativo da empresa (overrides têm prioridade)
   const activeContract = company?.company_contracts?.find(c => c.status === 'Ativo') || {};
+  const bmmNumber = o.bmm_number ?? "";
   const contractNumber = o.contract_number ?? activeContract.contract_number;
   const amendmentNumber = o.amendment_number ?? activeContract.amendment_number;
   const contractObject = o.contract_object ?? company?.billing_info?.contract_object;
@@ -193,6 +194,11 @@ export default function BMMPreview({ content }) {
           <p className="text-lg text-stone-600 mt-1">
             Período: <strong>{period}</strong>
           </p>
+          {bmmNumber && (
+            <p className="text-sm text-stone-600 mt-1">
+              <strong>Nº:</strong> {bmmNumber}
+            </p>
+          )}
           {(contractNumber || amendmentNumber) && (
             <div className="text-sm text-stone-600 mt-2">
               <p>
