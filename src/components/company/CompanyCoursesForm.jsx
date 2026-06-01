@@ -89,6 +89,11 @@ export default function CompanyCoursesForm({ companyCourses, courses, onChange }
     onChange(updated);
   };
 
+  const formatCurrency = (value) => {
+    const num = parseFloat(String(value).replace(',', '.')) || 0;
+    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
   return (
     <div className="space-y-4">
       {normalizedCourses.length === 0 ? (
@@ -226,31 +231,23 @@ export default function CompanyCoursesForm({ companyCourses, courses, onChange }
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant="outline" className="bg-emerald-50">Turma Fechada</Badge>
                   </div>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label>Valor da Turma Fechada (R$) *</Label>
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        value={course.class_fixed_value ?? ''}
-                        onChange={(e) => handleCourseChange(index, 'class_fixed_value', e.target.value)}
-                        onBlur={() => handleClassFixedValueBlur(index)}
-                        placeholder="Ex: 2000.00 ou 2000,00"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Quantidade Máxima de Alunos</Label>
-                      <Input
-                        type="number"
-                        value={course.included_students_limit || 15}
-                        onChange={(e) => handleCourseChange(index, 'included_students_limit', e.target.value)}
-                        placeholder="Ex: 15"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label>Valor da Turma Fechada (R$) *</Label>
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      value={course.class_fixed_value ?? ''}
+                      onChange={(e) => handleCourseChange(index, 'class_fixed_value', e.target.value)}
+                      onBlur={() => handleClassFixedValueBlur(index)}
+                      placeholder="Ex: 2.000,00"
+                      required
+                    />
+                    {parseFloat(String(course.class_fixed_value).replace(',', '.')) > 0 && (
+                      <p className="text-xs text-stone-500">Valor: {formatCurrency(course.class_fixed_value)}</p>
+                    )}
                   </div>
                   <div className="p-2 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-800">
-                    <strong>Valor configurado:</strong> R$ {parseFloat(String(course.class_fixed_value).replace(',', '.')) || 0} fixo para até {course.included_students_limit || 15} alunos — independente da quantidade.
+                    <strong>Valor configurado:</strong> {formatCurrency(course.class_fixed_value)} fixo por turma — independente da quantidade de alunos.
                   </div>
                 </div>
               )}
