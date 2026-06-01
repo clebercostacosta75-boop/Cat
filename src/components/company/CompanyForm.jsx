@@ -17,6 +17,7 @@ import LogoUploader from "./LogoUploader";
 import CompanyCoursesForm from "./CompanyCoursesForm";
 import CompanyContractsForm from "./CompanyContractsForm";
 import BulkCoursesUploader from "./BulkCoursesUploader";
+import CompanySAPConfig from "./CompanySAPConfig";
 
 export default function CompanyForm({ company, onSubmit, onCancel }) {
   const [notifyInstructor, setNotifyInstructor] = useState(false);
@@ -73,7 +74,13 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
       class_fixed_value: parseFloat(String(c.class_fixed_value || '0').replace(',', '.')) || 0,
       included_students_limit: parseInt(c.included_students_limit) || 15,
     })),
-    company_contracts: company?.company_contracts || []
+    company_contracts: company?.company_contracts || [],
+    sap_config: company?.sap_config || {
+      enabled: false,
+      codigo_material_pai: '',
+      presencial: { codigo_servico_filho: '', descricao: '' },
+      ead: { codigo_servico_filho: '', descricao: '' }
+    }
   });
 
   const handleSubmit = (e) => {
@@ -545,6 +552,12 @@ export default function CompanyForm({ company, onSubmit, onCancel }) {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Configuração SAP */}
+      <CompanySAPConfig 
+        company={formData} 
+        onChange={(updatedCompany) => setFormData(updatedCompany)}
+      />
 
       {/* 5. Serviços Adicionais */}
       <Card className="border-amber-200 bg-amber-50/30">
