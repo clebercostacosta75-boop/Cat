@@ -310,25 +310,7 @@ export default function BMMPreview({ content }) {
                   </td>
                 </tr>
               ))}
-              {/* Itens adicionais: excedentes e serviços — uma linha por item */}
-              {additionalItems.map((item, idx) => (
-                <tr key={`add-${idx}`} className={item.type === 'excedente_alunos' ? 'bg-orange-50' : 'bg-amber-50'}>
-                  <td className="border border-stone-300 px-3 py-2 text-stone-500">{classes.length + idx + 1}</td>
-                  <td className="border border-stone-300 px-3 py-2 font-medium" style={{color: item.type === 'excedente_alunos' ? '#9a3412' : '#92400e'}}>
-                    {item.description}
-                  </td>
-                  <td className="border border-stone-300 px-3 py-2 text-center text-stone-500">—</td>
-                  <td className="border border-stone-300 px-3 py-2 text-center">
-                    {item.quantity}
-                  </td>
-                  <td className="border border-stone-300 px-3 py-2 text-right">
-                    {item.unit_value > 0 ? formatCurrency(item.unit_value) : '—'}
-                  </td>
-                  <td className="border border-stone-300 px-3 py-2 text-right font-semibold" style={{color: item.type === 'excedente_alunos' ? '#9a3412' : '#92400e'}}>
-                    {item.total_value > 0 ? formatCurrency(item.total_value) : '—'}
-                  </td>
-                </tr>
-              ))}
+
             </tbody>
             <tfoot>
               <tr className="bg-emerald-100 font-bold">
