@@ -80,9 +80,10 @@ const AuthenticatedApp = () => {
 
         const profiles = await base44.entities.UserProfile.filter({ user_email: user.email });
         const profile = profiles[0];
-        if (!profile || !profile.consent_accepted_at) {
+        // Só pede consentimento se: perfil existe, nunca aceitou, e ainda não trocou a senha
+        if (profile && !profile.consent_accepted_at && !profile.password_changed) {
           setNeedsConsent(true);
-        } else if (profile.status === "pending_password_change" && !profile.password_changed) {
+        } else if (profile && profile.status === "pending_password_change" && !profile.password_changed) {
           setNeedsPasswordChange(true);
         }
       } catch {}
