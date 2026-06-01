@@ -500,13 +500,9 @@ export default function BMMPreview({ content }) {
                       
                       return (
                         <tr className="bg-emerald-100">
-                          <td colSpan={2} className="border border-stone-300 px-3 py-2 font-bold text-emerald-900">
+                          <td colSpan={4} className="border border-stone-300 px-3 py-2 font-bold text-emerald-900">
                             TOTAL
                           </td>
-                          <td className="border border-stone-300 px-3 py-2"></td>
-                          <td className="border border-stone-300 px-3 py-2 text-center font-bold text-emerald-900">
-                             {classItem.students_count || 0}
-                           </td>
                           <td className="border border-stone-300 px-3 py-2"></td>
                           <td className="border border-stone-300 px-3 py-2 text-right font-bold text-emerald-900">
                             {formatCurrency(totalFinal)}
