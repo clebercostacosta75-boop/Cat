@@ -1,7 +1,7 @@
 export function exportBMMPDF(content, signatureUrl = null) {
   if (!content) return;
 
-  const { company, contractor, period, classes, totals } = content;
+  const { company, contractor, period, classes, totals, additionalItems = [] } = content;
 
   const formatCurrency = (value) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
@@ -151,6 +151,71 @@ export function exportBMMPDF(content, signatureUrl = null) {
       </div>
     </div>
   </div>
+
+<!-- ===== Detalhamento de Excedentes ===== -->
+${(() => {
+  const excedentesByClass = {};
+  const servicosByClass = {};
+  
+  additionalItems.forEach(item => {
+    if (item.class_id && item.type === 'excedente_alunos') {
+      if (!excedentesByClass[item.class_id]) excedentesByClass[item.class_id] = [];
+      excedentesByClass[item.class_id].push(item);
+    } else if (item.parent_excedente_id) {
+      if (!servicosByClass[item.parent_excedente_id]) servicosByClass[item.parent_excedente_id] = [];
+      servicosByClass[item.parent_excedente_id].push(item);
+    }
+  });
+  
+  if (Object.keys(excedentesByClass).length === 0 && Object.keys(servicosByClass).length === 0) return '';
+  
+  let html = '<div class="client-box" style="margin-top:6px; background:#fff3cd; border-color:#ffc107;"><h2 style="color:#856404; border-bottom-color:#ffc107;">DETALHAMENTO DE EXCEDENTES</h2>';
+  
+  classes.forEach(cls => {
+    const excedentes = excedentesByClass[cls.id] || [];
+    const servicos = servicosByClass[cls.id] || [];
+    
+    if (excedentes.length === 0 && servicos.length === 0) return;
+    
+    html += `<p style="margin-top:8px; font-weight:bold; color:#333;">${cls.training_name} - Turma Fechada</p>`;
+    html += `<table style="width:100%; margin-top:4px; font-size:9px;">`;
+    html += `<tr style="background:#fff;">
+      <td style="border:1px solid #d1d5db; padding:3px 5px;"><strong>Descrição</strong></td>
+      <td style="border:1px solid #d1d5db; padding:3px 5px; text-align:center; width:50px;"><strong>Qtd</strong></td>
+      <td style="border:1px solid #d1d5db; padding:3px 5px; text-align:right; width:80px;"><strong>Vlr Unit</strong></td>
+      <td style="border:1px solid #d1d5db; padding:3px 5px; text-align:right; width:80px;"><strong>Vlr Total</strong></td>
+    </tr>`;
+    
+    excedentes.forEach(exc => {
+      html += `<tr style="background:#fff;">
+        <td style="border:1px solid #d1d5db; padding:3px 5px;">${exc.description}</td>
+        <td style="border:1px solid #d1d5db; padding:3px 5px; text-align:center;">${exc.quantity}</td>
+        <td style="border:1px solid #d1d5db; padding:3px 5px; text-align:right;">${formatCurrency(exc.unit_value)}</td>
+        <td style="border:1px solid #d1d5db; padding:3px 5px; text-align:right; color:#d97706;">${formatCurrency(exc.total_value)}</td>
+      </tr>`;
+    });
+    
+    servicos.forEach(svc => {
+      html += `<tr style="background:#fff;">
+        <td style="border:1px solid #d1d5db; padding:3px 5px;">↳ ${svc.description}</td>
+        <td style="border:1px solid #d1d5db; padding:3px 5px; text-align:center;">${svc.quantity}</td>
+        <td style="border:1px solid #d1d5db; padding:3px 5px; text-align:right;">${formatCurrency(svc.unit_value)}</td>
+        <td style="border:1px solid #d1d5db; padding:3px 5px; text-align:right; color:#d97706;">${formatCurrency(svc.total_value)}</td>
+      </tr>`;
+    });
+    
+    const subtotal = excedentes.reduce((s, e) => s + e.total_value, 0) + servicos.reduce((s, e) => s + e.total_value, 0);
+    html += `<tr style="background:#fff9e6;">
+      <td colspan="3" style="border:1px solid #d1d5db; padding:3px 5px; text-align:right;"><strong>Subtotal Excedentes</strong></td>
+      <td style="border:1px solid #d1d5db; padding:3px 5px; text-align:right; color:#d97706;"><strong>${formatCurrency(subtotal)}</strong></td>
+    </tr>`;
+    
+    html += '</table>';
+  });
+  
+  html += '</div>';
+  return html;
+})()}
 
 <!-- ===== Demonstrativo + Cards ===== -->
 <div class="section">
