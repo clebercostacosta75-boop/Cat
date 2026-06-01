@@ -247,7 +247,7 @@ export default function BMMGenerator() {
             if (unitVal <= 0) continue;
             additionalItems.push({
               type: svc.key,
-              description: `${svc.description} — ${classItem.training_name}`,
+              description: `${svc.description} — ${classItem.training_name} (${studentsCount} aluno(s))`,
               unit_value: unitVal,
               quantity: studentsCount,
               total_value: unitVal * studentsCount,
