@@ -490,6 +490,49 @@ export default function BMMPreview({ content }) {
                 ));
               })()}
             </tbody>
+            <tfoot>
+              <tr className="bg-emerald-100 font-bold">
+                <td colSpan={2} className="border border-stone-300 px-3 py-2 text-right">
+                  TOTAIS:
+                </td>
+                <td className="border border-stone-300 px-3 py-2"></td>
+                <td className="border border-stone-300 px-3 py-2 text-center">
+                  {classes.reduce((sum, c) => sum + (c.students_count || 0), 0)}
+                </td>
+                <td className="border border-stone-300 px-3 py-2"></td>
+                <td className="border border-stone-300 px-3 py-2 text-right text-emerald-700">
+                  {(() => {
+                    let total = 0;
+                    classes.forEach(classItem => {
+                      const additionalServices = content?.company?.additional_services || {};
+                      const limiteContratado = 15;
+                      total += classItem.total_value;
+                      
+                      if (additionalServices.coffee_break_morning_enabled && additionalServices.coffee_break_morning_unit_value > 0) {
+                        total += limiteContratado * additionalServices.coffee_break_morning_unit_value;
+                      }
+                      if (additionalServices.coffee_break_afternoon_enabled && additionalServices.coffee_break_afternoon_unit_value > 0) {
+                        total += limiteContratado * additionalServices.coffee_break_afternoon_unit_value;
+                      }
+                      if (additionalServices.lunch_enabled && additionalServices.lunch_unit_value > 0) {
+                        total += limiteContratado * additionalServices.lunch_unit_value;
+                      }
+                      
+                      const excedentesDaTurma = additionalItems.filter(
+                        item => item.class_id === classItem.id && item.type === 'excedente_alunos'
+                      );
+                      const servicosExcedentesDaTurma = additionalItems.filter(
+                        item => item.parent_excedente_id === classItem.id
+                      );
+                      
+                      excedentesDaTurma.forEach(exc => total += exc.total_value);
+                      servicosExcedentesDaTurma.forEach(svc => total += svc.total_value);
+                    });
+                    return formatCurrency(total);
+                  })()}
+                </td>
+              </tr>
+            </tfoot>
 
           </table>
         </div>
