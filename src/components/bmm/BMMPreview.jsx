@@ -3,17 +3,17 @@ import { Card } from "@/components/ui/card";
 import ExcedentesDetailBlock from "@/components/bmm/ExcedentesDetailBlock";
 
 export default function BMMPreview({ content }) {
-  // Adicionar estilos de impressão A4 Vertical
+  // Adicionar estilos de impressão A4 Vertical (ABNT/NBR)
   React.useEffect(() => {
     const style = document.createElement('style');
     style.id = 'bmm-print-styles';
     style.textContent = `
+      @page {
+        size: A4 portrait;
+        margin: 20mm;
+      }
+      
       @media print {
-        @page {
-          size: A4 portrait;
-          margin: 10mm;
-        }
-        
         * {
           print-color-adjust: exact !important;
           -webkit-print-color-adjust: exact !important;
@@ -21,74 +21,115 @@ export default function BMMPreview({ content }) {
           break-inside: avoid !important;
         }
         
-        /* Ocultar apenas sidebar e header */
+        /* Ocultar sidebar e header */
         #app-sidebar,
         #app-header {
           display: none !important;
         }
         
-        /* Garantir que tudo seja impresso */
+        /* Resetar estilo padrão */
         body, html {
           visibility: visible !important;
           margin: 0 !important;
           padding: 0 !important;
           background: white !important;
+          width: 100% !important;
+          height: 100% !important;
+          font-family: Arial, sans-serif !important;
+          font-size: 10pt !important;
+          color: #000 !important;
+          line-height: 1.15 !important;
         }
         
-        /* Container do BMM */
+        /* Container - Margens ABNT: 20mm */
         #bmm-print-container {
           display: block !important;
           width: 100% !important;
           margin: 0 !important;
-          padding: 10mm !important;
+          padding: 0 !important;
           box-shadow: none !important;
           border: none !important;
           page-break-after: avoid !important;
           page-break-before: avoid !important;
-          break-after: avoid !important;
-          break-before: avoid !important;
         }
         
-        /* Card */
         #bmm-print-container > div {
           box-shadow: none !important;
           border: none !important;
           padding: 0 !important;
         }
         
-        /* Cabeçalho e seções */
-        h1, h2 {
+        /* Fontes - ABNT/NBR */
+        h1 {
+          font-family: Arial, sans-serif !important;
+          font-size: 14pt !important;
+          font-weight: bold !important;
+          text-align: center !important;
+          margin: 0 0 8px 0 !important;
           page-break-after: avoid !important;
-          break-after: avoid !important;
-          margin-bottom: 8px !important;
         }
         
-        /* Tabela */
+        h2 {
+          font-family: Arial, sans-serif !important;
+          font-size: 11pt !important;
+          font-weight: bold !important;
+          text-transform: uppercase !important;
+          margin: 12px 0 8px 0 !important;
+          page-break-after: avoid !important;
+        }
+        
+        p {
+          font-family: Arial, sans-serif !important;
+          font-size: 10pt !important;
+          margin: 2px 0 2px 0 !important;
+          line-height: 1.15 !important;
+        }
+        
+        /* Tabelas - ABNT: 8-9pt */
         table {
           width: 100% !important;
-          font-size: 8pt !important;
+          font-family: Arial, sans-serif !important;
+          font-size: 8.5pt !important;
           border-collapse: collapse !important;
           page-break-inside: avoid !important;
-          break-inside: avoid !important;
-          margin-bottom: 8px !important;
-        }
-        
-        th, td {
-          padding: 2px 4px !important;
-          border: 0.5px solid #999 !important;
-          page-break-inside: avoid !important;
+          margin: 8px 0 8px 0 !important;
         }
         
         thead {
           background-color: #10b981 !important;
           color: white !important;
+          font-weight: bold !important;
           page-break-after: avoid !important;
         }
         
-        /* Textos */
-        h1 { font-size: 13pt !important; }
-        h2 { font-size: 9pt !important; }
-        p { margin: 3px 0 !important; }
+        th {
+          padding: 3px 4px !important;
+          border: 1px solid #333 !important;
+          text-align: left !important;
+          font-weight: bold !important;
+          font-size: 8.5pt !important;
+        }
+        
+        td {
+          padding: 2px 4px !important;
+          border: 0.5px solid #666 !important;
+          font-size: 8.5pt !important;
+        }
+        
+        /* Seções de dados */
+        .bg-stone-50 {
+          page-break-inside: avoid !important;
+          margin: 8px 0 8px 0 !important;
+          padding: 6px !important;
+          font-family: Arial, sans-serif !important;
+          font-size: 10pt !important;
+        }
+        
+        /* Grid de totais */
+        .grid {
+          page-break-inside: avoid !important;
+          margin: 8px 0 8px 0 !important;
+        }
         
         /* Imagens */
         img {
@@ -96,48 +137,32 @@ export default function BMMPreview({ content }) {
           page-break-inside: avoid !important;
         }
         
-        /* Seções de dados */
-        .bg-stone-50 {
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-          margin-bottom: 6px !important;
-        }
-        
-        /* Grid de totais */
-        .grid {
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-          gap: 8px !important;
-        }
-        
         /* Assinaturas */
         .signature-section {
           page-break-inside: avoid !important;
-          break-inside: avoid !important;
-          margin-top: 8px !important;
-          padding-top: 6px !important;
+          margin: 12px 0 0 0 !important;
+          padding-top: 8px !important;
+          border-top: 1px solid #ccc !important;
+          font-family: Arial, sans-serif !important;
+          font-size: 10pt !important;
         }
         
         /* Rodapé */
-        .mt-8 {
+        footer, .mt-8 {
           page-break-before: avoid !important;
-          break-before: avoid !important;
-          margin-top: 6px !important;
-          font-size: 7pt !important;
+          margin-top: 8px !important;
+          padding-top: 6px !important;
+          border-top: 1px solid #ccc !important;
+          font-family: Arial, sans-serif !important;
+          font-size: 8pt !important;
+          text-align: center !important;
         }
         
-        /* Remover espaços e margens excessivas */
-        .mb-6 {
-          margin-bottom: 6px !important;
-        }
-        
-        .mt-4 {
-          margin-top: 4px !important;
-        }
-        
-        .pt-6 {
-          padding-top: 4px !important;
-        }
+        /* Desativar margens padrão */
+        .mb-6 { margin-bottom: 8px !important; }
+        .mt-4 { margin-top: 8px !important; }
+        .pt-6 { padding-top: 6px !important; }
+        .pb-6 { padding-bottom: 6px !important; }
       }
     `;
     document.head.appendChild(style);
