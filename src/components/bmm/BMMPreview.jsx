@@ -550,9 +550,6 @@ export default function BMMPreview({ content }) {
             <div className="bg-amber-50 rounded-lg p-4 text-center">
               <p className="text-2xl font-bold text-amber-600">{formatCurrency(totalGeral)}</p>
               <p className="text-sm text-stone-600">Valor Total do BMM</p>
-              <p className="text-xs text-amber-500 mt-1">
-                Treinamentos: {formatCurrency(totalTreinamento)} + Serviços: {formatCurrency(totalServicos)}
-              </p>
             </div>
           </div>
         );
