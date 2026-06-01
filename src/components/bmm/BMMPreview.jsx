@@ -243,7 +243,10 @@ export default function BMMPreview({ content }) {
                         )}
                       </td>
                       <td className="border border-stone-300 px-3 py-2 text-center font-bold">
-                        {classItem.students_count || 0}
+                        {classItem.duration_hours || 0}h
+                      </td>
+                      <td className="border border-stone-300 px-3 py-2 text-center font-bold">
+                        {15}
                       </td>
                       <td className="border border-stone-300 px-3 py-2 text-right font-bold">
                         {formatCurrency(classItem.unit_value)}
@@ -253,25 +256,97 @@ export default function BMMPreview({ content }) {
                       </td>
                     </tr>
 
+                    {/* Serviços adicionais da Turma Fechada (Coffee Break Manhã, Tarde, Almoço) */}
+                    {(() => {
+                      const servicos = [];
+                      const additionalServices = content?.company?.additional_services || {};
+                      const limiteContratado = 15;
+                      
+                      if (additionalServices.coffee_break_morning_enabled && additionalServices.coffee_break_morning_unit_value > 0) {
+                        servicos.push({
+                          description: `Coffee Break Manhã – Turma Fechada`,
+                          quantity: limiteContratado,
+                          unit_value: additionalServices.coffee_break_morning_unit_value,
+                          total_value: limiteContratado * additionalServices.coffee_break_morning_unit_value
+                        });
+                      }
+                      
+                      if (additionalServices.coffee_break_afternoon_enabled && additionalServices.coffee_break_afternoon_unit_value > 0) {
+                        servicos.push({
+                          description: `Coffee Break Tarde – Turma Fechada`,
+                          quantity: limiteContratado,
+                          unit_value: additionalServices.coffee_break_afternoon_unit_value,
+                          total_value: limiteContratado * additionalServices.coffee_break_afternoon_unit_value
+                        });
+                      }
+                      
+                      if (additionalServices.lunch_enabled && additionalServices.lunch_unit_value > 0) {
+                        servicos.push({
+                          description: `Almoço – Turma Fechada`,
+                          quantity: limiteContratado,
+                          unit_value: additionalServices.lunch_unit_value,
+                          total_value: limiteContratado * additionalServices.lunch_unit_value
+                        });
+                      }
+                      
+                      return servicos.map((servico, svcIdx) => (
+                        <tr key={`svc-base-${index}-${svcIdx}`} className="bg-white">
+                          <td className="border border-stone-300 px-3 py-2"></td>
+                          <td className="border border-stone-300 px-3 py-2 text-stone-700">
+                            {servico.description}
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2 text-center">—</td>
+                          <td className="border border-stone-300 px-3 py-2 text-center">
+                            {servico.quantity}
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2 text-right">
+                            {formatCurrency(servico.unit_value)}
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2 text-right font-semibold">
+                            {formatCurrency(servico.total_value)}
+                          </td>
+                        </tr>
+                      ));
+                    })()}
+
                     {/* Subtotal Turma Fechada */}
-                    <tr className="bg-stone-100">
-                      <td colSpan={2} className="border border-stone-300 px-3 py-2 font-bold text-stone-900">
-                        Subtotal Turma Fechada
-                      </td>
-                      <td className="border border-stone-300 px-3 py-2 text-center font-bold">
-                        {classItem.students_count || 0}
-                      </td>
-                      <td className="border border-stone-300 px-3 py-2"></td>
-                      <td className="border border-stone-300 px-3 py-2 text-right font-bold">
-                        {formatCurrency(classItem.total_value)}
-                      </td>
-                    </tr>
+                    {(() => {
+                      const additionalServices = content?.company?.additional_services || {};
+                      const limiteContratado = 15;
+                      let subtotal = classItem.total_value;
+                      
+                      if (additionalServices.coffee_break_morning_enabled && additionalServices.coffee_break_morning_unit_value > 0) {
+                        subtotal += limiteContratado * additionalServices.coffee_break_morning_unit_value;
+                      }
+                      if (additionalServices.coffee_break_afternoon_enabled && additionalServices.coffee_break_afternoon_unit_value > 0) {
+                        subtotal += limiteContratado * additionalServices.coffee_break_afternoon_unit_value;
+                      }
+                      if (additionalServices.lunch_enabled && additionalServices.lunch_unit_value > 0) {
+                        subtotal += limiteContratado * additionalServices.lunch_unit_value;
+                      }
+                      
+                      return (
+                        <tr className="bg-stone-100">
+                          <td colSpan={2} className="border border-stone-300 px-3 py-2 font-bold text-stone-900">
+                            Subtotal Turma Fechada
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2"></td>
+                          <td className="border border-stone-300 px-3 py-2 text-center font-bold">
+                            {15}
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2"></td>
+                          <td className="border border-stone-300 px-3 py-2 text-right font-bold">
+                            {formatCurrency(subtotal)}
+                          </td>
+                        </tr>
+                      );
+                    })()}
 
                     {/* Excedentes Aplicados - Seção */}
                     {excedentesDaTurma.length > 0 && (
                       <>
                         <tr className="bg-orange-50">
-                          <td colSpan={5} className="border border-stone-300 px-3 py-2 font-bold text-orange-900">
+                          <td colSpan={6} className="border border-stone-300 px-3 py-2 font-bold text-orange-900">
                             Excedentes Aplicados
                           </td>
                         </tr>
@@ -281,8 +356,9 @@ export default function BMMPreview({ content }) {
                           <tr key={`exc-${index}-${excIdx}`} className="bg-white">
                             <td className="border border-stone-300 px-3 py-2"></td>
                             <td className="border border-stone-300 px-3 py-2 text-stone-900">
-                              {excedente.description}
+                              ↳ {excedente.description}
                             </td>
+                            <td className="border border-stone-300 px-3 py-2 text-center">—</td>
                             <td className="border border-stone-300 px-3 py-2 text-center text-orange-700 font-semibold">
                               {excedente.quantity}
                             </td>
@@ -300,8 +376,9 @@ export default function BMMPreview({ content }) {
                           <tr key={`svc-${index}-${svcIdx}`} className="bg-white">
                             <td className="border border-stone-300 px-3 py-2"></td>
                             <td className="border border-stone-300 px-3 py-2 text-stone-700">
-                              {servico.description}
+                              ↳ {servico.description}
                             </td>
+                            <td className="border border-stone-300 px-3 py-2 text-center">—</td>
                             <td className="border border-stone-300 px-3 py-2 text-center text-orange-700">
                               {servico.quantity}
                             </td>
@@ -319,6 +396,7 @@ export default function BMMPreview({ content }) {
                           <td colSpan={2} className="border border-stone-300 px-3 py-2 font-bold text-orange-900">
                             Subtotal Excedentes
                           </td>
+                          <td className="border border-stone-300 px-3 py-2"></td>
                           <td className="border border-stone-300 px-3 py-2 text-center font-bold text-orange-700">
                             {excedentesDaTurma[0]?.quantity || 0}
                           </td>
@@ -331,20 +409,41 @@ export default function BMMPreview({ content }) {
                     )}
 
                     {/* Total de Participantes Realizados */}
-                    <tr className="bg-emerald-100">
-                      <td colSpan={2} className="border border-stone-300 px-3 py-2 font-bold text-emerald-900">
-                        TOTAL DE PARTICIPANTES REALIZADOS
-                      </td>
-                      <td className="border border-stone-300 px-3 py-2 text-center font-bold text-emerald-900">
-                        {classItem.students_count || 0}
-                      </td>
-                      <td className="border border-stone-300 px-3 py-2 font-bold text-emerald-900">
-                        TOTAL GERAL
-                      </td>
-                      <td className="border border-stone-300 px-3 py-2 text-right font-bold text-emerald-900">
-                        {formatCurrency(totalGeral)}
-                      </td>
-                    </tr>
+                    {(() => {
+                      const additionalServices = content?.company?.additional_services || {};
+                      const limiteContratado = 15;
+                      let subtotalBase = classItem.total_value;
+                      
+                      if (additionalServices.coffee_break_morning_enabled && additionalServices.coffee_break_morning_unit_value > 0) {
+                        subtotalBase += limiteContratado * additionalServices.coffee_break_morning_unit_value;
+                      }
+                      if (additionalServices.coffee_break_afternoon_enabled && additionalServices.coffee_break_afternoon_unit_value > 0) {
+                        subtotalBase += limiteContratado * additionalServices.coffee_break_afternoon_unit_value;
+                      }
+                      if (additionalServices.lunch_enabled && additionalServices.lunch_unit_value > 0) {
+                        subtotalBase += limiteContratado * additionalServices.lunch_unit_value;
+                      }
+                      
+                      const totalGeral2 = subtotalBase + totalExcedentes;
+                      
+                      return (
+                        <tr className="bg-emerald-100">
+                          <td colSpan={2} className="border border-stone-300 px-3 py-2 font-bold text-emerald-900">
+                            TOTAL DE PARTICIPANTES REALIZADOS
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2"></td>
+                          <td className="border border-stone-300 px-3 py-2 text-center font-bold text-emerald-900">
+                            {(classItem.students_count || 0)}
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2 font-bold text-emerald-900">
+                            TOTAL GERAL
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2 text-right font-bold text-emerald-900">
+                            {formatCurrency(totalGeral2)}
+                          </td>
+                        </tr>
+                      );
+                    })()}
                   </React.Fragment>
                 );
               })}
