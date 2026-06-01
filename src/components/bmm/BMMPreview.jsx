@@ -67,7 +67,7 @@ export default function BMMPreview({ content }) {
           font-size: 12pt !important;
           font-weight: bold !important;
           text-align: center !important;
-          margin: 0 0 4px 0 !important;
+          margin: 0 0 8px 0 !important;
           padding: 0 !important;
           page-break-after: avoid !important;
         }
@@ -85,16 +85,16 @@ export default function BMMPreview({ content }) {
         p {
           font-family: Arial, sans-serif !important;
           font-size: 9pt !important;
-          margin: 0 0 0 0 !important;
+          margin: 0 !important;
           padding: 0 !important;
-          line-height: 1 !important;
+          line-height: 1.1 !important;
         }
         
-        /* Tabelas - 9pt cabeçalho, 9pt conteúdo */
+        /* Tabelas - 8pt */
         table {
           width: 100% !important;
           font-family: Arial, sans-serif !important;
-          font-size: 9pt !important;
+          font-size: 8pt !important;
           border-collapse: collapse !important;
           page-break-inside: avoid !important;
           margin: 4px 0 4px 0 !important;
@@ -108,33 +108,72 @@ export default function BMMPreview({ content }) {
         }
         
         th {
-          padding: 4px 6px !important;
+          padding: 4px !important;
           border: 1px solid #333 !important;
           text-align: left !important;
           font-weight: bold !important;
-          font-size: 9pt !important;
+          font-size: 8pt !important;
+          height: auto !important;
+          max-height: 28px !important;
+          vertical-align: middle !important;
+        }
+        
+        tr {
+          height: auto !important;
+          max-height: 24px !important;
         }
         
         td {
-          padding: 4px 6px !important;
+          padding: 2px 4px !important;
           border: 0.5px solid #666 !important;
-          font-size: 9pt !important;
+          font-size: 8pt !important;
+          line-height: 1.1 !important;
+          height: auto !important;
+          vertical-align: middle !important;
         }
         
-        /* Seções de dados */
-        .bg-stone-50 {
-          page-break-inside: avoid !important;
-          margin: 4px 0 4px 0 !important;
-          padding: 2px 3px !important;
+        /* Dados do Cliente */
+        .dados-cliente {
+          margin-top: 0 !important;
+          margin-bottom: 6px !important;
+          padding: 8px !important;
           font-family: Arial, sans-serif !important;
           font-size: 9pt !important;
+          page-break-inside: avoid !important;
         }
         
-        /* Grid de totais - Indicadores */
+        /* Excedentes */
+        .excedentes-block {
+          margin-top: 6px !important;
+          margin-bottom: 6px !important;
+          padding: 8px !important;
+          font-family: Arial, sans-serif !important;
+          font-size: 9pt !important;
+          page-break-inside: avoid !important;
+        }
+        
+        /* Demonstrativo */
+        .demonstrativo-block {
+          margin-top: 6px !important;
+          margin-bottom: 8px !important;
+          page-break-inside: avoid !important;
+        }
+        
+        /* Grid de Indicadores */
         .grid {
           page-break-inside: avoid !important;
-          margin: 4px 0 4px 0 !important;
-          gap: 4px !important;
+          margin: 8px 0 8px 0 !important;
+          gap: 6px !important;
+        }
+        
+        /* Observações */
+        .observacoes-block {
+          margin-top: 6px !important;
+          margin-bottom: 4px !important;
+          padding: 6px !important;
+          font-family: Arial, sans-serif !important;
+          font-size: 9pt !important;
+          page-break-inside: avoid !important;
         }
         
         /* Imagens */
@@ -143,11 +182,15 @@ export default function BMMPreview({ content }) {
           page-break-inside: avoid !important;
         }
         
-        /* Indicadores - Cards máximo 80px, números 14pt, labels 8pt */
+        /* Indicadores - Cards máximo 65px, números 14pt, labels 8pt */
         .indicator-card {
-          height: 80px !important;
-          padding: 4px !important;
+          height: auto !important;
+          max-height: 65px !important;
+          padding: 6px !important;
           page-break-inside: avoid !important;
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: center !important;
         }
         
         .indicator-number {
@@ -155,60 +198,81 @@ export default function BMMPreview({ content }) {
           font-size: 14pt !important;
           font-weight: bold !important;
           display: block !important;
-          margin: 2px 0 1px 0 !important;
+          margin: 0 !important;
+          line-height: 1 !important;
         }
         
         .indicator-label {
           font-family: Arial, sans-serif !important;
           font-size: 8pt !important;
           display: block !important;
-          margin: 0 !important;
+          margin: 2px 0 0 0 !important;
+          line-height: 1.1 !important;
         }
         
         /* Assinaturas */
         .signature-section {
           page-break-inside: avoid !important;
-          margin: 4px 0 2px 0 !important;
-          padding: 2px 0 0 0 !important;
+          margin: 8px 0 0 0 !important;
+          padding: 0 !important;
           border-top: 1px solid #ccc !important;
           font-family: Arial, sans-serif !important;
           font-size: 9pt !important;
         }
         
-        /* Cada bloco de assinatura máximo 60px */
+        /* Cada bloco de assinatura máximo 55px */
         .signature-block {
-          height: 60px !important;
+          height: auto !important;
+          max-height: 55px !important;
           page-break-inside: avoid !important;
-          margin-bottom: 2px !important;
+          margin-bottom: 0 !important;
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: space-between !important;
         }
         
         .signature-line {
-          margin-top: 4px !important;
+          margin-top: 12px !important;
           margin-bottom: 0 !important;
+          height: 1px !important;
+          background: #000 !important;
+        }
+        
+        .signature-name {
+          margin-top: 3px !important;
+          margin-bottom: 0 !important;
+          font-size: 9pt !important;
+        }
+        
+        .signature-role {
+          margin-top: 2px !important;
+          margin-bottom: 0 !important;
+          font-size: 8pt !important;
         }
         
         /* Rodapé */
         footer, .mt-8 {
           page-break-before: avoid !important;
-          margin-top: 2px !important;
+          margin-top: 4px !important;
           margin-bottom: 0 !important;
-          padding: 1px 0 0 0 !important;
+          padding: 2px 0 0 0 !important;
           border-top: 1px solid #ccc !important;
           font-family: Arial, sans-serif !important;
-          font-size: 8pt !important;
+          font-size: 7pt !important;
           text-align: center !important;
-          line-height: 1 !important;
+          line-height: 1.1 !important;
+          height: auto !important;
+          min-height: auto !important;
         }
         
         /* Desativar margens padrão */
-        .mb-6 { margin-bottom: 4px !important; }
+        .mb-6 { margin-bottom: 0 !important; }
         .mt-4 { margin-top: 0 !important; }
         .pt-6 { padding-top: 0 !important; }
         .pb-6 { padding-bottom: 0 !important; }
         
         /* Compactar breaks */
         br { display: none !important; }
-        div[style*="height: "] { height: auto !important; }
       }
     `;
     document.head.appendChild(style);
