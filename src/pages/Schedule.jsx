@@ -381,6 +381,7 @@ export default function SchedulePage() {
   const [concluding, setConcluding] = useState(null);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
+  const [filterMonth, setFilterMonth] = useState(() => format(new Date(), "yyyy-MM"));
   const [selectedCalendarItem, setSelectedCalendarItem] = useState(null);
   const queryClient = useQueryClient();
 
@@ -412,6 +413,19 @@ export default function SchedulePage() {
     return combined;
   }, [classes, agendamentos]);
 
+  // Empresas do mês selecionado (para sugestão na busca)
+  const empresasDoMes = useMemo(() => {
+    if (!filterMonth) return [];
+    const [ano, mes] = filterMonth.split("-");
+    const empresas = new Set();
+    allItems.forEach((item) => {
+      if (!item.data_inicio) return;
+      const d = item.data_inicio.substring(0, 7); // "yyyy-MM"
+      if (d === filterMonth) empresas.add(item.empresa_nome);
+    });
+    return Array.from(empresas).sort();
+  }, [allItems, filterMonth]);
+
   // Filtros
   const filtered = useMemo(() => {
     return allItems.filter((item) => {
@@ -422,9 +436,11 @@ export default function SchedulePage() {
         item.instrutor_nome?.toLowerCase().includes(q) ||
         item.local?.toLowerCase().includes(q);
       const matchStatus = filterStatus === "todos" || item.status === filterStatus;
-      return matchSearch && matchStatus;
+      // Filtro de mês: só exibe itens cujo data_inicio pertence ao mês selecionado
+      const matchMonth = !filterMonth || (item.data_inicio && item.data_inicio.substring(0, 7) === filterMonth);
+      return matchSearch && matchStatus && matchMonth;
     });
-  }, [allItems, search, filterStatus]);
+  }, [allItems, search, filterStatus, filterMonth]);
 
   // Estatísticas
   const stats = useMemo(() => {
@@ -559,8 +575,8 @@ export default function SchedulePage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Cronograma de Turmas</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {stats.total} treinamento(s) no total
-            {stats.dataInicio && (
+            {filtered.length} treinamento(s){filterMonth ? ` em ${format(new Date(filterMonth + "-02"), "MMMM/yyyy", { locale: ptBR })}` : " no total"}
+            {!filterMonth && stats.dataInicio && (
               <span className="ml-2 text-gray-400">
                 · de{" "}
                 <span className="font-medium text-gray-600">
@@ -608,15 +624,43 @@ export default function SchedulePage() {
 
       {/* Barra de ferramentas */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-        {/* Busca */}
+        {/* Filtro de mês */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <Calendar className="w-4 h-4 text-gray-400" />
+          <input
+            type="month"
+            value={filterMonth}
+            onChange={(e) => { setFilterMonth(e.target.value); setSearch(""); }}
+            className="text-sm border border-gray-200 rounded-lg px-2 py-2 bg-white text-gray-700 focus:outline-none"
+          />
+          {filterMonth && (
+            <button
+              onClick={() => setFilterMonth("")}
+              className="text-xs text-gray-400 hover:text-gray-600 px-1"
+              title="Ver todos os meses"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        {/* Busca (empresas filtradas pelo mês) */}
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
-            placeholder="Buscar por treinamento, empresa, instrutor, local..."
+            list="empresas-do-mes"
+            placeholder={filterMonth ? `Buscar entre ${empresasDoMes.length} empresa(s) deste mês...` : "Buscar por treinamento, empresa, instrutor, local..."}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 text-sm"
           />
+          {filterMonth && (
+            <datalist id="empresas-do-mes">
+              {empresasDoMes.map((emp) => (
+                <option key={emp} value={emp} />
+              ))}
+            </datalist>
+          )}
         </div>
 
         {/* Filtro status */}
