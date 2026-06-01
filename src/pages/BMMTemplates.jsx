@@ -165,66 +165,10 @@ export default function BMMTemplatesPage() {
           </Card>
         )}
 
-        {/* Modelos Padrão */}
-        <div>
-          <h3 className="text-lg font-semibold text-stone-900 mb-4">📦 Modelos Padrão do Sistema</h3>
-          <div className="grid md:grid-cols-2 gap-4">
-            <Card className="border-2 border-blue-200 bg-blue-50/50">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <FileText className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-stone-900">Demonstrativo Físico-Financeiro</h3>
-                      <Badge className="bg-blue-100 text-blue-800 mt-1">Modelo Padrão</Badge>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-sm text-stone-600 mb-4">
-                  Modelo completo com cabeçalho formal, informações de contrato, tabela detalhada de itens e seção de assinaturas.
-                </p>
-                <div className="text-xs text-stone-500">
-                  ✓ Cabeçalho com logo<br />
-                  ✓ Informações contratuais<br />
-                  ✓ Tabela de itens<br />
-                  ✓ Seção de assinaturas
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2 border-green-200 bg-green-50/50">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                      <FileText className="w-6 h-6 text-green-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-stone-900">Lista de Treinamentos Normativos</h3>
-                      <Badge className="bg-green-100 text-green-800 mt-1">Modelo Padrão</Badge>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-sm text-stone-600 mb-4">
-                  Formato de tabela com lista detalhada de treinamentos, modalidade, carga horária, período e instrutor.
-                </p>
-                <div className="text-xs text-stone-500">
-                  ✓ Lista de treinamentos<br />
-                  ✓ Informações do instrutor<br />
-                  ✓ Horários e períodos<br />
-                  ✓ Totalizadores
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Modelos Personalizados */}
+        {/* Modelos Salvos (banco) */}
         {templates.length > 0 && (
           <div>
-            <h3 className="text-lg font-semibold text-stone-900 mb-4">✨ Modelos Personalizados</h3>
+            <h3 className="text-lg font-semibold text-stone-900 mb-4">📋 Modelos Cadastrados</h3>
             <div className="grid md:grid-cols-2 gap-4">
               {templates.map((template) => (
                 <Card key={template.id} className="border-none shadow-lg hover:shadow-xl transition-shadow">
@@ -275,9 +219,9 @@ export default function BMMTemplatesPage() {
           <Card className="border-none shadow-lg">
             <CardContent className="p-12 text-center">
               <FileText className="w-16 h-16 mx-auto mb-4 text-stone-300" />
-              <p className="text-stone-600 mb-4">Nenhum modelo personalizado criado</p>
+              <p className="text-stone-600 mb-4">Nenhum modelo cadastrado</p>
               <p className="text-sm text-stone-500 mb-4">
-                Use os modelos padrão ou crie seus próprios modelos personalizados
+                Crie modelos reutilizáveis para seus BMMs
               </p>
               <Button 
                 onClick={() => setShowForm(true)}

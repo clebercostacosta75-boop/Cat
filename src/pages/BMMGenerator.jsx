@@ -360,7 +360,17 @@ export default function BMMGenerator() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Modelo de BMM</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>Modelo de BMM</Label>
+                      <a
+                        href="/BMMTemplates"
+                        className="text-xs text-blue-600 hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        + Gerenciar modelos
+                      </a>
+                    </div>
                     <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o modelo (opcional)" />
