@@ -28,6 +28,18 @@ export default function BMMEditor({ content, onChange }) {
   const o = content.overrides || {};
   const c = content.company || {};
   const contract = c.company_contracts?.find(ct => ct.status === 'Ativo') || {};
+  
+  // Valores padrão para UNITAPAJÓS
+  const isUnitapajos = c.nome_fantasia === 'UNITAPAJÓS' || c.razao_social?.includes('UNITAPAJÓS');
+  const unitapajosDefaults = {
+    title: 'BOLETIM MENSAL DE MEDIÇÃO - BMM',
+    contract_number: 'Código: RG-ADM-UNI-025',
+    amendment_number: 'CTR-SJ Nº 202504053',
+    contract_object: 'Prestação de Serviço de Treinamentos de Capacitação e Segurança pela CONTRATADA',
+    fiscal_role: 'Técnico de Segurança',
+    contract_manager_role: 'Coordenador de SST',
+    notes: 'Última revisão: 09/05/2022'
+  };
 
   return (
     <Card className="border border-blue-200 bg-blue-50/30">
@@ -47,7 +59,7 @@ export default function BMMEditor({ content, onChange }) {
              <div className="space-y-1">
                <Label className="text-xs">Título do documento</Label>
                <Input
-                 value={o.title ?? "BOLETIM MENSAL DE MEDIÇÃO - BMM"}
+                 value={o.title ?? (isUnitapajos ? unitapajosDefaults.title : "BOLETIM MENSAL DE MEDIÇÃO - BMM")}
                  onChange={e => update("overrides.title", e.target.value)}
                  placeholder="Ex: BOLETIM MENSAL DE MEDIÇÃO - BMM"
                />
@@ -63,7 +75,7 @@ export default function BMMEditor({ content, onChange }) {
              <div className="space-y-1">
                <Label className="text-xs">Número do Contrato</Label>
                <Input
-                 value={o.contract_number ?? contract.contract_number ?? ""}
+                 value={o.contract_number ?? (isUnitapajos ? unitapajosDefaults.contract_number : contract.contract_number ?? "")}
                  onChange={e => update("overrides.contract_number", e.target.value)}
                  placeholder="Ex: 001/2025"
                />
@@ -71,7 +83,7 @@ export default function BMMEditor({ content, onChange }) {
              <div className="space-y-1">
                <Label className="text-xs">Número do Aditivo</Label>
                <Input
-                 value={o.amendment_number ?? contract.amendment_number ?? ""}
+                 value={o.amendment_number ?? (isUnitapajos ? unitapajosDefaults.amendment_number : contract.amendment_number ?? "")}
                  onChange={e => update("overrides.amendment_number", e.target.value)}
                  placeholder="Ex: 001/2026"
                />
@@ -79,7 +91,7 @@ export default function BMMEditor({ content, onChange }) {
              <div className="space-y-1">
                <Label className="text-xs">Objeto do Contrato</Label>
                <Input
-                 value={o.contract_object ?? c.billing_info?.contract_object ?? ""}
+                 value={o.contract_object ?? (isUnitapajos ? unitapajosDefaults.contract_object : c.billing_info?.contract_object ?? "")}
                  onChange={e => update("overrides.contract_object", e.target.value)}
                  placeholder="Ex: Prestação de serviços de treinamento"
                />
@@ -102,7 +114,7 @@ export default function BMMEditor({ content, onChange }) {
             <div className="space-y-1">
               <Label className="text-xs">Cargo – Fiscalização</Label>
               <Input
-                value={o.fiscal_role ?? c.fiscal_role ?? ""}
+                value={o.fiscal_role ?? (isUnitapajos ? unitapajosDefaults.fiscal_role : c.fiscal_role ?? "")}
                 onChange={e => update("overrides.fiscal_role", e.target.value)}
                 placeholder="Ex: Técnico de Segurança"
               />
@@ -118,7 +130,7 @@ export default function BMMEditor({ content, onChange }) {
             <div className="space-y-1">
               <Label className="text-xs">Cargo – Gestor do Contrato</Label>
               <Input
-                value={o.contract_manager_role ?? c.contract_manager_role ?? ""}
+                value={o.contract_manager_role ?? (isUnitapajos ? unitapajosDefaults.contract_manager_role : c.contract_manager_role ?? "")}
                 onChange={e => update("overrides.contract_manager_role", e.target.value)}
                 placeholder="Ex: Coordenador de SST"
               />
@@ -130,7 +142,7 @@ export default function BMMEditor({ content, onChange }) {
         <div>
           <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">Observações / Notas</p>
           <Textarea
-            value={o.notes ?? ""}
+            value={o.notes ?? (isUnitapajos ? unitapajosDefaults.notes : "")}
             onChange={e => update("overrides.notes", e.target.value)}
             placeholder="Observações que aparecerão no rodapé do BMM (opcional)"
             rows={3}
