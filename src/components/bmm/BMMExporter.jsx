@@ -170,14 +170,6 @@ export function exportBMMPDF(content, signatureUrl = null) {
     <tbody>
       ${tableRows}
     </tbody>
-    <tfoot>
-      <tr>
-        <td colspan="3" style="text-align:right;">TOTAIS:</td>
-        <td style="text-align:center;">${totals.students}</td>
-        <td></td>
-        <td style="text-align:right; color:#065f46;">${formatCurrency(totals.value)}</td>
-      </tr>
-    </tfoot>
   </table>
 
   <div class="summary-cards">
