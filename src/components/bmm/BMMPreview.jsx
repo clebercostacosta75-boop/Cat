@@ -427,39 +427,6 @@ export default function BMMPreview({ content }) {
                       ));
                     })()}
 
-                    {/* Subtotal Turma Fechada */}
-                    {(() => {
-                      const additionalServices = content?.company?.additional_services || {};
-                      const limiteContratado = classItem.students_count || 0;
-                      let subtotal = classItem.total_value;
-                      
-                      if (additionalServices.coffee_break_morning_enabled && additionalServices.coffee_break_morning_unit_value > 0) {
-                        subtotal += limiteContratado * additionalServices.coffee_break_morning_unit_value;
-                      }
-                      if (additionalServices.coffee_break_afternoon_enabled && additionalServices.coffee_break_afternoon_unit_value > 0) {
-                        subtotal += limiteContratado * additionalServices.coffee_break_afternoon_unit_value;
-                      }
-                      if (additionalServices.lunch_enabled && additionalServices.lunch_unit_value > 0) {
-                        subtotal += limiteContratado * additionalServices.lunch_unit_value;
-                      }
-                      
-                      return (
-                        <tr className="bg-stone-100">
-                              <td colSpan={2} className="border border-stone-300 px-3 py-2 font-bold text-stone-900">
-                                Subtotal Turma Fechada
-                              </td>
-                              <td className="border border-stone-300 px-3 py-2"></td>
-                              <td className="border border-stone-300 px-3 py-2 text-center font-bold">
-                                {classItem.students_count || 0}
-                              </td>
-                          <td className="border border-stone-300 px-3 py-2"></td>
-                          <td className="border border-stone-300 px-3 py-2 text-right font-bold">
-                            {formatCurrency(subtotal)}
-                          </td>
-                        </tr>
-                      );
-                    })()}
-
                     {/* Excedentes Aplicados - Seção */}
                     {excedentesDaTurma.length > 0 && (
                       <>
@@ -509,55 +476,40 @@ export default function BMMPreview({ content }) {
                           </tr>
                         ))}
 
-                        {/* Subtotal Excedentes */}
-                        <tr className="bg-orange-100">
-                          <td colSpan={2} className="border border-stone-300 px-3 py-2 font-bold text-orange-900">
-                            Subtotal Excedentes
-                          </td>
-                          <td className="border border-stone-300 px-3 py-2"></td>
-                          <td className="border border-stone-300 px-3 py-2 text-center font-bold text-orange-700">
-                            {excedentesDaTurma[0]?.quantity || 0}
-                          </td>
-                          <td className="border border-stone-300 px-3 py-2"></td>
-                          <td className="border border-stone-300 px-3 py-2 text-right font-bold text-orange-900">
-                            {formatCurrency(totalExcedentes)}
-                          </td>
-                        </tr>
+
                       </>
                     )}
 
-                    {/* Total de Participantes Realizados */}
+                    {/* Total Final da Turma */}
                     {(() => {
                       const additionalServices = content?.company?.additional_services || {};
                       const limiteContratado = classItem.students_count || 15;
-                      let subtotalBase = classItem.total_value;
+                      let totalTurma = classItem.total_value;
                       
                       if (additionalServices.coffee_break_morning_enabled && additionalServices.coffee_break_morning_unit_value > 0) {
-                        subtotalBase += limiteContratado * additionalServices.coffee_break_morning_unit_value;
+                        totalTurma += limiteContratado * additionalServices.coffee_break_morning_unit_value;
                       }
                       if (additionalServices.coffee_break_afternoon_enabled && additionalServices.coffee_break_afternoon_unit_value > 0) {
-                        subtotalBase += limiteContratado * additionalServices.coffee_break_afternoon_unit_value;
+                        totalTurma += limiteContratado * additionalServices.coffee_break_afternoon_unit_value;
                       }
                       if (additionalServices.lunch_enabled && additionalServices.lunch_unit_value > 0) {
-                        subtotalBase += limiteContratado * additionalServices.lunch_unit_value;
+                        totalTurma += limiteContratado * additionalServices.lunch_unit_value;
                       }
                       
-                      const totalGeral2 = subtotalBase + totalExcedentes;
+                      const totalFinal = totalTurma + totalExcedentes;
                       
                       return (
                         <tr className="bg-emerald-100">
                           <td colSpan={2} className="border border-stone-300 px-3 py-2 font-bold text-emerald-900">
-                            TOTAL DE PARTICIPANTES REALIZADOS
+                            TOTAL
                           </td>
                           <td className="border border-stone-300 px-3 py-2"></td>
                           <td className="border border-stone-300 px-3 py-2 text-center font-bold text-emerald-900">
                              {classItem.students_count || 0}
                            </td>
-                          <td className="border border-stone-300 px-3 py-2 font-bold text-emerald-900">
-                            TOTAL GERAL
-                          </td>
+                          <td className="border border-stone-300 px-3 py-2"></td>
                           <td className="border border-stone-300 px-3 py-2 text-right font-bold text-emerald-900">
-                            {formatCurrency(totalGeral2)}
+                            {formatCurrency(totalFinal)}
                           </td>
                         </tr>
                       );
