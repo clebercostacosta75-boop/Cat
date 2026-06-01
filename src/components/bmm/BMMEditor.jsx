@@ -38,7 +38,19 @@ export default function BMMEditor({ content, onChange }) {
     contract_object: 'Prestação de Serviço de Treinamentos de Capacitação e Segurança pela CONTRATADA',
     fiscal_role: 'Técnico de Segurança',
     contract_manager_role: 'Coordenador de SST',
-    notes: 'Última revisão: 09/05/2022'
+    notes: 'Última revisão: 09/05/2022',
+    sap_config: {
+      enabled: true,
+      codigo_material_pai: '2010000491',
+      presencial: {
+        codigo_servico_filho: '3012507',
+        descricao: 'Serv. Treinamento\nFuncionário / Serv.\nTreinamento de NR'
+      },
+      ead: {
+        codigo_servico_filho: '3012506',
+        descricao: 'Serv. Treinamento\nFuncionário / Serv.\nTreinamento de NR'
+      }
+    }
   };
 
   return (
@@ -139,17 +151,51 @@ export default function BMMEditor({ content, onChange }) {
         </div>
 
         {/* Observações */}
-        <div>
-          <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">Observações / Notas</p>
-          <Textarea
-            value={o.notes ?? (isUnitapajos ? unitapajosDefaults.notes : "")}
-            onChange={e => update("overrides.notes", e.target.value)}
-            placeholder="Observações que aparecerão no rodapé do BMM (opcional)"
-            rows={3}
-          />
-        </div>
+         <div>
+           <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">Observações / Notas</p>
+           <Textarea
+             value={o.notes ?? (isUnitapajos ? unitapajosDefaults.notes : "")}
+             onChange={e => update("overrides.notes", e.target.value)}
+             placeholder="Observações que aparecerão no rodapé do BMM (opcional)"
+             rows={3}
+           />
+         </div>
 
-      </CardContent>
-    </Card>
-  );
-}
+         {/* Configuração SAP (UNITAPAJÓS) */}
+         {isUnitapajos && (
+           <div className="border-t pt-4">
+             <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-3">Configuração SAP – UNITAPAJÓS</p>
+             <div className="grid md:grid-cols-2 gap-3">
+               <div className="space-y-1">
+                 <Label className="text-xs">Código Material (PAI)</Label>
+                 <Input
+                   value={c.sap_config?.codigo_material_pai ?? unitapajosDefaults.sap_config.codigo_material_pai}
+                   disabled
+                   className="bg-stone-100 cursor-not-allowed"
+                 />
+               </div>
+               <div className="space-y-1">
+                 <Label className="text-xs">Código Serviço – Presencial</Label>
+                 <Input
+                   value={c.sap_config?.presencial?.codigo_servico_filho ?? unitapajosDefaults.sap_config.presencial.codigo_servico_filho}
+                   disabled
+                   className="bg-stone-100 cursor-not-allowed"
+                 />
+               </div>
+               <div className="space-y-1">
+                 <Label className="text-xs">Código Serviço – EAD</Label>
+                 <Input
+                   value={c.sap_config?.ead?.codigo_servico_filho ?? unitapajosDefaults.sap_config.ead.codigo_servico_filho}
+                   disabled
+                   className="bg-stone-100 cursor-not-allowed"
+                 />
+               </div>
+             </div>
+             <p className="text-xs text-stone-500 mt-3">✓ Esses dados SAP serão preenchidos automaticamente nas linhas da tabela do BMM.</p>
+           </div>
+         )}
+
+        </CardContent>
+        </Card>
+        );
+        }
