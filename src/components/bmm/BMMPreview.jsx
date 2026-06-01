@@ -98,6 +98,61 @@ export default function BMMPreview({ content }) {
     }).format(value || 0);
   };
 
+  const formatCurrencyByExtent = (value) => {
+    const num = Math.floor(value);
+    const cents = Math.round((value - num) * 100);
+    
+    const ones = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
+    const teens = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+    const tens = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+    const scales = ['', 'mil', 'milhão', 'bilhão', 'trilhão'];
+
+    const convertBelowThousand = (n) => {
+      if (n === 0) return '';
+      if (n < 10) return ones[n];
+      if (n < 20) return teens[n - 10];
+      if (n < 100) {
+        const t = Math.floor(n / 10);
+        const o = n % 10;
+        return o === 0 ? tens[t] : tens[t] + ' e ' + ones[o];
+      }
+      const h = Math.floor(n / 100);
+      const remainder = n % 100;
+      const hundreds = h === 1 ? 'cento' : ones[h] + 'centos';
+      return remainder === 0 ? hundreds : hundreds + ' e ' + convertBelowThousand(remainder);
+    };
+
+    const convertToWords = (n) => {
+      if (n === 0) return 'zero';
+      let words = [];
+      let scaleIndex = 0;
+      while (n > 0) {
+        const group = n % 1000;
+        if (group !== 0) {
+          const groupWords = convertBelowThousand(group);
+          if (scales[scaleIndex]) {
+            if (group === 1 && scaleIndex > 1) {
+              words.unshift(scales[scaleIndex]);
+            } else if (scaleIndex === 1 && group === 1) {
+              words.unshift('mil');
+            } else {
+              words.unshift(groupWords + ' ' + scales[scaleIndex]);
+            }
+          } else {
+            words.unshift(groupWords);
+          }
+        }
+        n = Math.floor(n / 1000);
+        scaleIndex++;
+      }
+      return words.filter(w => w).join(' ').trim();
+    };
+
+    const reaisText = convertToWords(num);
+    const centsText = cents === 0 ? '' : ` e ${convertToWords(cents)} centavo${cents === 1 ? '' : 's'}`;
+    return reaisText + (centsText ? centsText : '');
+  };
+
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     try {
@@ -610,8 +665,11 @@ export default function BMMPreview({ content }) {
               <p className="text-sm text-stone-600">Total de Alunos</p>
             </div>
             <div className="bg-amber-50 rounded-lg p-4 text-center">
-              <p className="text-2xl font-bold text-amber-600">{formatCurrency(totalGeral)}</p>
-              <p className="text-sm text-stone-600">Valor Total do BMM</p>
+              <p className="text-lg font-bold text-amber-600">{formatCurrency(totalGeral)}</p>
+              <p className="text-xs text-stone-500 mt-2 italic">
+                {formatCurrencyByExtent(totalGeral)} reais
+              </p>
+              <p className="text-sm text-stone-600 mt-2">Valor Total do BMM</p>
             </div>
           </div>
         );
