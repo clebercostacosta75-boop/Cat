@@ -19,6 +19,8 @@ export default function BMMPreview({ content }) {
           -webkit-print-color-adjust: exact !important;
           page-break-inside: avoid !important;
           break-inside: avoid !important;
+          orphans: 2 !important;
+          widows: 2 !important;
         }
         
         /* Ocultar sidebar e header */
@@ -82,20 +84,20 @@ export default function BMMPreview({ content }) {
         
         p {
           font-family: Arial, sans-serif !important;
-          font-size: 10pt !important;
-          margin: 1px 0 1px 0 !important;
+          font-size: 9pt !important;
+          margin: 0 0 0 0 !important;
           padding: 0 !important;
-          line-height: 1.1 !important;
+          line-height: 1 !important;
         }
         
-        /* Tabelas - 10pt cabeçalho, 10pt conteúdo */
+        /* Tabelas - 9pt cabeçalho, 9pt conteúdo */
         table {
           width: 100% !important;
           font-family: Arial, sans-serif !important;
-          font-size: 10pt !important;
+          font-size: 9pt !important;
           border-collapse: collapse !important;
           page-break-inside: avoid !important;
-          margin: 3px 0 3px 0 !important;
+          margin: 4px 0 4px 0 !important;
         }
         
         thead {
@@ -106,32 +108,33 @@ export default function BMMPreview({ content }) {
         }
         
         th {
-          padding: 2px 3px !important;
+          padding: 4px 6px !important;
           border: 1px solid #333 !important;
           text-align: left !important;
           font-weight: bold !important;
-          font-size: 10pt !important;
+          font-size: 9pt !important;
         }
         
         td {
-          padding: 2px 3px !important;
+          padding: 4px 6px !important;
           border: 0.5px solid #666 !important;
-          font-size: 10pt !important;
+          font-size: 9pt !important;
         }
         
         /* Seções de dados */
         .bg-stone-50 {
           page-break-inside: avoid !important;
-          margin: 2px 0 2px 0 !important;
-          padding: 3px !important;
+          margin: 4px 0 4px 0 !important;
+          padding: 2px 3px !important;
           font-family: Arial, sans-serif !important;
-          font-size: 10pt !important;
+          font-size: 9pt !important;
         }
         
-        /* Grid de totais */
+        /* Grid de totais - Indicadores */
         .grid {
           page-break-inside: avoid !important;
-          margin: 2px 0 2px 0 !important;
+          margin: 4px 0 4px 0 !important;
+          gap: 4px !important;
         }
         
         /* Imagens */
@@ -140,46 +143,72 @@ export default function BMMPreview({ content }) {
           page-break-inside: avoid !important;
         }
         
-        /* Indicadores - Números em 16pt, Labels em 9pt */
+        /* Indicadores - Cards máximo 80px, números 14pt, labels 8pt */
+        .indicator-card {
+          height: 80px !important;
+          padding: 4px !important;
+          page-break-inside: avoid !important;
+        }
+        
         .indicator-number {
           font-family: Arial, sans-serif !important;
-          font-size: 16pt !important;
+          font-size: 14pt !important;
           font-weight: bold !important;
           display: block !important;
+          margin: 2px 0 1px 0 !important;
         }
         
         .indicator-label {
           font-family: Arial, sans-serif !important;
-          font-size: 9pt !important;
+          font-size: 8pt !important;
           display: block !important;
+          margin: 0 !important;
         }
         
         /* Assinaturas */
         .signature-section {
           page-break-inside: avoid !important;
-          margin: 4px 0 0 0 !important;
-          padding-top: 3px !important;
+          margin: 4px 0 2px 0 !important;
+          padding: 2px 0 0 0 !important;
           border-top: 1px solid #ccc !important;
           font-family: Arial, sans-serif !important;
-          font-size: 10pt !important;
+          font-size: 9pt !important;
+        }
+        
+        /* Cada bloco de assinatura máximo 60px */
+        .signature-block {
+          height: 60px !important;
+          page-break-inside: avoid !important;
+          margin-bottom: 2px !important;
+        }
+        
+        .signature-line {
+          margin-top: 4px !important;
+          margin-bottom: 0 !important;
         }
         
         /* Rodapé */
         footer, .mt-8 {
           page-break-before: avoid !important;
           margin-top: 2px !important;
-          padding-top: 2px !important;
+          margin-bottom: 0 !important;
+          padding: 1px 0 0 0 !important;
           border-top: 1px solid #ccc !important;
           font-family: Arial, sans-serif !important;
           font-size: 8pt !important;
           text-align: center !important;
+          line-height: 1 !important;
         }
         
         /* Desativar margens padrão */
-        .mb-6 { margin-bottom: 2px !important; }
-        .mt-4 { margin-top: 2px !important; }
-        .pt-6 { padding-top: 2px !important; }
-        .pb-6 { padding-bottom: 2px !important; }
+        .mb-6 { margin-bottom: 4px !important; }
+        .mt-4 { margin-top: 0 !important; }
+        .pt-6 { padding-top: 0 !important; }
+        .pb-6 { padding-bottom: 0 !important; }
+        
+        /* Compactar breaks */
+        br { display: none !important; }
+        div[style*="height: "] { height: auto !important; }
       }
     `;
     document.head.appendChild(style);
