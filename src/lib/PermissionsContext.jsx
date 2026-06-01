@@ -79,8 +79,8 @@ export function PermissionsProvider({ children }) {
   const [allowedKeys, setAllowedKeys] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       // PASSO 1: Verificar autenticação
       let u;
@@ -164,8 +164,8 @@ export function PermissionsProvider({ children }) {
     const handler = () => load();
     window.addEventListener("permissions-updated", handler);
 
-    // Polling a cada 15 segundos para capturar permissões atualizadas por outro admin
-    const interval = setInterval(() => load(), 15000);
+    // Polling a cada 60 segundos para capturar permissões atualizadas por outro admin (sem spinner)
+    const interval = setInterval(() => load(false), 60000);
 
     return () => {
       window.removeEventListener("permissions-updated", handler);
