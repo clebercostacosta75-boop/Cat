@@ -119,7 +119,7 @@ export default function BMMPreview({ content }) {
   const contractManagerRole = o.contract_manager_role ?? company?.contract_manager_role;
 
   return (
-    <Card id="bmm-print-container" className="border-none shadow-xl bg-white p-8">
+    <Card id="bmm-print-container" className="border-none shadow-xl bg-white p-8 print:shadow-none print:border-0 print:p-0">
       {/* Cabeçalho */}
       <div className="border-b-2 border-emerald-600 pb-6 mb-6">
         <div className="flex items-center justify-between">
