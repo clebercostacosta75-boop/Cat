@@ -160,11 +160,10 @@ export default function BMMGenerator() {
       const totalValue = classesData.reduce((sum, c) => sum + c.total_value, 0);
       const totalStudents = classesData.reduce((sum, c) => sum + (c.students_count || 0), 0);
 
-      // Calcular serviços adicionais (coffee break / almoço) com base nos alunos de cada turma
+      // Calcular serviços adicionais (coffee break / almoço) e excedentes de alunos
       const additionalServices = company?.additional_services || {};
       const additionalItems = [];
 
-      // Para cada serviço habilitado, gera uma linha por turma usando o students_count do cronograma
       const serviceTypes = [
         {
           key: 'coffee_break_morning',
@@ -186,23 +185,75 @@ export default function BMMGenerator() {
         },
       ];
 
-      for (const svc of serviceTypes) {
-        if (!additionalServices[svc.enabledKey]) continue;
-        const unitValue = parseFloat(additionalServices[svc.valueKey]) || 0;
-        if (unitValue <= 0) continue;
+      for (const classItem of classesData) {
+        const studentsCount = classItem.students_count || 0;
+        if (studentsCount <= 0) continue;
 
-        // Uma linha por turma, usando students_count da turma (do Cronograma de Turmas)
-        for (const classItem of classesData) {
-          const qty = classItem.students_count || 0;
-          if (qty <= 0) continue;
-          additionalItems.push({
-            type: svc.key,
-            description: `${svc.description} — ${classItem.training_name}`,
-            unit_value: unitValue,
-            quantity: qty,
-            total_value: unitValue * qty,
-            class_id: classItem.id,
-          });
+        // Determinar limite e tipo de cobrança da turma
+        const companyCourse = company?.company_courses?.find(
+          cc => cc.course_id === classItem.training_id || cc.course_name === classItem.training_name
+        );
+        const billingType = companyCourse?.billing_type || 'per_student';
+        const includedLimit = parseFloat(companyCourse?.included_students_limit) || 15;
+        const specificPrice = parseFloat(companyCourse?.specific_price) || 0;
+
+        if (billingType === 'per_closed_class') {
+          // Turma fechada: calcular excedente de alunos
+          const excedente = studentsCount - includedLimit;
+
+          if (excedente > 0) {
+            // Linha de alunos excedentes (valor por aluno adicional)
+            if (specificPrice > 0) {
+              additionalItems.push({
+                type: 'excedente_alunos',
+                description: `Alunos excedentes — ${classItem.training_name} (${excedente} acima do limite de ${includedLimit})`,
+                unit_value: specificPrice,
+                quantity: excedente,
+                total_value: specificPrice * excedente,
+                class_id: classItem.id,
+              });
+            } else {
+              // Sem valor unitário cadastrado: registra o excedente sem valor para visibilidade
+              additionalItems.push({
+                type: 'excedente_alunos',
+                description: `Alunos excedentes — ${classItem.training_name} (${excedente} acima do limite de ${includedLimit}) — valor unitário a definir`,
+                unit_value: 0,
+                quantity: excedente,
+                total_value: 0,
+                class_id: classItem.id,
+              });
+            }
+
+            // Serviços adicionais apenas sobre os alunos EXCEDENTES
+            for (const svc of serviceTypes) {
+              if (!additionalServices[svc.enabledKey]) continue;
+              const unitVal = parseFloat(additionalServices[svc.valueKey]) || 0;
+              if (unitVal <= 0) continue;
+              additionalItems.push({
+                type: svc.key,
+                description: `${svc.description} excedente — ${classItem.training_name} (${excedente} aluno(s))`,
+                unit_value: unitVal,
+                quantity: excedente,
+                total_value: unitVal * excedente,
+                class_id: classItem.id,
+              });
+            }
+          }
+        } else {
+          // Cobrança por aluno: serviços adicionais sobre TODOS os alunos
+          for (const svc of serviceTypes) {
+            if (!additionalServices[svc.enabledKey]) continue;
+            const unitVal = parseFloat(additionalServices[svc.valueKey]) || 0;
+            if (unitVal <= 0) continue;
+            additionalItems.push({
+              type: svc.key,
+              description: `${svc.description} — ${classItem.training_name}`,
+              unit_value: unitVal,
+              quantity: studentsCount,
+              total_value: unitVal * studentsCount,
+              class_id: classItem.id,
+            });
+          }
         }
       }
 
