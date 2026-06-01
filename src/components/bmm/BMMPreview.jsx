@@ -551,7 +551,7 @@ export default function BMMPreview({ content }) {
                     {excedentesDaTurma.length > 0 && (
                       <>
                         <tr className="bg-orange-50">
-                          <td colSpan={6} className="border border-stone-300 px-3 py-2 font-bold text-orange-900">
+                          <td colSpan={hasSAPConfig ? 9 : 6} className="border border-stone-300 px-3 py-2 font-bold text-orange-900">
                             Excedentes Aplicados
                           </td>
                         </tr>
@@ -620,7 +620,7 @@ export default function BMMPreview({ content }) {
                       
                       return (
                         <tr className="bg-emerald-100">
-                          <td colSpan={4} className="border border-stone-300 px-3 py-2 font-bold text-emerald-900">
+                          <td colSpan={hasSAPConfig ? 5 : 4} className="border border-stone-300 px-3 py-2 font-bold text-emerald-900">
                             TOTAL
                           </td>
                           <td className="border border-stone-300 px-3 py-2"></td>
