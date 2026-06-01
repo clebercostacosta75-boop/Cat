@@ -118,6 +118,35 @@ export default function BMMPreview({ content }) {
   const contractManagerName = o.contract_manager_name ?? company?.contract_manager_name;
   const contractManagerRole = o.contract_manager_role ?? company?.contract_manager_role;
 
+  // Detectar se empresa tem SAP habilitado (UNITAPAJÓS ou outra com config)
+  const hasSAPConfig = company?.sap_config?.enabled;
+
+  // Função para obter dados SAP baseado na modalidade
+  const getSAPData = (classItem) => {
+    if (!hasSAPConfig) return null;
+
+    const sapCfg = company.sap_config;
+    const codigoMaterialPai = sapCfg.codigo_material_pai || '';
+    
+    // Normalizar modalidade (comparar presencial vs ead)
+    const modality = (classItem.category || classItem.modality || '').toLowerCase();
+    const isPresencial = modality.includes('presencial');
+    
+    if (isPresencial) {
+      return {
+        codigo_material: codigoMaterialPai,
+        codigo_servico: sapCfg.presencial?.codigo_servico_filho || '',
+        descricao: sapCfg.presencial?.descricao || ''
+      };
+    } else {
+      return {
+        codigo_material: codigoMaterialPai,
+        codigo_servico: sapCfg.ead?.codigo_servico_filho || '',
+        descricao: sapCfg.ead?.descricao || ''
+      };
+    }
+  };
+
   return (
     <Card id="bmm-print-container" className="border-none shadow-xl bg-white p-8 print:shadow-none print:border-0 print:p-0">
       {/* Cabeçalho */}
@@ -212,6 +241,13 @@ export default function BMMPreview({ content }) {
                 <th className="border border-emerald-700 px-3 py-2 text-center">Qtd. Alunos</th>
                 <th className="border border-emerald-700 px-3 py-2 text-right">Valor Unit. / Turma</th>
                 <th className="border border-emerald-700 px-3 py-2 text-right">Valor Total</th>
+                {hasSAPConfig && (
+                  <>
+                    <th className="border border-emerald-700 px-3 py-2 text-center text-xs">Código Material (PAI) - SAP</th>
+                    <th className="border border-emerald-700 px-3 py-2 text-center text-xs">Código Serviço (FILHO) - SAP</th>
+                    <th className="border border-emerald-700 px-3 py-2 text-left text-xs">Descrição SAP</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -232,29 +268,47 @@ export default function BMMPreview({ content }) {
                 return (
                   <React.Fragment key={index}>
                     {/* Treinamento principal */}
-                    <tr className="bg-white">
-                      <td className="border border-stone-300 px-3 py-2 font-bold">{index + 1}</td>
-                      <td className="border border-stone-300 px-3 py-2 font-bold text-stone-900">
-                        <div>{classItem.training_name} – Turma Fechada</div>
-                        {classItem.realization_dates && classItem.realization_dates.length > 0 && (
-                          <div className="text-xs text-stone-600 mt-1">
-                            📅 {classItem.realization_dates.map(d => formatDate(d)).join(', ')}
-                          </div>
-                        )}
-                      </td>
-                      <td className="border border-stone-300 px-3 py-2 text-center font-bold">
-                        {classItem.duration_hours || 0}h
-                      </td>
-                      <td className="border border-stone-300 px-3 py-2 text-center font-bold">
-                        {15}
-                      </td>
-                      <td className="border border-stone-300 px-3 py-2 text-right font-bold">
-                        {formatCurrency(classItem.unit_value)}
-                      </td>
-                      <td className="border border-stone-300 px-3 py-2 text-right font-bold">
-                        {formatCurrency(classItem.total_value)}
-                      </td>
-                    </tr>
+                    {(() => {
+                      const sapData = getSAPData(classItem);
+                      return (
+                        <tr className="bg-white">
+                          <td className="border border-stone-300 px-3 py-2 font-bold">{index + 1}</td>
+                          <td className="border border-stone-300 px-3 py-2 font-bold text-stone-900">
+                            <div>{classItem.training_name} – Turma Fechada</div>
+                            {classItem.realization_dates && classItem.realization_dates.length > 0 && (
+                              <div className="text-xs text-stone-600 mt-1">
+                                📅 {classItem.realization_dates.map(d => formatDate(d)).join(', ')}
+                              </div>
+                            )}
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2 text-center font-bold">
+                            {classItem.duration_hours || 0}h
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2 text-center font-bold">
+                            {15}
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2 text-right font-bold">
+                            {formatCurrency(classItem.unit_value)}
+                          </td>
+                          <td className="border border-stone-300 px-3 py-2 text-right font-bold">
+                            {formatCurrency(classItem.total_value)}
+                          </td>
+                          {hasSAPConfig && sapData && (
+                            <>
+                              <td className="border border-stone-300 px-3 py-2 text-center text-xs font-mono">
+                                {sapData.codigo_material}
+                              </td>
+                              <td className="border border-stone-300 px-3 py-2 text-center text-xs font-mono">
+                                {sapData.codigo_servico}
+                              </td>
+                              <td className="border border-stone-300 px-3 py-2 text-xs">
+                                {sapData.descricao}
+                              </td>
+                            </>
+                          )}
+                        </tr>
+                      );
+                    })()}
 
                     {/* Serviços adicionais da Turma Fechada (Coffee Break Manhã, Tarde, Almoço) */}
                     {(() => {
