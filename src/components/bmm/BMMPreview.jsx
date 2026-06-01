@@ -228,25 +228,42 @@ export default function BMMPreview({ content }) {
                   </td>
                 </tr>
               ))}
-              {/* Serviços adicionais */}
-              {additionalItems.map((item, idx) => (
-                <tr key={`add-${idx}`} className="bg-amber-50">
-                  <td className="border border-stone-300 px-3 py-2 text-stone-500">{classes.length + idx + 1}</td>
-                  <td className="border border-stone-300 px-3 py-2 font-medium text-amber-800">
-                    {item.description}
-                  </td>
-                  <td className="border border-stone-300 px-3 py-2 text-center text-stone-500">—</td>
-                  <td className="border border-stone-300 px-3 py-2 text-center">
-                    QTD. {item.quantity}
-                  </td>
-                  <td className="border border-stone-300 px-3 py-2 text-right">
-                    {formatCurrency(item.unit_value)}
-                  </td>
-                  <td className="border border-stone-300 px-3 py-2 text-right font-semibold text-amber-700">
-                    {formatCurrency(item.total_value)}
-                  </td>
-                </tr>
-              ))}
+              {/* Serviços adicionais - agrupados por tipo */}
+              {(() => {
+                // Agrupa por tipo de serviço somando quantidade e total
+                const grouped = {};
+                for (const item of additionalItems) {
+                  if (!grouped[item.type]) {
+                    grouped[item.type] = {
+                      type: item.type,
+                      description: item.description.split(' — ')[0], // pega só o nome do serviço
+                      unit_value: item.unit_value,
+                      quantity: 0,
+                      total_value: 0,
+                    };
+                  }
+                  grouped[item.type].quantity += item.quantity;
+                  grouped[item.type].total_value += item.total_value;
+                }
+                return Object.values(grouped).map((item, idx) => (
+                  <tr key={`add-${idx}`} className="bg-amber-50">
+                    <td className="border border-stone-300 px-3 py-2 text-stone-500">{classes.length + idx + 1}</td>
+                    <td className="border border-stone-300 px-3 py-2 font-medium text-amber-800">
+                      {item.description}
+                    </td>
+                    <td className="border border-stone-300 px-3 py-2 text-center text-stone-500">—</td>
+                    <td className="border border-stone-300 px-3 py-2 text-center">
+                      {item.quantity}
+                    </td>
+                    <td className="border border-stone-300 px-3 py-2 text-right">
+                      {formatCurrency(item.unit_value)}
+                    </td>
+                    <td className="border border-stone-300 px-3 py-2 text-right font-semibold text-amber-700">
+                      {formatCurrency(item.total_value)}
+                    </td>
+                  </tr>
+                ));
+              })()}
             </tbody>
             <tfoot>
               <tr className="bg-emerald-100 font-bold">

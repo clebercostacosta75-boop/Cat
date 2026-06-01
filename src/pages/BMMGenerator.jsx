@@ -159,36 +159,50 @@ export default function BMMGenerator() {
       const totalValue = classesData.reduce((sum, c) => sum + c.total_value, 0);
       const totalStudents = classesData.reduce((sum, c) => sum + (c.students_count || 0), 0);
 
-      // Calcular serviços adicionais (coffee break / almoço) com base no total de alunos
+      // Calcular serviços adicionais (coffee break / almoço) com base nos alunos de cada turma
       const additionalServices = company?.additional_services || {};
       const additionalItems = [];
 
-      if (additionalServices.coffee_break_morning_enabled && (additionalServices.coffee_break_morning_unit_value || 0) > 0) {
-        additionalItems.push({
-          type: 'coffee_break_morning',
+      // Para cada serviço habilitado, gera uma linha por turma usando o students_count do cronograma
+      const serviceTypes = [
+        {
+          key: 'coffee_break_morning',
+          enabledKey: 'coffee_break_morning_enabled',
+          valueKey: 'coffee_break_morning_unit_value',
           description: 'Coffee break manhã',
-          unit_value: additionalServices.coffee_break_morning_unit_value,
-          quantity: totalStudents,
-          total_value: (additionalServices.coffee_break_morning_unit_value || 0) * totalStudents,
-        });
-      }
-      if (additionalServices.coffee_break_afternoon_enabled && (additionalServices.coffee_break_afternoon_unit_value || 0) > 0) {
-        additionalItems.push({
-          type: 'coffee_break_afternoon',
+        },
+        {
+          key: 'coffee_break_afternoon',
+          enabledKey: 'coffee_break_afternoon_enabled',
+          valueKey: 'coffee_break_afternoon_unit_value',
           description: 'Coffee break tarde',
-          unit_value: additionalServices.coffee_break_afternoon_unit_value,
-          quantity: totalStudents,
-          total_value: (additionalServices.coffee_break_afternoon_unit_value || 0) * totalStudents,
-        });
-      }
-      if (additionalServices.lunch_enabled && (additionalServices.lunch_unit_value || 0) > 0) {
-        additionalItems.push({
-          type: 'lunch',
+        },
+        {
+          key: 'lunch',
+          enabledKey: 'lunch_enabled',
+          valueKey: 'lunch_unit_value',
           description: 'Almoço',
-          unit_value: additionalServices.lunch_unit_value,
-          quantity: totalStudents,
-          total_value: (additionalServices.lunch_unit_value || 0) * totalStudents,
-        });
+        },
+      ];
+
+      for (const svc of serviceTypes) {
+        if (!additionalServices[svc.enabledKey]) continue;
+        const unitValue = parseFloat(additionalServices[svc.valueKey]) || 0;
+        if (unitValue <= 0) continue;
+
+        // Uma linha por turma, usando students_count da turma (do Cronograma de Turmas)
+        for (const classItem of classesData) {
+          const qty = classItem.students_count || 0;
+          if (qty <= 0) continue;
+          additionalItems.push({
+            type: svc.key,
+            description: `${svc.description} — ${classItem.training_name}`,
+            unit_value: unitValue,
+            quantity: qty,
+            total_value: unitValue * qty,
+            class_id: classItem.id,
+          });
+        }
       }
 
       const additionalTotal = additionalItems.reduce((sum, i) => sum + i.total_value, 0);
