@@ -39,6 +39,21 @@ export const ALL_MODULES = [
   "Log de Acesso",
 ];
 
+// Mapa de chaves de rota → chave de módulo (para ProtectedRoute)
+export const ROUTE_TO_MODULE = {
+  "Schedule": "Cronograma",
+  "AttendanceCall": "Chamada Presencial",
+  "CertDesigner": "Designer de Certificados",
+  "CertificateAlerts": "Alertas de Vencimento",
+  "CommunicationCenter": "Central de Comunicação",
+  "Companies": "Empresas",
+  "Contractors": "Contratadas",
+  "Courses": "Cursos",
+  "Instructors": "Instrutores",
+  "Users": "Usuários",
+  "AuditLog": "Log de Auditoria",
+};
+
 // Módulos bloqueados para perfil Editor
 const ADMIN_MODULES = [
   "Usuários",
@@ -144,10 +159,18 @@ export function PermissionsProvider({ children }) {
 
   useEffect(() => {
     load();
-    // Recarrega quando admin salvar permissões
+
+    // Recarrega quando admin salvar permissões (mesma janela)
     const handler = () => load();
     window.addEventListener("permissions-updated", handler);
-    return () => window.removeEventListener("permissions-updated", handler);
+
+    // Polling a cada 15 segundos para capturar permissões atualizadas por outro admin
+    const interval = setInterval(() => load(), 15000);
+
+    return () => {
+      window.removeEventListener("permissions-updated", handler);
+      clearInterval(interval);
+    };
   }, [load]);
 
   const hasPermission = useCallback((key) => {
