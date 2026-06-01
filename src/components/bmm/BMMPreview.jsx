@@ -279,7 +279,7 @@ export default function BMMPreview({ content }) {
                   TOTAIS:
                 </td>
                 <td className="border border-stone-300 px-3 py-2 text-center">
-                  {totals.students}
+                  {classes.reduce((sum, c) => sum + (c.students_count || 0), 0)}
                 </td>
                 <td className="border border-stone-300 px-3 py-2"></td>
                 <td className="border border-stone-300 px-3 py-2 text-right text-emerald-700">
