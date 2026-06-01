@@ -3,20 +3,22 @@ import { Card } from "@/components/ui/card";
 import ExcedentesDetailBlock from "@/components/bmm/ExcedentesDetailBlock";
 
 export default function BMMPreview({ content }) {
-  // Adicionar estilos de impressão A4 Paisagem
+  // Adicionar estilos de impressão A4 Vertical
   React.useEffect(() => {
     const style = document.createElement('style');
     style.id = 'bmm-print-styles';
     style.textContent = `
       @media print {
         @page {
-          size: A4 landscape;
+          size: A4 portrait;
           margin: 10mm;
         }
         
         * {
           print-color-adjust: exact !important;
           -webkit-print-color-adjust: exact !important;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
         }
         
         /* Ocultar apenas sidebar e header */
@@ -26,11 +28,10 @@ export default function BMMPreview({ content }) {
         }
         
         /* Garantir que tudo seja impresso */
-        body, html, * {
+        body, html {
           visibility: visible !important;
-        }
-        
-        body {
+          margin: 0 !important;
+          padding: 0 !important;
           background: white !important;
         }
         
@@ -39,40 +40,103 @@ export default function BMMPreview({ content }) {
           display: block !important;
           width: 100% !important;
           margin: 0 !important;
-          padding: 0 !important;
+          padding: 10mm !important;
+          box-shadow: none !important;
+          border: none !important;
+          page-break-after: avoid !important;
+          page-break-before: avoid !important;
+          break-after: avoid !important;
+          break-before: avoid !important;
         }
         
         /* Card */
         #bmm-print-container > div {
           box-shadow: none !important;
           border: none !important;
-          padding: 10mm !important;
+          padding: 0 !important;
+        }
+        
+        /* Cabeçalho e seções */
+        h1, h2 {
+          page-break-after: avoid !important;
+          break-after: avoid !important;
+          margin-bottom: 8px !important;
         }
         
         /* Tabela */
         table {
           width: 100% !important;
-          font-size: 8.5pt !important;
+          font-size: 8pt !important;
           border-collapse: collapse !important;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          margin-bottom: 8px !important;
         }
         
         th, td {
-          padding: 3px 5px !important;
-          border: 1px solid #ccc !important;
+          padding: 2px 4px !important;
+          border: 0.5px solid #999 !important;
+          page-break-inside: avoid !important;
         }
         
         thead {
           background-color: #10b981 !important;
           color: white !important;
+          page-break-after: avoid !important;
         }
         
         /* Textos */
-        h1 { font-size: 14pt !important; }
-        h2 { font-size: 10pt !important; }
+        h1 { font-size: 13pt !important; }
+        h2 { font-size: 9pt !important; }
+        p { margin: 3px 0 !important; }
         
         /* Imagens */
         img {
-          max-height: 35px !important;
+          max-height: 30px !important;
+          page-break-inside: avoid !important;
+        }
+        
+        /* Seções de dados */
+        .bg-stone-50 {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          margin-bottom: 6px !important;
+        }
+        
+        /* Grid de totais */
+        .grid {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          gap: 8px !important;
+        }
+        
+        /* Assinaturas */
+        .signature-section {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          margin-top: 8px !important;
+          padding-top: 6px !important;
+        }
+        
+        /* Rodapé */
+        .mt-8 {
+          page-break-before: avoid !important;
+          break-before: avoid !important;
+          margin-top: 6px !important;
+          font-size: 7pt !important;
+        }
+        
+        /* Remover espaços e margens excessivas */
+        .mb-6 {
+          margin-bottom: 6px !important;
+        }
+        
+        .mt-4 {
+          margin-top: 4px !important;
+        }
+        
+        .pt-6 {
+          padding-top: 4px !important;
         }
       }
     `;
