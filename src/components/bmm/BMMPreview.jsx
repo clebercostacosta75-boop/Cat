@@ -273,31 +273,32 @@ export default function BMMPreview({ content }) {
                       const company_courses = content?.company?.company_courses || [];
                       const coursePricing = company_courses.find(cc => cc.course_id === classItem.training_id) || {};
                       const additionalServices = content?.company?.additional_services || {};
+                      const limiteContratado = coursePricing.included_students_limit || 15; // Apenas alunos contratados
                       
                       if (additionalServices.coffee_break_morning_enabled && additionalServices.coffee_break_morning_unit_value > 0) {
                         servicos.push({
                           description: `Coffee Break Manhã — ${classItem.training_name}`,
-                          quantity: classItem.students_count,
+                          quantity: limiteContratado,
                           unit_value: additionalServices.coffee_break_morning_unit_value,
-                          total_value: (classItem.students_count || 0) * additionalServices.coffee_break_morning_unit_value
+                          total_value: limiteContratado * additionalServices.coffee_break_morning_unit_value
                         });
                       }
                       
                       if (additionalServices.coffee_break_afternoon_enabled && additionalServices.coffee_break_afternoon_unit_value > 0) {
                         servicos.push({
                           description: `Coffee Break Tarde — ${classItem.training_name}`,
-                          quantity: classItem.students_count,
+                          quantity: limiteContratado,
                           unit_value: additionalServices.coffee_break_afternoon_unit_value,
-                          total_value: (classItem.students_count || 0) * additionalServices.coffee_break_afternoon_unit_value
+                          total_value: limiteContratado * additionalServices.coffee_break_afternoon_unit_value
                         });
                       }
                       
                       if (additionalServices.lunch_enabled && additionalServices.lunch_unit_value > 0) {
                         servicos.push({
                           description: `Almoço — ${classItem.training_name}`,
-                          quantity: classItem.students_count,
+                          quantity: limiteContratado,
                           unit_value: additionalServices.lunch_unit_value,
-                          total_value: (classItem.students_count || 0) * additionalServices.lunch_unit_value
+                          total_value: limiteContratado * additionalServices.lunch_unit_value
                         });
                       }
                       
