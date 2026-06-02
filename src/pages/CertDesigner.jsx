@@ -61,20 +61,11 @@ function FieldGroup({ label, children }) {
 
 export default function CertDesigner() {
   const queryClient = useQueryClient();
-  // Restaura estado da sessão ao voltar para a página
-  const sessionState = (() => {
-    try { return JSON.parse(sessionStorage.getItem("certdesigner_state") || "null"); } catch { return null; }
-  })();
 
-  const [selectedId, setSelectedId] = useState(sessionState?.selectedId || null);
-  const [form, setForm] = useState(sessionState?.form || DEFAULT_MODEL);
-  const [creating, setCreating] = useState(sessionState?.creating || false);
+  const [selectedId, setSelectedId] = useState(null);
+  const [form, setForm] = useState(DEFAULT_MODEL);
+  const [creating, setCreating] = useState(false);
   const [editorMode, setEditorMode] = useState("form"); // "form" | "canvas"
-
-  // Persiste estado no sessionStorage sempre que muda
-  useEffect(() => {
-    sessionStorage.setItem("certdesigner_state", JSON.stringify({ selectedId, form, creating }));
-  }, [selectedId, form, creating]);
 
   const { data: models = [], isLoading } = useQuery({
     queryKey: ["certificateModels"],
@@ -86,6 +77,18 @@ export default function CertDesigner() {
     queryKey: ["digitalSignatures"],
     queryFn: () => base44.entities.DigitalSignature.list("-created_date", 200),
   });
+
+  // Quando as assinaturas carregam, resolve URLs dos responsáveis no form atual
+  useEffect(() => {
+    if (!digitalSignatures.length || !form.technical_responsibles?.length) return;
+    const hasUnresolved = form.technical_responsibles.some(r => r.signature_id && !r.signature_url);
+    if (!hasUnresolved) return;
+    setForm(f => ({
+      ...f,
+      technical_responsibles: resolveSignatures(f.technical_responsibles, digitalSignatures),
+    }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [digitalSignatures]);
 
   const { data: courses = [] } = useQuery({
     queryKey: ["coursesForDesigner"],
@@ -157,25 +160,27 @@ export default function CertDesigner() {
     },
   });
 
+  const resolveSignatures = (responsibles, allSigs) =>
+    (responsibles || []).map(r => {
+      if (r.signature_id) {
+        const sig = allSigs.find(s => s.id === r.signature_id);
+        if (sig) return { ...r, signature_url: sig.signature_url };
+      }
+      return r;
+    });
+
   const selectModel = async (m) => {
     setSelectedId(m.id);
     setCreating(false);
+    // Limpa sessionStorage para forçar dados frescos
+    sessionStorage.removeItem("certdesigner_state");
     try {
-      // Busca dados frescos do modelo e todas as assinaturas diretamente do banco
       const [freshList, allSigs] = await Promise.all([
-        base44.entities.CertificateModel.filter({ id: m.id }),
+        base44.entities.CertificateModel.list("-created_date", 100),
         base44.entities.DigitalSignature.list("-created_date", 200),
       ]);
-      const data = (freshList && freshList.length > 0) ? freshList[0] : m;
-      // Resolve signature_url para cada responsável usando o banco, não o estado da query
-      const resolvedResponsibles = (data.technical_responsibles || []).map(r => {
-        if (r.signature_id) {
-          const sig = allSigs.find(s => s.id === r.signature_id);
-          if (sig) return { ...r, signature_url: sig.signature_url, name: r.name || sig.name, title: r.title || sig.title, registration: r.registration || sig.registration };
-        }
-        return r;
-      });
-      setForm({ ...DEFAULT_MODEL, ...data, technical_responsibles: resolvedResponsibles });
+      const data = freshList.find(x => x.id === m.id) || m;
+      setForm({ ...DEFAULT_MODEL, ...data, technical_responsibles: resolveSignatures(data.technical_responsibles, allSigs) });
     } catch {
       setForm({ ...DEFAULT_MODEL, ...m });
     }
