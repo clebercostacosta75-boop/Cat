@@ -29,7 +29,7 @@ const statusConfig = {
 export default function Certificates() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [activeTab, setActiveTab] = useState("lista");
+  const [activeTab, setActiveTab] = useState("emitir");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [canDelete, setCanDelete] = useState(false);
   const queryClient = useQueryClient();

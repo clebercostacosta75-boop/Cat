@@ -11,7 +11,7 @@ import CertDesigner from "./CertDesigner";
 import StudentListCertificacoes from "@/components/certificates/StudentListCertificacoes";
 
 export default function Certificacoes() {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("certificados");
 
   return (
     <div className="p-6 space-y-4">
