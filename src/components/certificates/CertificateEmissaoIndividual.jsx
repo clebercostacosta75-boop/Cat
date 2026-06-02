@@ -70,19 +70,22 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
     queryFn: () => base44.entities.CertificateModel.list("-created_date", 100),
   });
 
-  // Carrega alunos individuais (PF)
+  // Carrega alunos individuais (PF) — lazy: só quando há busca
+  const [studentsEnabled, setStudentsEnabled] = useState(false);
   const { data: students = [] } = useQuery({
     queryKey: ["students-pf-cert"],
-    queryFn: () => base44.entities.Student.list("-created_date", 500),
+    queryFn: () => base44.entities.Student.list("-created_date", 300),
+    enabled: studentsEnabled,
   });
 
   // Carrega matrículas (para buscar cursos do aluno selecionado)
   const { data: allEnrollments = [] } = useQuery({
     queryKey: ["enrollments-pf-cert"],
     queryFn: async () => {
-      const all = await base44.entities.StudentCourseEnrollment.list("-created_date", 500);
+      const all = await base44.entities.StudentCourseEnrollment.list("-created_date", 300);
       return (all || []).filter(e => !e.company_id || e.company_id === "individual" || e.company_name === "Individual (PF)");
     },
+    enabled: studentsEnabled,
   });
 
   // Pré-selecionar empresa CAT ao carregar
@@ -310,8 +313,8 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
                 className="pl-9 pr-8"
                 placeholder="Digite o nome ou CPF do aluno..."
                 value={searchQuery}
-                onChange={e => { setSearchQuery(e.target.value); setShowSearchResults(true); }}
-                onFocus={() => { if (searchQuery.length >= 2) setShowSearchResults(true); }}
+                onChange={e => { setSearchQuery(e.target.value); setStudentsEnabled(true); setShowSearchResults(true); }}
+                onFocus={() => { setStudentsEnabled(true); if (searchQuery.length >= 2) setShowSearchResults(true); }}
               />
               {selectedStudent && (
                 <button onClick={clearStudent} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
