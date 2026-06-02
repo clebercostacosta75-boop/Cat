@@ -157,18 +157,26 @@ export default function CertDesigner() {
     },
   });
 
-  const selectModel = (m) => {
+  const selectModel = async (m) => {
     setSelectedId(m.id);
-    // Re-resolve signature_url para cada responsável técnico a partir do signature_id
-    const resolvedResponsibles = (m.technical_responsibles || []).map(r => {
-      if (r.signature_id) {
-        const sig = digitalSignatures.find(s => s.id === r.signature_id);
-        if (sig) return { ...r, signature_url: sig.signature_url, name: r.name || sig.name, title: r.title || sig.title };
-      }
-      return r;
-    });
-    setForm({ ...DEFAULT_MODEL, ...m, technical_responsibles: resolvedResponsibles });
     setCreating(false);
+    // Busca dados frescos do banco pelo ID
+    try {
+      const fresh = await base44.entities.CertificateModel.filter({ id: m.id });
+      const data = (fresh && fresh.length > 0) ? fresh[0] : m;
+      // Re-resolve signature_url para cada responsável técnico a partir do signature_id
+      const resolvedResponsibles = (data.technical_responsibles || []).map(r => {
+        if (r.signature_id) {
+          const sig = digitalSignatures.find(s => s.id === r.signature_id);
+          if (sig) return { ...r, signature_url: sig.signature_url, name: r.name || sig.name, title: r.title || sig.title };
+        }
+        return r;
+      });
+      setForm({ ...DEFAULT_MODEL, ...data, technical_responsibles: resolvedResponsibles });
+    } catch {
+      // fallback para dados da lista
+      setForm({ ...DEFAULT_MODEL, ...m });
+    }
   };
 
   const startNew = () => {
