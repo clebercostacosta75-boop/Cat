@@ -110,6 +110,13 @@ function AlterarDocumentoModal({ student, onClose, onSaved }) {
       const docAnterior = student.cpf || student.rg || "—";
       const updateData = tipoDoc === "CPF" ? { cpf: novoDoc.trim() } : { rg: novoDoc.trim() };
       await base44.entities.Student.update(student.id, updateData);
+
+      // Atualizar automaticamente os certificados do aluno
+      const certificates = await base44.entities.Certificate.filter({ student_id: student.id });
+      for (const cert of certificates) {
+        await base44.entities.Certificate.update(cert.id, updateData);
+      }
+
       const user = await base44.auth.me();
       await base44.entities.AuditLog.create({
         user_email: user?.email || "desconhecido",
@@ -120,7 +127,7 @@ function AlterarDocumentoModal({ student, onClose, onSaved }) {
         entity_name: student.full_name,
         details: `Documento alterado: tipo="${tipoDoc}", anterior="${docAnterior}", novo="${novoDoc.trim()}". Motivo: "${motivo}". Em ${new Date().toLocaleString("pt-BR")}`,
       });
-      toast.success("Documento atualizado e registrado no LOG.");
+      toast.success("Documento atualizado em aluno e certificados.");
       onSaved();
       onClose();
     } catch (e) {
@@ -167,7 +174,7 @@ function AlterarDocumentoModal({ student, onClose, onSaved }) {
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={onClose}>Cancelar</Button>
             <Button className="bg-gray-900 hover:bg-gray-800" onClick={handleConfirm} disabled={saving}>
-              {saving ? "Salvando..." : "Confirmar"}
+              {saving ? "Atualizando..." : "Atualizar Documento"}
             </Button>
           </div>
         </div>
