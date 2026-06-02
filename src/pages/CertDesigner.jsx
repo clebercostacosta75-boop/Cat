@@ -159,7 +159,15 @@ export default function CertDesigner() {
 
   const selectModel = (m) => {
     setSelectedId(m.id);
-    setForm({ ...DEFAULT_MODEL, ...m });
+    // Re-resolve signature_url para cada responsável técnico a partir do signature_id
+    const resolvedResponsibles = (m.technical_responsibles || []).map(r => {
+      if (r.signature_id) {
+        const sig = digitalSignatures.find(s => s.id === r.signature_id);
+        if (sig) return { ...r, signature_url: sig.signature_url, name: r.name || sig.name, title: r.title || sig.title };
+      }
+      return r;
+    });
+    setForm({ ...DEFAULT_MODEL, ...m, technical_responsibles: resolvedResponsibles });
     setCreating(false);
   };
 
@@ -504,7 +512,7 @@ export default function CertDesigner() {
                     <FieldGroup label="Texto do Corpo (Frente)">
                       <textarea
                         className="w-full border border-input rounded-md px-3 py-2 text-sm min-h-[80px] resize-y bg-background"
-                        value={form.front_body_text || "concluiu com êxito o curso de [CURSO]\ncom carga horária de [CARGA], realizado na empresa [EMPRESA], em [LOCAL]."}
+                        value={form.front_body_text || DEFAULT_MODEL.front_body_text}
                         onChange={e => set("front_body_text", e.target.value)}
                       />
                       <p className="text-xs text-gray-400">Variáveis: [ALUNO] [CURSO] [CARGA] [EMPRESA] [LOCAL] [DATA_INICIO] [DATA_FIM] [DATA_EMISSAO]</p>
