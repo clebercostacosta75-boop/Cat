@@ -349,23 +349,22 @@ export default function StudentListCertificacoes() {
                             <Award className="w-3 h-3" /> Gerar
                           </Button>
                         )}
-                        {/* Editar dados */}
-                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1 text-blue-600 hover:text-blue-800"
-                          onClick={() => setEditNomeStudent(s)} title="Corrigir nome">
-                          <Pencil className="w-3 h-3" /> Nome
+                        {/* Ações de edição */}
+                        <Button size="sm" className="h-8 px-3 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-md font-medium"
+                          onClick={() => setEditNomeStudent(s)}>
+                          Corrigir Nome
                         </Button>
-                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1 text-purple-600 hover:text-purple-800"
-                          onClick={() => setAlterarDocStudent(s)} title="Alterar documento">
-                          <FileText className="w-3 h-3" /> Doc
+                        <Button size="sm" className="h-8 px-3 text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-md font-medium"
+                          onClick={() => setAlterarDocStudent(s)}>
+                          Alterar Doc
                         </Button>
-                        {/* Editar completo */}
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0"
+                        <Button size="sm" variant="outline" className="h-8 px-3 text-xs"
                           onClick={() => { setEditingStudent(s); setImportTab("individual"); setModalOpen(true); }}>
-                          <Pencil className="w-3.5 h-3.5" />
+                          Editar
                         </Button>
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500"
+                        <Button size="sm" variant="outline" className="h-8 px-3 text-xs text-red-600 hover:bg-red-50 border-red-200"
                           onClick={() => { if (confirm("Remover este aluno?")) deleteMutation.mutate(s.id); }}>
-                          <Trash2 className="w-3.5 h-3.5" />
+                          Remover
                         </Button>
                       </div>
                     </td>
