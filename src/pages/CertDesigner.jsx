@@ -69,6 +69,7 @@ export default function CertDesigner() {
   const { data: models = [], isLoading } = useQuery({
     queryKey: ["certificateModels"],
     queryFn: () => base44.entities.CertificateModel.list("-created_date", 100),
+    staleTime: 30000,
   });
 
   const { data: digitalSignatures = [] } = useQuery({
@@ -112,18 +113,21 @@ export default function CertDesigner() {
     onSuccess: async (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ["certificateModels"] });
       toast.success("Modelo salvo com sucesso!");
+      const savedId = selectedId || result?.id;
       const action = selectedId ? "modelo_editado" : "modelo_criado";
-      logAction(action, "CertificateModel", selectedId || result?.id, variables.name, {
+      logAction(action, "CertificateModel", savedId, variables.name, {
         descricao: selectedId ? `Modelo "${variables.name}" editado` : `Modelo "${variables.name}" criado`,
         duracao: variables.duration,
         modalidade: variables.modality,
       });
       await syncCourseWithCatalog(variables);
-      if (!selectedId) {
+      if (!selectedId && result?.id) {
+        // Novo modelo criado: selecionar automaticamente para continuar editando
+        setSelectedId(result.id);
         setCreating(false);
-        setSelectedId(null);
-        setForm(DEFAULT_MODEL);
+        setForm({ ...DEFAULT_MODEL, ...variables, id: result.id });
       }
+      // Se já tinha selectedId, mantém o form atual (sem resetar)
     },
     onError: () => toast.error("Erro ao salvar modelo."),
   });
@@ -160,9 +164,12 @@ export default function CertDesigner() {
     setForm((f) => ({ ...f, [key]: { ...(f[key] || {}), [subKey]: val } }));
 
   const handleSave = () => {
-    if (!form.name) return toast.error("Informe o nome do modelo.");
-    if (!form.duration) return toast.error("Informe a carga horária.");
-    saveMutation.mutate(form);
+    if (!form.name?.trim()) { toast.error("Informe o nome do modelo."); return; }
+    if (!form.duration?.trim()) { toast.error("Informe a carga horária."); return; }
+    // Garante que o id correto está no payload ao atualizar
+    const payload = { ...form };
+    if (selectedId) delete payload.id; // update usa selectedId separadamente
+    saveMutation.mutate(payload);
   };
 
   const handleDuplicate = (model) => {
@@ -309,7 +316,11 @@ export default function CertDesigner() {
                     </Button>
                   )}
                   <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 px-3" onClick={handleSave} disabled={saveMutation.isPending}>
-                    <Save className="w-3 h-3 mr-1" /> Salvar
+                    {saveMutation.isPending ? (
+                      <><span className="w-3 h-3 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" /> Salvando...</>
+                    ) : (
+                      <><Save className="w-3 h-3 mr-1" /> Salvar</>
+                    )}
                   </Button>
                 </div>
               </div>
