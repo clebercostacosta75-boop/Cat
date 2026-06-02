@@ -78,10 +78,21 @@ export function PermissionsProvider({ children }) {
   // array = lista exata de módulos permitidos
   const [allowedKeys, setAllowedKeys] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Cache local com TTL de 5 minutos para evitar recarregamentos desnecessários
+  const [permissionCache, setPermissionCache] = useState({ data: null, timestamp: null });
 
   const load = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
     try {
+      // CACHE: Se houver dados em cache e ainda válidos (< 5 min), usar cache
+      const now = Date.now();
+      if (permissionCache.data && permissionCache.timestamp && (now - permissionCache.timestamp) < 300000) {
+        setRole(permissionCache.data.role);
+        setAllowedKeys(permissionCache.data.allowedKeys);
+        setLoading(false);
+        return;
+      }
+
       // PASSO 1: Verificar autenticação
       let u;
       try {
@@ -102,6 +113,7 @@ export function PermissionsProvider({ children }) {
       if (u.role === "admin") {
         setRole("admin");
         setAllowedKeys(null);
+        setPermissionCache({ data: { role: "admin", allowedKeys: null }, timestamp: Date.now() });
         setLoading(false);
         return;
       }
@@ -124,6 +136,7 @@ export function PermissionsProvider({ children }) {
         // Usuário sem perfil = acesso mínimo
         setRole("cliente");
         setAllowedKeys(CLIENT_MODULES);
+        setPermissionCache({ data: { role: "cliente", allowedKeys: CLIENT_MODULES }, timestamp: Date.now() });
         setLoading(false);
         return;
       }
@@ -132,30 +145,35 @@ export function PermissionsProvider({ children }) {
       setRole(profileRole);
 
       // PASSO 4: Aplicar regras por perfil
+      let finalAllowedKeys = null;
       if (profileRole === "gestor_master") {
         // Acesso total irrestrito
-        setAllowedKeys(null);
+        finalAllowedKeys = null;
       } else if (profileRole === "editor") {
         // Tudo exceto Administração
-        setAllowedKeys(EDITOR_MODULES);
+        finalAllowedKeys = EDITOR_MODULES;
       } else if (profileRole === "cliente") {
         // Apenas Dashboard, Certificações, Alertas
-        setAllowedKeys(CLIENT_MODULES);
+        finalAllowedKeys = CLIENT_MODULES;
       } else if (profileRole === "personalizado") {
         // Lista definida manualmente pelo admin
         const perms = profile.permissions || [];
-        setAllowedKeys(perms.length > 0 ? perms : []);
+        finalAllowedKeys = perms.length > 0 ? perms : [];
       } else {
         // Qualquer outro perfil legado: usar permissões salvas ou lista vazia
         const perms = profile.permissions || [];
-        setAllowedKeys(perms.length > 0 ? perms : []);
+        finalAllowedKeys = perms.length > 0 ? perms : [];
       }
+      
+      setAllowedKeys(finalAllowedKeys);
+      // Cache o resultado por 5 minutos
+      setPermissionCache({ data: { role: profileRole, allowedKeys: finalAllowedKeys }, timestamp: Date.now() });
     } catch {
       setAllowedKeys([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [permissionCache]);
 
   useEffect(() => {
     load();
@@ -168,8 +186,8 @@ export function PermissionsProvider({ children }) {
     const forceReloadHandler = () => load(true);
     window.addEventListener("permissions-force-reload", forceReloadHandler);
 
-    // Polling a cada 10 segundos (reduzido de 60s para resposta mais rápida)
-    const interval = setInterval(() => load(false), 10000);
+    // Polling a cada 30 segundos (balanço entre segurança e performance)
+    const interval = setInterval(() => load(false), 30000);
 
     return () => {
       window.removeEventListener("permissions-updated", handler);
