@@ -8,15 +8,25 @@ import { Download } from "lucide-react";
 import { buildCertificateHTMLFromModel } from "./CertificatePreview";
 
 export function exportCertificatePDF(cert, model) {
-  // Mescla: dados do modelo têm prioridade para layout, dados do cert têm prioridade para conteúdo do aluno
   const mergedModel = {
     ...(model || {}),
-    // Campos de layout/background que podem estar salvos diretamente no cert (emissões antigas)
     front_background_url: cert.front_background_url || model?.front_background_url,
     back_background_url: cert.back_background_url || model?.back_background_url,
   };
 
-  const html = buildCertificateHTMLFromModel(mergedModel, cert);
+  // Se os responsáveis do certificado não têm signature_url mas o modelo tem,
+  // usa os responsáveis do modelo (mais atualizados com assinaturas)
+  const certResps = cert.technical_responsibles || [];
+  const modelResps = model?.technical_responsibles || [];
+  const certHasSigs = certResps.some(r => r.signature_url);
+  const modelHasSigs = modelResps.some(r => r.signature_url);
+
+  const certWithResps = {
+    ...cert,
+    technical_responsibles: (!certHasSigs && modelHasSigs) ? modelResps : certResps,
+  };
+
+  const html = buildCertificateHTMLFromModel(mergedModel, certWithResps);
   const win = window.open("", "_blank");
   if (!win) {
     alert("Popup bloqueado. Por favor, permita popups para este site.");

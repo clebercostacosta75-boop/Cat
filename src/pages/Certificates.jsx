@@ -60,7 +60,10 @@ export default function Certificates() {
   });
 
   const getModelForCert = (cert) =>
-    models.find(m => m.name === cert.course_name || m.id === cert.model_id) || null;
+    models.find(m => m.id === cert.certificate_model_id)
+    || models.find(m => m.id === cert.model_id)
+    || models.find(m => m.name === cert.course_name)
+    || null;
 
   const revokeMutation = useMutation({
     mutationFn: (id) => base44.entities.Certificate.update(id, { status: "revoked" }),
