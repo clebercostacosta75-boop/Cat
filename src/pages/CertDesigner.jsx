@@ -326,20 +326,18 @@ export default function CertDesigner() {
                   {/* GERAL */}
                   <TabsContent value="geral" className="space-y-4">
                     <FieldGroup label="Nome do Modelo *">
-                      <Select value={form.name} onValueChange={v => set("name", v)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um curso cadastrado..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {courses.map(c => (
-                            <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                          ))}
-                          {courses.length === 0 && (
-                            <SelectItem value={null} disabled>Nenhum curso cadastrado</SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-gray-400">Cursos cadastrados em Cursos → aparecerão aqui automaticamente.</p>
+                      <Input
+                        value={form.name}
+                        onChange={e => set("name", e.target.value)}
+                        placeholder="Digite o nome do modelo..."
+                        list="courses-datalist"
+                      />
+                      <datalist id="courses-datalist">
+                        {courses.map(c => (
+                          <option key={c.id} value={c.name} />
+                        ))}
+                      </datalist>
+                      <p className="text-xs text-gray-400">Digite livremente ou selecione um curso cadastrado.</p>
                     </FieldGroup>
                     <FieldGroup label="Carga Horária *">
                       <Input value={form.duration} onChange={e => set("duration", e.target.value)} placeholder="Ex: 8h" />
