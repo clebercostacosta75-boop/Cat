@@ -72,6 +72,12 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
     queryFn: () => base44.entities.CertificateModel.list("-created_date", 100),
   });
 
+  // Carrega assinaturas digitais para resolver signature_url dos responsáveis
+  const { data: digitalSignatures = [] } = useQuery({
+    queryKey: ["digitalSignatures"],
+    queryFn: () => base44.entities.DigitalSignature.list("-created_date", 100),
+  });
+
   // Carrega turmas da empresa selecionada
   const { data: classSchedules = [] } = useQuery({
     queryKey: ["class-schedules-cert", clientId],
@@ -238,7 +244,14 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
         client_id: clientId,
         client_name: selectedCompany?.nome_fantasia || selectedCompany?.razao_social || "",
         instructor_name: selectedModel?.instructor_name || "",
-        technical_responsibles: selectedModel?.technical_responsibles || [],
+        technical_responsibles: (selectedModel?.technical_responsibles || []).map(r => {
+          if (r.signature_url) return r; // já tem URL, não precisa resolver
+          if (r.signature_id) {
+            const sig = digitalSignatures.find(s => s.id === r.signature_id);
+            if (sig) return { ...r, signature_url: sig.signature_url };
+          }
+          return r;
+        }),
         front_background_url: selectedModel?.front_background_url || "",
         back_background_url: selectedModel?.back_background_url || "",
         show_programmatic_hours: selectedModel?.show_programmatic_hours ?? true,
