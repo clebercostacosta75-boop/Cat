@@ -84,7 +84,7 @@ export default function CertDesigner() {
 
   const { data: digitalSignatures = [] } = useQuery({
     queryKey: ["digitalSignatures"],
-    queryFn: () => base44.entities.DigitalSignature.filter({ is_active: true }, "-created_date", 100),
+    queryFn: () => base44.entities.DigitalSignature.list("-created_date", 200),
   });
 
   const { data: courses = [] } = useQuery({
@@ -449,40 +449,40 @@ export default function CertDesigner() {
                       <Label className="text-xs text-gray-500 uppercase tracking-wider">Responsáveis Técnicos</Label>
                       <div className="mt-2 space-y-3">
                         {(form.technical_responsibles || []).map((r, i) => {
-                          const linkedSig = digitalSignatures.find(s => s.id === r.signature_id);
-                          return (
+                           return (
                           <div key={i} className="border rounded-lg p-2 space-y-1.5">
-                            {/* Vincular assinatura cadastrada */}
-                            <div className="space-y-0.5">
-                              <p className="text-[10px] text-gray-400 uppercase tracking-wider">Assinatura Digital</p>
-                              <select
-                                className="w-full border border-input rounded-md px-2 py-1.5 text-xs bg-background"
-                                value={r.signature_id || ""}
-                                onChange={e => {
-                                  const arr = [...form.technical_responsibles];
-                                  const sig = digitalSignatures.find(s => s.id === e.target.value);
-                                  arr[i] = {
-                                    ...arr[i],
-                                    signature_id: e.target.value || "",
-                                    name: sig ? sig.name : arr[i].name,
-                                    title: sig ? sig.title : arr[i].title,
-                                    registration: sig ? (sig.registration || arr[i].registration) : arr[i].registration,
-                                    signature_url: sig ? sig.signature_url : "",
-                                  };
-                                  set("technical_responsibles", arr);
-                                }}
-                              >
-                                <option value="">— Selecionar assinatura cadastrada —</option>
-                                {digitalSignatures.map(s => (
-                                  <option key={s.id} value={s.id}>{s.name} — {s.title}</option>
-                                ))}
-                              </select>
-                              {linkedSig?.signature_url && (
-                                <div className="bg-gray-50 border rounded p-1 mt-1">
-                                  <img src={linkedSig.signature_url} alt="Assinatura" className="max-h-10 object-contain" />
-                                </div>
-                              )}
-                            </div>
+                             {/* Vincular assinatura cadastrada */}
+                             <div className="space-y-0.5">
+                               <p className="text-[10px] text-gray-400 uppercase tracking-wider">Assinatura Digital</p>
+                               <select
+                                 className="w-full border border-input rounded-md px-2 py-1.5 text-xs bg-background"
+                                 value={r.signature_id || ""}
+                                 onChange={e => {
+                                   const arr = [...form.technical_responsibles];
+                                   const sig = digitalSignatures.find(s => s.id === e.target.value);
+                                   arr[i] = {
+                                     ...arr[i],
+                                     signature_id: sig ? sig.id : "",
+                                     signature_url: sig ? sig.signature_url : "",
+                                     name: sig ? sig.name : arr[i].name,
+                                     title: sig ? sig.title : arr[i].title,
+                                     registration: sig ? (sig.registration || arr[i].registration) : arr[i].registration,
+                                   };
+                                   set("technical_responsibles", arr);
+                                 }}
+                               >
+                                 <option value="">— Selecionar assinatura cadastrada —</option>
+                                 {digitalSignatures.map(s => (
+                                   <option key={s.id} value={s.id}>{s.name} — {s.title}</option>
+                                 ))}
+                               </select>
+                               {/* Usa r.signature_url do form diretamente — sempre atualizado no onChange */}
+                               {r.signature_url && (
+                                 <div className="bg-gray-50 border rounded p-1 mt-1">
+                                   <img src={r.signature_url} alt="Assinatura" className="max-h-10 object-contain" />
+                                 </div>
+                               )}
+                             </div>
                             <Input className="text-xs" placeholder="Nome" value={r.name || ""} onChange={e => { const arr = [...form.technical_responsibles]; arr[i] = { ...arr[i], name: e.target.value }; set("technical_responsibles", arr); }} />
                             <Input className="text-xs" placeholder="Título/Cargo" value={r.title || ""} onChange={e => { const arr = [...form.technical_responsibles]; arr[i] = { ...arr[i], title: e.target.value }; set("technical_responsibles", arr); }} />
                             <Input className="text-xs" placeholder="Registro (CREA, CRM...)" value={r.registration || ""} onChange={e => { const arr = [...form.technical_responsibles]; arr[i] = { ...arr[i], registration: e.target.value }; set("technical_responsibles", arr); }} />
