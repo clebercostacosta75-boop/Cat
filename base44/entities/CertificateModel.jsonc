@@ -175,6 +175,14 @@
           },
           "registration": {
             "type": "string"
+          },
+          "signature_id": {
+            "type": "string",
+            "description": "ID da assinatura digital vinculada (DigitalSignature)"
+          },
+          "signature_url": {
+            "type": "string",
+            "description": "URL da imagem da assinatura digital"
           }
         }
       },
