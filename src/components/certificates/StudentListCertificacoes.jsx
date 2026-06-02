@@ -209,7 +209,7 @@ export default function StudentListCertificacoes() {
 
   const { data: courses = [] } = useQuery({
     queryKey: ["courses"],
-    queryFn: () => base44.entities.Course.list("name", 100),
+    queryFn: () => base44.entities.Course.list("name", 500),
   });
 
   const updateMutation = useMutation({
