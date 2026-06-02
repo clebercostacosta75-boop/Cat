@@ -67,10 +67,17 @@ export default function CertDesigner() {
   const [creating, setCreating] = useState(false);
   const [editorMode, setEditorMode] = useState("form"); // "form" | "canvas"
 
+  // Limpa cache ao montar para garantir dados frescos do banco
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["certificateModels"] });
+    queryClient.invalidateQueries({ queryKey: ["digitalSignatures"] });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const { data: models = [], isLoading } = useQuery({
     queryKey: ["certificateModels"],
     queryFn: () => base44.entities.CertificateModel.list("-created_date", 100),
-    staleTime: 30000,
+    staleTime: 0,
   });
 
   const { data: digitalSignatures = [] } = useQuery({
@@ -172,16 +179,17 @@ export default function CertDesigner() {
   const selectModel = async (m) => {
     setSelectedId(m.id);
     setCreating(false);
-    // Limpa sessionStorage para forçar dados frescos
-    sessionStorage.removeItem("certdesigner_state");
     try {
-      const [freshList, allSigs] = await Promise.all([
-        base44.entities.CertificateModel.list("-created_date", 100),
-        base44.entities.DigitalSignature.list("-created_date", 200),
-      ]);
-      const data = freshList.find(x => x.id === m.id) || m;
-      setForm({ ...DEFAULT_MODEL, ...data, technical_responsibles: resolveSignatures(data.technical_responsibles, allSigs) });
-    } catch {
+      // Busca dados frescos diretamente, sem cache
+      const allSigs = await base44.entities.DigitalSignature.list("-created_date", 200);
+      // Pega o modelo direto do banco pelo filtro
+      const freshModels = await base44.entities.CertificateModel.list("-created_date", 100);
+      const data = freshModels.find(x => x.id === m.id) || m;
+      const resolved = resolveSignatures(data.technical_responsibles, allSigs);
+      console.log("selectModel - responsibles com assinaturas:", resolved.map(r => ({ name: r.name, has_url: !!r.signature_url })));
+      setForm({ ...DEFAULT_MODEL, ...data, technical_responsibles: resolved });
+    } catch (e) {
+      console.error("selectModel error:", e);
       setForm({ ...DEFAULT_MODEL, ...m });
     }
   };
