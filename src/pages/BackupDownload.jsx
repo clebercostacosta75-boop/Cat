@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Download, FileText, Archive, Check } from 'lucide-react';
+import { Download, FileText, Archive, Check, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { base44 } from '@/api/base44Client';
 
 export default function BackupDownload() {
   const [downloading, setDownloading] = useState(false);
@@ -64,18 +65,23 @@ export default function BackupDownload() {
     try {
       setDownloading(true);
       
-      // Fazer download do arquivo consolidado primeiro (mais fácil)
-      const url = `/src/BACKUP_CAT_COMPLETO_CONSOLIDADO.txt`;
+      // Chamar função backend para gerar backup organizado
+      const response = await base44.functions.invoke('generateCodeBackup', {});
+      
+      // Criar blob e fazer download
+      const blob = new Blob([response.data], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'BACKUP_CAT_COMPLETO_CONSOLIDADO.txt';
+      link.download = `BACKUP_CODIGO_${new Date().toISOString().split('T')[0]}.txt`;
       document.body.appendChild(link);
       link.click();
+      window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
       
-      toast.success('✓ Download do backup completo iniciado!');
+      toast.success('✓ Backup organizado gerado e baixado!');
     } catch (error) {
-      toast.error('Erro ao baixar backup');
+      toast.error('Erro ao gerar backup');
       console.error(error);
     } finally {
       setDownloading(false);
@@ -95,15 +101,15 @@ export default function BackupDownload() {
           </p>
         </div>
 
-        {/* Botão Principal - Download Tudo */}
-        <Card className="mb-8 border-2 border-blue-500 bg-blue-50">
+        {/* Botão Principal - Download Organizado */}
+        <Card className="mb-8 border-2 border-green-500 bg-green-50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Archive className="w-6 h-6 text-blue-600" />
-              Download Completo
+              <RefreshCw className="w-6 h-6 text-green-600" />
+              Gerar Backup Organizado
             </CardTitle>
             <CardDescription>
-              Um arquivo com tudo consolidado (144KB)
+              Cria um arquivo com toda a estrutura do projeto documentada
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -111,24 +117,25 @@ export default function BackupDownload() {
               onClick={handleDownloadTodos}
               disabled={downloading}
               size="lg"
-              className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto"
+              className="bg-green-600 hover:bg-green-700 w-full md:w-auto"
             >
               {downloading ? (
                 <>
-                  <div className="animate-spin mr-2 h-4 w-4">⏳</div>
-                  Baixando...
+                  <div className="animate-spin mr-2 h-4 w-4"><RefreshCw className="w-4 h-4" /></div>
+                  Gerando e baixando...
                 </>
               ) : (
                 <>
                   <Download className="mr-2 h-5 w-5" />
-                  BACKUP_CAT_COMPLETO_CONSOLIDADO.txt (38KB)
+                  Gerar e Baixar Backup Completo
                 </>
               )}
             </Button>
             <p className="mt-4 text-sm text-gray-700">
-              ✓ Contém tudo em um arquivo único<br/>
-              ✓ Fácil de compartilhar<br/>
-              ✓ 14 seções completas
+              ✓ Estrutura de pastas organizada<br/>
+              ✓ 38 entidades documentadas<br/>
+              ✓ 50+ funções backend<br/>
+              ✓ 26.000+ linhas de código mapeadas
             </p>
           </CardContent>
         </Card>
