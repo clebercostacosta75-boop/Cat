@@ -160,21 +160,23 @@ export default function CertDesigner() {
   const selectModel = async (m) => {
     setSelectedId(m.id);
     setCreating(false);
-    // Busca dados frescos do banco pelo ID
     try {
-      const fresh = await base44.entities.CertificateModel.filter({ id: m.id });
-      const data = (fresh && fresh.length > 0) ? fresh[0] : m;
-      // Re-resolve signature_url para cada responsável técnico a partir do signature_id
+      // Busca dados frescos do modelo e todas as assinaturas diretamente do banco
+      const [freshList, allSigs] = await Promise.all([
+        base44.entities.CertificateModel.filter({ id: m.id }),
+        base44.entities.DigitalSignature.list("-created_date", 200),
+      ]);
+      const data = (freshList && freshList.length > 0) ? freshList[0] : m;
+      // Resolve signature_url para cada responsável usando o banco, não o estado da query
       const resolvedResponsibles = (data.technical_responsibles || []).map(r => {
         if (r.signature_id) {
-          const sig = digitalSignatures.find(s => s.id === r.signature_id);
-          if (sig) return { ...r, signature_url: sig.signature_url, name: r.name || sig.name, title: r.title || sig.title };
+          const sig = allSigs.find(s => s.id === r.signature_id);
+          if (sig) return { ...r, signature_url: sig.signature_url, name: r.name || sig.name, title: r.title || sig.title, registration: r.registration || sig.registration };
         }
         return r;
       });
       setForm({ ...DEFAULT_MODEL, ...data, technical_responsibles: resolvedResponsibles });
     } catch {
-      // fallback para dados da lista
       setForm({ ...DEFAULT_MODEL, ...m });
     }
   };
@@ -192,9 +194,16 @@ export default function CertDesigner() {
   const handleSave = () => {
     if (!form.name?.trim()) { toast.error("Informe o nome do modelo."); return; }
     if (!form.duration?.trim()) { toast.error("Informe a carga horária."); return; }
-    // Garante que o id correto está no payload ao atualizar
-    const payload = { ...form };
-    if (selectedId) delete payload.id; // update usa selectedId separadamente
+    // Garante signature_url persistida junto com signature_id para cada responsável
+    const resolvedResponsibles = (form.technical_responsibles || []).map(r => {
+      if (r.signature_id && !r.signature_url) {
+        const sig = digitalSignatures.find(s => s.id === r.signature_id);
+        if (sig) return { ...r, signature_url: sig.signature_url };
+      }
+      return r;
+    });
+    const payload = { ...form, technical_responsibles: resolvedResponsibles };
+    if (selectedId) delete payload.id;
     saveMutation.mutate(payload);
   };
 
