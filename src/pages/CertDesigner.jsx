@@ -3,7 +3,7 @@
  * Permite criar/editar modelos (CertificateModel) com pré-visualização em tempo real.
  * A pré-visualização usa o mesmo componente CertificatePreview usado na emissão.
  */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { logAction } from "@/components/audit/AuditLogger";
@@ -61,10 +61,20 @@ function FieldGroup({ label, children }) {
 
 export default function CertDesigner() {
   const queryClient = useQueryClient();
-  const [selectedId, setSelectedId] = useState(null);
-  const [form, setForm] = useState(DEFAULT_MODEL);
-  const [creating, setCreating] = useState(false);
+  // Restaura estado da sessão ao voltar para a página
+  const sessionState = (() => {
+    try { return JSON.parse(sessionStorage.getItem("certdesigner_state") || "null"); } catch { return null; }
+  })();
+
+  const [selectedId, setSelectedId] = useState(sessionState?.selectedId || null);
+  const [form, setForm] = useState(sessionState?.form || DEFAULT_MODEL);
+  const [creating, setCreating] = useState(sessionState?.creating || false);
   const [editorMode, setEditorMode] = useState("form"); // "form" | "canvas"
+
+  // Persiste estado no sessionStorage sempre que muda
+  useEffect(() => {
+    sessionStorage.setItem("certdesigner_state", JSON.stringify({ selectedId, form, creating }));
+  }, [selectedId, form, creating]);
 
   const { data: models = [], isLoading } = useQuery({
     queryKey: ["certificateModels"],
