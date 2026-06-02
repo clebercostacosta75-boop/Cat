@@ -439,7 +439,7 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
             <SelectContent>
               {models.map(m => (
                 <SelectItem key={m.id} value={m.id}>
-                  📜 {m.name} ({m.duration})
+                  📜 {m.name}
                 </SelectItem>
               ))}
             </SelectContent>
