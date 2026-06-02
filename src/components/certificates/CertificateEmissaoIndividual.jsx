@@ -10,8 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Award, Building2, FileText, User, Loader2, Search, AlertTriangle, CheckCircle2, X, Calendar, Users } from "lucide-react";
+import { Award, Building2, FileText, User, Loader2, Search, AlertTriangle, CheckCircle2, X } from "lucide-react";
 import { format, addMonths } from "date-fns";
+
+// CNPJ da empresa CAT que deve ser pré-selecionada
+const CAT_CNPJ = "07.238.084/0001-45";
+const CAT_NOME_FANTASIA = "CAT - CURSOS DE APRIMORAMENTO DO TRABALHADOR";
+const CAT_RAZAO_SOCIAL = "V.S. NUNES CURSOS E TREINAMENTO LTDA";
 
 function gerarCodigo() {
   const rand = Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -22,19 +27,12 @@ function normStr(v) {
   return (v || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").trim();
 }
 
-function formatDateBR(dateStr) {
-  if (!dateStr) return "—";
-  try { return new Date(dateStr + "T00:00:00").toLocaleDateString("pt-BR"); } catch { return dateStr; }
-}
-
 export default function CertificateEmissaoIndividual({ onSuccess }) {
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
-  // Fluxo: Empresa → Turma → Aluno
   const [clientId, setClientId] = useState("");
-  const [selectedClassId, setSelectedClassId] = useState("");
   const [modelId, setModelId] = useState("");
   const [sendWhatsApp, setSendWhatsApp] = useState(true);
 
@@ -72,32 +70,34 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
     queryFn: () => base44.entities.CertificateModel.list("-created_date", 100),
   });
 
-  // Carrega assinaturas digitais para resolver signature_url dos responsáveis
-  const { data: digitalSignatures = [] } = useQuery({
-    queryKey: ["digitalSignatures"],
-    queryFn: () => base44.entities.DigitalSignature.list("-created_date", 100),
-  });
-
-  // Carrega turmas da empresa selecionada
-  const { data: classSchedules = [] } = useQuery({
-    queryKey: ["class-schedules-cert", clientId],
-    queryFn: () => clientId
-      ? base44.entities.ClassSchedule.filter({ company_id: clientId }, "-created_date", 100)
-      : Promise.resolve([]),
-    enabled: !!clientId,
-  });
-
-  // Carrega alunos (filtra pela empresa se selecionada)
+  // Carrega alunos individuais (PF)
   const { data: students = [] } = useQuery({
-    queryKey: ["students-cert", clientId],
+    queryKey: ["students-pf-cert"],
     queryFn: () => base44.entities.Student.list("-created_date", 500),
   });
 
-  // Carrega matrículas
+  // Carrega matrículas (para buscar cursos do aluno selecionado)
   const { data: allEnrollments = [] } = useQuery({
-    queryKey: ["enrollments-cert", clientId],
-    queryFn: () => base44.entities.StudentCourseEnrollment.list("-created_date", 500),
+    queryKey: ["enrollments-pf-cert"],
+    queryFn: async () => {
+      const all = await base44.entities.StudentCourseEnrollment.list("-created_date", 500);
+      return (all || []).filter(e => !e.company_id || e.company_id === "individual" || e.company_name === "Individual (PF)");
+    },
   });
+
+  // Pré-selecionar empresa CAT ao carregar
+  useEffect(() => {
+    if (companies.length === 0) return;
+    // Buscar pela empresa CAT pelo CNPJ ou nome
+    const cat = companies.find(c =>
+      (c.cnpj || "").replace(/\D/g, "") === CAT_CNPJ.replace(/\D/g, "") ||
+      normStr(c.nome_fantasia || "").includes("cat") ||
+      normStr(c.razao_social || "").includes("nunes cursos")
+    );
+    if (cat && !clientId) {
+      setClientId(cat.id);
+    }
+  }, [companies]);
 
   // Fechar dropdown ao clicar fora
   useEffect(() => {
@@ -112,76 +112,32 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
 
   const selectedCompany = companies.find(c => c.id === clientId);
   const selectedModel = models.find(m => m.id === modelId);
-  const selectedClass = classSchedules.find(c => c.id === selectedClassId);
 
   const handleField = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  // Ao selecionar empresa, resetar turma e aluno
-  const handleSelectCompany = (id) => {
-    setClientId(id);
-    setSelectedClassId("");
-    clearStudent();
-  };
-
-  // Ao selecionar turma, preencher datas e modelo automaticamente
-  const handleSelectClass = (classId) => {
-    setSelectedClassId(classId);
-    clearStudent();
-    const cls = classSchedules.find(c => c.id === classId);
-    if (!cls) return;
-
-    // Preencher datas da turma
-    const dates = cls.realization_dates || [];
-    if (dates.length > 0) {
-      handleField("start_date", dates[0]);
-      handleField("end_date", dates[dates.length - 1]);
-    }
-
-    // Tentar encontrar modelo pelo nome do treinamento
-    if (cls.training_name) {
-      const tNorm = normStr(cls.training_name);
-      const matchModel = models.find(m => normStr(m.name).includes(tNorm) || tNorm.includes(normStr(m.name)));
-      if (matchModel) setModelId(matchModel.id);
-    }
-  };
-
-  // Filtrar alunos: se empresa selecionada, priorizar alunos da empresa
-  const studentsFiltered = clientId
-    ? students.filter(s => s.company_name === selectedCompany?.nome_fantasia || s.company_id === clientId || !s.company_id)
-    : students;
-
-  // Resultados de busca de alunos
+  // Resultados de busca de alunos filtrados
   const searchNorm = normStr(searchQuery);
-  const filteredStudents = searchNorm.length < 2 ? [] : studentsFiltered.filter(s =>
+  const filteredStudents = searchNorm.length < 2 ? [] : students.filter(s =>
     normStr(s.full_name || "").includes(searchNorm) ||
     normStr(s.cpf || "").includes(searchNorm.replace(/\D/g, ""))
   ).slice(0, 8);
 
-  // Ao selecionar aluno: preenche dados e busca matrículas
+  // Ao selecionar aluno
   const handleSelectStudent = (student) => {
     setSelectedStudent(student);
     setSearchQuery(student.full_name);
     setShowSearchResults(false);
 
-    // Buscar matrículas do aluno (filtrando pela turma se selecionada)
-    let enrolls = allEnrollments.filter(e =>
-      e.student_id === student.id || e.student_cpf === student.cpf
-    );
-    if (selectedClassId) {
-      const classEnrolls = enrolls.filter(e => e.class_schedule_id === selectedClassId);
-      if (classEnrolls.length > 0) enrolls = classEnrolls;
-    }
+    // Buscar matrículas do aluno
+    const enrolls = allEnrollments.filter(e => e.student_id === student.id || e.student_cpf === student.cpf);
     setStudentEnrollments(enrolls);
 
-    // Preencher dados do aluno automaticamente
+    // Preencher dados do aluno
     setForm(f => ({
       ...f,
       student_name: student.full_name || "",
       student_cpf: student.cpf || "",
-      student_phone: student.whatsapp || student.phone || "",
-      detran_registro: student.detran_registro || f.detran_registro,
-      renach: student.renach || f.renach,
-      categoria_cnh: student.categoria_cnh || f.categoria_cnh,
+      student_phone: student.whatsapp || "",
     }));
 
     // Se tem exatamente 1 matrícula, preencher automaticamente
@@ -195,8 +151,8 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
   // Ao selecionar matrícula (quando aluno tem múltiplas)
   const applyEnrollment = (enrollment) => {
     setSelectedEnrollment(enrollment);
-    if (enrollment.start_date) handleField("start_date", enrollment.start_date);
-    if (enrollment.end_date) handleField("end_date", enrollment.end_date);
+    handleField("start_date", enrollment.start_date || form.start_date);
+    handleField("end_date", enrollment.end_date || form.end_date);
 
     // Tentar encontrar o modelo de certificado pelo nome do curso
     if (enrollment.course_name) {
@@ -211,7 +167,7 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
     setSelectedEnrollment(null);
     setStudentEnrollments([]);
     setSearchQuery("");
-    setForm(f => ({ ...f, student_name: "", student_cpf: "", student_phone: "", detran_registro: "", renach: "", categoria_cnh: "" }));
+    setForm(f => ({ ...f, student_name: "", student_cpf: "", student_phone: "" }));
   };
 
   const handleSave = async () => {
@@ -244,14 +200,7 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
         client_id: clientId,
         client_name: selectedCompany?.nome_fantasia || selectedCompany?.razao_social || "",
         instructor_name: selectedModel?.instructor_name || "",
-        technical_responsibles: (selectedModel?.technical_responsibles || []).map(r => {
-          if (r.signature_url) return r; // já tem URL, não precisa resolver
-          if (r.signature_id) {
-            const sig = digitalSignatures.find(s => s.id === r.signature_id);
-            if (sig) return { ...r, signature_url: sig.signature_url };
-          }
-          return r;
-        }),
+        technical_responsibles: selectedModel?.technical_responsibles || [],
         front_background_url: selectedModel?.front_background_url || "",
         back_background_url: selectedModel?.back_background_url || "",
         show_programmatic_hours: selectedModel?.show_programmatic_hours ?? true,
@@ -316,15 +265,15 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
   return (
     <div className="space-y-5">
 
-      {/* 1. Empresa */}
+      {/* 1. Cliente — pré-selecionado: CAT */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-            <Building2 className="w-4 h-4" /> 1. Empresa
+            <Building2 className="w-4 h-4" /> 1. Cliente
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Select value={clientId} onValueChange={handleSelectCompany}>
+          <Select value={clientId} onValueChange={setClientId}>
             <SelectTrigger>
               <SelectValue placeholder="🏢 Selecione a empresa..." />
             </SelectTrigger>
@@ -340,64 +289,17 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
           {selectedCompany && (
             <div className="mt-2 flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-3 py-1.5">
               <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
-              <span><strong>{selectedCompany.nome_fantasia || selectedCompany.razao_social}</strong></span>
+              <span><strong>{selectedCompany.nome_fantasia || selectedCompany.razao_social}</strong>{selectedCompany.cnpj ? ` — CNPJ: ${selectedCompany.cnpj}` : ""}</span>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* 2. Turma / Treinamento (opcional, filtra alunos) */}
-      {clientId && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Calendar className="w-4 h-4" /> 2. Turma / Treinamento <span className="text-gray-400 font-normal text-xs">(opcional)</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {classSchedules.length === 0 ? (
-              <p className="text-xs text-gray-400 italic">Nenhuma turma encontrada para esta empresa. Prossiga sem selecionar turma.</p>
-            ) : (
-              <Select value={selectedClassId} onValueChange={handleSelectClass}>
-                <SelectTrigger>
-                  <SelectValue placeholder="📅 Selecione a turma (opcional)..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {classSchedules.map(cls => (
-                    <SelectItem key={cls.id} value={cls.id}>
-                      📅 {cls.training_name}
-                      {cls.realization_dates?.length > 0 ? ` — ${formatDateBR(cls.realization_dates[0])}` : ""}
-                      {cls.status ? ` [${cls.status}]` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            {selectedClass && (
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-xs text-purple-800 space-y-1">
-                <p className="font-semibold">{selectedClass.training_name}</p>
-                <div className="flex flex-wrap gap-3 text-purple-600">
-                  {selectedClass.realization_dates?.length > 0 && (
-                    <span>📅 {selectedClass.realization_dates.map(d => formatDateBR(d)).join(", ")}</span>
-                  )}
-                  {selectedClass.instructor_name && <span>👨‍🏫 {selectedClass.instructor_name}</span>}
-                  {selectedClass.location && <span>📍 {selectedClass.location}</span>}
-                  {selectedClass.students_count && <span><Users className="w-3 h-3 inline" /> {selectedClass.students_count} alunos</span>}
-                </div>
-                {modelId && selectedModel && (
-                  <p className="text-emerald-700 font-medium">✅ Modelo sugerido: {selectedModel.name}</p>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 3. Buscar Aluno */}
+      {/* 2. Buscar Aluno */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-            <Search className="w-4 h-4" /> {clientId ? "3" : "2"}. Buscar Aluno Cadastrado
+            <Search className="w-4 h-4" /> 2. Buscar Aluno Cadastrado
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -428,11 +330,7 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
                     onClick={() => handleSelectStudent(s)}
                   >
                     <p className="text-sm font-semibold text-gray-900">{s.full_name}</p>
-                    <p className="text-xs text-gray-500">
-                      CPF: {s.cpf}
-                      {s.whatsapp ? ` • WhatsApp: ${s.whatsapp}` : ""}
-                      {s.company_name ? ` • ${s.company_name}` : ""}
-                    </p>
+                    <p className="text-xs text-gray-500">CPF: {s.cpf}{s.whatsapp ? ` • WhatsApp: ${s.whatsapp}` : ""}</p>
                   </button>
                 ))}
               </div>
@@ -444,22 +342,14 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
             )}
           </div>
 
-          {/* Aluno selecionado — dados preenchidos automaticamente */}
+          {/* Aluno selecionado */}
           {selectedStudent && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm space-y-1">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm space-y-0.5">
               <p className="font-semibold text-blue-900">✅ {selectedStudent.full_name}</p>
-              <p className="text-xs text-blue-700">
-                CPF: {selectedStudent.cpf}
-                {selectedStudent.whatsapp ? ` • WhatsApp: ${selectedStudent.whatsapp}` : ""}
-              </p>
-              <div className="flex flex-wrap gap-1 mt-1">
-                <Badge className="bg-blue-100 text-blue-700 text-xs">
-                  {studentEnrollments.length} matrícula(s)
-                </Badge>
-                {selectedStudent.detran_registro && (
-                  <Badge className="bg-gray-100 text-gray-600 text-xs">DETRAN: {selectedStudent.detran_registro}</Badge>
-                )}
-              </div>
+              <p className="text-xs text-blue-700">CPF: {selectedStudent.cpf}{selectedStudent.whatsapp ? ` • WhatsApp: ${selectedStudent.whatsapp}` : ""}</p>
+              <Badge className="bg-blue-100 text-blue-700 text-xs mt-1">
+                {studentEnrollments.length} matrícula(s) encontrada(s)
+              </Badge>
             </div>
           )}
 
@@ -480,7 +370,7 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
                 <SelectContent>
                   {studentEnrollments.map(enroll => (
                     <SelectItem key={enroll.id} value={enroll.id}>
-                      📚 {enroll.course_name} — {formatDateBR(enroll.start_date)} a {formatDateBR(enroll.end_date)}
+                      📚 {enroll.course_name} — {enroll.start_date ? new Date(enroll.start_date + "T00:00:00").toLocaleDateString("pt-BR") : "?"} a {enroll.end_date ? new Date(enroll.end_date + "T00:00:00").toLocaleDateString("pt-BR") : "?"}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -497,11 +387,11 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
         </CardContent>
       </Card>
 
-      {/* 4. Modelo do Certificado */}
+      {/* 3. Modelo do Certificado */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-            <FileText className="w-4 h-4" /> {clientId ? "4" : "3"}. Modelo do Certificado
+            <FileText className="w-4 h-4" /> 3. Modelo do Certificado
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">

@@ -3,7 +3,7 @@
  * Permite criar/editar modelos (CertificateModel) com pré-visualização em tempo real.
  * A pré-visualização usa o mesmo componente CertificatePreview usado na emissão.
  */
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { logAction } from "@/components/audit/AuditLogger";
@@ -61,41 +61,20 @@ function FieldGroup({ label, children }) {
 
 export default function CertDesigner() {
   const queryClient = useQueryClient();
-
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(DEFAULT_MODEL);
   const [creating, setCreating] = useState(false);
   const [editorMode, setEditorMode] = useState("form"); // "form" | "canvas"
 
-  // Limpa cache ao montar para garantir dados frescos do banco
-  useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ["certificateModels"] });
-    queryClient.invalidateQueries({ queryKey: ["digitalSignatures"] });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const { data: models = [], isLoading } = useQuery({
     queryKey: ["certificateModels"],
     queryFn: () => base44.entities.CertificateModel.list("-created_date", 100),
-    staleTime: 0,
   });
 
   const { data: digitalSignatures = [] } = useQuery({
     queryKey: ["digitalSignatures"],
-    queryFn: () => base44.entities.DigitalSignature.list("-created_date", 200),
+    queryFn: () => base44.entities.DigitalSignature.filter({ is_active: true }, "-created_date", 100),
   });
-
-  // Quando as assinaturas carregam, resolve URLs dos responsáveis no form atual
-  useEffect(() => {
-    if (!digitalSignatures.length || !form.technical_responsibles?.length) return;
-    const hasUnresolved = form.technical_responsibles.some(r => r.signature_id && !r.signature_url);
-    if (!hasUnresolved) return;
-    setForm(f => ({
-      ...f,
-      technical_responsibles: resolveSignatures(f.technical_responsibles, digitalSignatures),
-    }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [digitalSignatures]);
 
   const { data: courses = [] } = useQuery({
     queryKey: ["coursesForDesigner"],
@@ -133,21 +112,18 @@ export default function CertDesigner() {
     onSuccess: async (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ["certificateModels"] });
       toast.success("Modelo salvo com sucesso!");
-      const savedId = selectedId || result?.id;
       const action = selectedId ? "modelo_editado" : "modelo_criado";
-      logAction(action, "CertificateModel", savedId, variables.name, {
+      logAction(action, "CertificateModel", selectedId || result?.id, variables.name, {
         descricao: selectedId ? `Modelo "${variables.name}" editado` : `Modelo "${variables.name}" criado`,
         duracao: variables.duration,
         modalidade: variables.modality,
       });
       await syncCourseWithCatalog(variables);
-      if (!selectedId && result?.id) {
-        // Novo modelo criado: selecionar automaticamente para continuar editando
-        setSelectedId(result.id);
+      if (!selectedId) {
         setCreating(false);
-        setForm({ ...DEFAULT_MODEL, ...variables, id: result.id });
+        setSelectedId(null);
+        setForm(DEFAULT_MODEL);
       }
-      // Se já tinha selectedId, mantém o form atual (sem resetar)
     },
     onError: () => toast.error("Erro ao salvar modelo."),
   });
@@ -167,31 +143,10 @@ export default function CertDesigner() {
     },
   });
 
-  const resolveSignatures = (responsibles, allSigs) =>
-    (responsibles || []).map(r => {
-      if (r.signature_id) {
-        const sig = allSigs.find(s => s.id === r.signature_id);
-        if (sig) return { ...r, signature_url: sig.signature_url };
-      }
-      return r;
-    });
-
-  const selectModel = async (m) => {
+  const selectModel = (m) => {
     setSelectedId(m.id);
+    setForm({ ...DEFAULT_MODEL, ...m });
     setCreating(false);
-    try {
-      // Busca dados frescos diretamente, sem cache
-      const allSigs = await base44.entities.DigitalSignature.list("-created_date", 200);
-      // Pega o modelo direto do banco pelo filtro
-      const freshModels = await base44.entities.CertificateModel.list("-created_date", 100);
-      const data = freshModels.find(x => x.id === m.id) || m;
-      const resolved = resolveSignatures(data.technical_responsibles, allSigs);
-      console.log("selectModel - responsibles com assinaturas:", resolved.map(r => ({ name: r.name, has_url: !!r.signature_url })));
-      setForm({ ...DEFAULT_MODEL, ...data, technical_responsibles: resolved });
-    } catch (e) {
-      console.error("selectModel error:", e);
-      setForm({ ...DEFAULT_MODEL, ...m });
-    }
   };
 
   const startNew = () => {
@@ -205,19 +160,9 @@ export default function CertDesigner() {
     setForm((f) => ({ ...f, [key]: { ...(f[key] || {}), [subKey]: val } }));
 
   const handleSave = () => {
-    if (!form.name?.trim()) { toast.error("Informe o nome do modelo."); return; }
-    if (!form.duration?.trim()) { toast.error("Informe a carga horária."); return; }
-    // Garante signature_url persistida junto com signature_id para cada responsável
-    const resolvedResponsibles = (form.technical_responsibles || []).map(r => {
-      if (r.signature_id && !r.signature_url) {
-        const sig = digitalSignatures.find(s => s.id === r.signature_id);
-        if (sig) return { ...r, signature_url: sig.signature_url };
-      }
-      return r;
-    });
-    const payload = { ...form, technical_responsibles: resolvedResponsibles };
-    if (selectedId) delete payload.id;
-    saveMutation.mutate(payload);
+    if (!form.name) return toast.error("Informe o nome do modelo.");
+    if (!form.duration) return toast.error("Informe a carga horária.");
+    saveMutation.mutate(form);
   };
 
   const handleDuplicate = (model) => {
@@ -364,11 +309,7 @@ export default function CertDesigner() {
                     </Button>
                   )}
                   <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 px-3" onClick={handleSave} disabled={saveMutation.isPending}>
-                    {saveMutation.isPending ? (
-                      <><span className="w-3 h-3 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" /> Salvando...</>
-                    ) : (
-                      <><Save className="w-3 h-3 mr-1" /> Salvar</>
-                    )}
+                    <Save className="w-3 h-3 mr-1" /> Salvar
                   </Button>
                 </div>
               </div>
@@ -385,18 +326,20 @@ export default function CertDesigner() {
                   {/* GERAL */}
                   <TabsContent value="geral" className="space-y-4">
                     <FieldGroup label="Nome do Modelo *">
-                      <Input
-                        value={form.name}
-                        onChange={e => set("name", e.target.value)}
-                        placeholder="Digite o nome do modelo..."
-                        list="courses-datalist"
-                      />
-                      <datalist id="courses-datalist">
-                        {courses.map(c => (
-                          <option key={c.id} value={c.name} />
-                        ))}
-                      </datalist>
-                      <p className="text-xs text-gray-400">Digite livremente ou selecione um curso cadastrado.</p>
+                      <Select value={form.name} onValueChange={v => set("name", v)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um curso cadastrado..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {courses.map(c => (
+                            <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                          ))}
+                          {courses.length === 0 && (
+                            <SelectItem value={null} disabled>Nenhum curso cadastrado</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-400">Cursos cadastrados em Cursos → aparecerão aqui automaticamente.</p>
                     </FieldGroup>
                     <FieldGroup label="Carga Horária *">
                       <Input value={form.duration} onChange={e => set("duration", e.target.value)} placeholder="Ex: 8h" />
@@ -462,40 +405,40 @@ export default function CertDesigner() {
                       <Label className="text-xs text-gray-500 uppercase tracking-wider">Responsáveis Técnicos</Label>
                       <div className="mt-2 space-y-3">
                         {(form.technical_responsibles || []).map((r, i) => {
-                           return (
+                          const linkedSig = digitalSignatures.find(s => s.id === r.signature_id);
+                          return (
                           <div key={i} className="border rounded-lg p-2 space-y-1.5">
-                             {/* Vincular assinatura cadastrada */}
-                             <div className="space-y-0.5">
-                               <p className="text-[10px] text-gray-400 uppercase tracking-wider">Assinatura Digital</p>
-                               <select
-                                 className="w-full border border-input rounded-md px-2 py-1.5 text-xs bg-background"
-                                 value={r.signature_id || ""}
-                                 onChange={e => {
-                                   const arr = [...form.technical_responsibles];
-                                   const sig = digitalSignatures.find(s => s.id === e.target.value);
-                                   arr[i] = {
-                                     ...arr[i],
-                                     signature_id: sig ? sig.id : "",
-                                     signature_url: sig ? sig.signature_url : "",
-                                     name: sig ? sig.name : arr[i].name,
-                                     title: sig ? sig.title : arr[i].title,
-                                     registration: sig ? (sig.registration || arr[i].registration) : arr[i].registration,
-                                   };
-                                   set("technical_responsibles", arr);
-                                 }}
-                               >
-                                 <option value="">— Selecionar assinatura cadastrada —</option>
-                                 {digitalSignatures.map(s => (
-                                   <option key={s.id} value={s.id}>{s.name} — {s.title}</option>
-                                 ))}
-                               </select>
-                               {/* Usa r.signature_url do form diretamente — sempre atualizado no onChange */}
-                               {r.signature_url && (
-                                 <div className="bg-gray-50 border rounded p-1 mt-1">
-                                   <img src={r.signature_url} alt="Assinatura" className="max-h-10 object-contain" />
-                                 </div>
-                               )}
-                             </div>
+                            {/* Vincular assinatura cadastrada */}
+                            <div className="space-y-0.5">
+                              <p className="text-[10px] text-gray-400 uppercase tracking-wider">Assinatura Digital</p>
+                              <select
+                                className="w-full border border-input rounded-md px-2 py-1.5 text-xs bg-background"
+                                value={r.signature_id || ""}
+                                onChange={e => {
+                                  const arr = [...form.technical_responsibles];
+                                  const sig = digitalSignatures.find(s => s.id === e.target.value);
+                                  arr[i] = {
+                                    ...arr[i],
+                                    signature_id: e.target.value || "",
+                                    name: sig ? sig.name : arr[i].name,
+                                    title: sig ? sig.title : arr[i].title,
+                                    registration: sig ? (sig.registration || arr[i].registration) : arr[i].registration,
+                                    signature_url: sig ? sig.signature_url : "",
+                                  };
+                                  set("technical_responsibles", arr);
+                                }}
+                              >
+                                <option value="">— Selecionar assinatura cadastrada —</option>
+                                {digitalSignatures.map(s => (
+                                  <option key={s.id} value={s.id}>{s.name} — {s.title}</option>
+                                ))}
+                              </select>
+                              {linkedSig?.signature_url && (
+                                <div className="bg-gray-50 border rounded p-1 mt-1">
+                                  <img src={linkedSig.signature_url} alt="Assinatura" className="max-h-10 object-contain" />
+                                </div>
+                              )}
+                            </div>
                             <Input className="text-xs" placeholder="Nome" value={r.name || ""} onChange={e => { const arr = [...form.technical_responsibles]; arr[i] = { ...arr[i], name: e.target.value }; set("technical_responsibles", arr); }} />
                             <Input className="text-xs" placeholder="Título/Cargo" value={r.title || ""} onChange={e => { const arr = [...form.technical_responsibles]; arr[i] = { ...arr[i], title: e.target.value }; set("technical_responsibles", arr); }} />
                             <Input className="text-xs" placeholder="Registro (CREA, CRM...)" value={r.registration || ""} onChange={e => { const arr = [...form.technical_responsibles]; arr[i] = { ...arr[i], registration: e.target.value }; set("technical_responsibles", arr); }} />
@@ -542,7 +485,7 @@ export default function CertDesigner() {
                     <FieldGroup label="Texto do Corpo (Frente)">
                       <textarea
                         className="w-full border border-input rounded-md px-3 py-2 text-sm min-h-[80px] resize-y bg-background"
-                        value={form.front_body_text || DEFAULT_MODEL.front_body_text}
+                        value={form.front_body_text || "concluiu com êxito o curso de [CURSO]\ncom carga horária de [CARGA], realizado na empresa [EMPRESA], em [LOCAL]."}
                         onChange={e => set("front_body_text", e.target.value)}
                       />
                       <p className="text-xs text-gray-400">Variáveis: [ALUNO] [CURSO] [CARGA] [EMPRESA] [LOCAL] [DATA_INICIO] [DATA_FIM] [DATA_EMISSAO]</p>

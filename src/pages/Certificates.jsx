@@ -6,13 +6,16 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Award, Search, Clock, Settings, CheckCircle, XCircle } from "lucide-react";
+import { Award, Search, Clock, Settings, PlusCircle, Users, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import CertificateExporter from "@/components/certificates/CertificateExporter";
 import CertificateValidation from "@/components/certificates/CertificateValidation";
 import CertificateQRCode from "@/components/certificates/CertificateQRCode";
 import BulkCertificateExporter from "@/components/certificates/BulkCertificateExporter";
 import { Checkbox } from "@/components/ui/checkbox";
+import CertificateEmissaoIndividual from "@/components/certificates/CertificateEmissaoIndividual";
+import CertificateEmissaoMassa from "@/components/certificates/CertificateEmissaoMassa";
 import CertificateActionBar from "@/components/certificates/CertificateActionBar";
 
 const statusConfig = {
@@ -60,10 +63,7 @@ export default function Certificates() {
   });
 
   const getModelForCert = (cert) =>
-    models.find(m => m.id === cert.certificate_model_id)
-    || models.find(m => m.id === cert.model_id)
-    || models.find(m => m.name === cert.course_name)
-    || null;
+    models.find(m => m.name === cert.course_name || m.id === cert.model_id) || null;
 
   const revokeMutation = useMutation({
     mutationFn: (id) => base44.entities.Certificate.update(id, { status: "revoked" }),
@@ -164,17 +164,23 @@ export default function Certificates() {
 
       {/* Tabs principais */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="grid grid-cols-2 w-full max-w-sm">
-        <TabsTrigger value="lista" className="gap-2">
-          <Award className="w-4 h-4" /> Lista
-        </TabsTrigger>
-        <TabsTrigger value="validar" className="gap-2">
-          <Search className="w-4 h-4" /> Validar
-        </TabsTrigger>
-      </TabsList>
+        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+          <TabsTrigger value="lista" className="gap-2">
+            <Award className="w-4 h-4" /> Lista
+          </TabsTrigger>
+          <TabsTrigger value="emitir" className="gap-2">
+            <PlusCircle className="w-4 h-4" /> Emitir
+          </TabsTrigger>
+          <TabsTrigger value="massa" className="gap-2">
+            <Users className="w-4 h-4" /> Em Massa
+          </TabsTrigger>
+          <TabsTrigger value="validar" className="gap-2">
+            <Search className="w-4 h-4" /> Validar
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Lista de Certificados */}
-      <TabsContent value="lista" className="space-y-4 mt-4">
+        {/* Lista de Certificados */}
+        <TabsContent value="lista" className="space-y-4 mt-4">
 
           {/* Barra de seleção em lote */}
           {selectedIds.size > 0 && (
@@ -319,6 +325,36 @@ export default function Certificates() {
               })}
             </div>
           )}
+        </TabsContent>
+
+        {/* Emissão Individual */}
+        <TabsContent value="emitir" className="mt-4">
+          <div className="max-w-3xl mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Emitir Certificado Individual</CardTitle>
+                <p className="text-sm text-gray-500 mt-2">Preencha os dados para gerar um novo certificado</p>
+              </CardHeader>
+              <CardContent>
+                <CertificateEmissaoIndividual onSuccess={() => setActiveTab("lista")} />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Emissão em Massa */}
+        <TabsContent value="massa" className="mt-4">
+          <div className="max-w-3xl mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Emissão em Massa</CardTitle>
+                <p className="text-sm text-gray-500 mt-2">Cole os dados da planilha para gerar múltiplos certificados</p>
+              </CardHeader>
+              <CardContent>
+                <CertificateEmissaoMassa onSuccess={() => setActiveTab("lista")} />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Validação */}
