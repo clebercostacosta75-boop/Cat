@@ -88,19 +88,26 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
     enabled: studentsEnabled,
   });
 
-  // Pré-selecionar empresa CAT ao carregar
+  // Busca de empresa
+  const [companySearch, setCompanySearch] = useState("");
+  const [showCompanyResults, setShowCompanyResults] = useState(false);
+  const companyRef = useRef(null);
+
   useEffect(() => {
-    if (companies.length === 0) return;
-    // Buscar pela empresa CAT pelo CNPJ ou nome
-    const cat = companies.find(c =>
-      (c.cnpj || "").replace(/\D/g, "") === CAT_CNPJ.replace(/\D/g, "") ||
-      normStr(c.nome_fantasia || "").includes("cat") ||
-      normStr(c.razao_social || "").includes("nunes cursos")
-    );
-    if (cat && !clientId) {
-      setClientId(cat.id);
-    }
-  }, [companies]);
+    const handler = (e) => {
+      if (companyRef.current && !companyRef.current.contains(e.target)) {
+        setShowCompanyResults(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const filteredCompanies = companySearch.length < 1 ? [] : companies.filter(c =>
+    normStr(c.nome_fantasia || "").includes(normStr(companySearch)) ||
+    normStr(c.razao_social || "").includes(normStr(companySearch)) ||
+    (c.cnpj || "").includes(companySearch)
+  ).slice(0, 8);
 
   // Fechar dropdown ao clicar fora
   useEffect(() => {
@@ -268,7 +275,7 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
   return (
     <div className="space-y-5">
 
-      {/* 1. Cliente — pré-selecionado: CAT */}
+      {/* 1. Cliente */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -276,19 +283,46 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Select value={clientId} onValueChange={setClientId}>
-            <SelectTrigger>
-              <SelectValue placeholder="🏢 Selecione a empresa..." />
-            </SelectTrigger>
-            <SelectContent>
-              {companies.map(c => (
-                <SelectItem key={c.id} value={c.id}>
-                  🏢 {c.nome_fantasia || c.razao_social}
-                  {c.cnpj ? ` — ${c.cnpj}` : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="relative" ref={companyRef}>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                className="pl-9 pr-8"
+                placeholder="Digite o nome ou CNPJ da empresa..."
+                value={companySearch}
+                onChange={e => {
+                  setCompanySearch(e.target.value);
+                  setShowCompanyResults(true);
+                  if (!e.target.value) { setClientId(""); }
+                }}
+                onFocus={() => { if (companySearch.length >= 1) setShowCompanyResults(true); }}
+              />
+              {selectedCompany && (
+                <button onClick={() => { setClientId(""); setCompanySearch(""); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            {showCompanyResults && filteredCompanies.length > 0 && (
+              <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
+                {filteredCompanies.map(c => (
+                  <button
+                    key={c.id}
+                    className="w-full text-left px-4 py-2.5 hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors"
+                    onClick={() => { setClientId(c.id); setCompanySearch(c.nome_fantasia || c.razao_social || ""); setShowCompanyResults(false); }}
+                  >
+                    <p className="text-sm font-semibold text-gray-900">{c.nome_fantasia || c.razao_social}</p>
+                    {c.cnpj && <p className="text-xs text-gray-500">CNPJ: {c.cnpj}</p>}
+                  </button>
+                ))}
+              </div>
+            )}
+            {showCompanyResults && companySearch.length >= 1 && filteredCompanies.length === 0 && (
+              <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-3 text-sm text-gray-500">
+                Nenhuma empresa encontrada para "<strong>{companySearch}</strong>"
+              </div>
+            )}
+          </div>
           {selectedCompany && (
             <div className="mt-2 flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-3 py-1.5">
               <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
