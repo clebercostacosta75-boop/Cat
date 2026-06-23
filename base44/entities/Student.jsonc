@@ -145,7 +145,14 @@
           }
         },
         {
-          "created_by_id": "{{user.id}}"
+          "user_condition": {
+            "role": "Operacional"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "Certificacao"
+          }
         }
       ]
     },
@@ -157,7 +164,17 @@
           }
         },
         {
-          "created_by_id": "{{user.id}}"
+          "user_condition": {
+            "role": "Operacional"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "Certificacao"
+          }
+        },
+        {
+          "data.company_id": "{{user.data.company_id}}"
         }
       ]
     },
@@ -169,7 +186,17 @@
           }
         },
         {
-          "created_by_id": "{{user.id}}"
+          "user_condition": {
+            "role": "Operacional"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "Certificacao"
+          }
+        },
+        {
+          "id": "{{user.data.student_id}}"
         }
       ]
     },
