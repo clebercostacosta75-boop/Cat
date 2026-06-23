@@ -42,33 +42,27 @@
       "properties": {
         "coffee_break_morning_enabled": {
           "type": "boolean",
-          "default": false,
-          "description": "Oferece coffee break manh\u00e3"
+          "default": false
         },
         "coffee_break_morning_unit_value": {
           "type": "number",
-          "default": 0,
-          "description": "Valor unit\u00e1rio por pessoa - coffee break manh\u00e3 (R$)"
+          "default": 0
         },
         "coffee_break_afternoon_enabled": {
           "type": "boolean",
-          "default": false,
-          "description": "Oferece coffee break tarde"
+          "default": false
         },
         "coffee_break_afternoon_unit_value": {
           "type": "number",
-          "default": 0,
-          "description": "Valor unit\u00e1rio por pessoa - coffee break tarde (R$)"
+          "default": 0
         },
         "lunch_enabled": {
           "type": "boolean",
-          "default": false,
-          "description": "Oferece almo\u00e7o"
+          "default": false
         },
         "lunch_unit_value": {
           "type": "number",
-          "default": 0,
-          "description": "Valor unit\u00e1rio por pessoa - almo\u00e7o (R$)"
+          "default": 0
         }
       }
     },
@@ -259,61 +253,92 @@
         ]
       }
     },
+    "modulos_contratados": {
+      "type": "array",
+      "description": "M\u00f3dulos contratados pela empresa no portal",
+      "items": {
+        "type": "object",
+        "properties": {
+          "module_key": {
+            "type": "string",
+            "enum": [
+              "certificados",
+              "treinamentos",
+              "compliance_360",
+              "saude_ocupacional",
+              "nr01_psicossocial",
+              "pgr",
+              "documentos",
+              "financeiro",
+              "colaboradores",
+              "planos_acao"
+            ]
+          },
+          "module_name": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean",
+            "default": true
+          },
+          "activated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "module_key",
+          "module_name"
+        ]
+      }
+    },
     "bmm_editor_config": {
       "type": "object",
       "description": "Configura\u00e7\u00e3o exclusiva do BMM para UNITAPAJ\u00d3S (n\u00e3o afeta outros clientes)",
       "properties": {
         "title": {
-          "type": "string",
-          "description": "T\u00edtulo do documento"
+          "type": "string"
         },
         "bmm_number": {
-          "type": "string",
-          "description": "N\u00famero do BMM (ex: BMM-001/2025)"
+          "type": "string"
         },
         "contract_number": {
-          "type": "string",
-          "description": "N\u00famero do contrato"
+          "type": "string"
         },
         "amendment_number": {
-          "type": "string",
-          "description": "N\u00famero do aditivo"
+          "type": "string"
         },
         "contract_object": {
-          "type": "string",
-          "description": "Objeto do contrato"
+          "type": "string"
         },
         "fiscal_name": {
-          "type": "string",
-          "description": "Nome do fiscal"
+          "type": "string"
         },
         "fiscal_role": {
-          "type": "string",
-          "description": "Cargo do fiscal"
+          "type": "string"
         },
         "contract_manager_name": {
-          "type": "string",
-          "description": "Nome do gestor do contrato"
+          "type": "string"
         },
         "contract_manager_role": {
-          "type": "string",
-          "description": "Cargo do gestor do contrato"
+          "type": "string"
         },
         "notes": {
-          "type": "string",
-          "description": "Observa\u00e7\u00f5es gerais"
+          "type": "string"
         },
         "sap_config": {
           "type": "object",
-          "description": "Configura\u00e7\u00e3o SAP para UNITAPAJ\u00d3S",
           "properties": {
             "enabled": {
               "type": "boolean",
               "default": true
             },
             "codigo_material_pai": {
-              "type": "string",
-              "description": "C\u00f3digo Material (PAI) - SAP"
+              "type": "string"
             },
             "presencial": {
               "type": "object",

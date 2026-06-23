@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Building2, Search, Shield, Award, CheckCircle2, Clock,
   XCircle, AlertTriangle, Ban, Download, ExternalLink,
-  ChevronDown, ChevronUp, RefreshCw, Filter
+  ChevronDown, ChevronUp, RefreshCw, Filter, Users,
+  FileText, LayoutDashboard, Activity
 } from "lucide-react";
 import { format, parseISO, isBefore, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -165,6 +166,17 @@ export default function CompanyPortal() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState("certificados");
+  const [students, setStudents] = useState([]);
+  const [activeModules, setActiveModules] = useState([]);
+
+  const fetchStudents = async () => {
+    if (!company) return;
+    try {
+      const all = await base44.entities.Student.filter({ company_id: company.id });
+      setStudents(all);
+    } catch {}
+  };
 
   useEffect(() => {
     base44.entities.CertificateModel.list().then(setCertModels).catch(() => {});
@@ -193,9 +205,18 @@ export default function CompanyPortal() {
 
       setCompany(companyFull);
 
+      // Determinar módulos ativos
+      const mods = companyFull.modulos_contratados?.filter(m => m.active) || [];
+      // Se não tem módulos configurados, libera certificados por padrão
+      if (mods.length === 0) {
+        mods.push({ module_key: "certificados", module_name: "Certificados", active: true });
+      }
+      setActiveModules(mods);
+
       // Buscar certificados da empresa
       const certs = await base44.entities.Certificate.filter({ client_id: companyFull.id });
       setCertificates(certs);
+      await fetchStudents();
       setSearched(true);
     } catch (e) {
       setError("Erro ao buscar dados. Tente novamente.");
@@ -325,66 +346,147 @@ export default function CompanyPortal() {
               </div>
             )}
 
-            {/* Filters */}
-            <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b flex flex-wrap gap-2 items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Award className="w-4 h-4 text-emerald-600" />
-                  <span className="font-semibold text-gray-800 text-sm">
-                    Certificados ({filteredCerts.length})
-                  </span>
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                    <Input
-                      placeholder="Buscar colaborador..."
-                      className="pl-8 h-8 text-xs w-44"
-                      value={search}
-                      onChange={e => setSearch(e.target.value)}
-                    />
+            {/* Tabs de Módulos */}
+            <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-4">
+              {activeModules.map(mod => (
+                <button
+                  key={mod.module_key}
+                  onClick={() => setActiveTab(mod.module_key)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-colors ${
+                    activeTab === mod.module_key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  {mod.module_key === "certificados" && <Award className="w-3.5 h-3.5" />}
+                  {mod.module_key === "colaboradores" && <Users className="w-3.5 h-3.5" />}
+                  {mod.module_key === "documentos" && <FileText className="w-3.5 h-3.5" />}
+                  {mod.module_key === "compliance_360" && <Shield className="w-3.5 h-3.5" />}
+                  {mod.module_key === "financeiro" && <Activity className="w-3.5 h-3.5" />}
+                  {!["certificados","colaboradores","documentos","compliance_360","financeiro"].includes(mod.module_key) && <LayoutDashboard className="w-3.5 h-3.5" />}
+                  {mod.module_name}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab: Certificados */}
+            {activeTab === "certificados" && (
+              <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b flex flex-wrap gap-2 items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Award className="w-4 h-4 text-emerald-600" />
+                    <span className="font-semibold text-gray-800 text-sm">Certificados ({filteredCerts.length})</span>
                   </div>
-                  <select
-                    className="border rounded-md px-2 py-1 text-xs text-gray-600 h-8"
-                    value={statusFilter}
-                    onChange={e => setStatusFilter(e.target.value)}
-                  >
-                    <option value="all">Todos</option>
-                    <option value="signed">✅ Assinados</option>
-                    <option value="pending_signature">⏳ Pendentes</option>
-                    <option value="expired">❌ Vencidos</option>
-                    <option value="revoked">🚫 Revogados</option>
-                  </select>
+                  <div className="flex gap-2 flex-wrap">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                      <Input placeholder="Buscar colaborador..." className="pl-8 h-8 text-xs w-44" value={search} onChange={e => setSearch(e.target.value)} />
+                    </div>
+                    <select className="border rounded-md px-2 py-1 text-xs text-gray-600 h-8" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                      <option value="all">Todos</option>
+                      <option value="signed">✅ Assinados</option>
+                      <option value="pending_signature">⏳ Pendentes</option>
+                      <option value="expired">❌ Vencidos</option>
+                      <option value="revoked">🚫 Revogados</option>
+                    </select>
+                  </div>
+                </div>
+                {filteredCerts.length === 0 ? (
+                  <div className="py-12 text-center text-gray-400"><Award className="w-10 h-10 mx-auto mb-2 opacity-30" /><p className="text-sm">Nenhum certificado encontrado.</p></div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 border-b text-xs">
+                        <tr><th className="text-left px-4 py-2 font-medium text-gray-500">Colaborador</th><th className="text-left px-4 py-2 font-medium text-gray-500">Curso</th><th className="text-left px-4 py-2 font-medium text-gray-500">Realização</th><th className="text-left px-4 py-2 font-medium text-gray-500">Vencimento</th><th className="text-left px-4 py-2 font-medium text-gray-500">Status</th><th className="px-4 py-2"></th></tr>
+                      </thead>
+                      <tbody>{filteredCerts.map(cert => <CertRow key={cert.id} cert={cert} certModels={certModels} />)}</tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab: Colaboradores */}
+            {activeTab === "colaboradores" && (
+              <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b flex items-center gap-2">
+                  <Users className="w-4 h-4 text-blue-600" />
+                  <span className="font-semibold text-gray-800 text-sm">Colaboradores ({students.length})</span>
+                </div>
+                {students.length === 0 ? (
+                  <div className="py-12 text-center text-gray-400"><Users className="w-10 h-10 mx-auto mb-2 opacity-30" /><p className="text-sm">Nenhum colaborador cadastrado.</p></div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 border-b text-xs">
+                        <tr><th className="text-left px-4 py-2 font-medium text-gray-500">Nome</th><th className="text-left px-4 py-2 font-medium text-gray-500">CPF</th><th className="text-left px-4 py-2 font-medium text-gray-500">Função</th><th className="text-left px-4 py-2 font-medium text-gray-500">Status</th></tr>
+                      </thead>
+                      <tbody>
+                        {students.map(s => (
+                          <tr key={s.id} className="border-b hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm font-medium text-gray-800">{s.full_name}</td>
+                            <td className="px-4 py-3 text-sm text-gray-500">{s.cpf}</td>
+                            <td className="px-4 py-3 text-sm text-gray-500">{s.funcao || "—"}</td>
+                            <td className="px-4 py-3"><Badge className={s.status === "Ativo" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}>{s.status}</Badge></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab: Documentos */}
+            {activeTab === "documentos" && (
+              <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-purple-600" />
+                  <span className="font-semibold text-gray-800 text-sm">Documentos da Empresa</span>
+                </div>
+                <div className="py-12 text-center text-gray-400">
+                  <FileText className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Módulo de documentos em desenvolvimento.</p>
+                  <p className="text-xs mt-1">Em breve: PGR, PCMSO, LTCAT, ASO e outros documentos.</p>
                 </div>
               </div>
+            )}
 
-              {filteredCerts.length === 0 ? (
+            {/* Tab: Compliance 360 */}
+            {activeTab === "compliance_360" && (
+              <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-indigo-600" />
+                  <span className="font-semibold text-gray-800 text-sm">Compliance 360</span>
+                </div>
                 <div className="py-12 text-center text-gray-400">
-                  <Award className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Nenhum certificado encontrado.</p>
+                  <Shield className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Módulo Compliance 360 em desenvolvimento.</p>
+                  <p className="text-xs mt-1">Em breve: Score de conformidade, matriz de riscos, planos de ação.</p>
                 </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50 border-b text-xs">
-                      <tr>
-                        <th className="text-left px-4 py-2 font-medium text-gray-500">Colaborador</th>
-                        <th className="text-left px-4 py-2 font-medium text-gray-500">Curso</th>
-                        <th className="text-left px-4 py-2 font-medium text-gray-500">Realização</th>
-                        <th className="text-left px-4 py-2 font-medium text-gray-500">Vencimento</th>
-                        <th className="text-left px-4 py-2 font-medium text-gray-500">Status</th>
-                        <th className="px-4 py-2"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredCerts.map(cert => (
-                        <CertRow key={cert.id} cert={cert} certModels={certModels} />
-                      ))}
-                    </tbody>
-                  </table>
+              </div>
+            )}
+
+            {/* Tab: Financeiro */}
+            {activeTab === "financeiro" && (
+              <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-amber-600" />
+                  <span className="font-semibold text-gray-800 text-sm">Financeiro</span>
                 </div>
-              )}
-            </div>
+                <div className="py-12 text-center text-gray-400">
+                  <Activity className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Módulo financeiro em desenvolvimento.</p>
+                  <p className="text-xs mt-1">Em breve: Faturamento, BMM, contas a receber.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Tab: módulo não reconhecido */}
+            {!["certificados","colaboradores","documentos","compliance_360","financeiro"].includes(activeTab) && (
+              <div className="bg-white rounded-xl border shadow-sm p-8 text-center text-gray-400">
+                <LayoutDashboard className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">Conteúdo deste módulo será carregado em breve.</p>
+              </div>
+            )}
 
             <p className="text-xs text-gray-400 text-center mt-4">
               Dados exibidos em tempo real. Para dúvidas, entre em contato com o CAT Cursos.

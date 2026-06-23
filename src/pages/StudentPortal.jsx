@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Award, Search, Download, Link2, CheckCircle, Clock,
-  AlertTriangle, XCircle, Shield, Copy, ExternalLink, BookOpen, Calendar
+  AlertTriangle, XCircle, Shield, Copy, ExternalLink, BookOpen, Calendar,
+  CreditCard, Eye, QrCode, ChevronLeft, ChevronRight, RefreshCw
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -75,6 +76,8 @@ export default function StudentPortal() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [copiedId, setCopiedId] = useState(null);
+  const [viewMode, setViewMode] = useState("list"); // "list" | "wallet"
+  const [walletIndex, setWalletIndex] = useState(0);
 
   const handleSearch = async () => {
     const cleaned = cpf.replace(/\D/g, "");
@@ -207,21 +210,130 @@ export default function StudentPortal() {
               </div>
             ) : (
               <>
-                {/* Resumo */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
-                    <p className="text-2xl font-bold text-green-800">{activeCerts.length}</p>
-                    <p className="text-xs text-green-600 mt-0.5">Certificado{activeCerts.length !== 1 ? "s" : ""} Válido{activeCerts.length !== 1 ? "s" : ""}</p>
+                {/* Resumo + Toggle */}
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="grid grid-cols-3 gap-3 flex-1">
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
+                      <p className="text-2xl font-bold text-green-800">{activeCerts.length}</p>
+                      <p className="text-xs text-green-600 mt-0.5">Válido{activeCerts.length !== 1 ? "s" : ""}</p>
+                    </div>
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
+                      <p className="text-2xl font-bold text-red-800">{expiredCerts.length}</p>
+                      <p className="text-xs text-red-600 mt-0.5">Vencido{expiredCerts.length !== 1 ? "s" : ""}</p>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
+                      <p className="text-2xl font-bold text-blue-800">{certs.length}</p>
+                      <p className="text-xs text-blue-600 mt-0.5">Total</p>
+                    </div>
                   </div>
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
-                    <p className="text-2xl font-bold text-red-800">{expiredCerts.length}</p>
-                    <p className="text-xs text-red-600 mt-0.5">Vencido{expiredCerts.length !== 1 ? "s" : ""}</p>
-                  </div>
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
-                    <p className="text-2xl font-bold text-blue-800">{certs.length}</p>
-                    <p className="text-xs text-blue-600 mt-0.5">Total de Cursos</p>
+                  <div className="flex bg-gray-100 rounded-lg p-1">
+                    <button onClick={() => setViewMode("list")} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${viewMode === "list" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}>
+                      <BookOpen className="w-3.5 h-3.5 inline mr-1" />Lista
+                    </button>
+                    <button onClick={() => { setViewMode("wallet"); setWalletIndex(0); }} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${viewMode === "wallet" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}>
+                      <CreditCard className="w-3.5 h-3.5 inline mr-1" />Carteira
+                    </button>
                   </div>
                 </div>
+
+                {/* Carteira Digital */}
+                {viewMode === "wallet" && activeCerts.length > 0 && (
+                  <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl p-6 text-white relative overflow-hidden shadow-xl">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+
+                    {/* Navegação entre cards */}
+                    <div className="flex items-center justify-between mb-4">
+                      <button
+                        onClick={() => setWalletIndex(i => i > 0 ? i - 1 : activeCerts.length - 1)}
+                        className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <div className="text-center">
+                        <CreditCard className="w-5 h-5 mx-auto mb-1 opacity-80" />
+                        <p className="text-xs text-emerald-200">CARTEIRA DIGITAL</p>
+                      </div>
+                      <button
+                        onClick={() => setWalletIndex(i => i < activeCerts.length - 1 ? i + 1 : 0)}
+                        className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Card principal */}
+                    {activeCerts[walletIndex] && (
+                      <div className="bg-white/10 backdrop-blur rounded-xl p-4 border border-white/20">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <p className="text-lg font-bold">{activeCerts[walletIndex].course_name}</p>
+                            <p className="text-emerald-200 text-sm">{activeCerts[walletIndex].course_duration}</p>
+                          </div>
+                          <div className="bg-white rounded-lg p-1.5">
+                            <QrCode className="w-8 h-8 text-emerald-800" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                          <div>
+                            <p className="text-emerald-300 text-xs">Emitido</p>
+                            <p>{formatDate(activeCerts[walletIndex].end_date)}</p>
+                          </div>
+                          <div>
+                            <p className="text-emerald-300 text-xs">Validade</p>
+                            <p>{formatDate(activeCerts[walletIndex].valid_until)}</p>
+                          </div>
+                          {activeCerts[walletIndex].client_name && (
+                            <div className="col-span-2">
+                              <p className="text-emerald-300 text-xs">Empresa</p>
+                              <p>{activeCerts[walletIndex].client_name}</p>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-mono text-emerald-300">{activeCerts[walletIndex].certificate_code}</p>
+                          <div className="flex gap-1">
+                            <button onClick={() => copyValidationLink(activeCerts[walletIndex])} className="p-1.5 rounded-md bg-white/20 hover:bg-white/30" title="Copiar link de validação">
+                              {copiedId === activeCerts[walletIndex].id ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                            </button>
+                            <button onClick={() => downloadPDF(activeCerts[walletIndex])} className="p-1.5 rounded-md bg-white/20 hover:bg-white/30" title="Baixar PDF">
+                              <Download className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => window.open(`${window.location.origin}/CertificateValidate?code=${activeCerts[walletIndex].certificate_code}`, "_blank")}
+                              className="p-1.5 rounded-md bg-white/20 hover:bg-white/30" title="Validar"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Indicador de cards */}
+                    <div className="flex justify-center gap-1.5 mt-4">
+                      {activeCerts.slice(0, Math.min(activeCerts.length, 8)).map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setWalletIndex(i)}
+                          className={`w-2 h-2 rounded-full transition-all ${i === walletIndex ? "bg-white w-4" : "bg-white/40"}`}
+                        />
+                      ))}
+                      {activeCerts.length > 8 && <span className="text-xs text-emerald-300 ml-1">+{activeCerts.length - 8}</span>}
+                    </div>
+                  </div>
+                )}
+
+                {viewMode === "wallet" && activeCerts.length === 0 && (
+                  <div className="text-center py-8 bg-gray-50 rounded-xl border">
+                    <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                    <p className="text-gray-500 text-sm">Nenhum certificado ativo para exibir na carteira digital.</p>
+                  </div>
+                )}
+
+                {/* Modo Lista */}
+                {viewMode === "list" && (
+                  <>
 
                 {/* Certificados ativos */}
                 {activeCerts.length > 0 && (
@@ -247,6 +359,8 @@ export default function StudentPortal() {
                       {expiredCerts.map(cert => <CertCard key={cert.id} cert={cert} onDownload={downloadPDF} onCopy={copyValidationLink} copiedId={copiedId} expired />)}
                     </div>
                   </div>
+                )}
+                  </>
                 )}
               </>
             )}
