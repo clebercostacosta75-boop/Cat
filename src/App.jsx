@@ -53,6 +53,7 @@ import BackupDownload from './pages/BackupDownload.jsx';
 import PortalInstrutor from './pages/PortalInstrutor.jsx';
 import ProntuarioDigital from './pages/ProntuarioDigital.jsx';
 import Homologacoes from './pages/Homologacoes.jsx';
+import MatrizTreinamentos from './pages/MatrizTreinamentos.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -154,6 +155,7 @@ const AuthenticatedApp = () => {
       <Route path="/PortalInstrutor" element={<PortalInstrutor />} />
       <Route path="/ProntuarioDigital" element={<LayoutWrapper currentPageName="ProntuarioDigital"><ProtectedRoute pageKey="Dashboard"><ProntuarioDigital /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/Homologacoes" element={<LayoutWrapper currentPageName="Homologacoes"><ProtectedRoute pageKey="Homologações"><Homologacoes /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/MatrizTreinamentos" element={<LayoutWrapper currentPageName="MatrizTreinamentos"><ProtectedRoute pageKey="Matriz de Treinamentos"><MatrizTreinamentos /></ProtectedRoute></LayoutWrapper>} />
 
       {/* Rotas autenticadas com layout */}
       <Route path="/" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />
