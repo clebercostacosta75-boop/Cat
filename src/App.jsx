@@ -52,6 +52,7 @@ import AuditoriaCompleta from './pages/AuditoriaCompleta.jsx';
 import BackupDownload from './pages/BackupDownload.jsx';
 import PortalInstrutor from './pages/PortalInstrutor.jsx';
 import ProntuarioDigital from './pages/ProntuarioDigital.jsx';
+import GestaoDocumentosAluno from './pages/GestaoDocumentosAluno.jsx';
 import Homologacoes from './pages/Homologacoes.jsx';
 import MatrizTreinamentos from './pages/MatrizTreinamentos.jsx';
 
@@ -154,6 +155,7 @@ const AuthenticatedApp = () => {
       <Route path="/BackupDownload" element={<LayoutWrapper currentPageName="BackupDownload"><ProtectedRoute pageKey="Dashboard"><BackupDownload /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/PortalInstrutor" element={<PortalInstrutor />} />
       <Route path="/ProntuarioDigital" element={<LayoutWrapper currentPageName="ProntuarioDigital"><ProtectedRoute pageKey="Dashboard"><ProntuarioDigital /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/GestaoDocumentosAluno" element={<LayoutWrapper currentPageName="GestaoDocumentosAluno"><ProtectedRoute pageKey="Dashboard"><GestaoDocumentosAluno /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/Homologacoes" element={<LayoutWrapper currentPageName="Homologacoes"><ProtectedRoute pageKey="Homologações"><Homologacoes /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/MatrizTreinamentos" element={<LayoutWrapper currentPageName="MatrizTreinamentos"><ProtectedRoute pageKey="Matriz de Treinamentos"><MatrizTreinamentos /></ProtectedRoute></LayoutWrapper>} />
 

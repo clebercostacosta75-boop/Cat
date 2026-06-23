@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Grid3X3, Search, Plus, Trash2, Edit, Building2, BookOpen, Shield,
-  AlertTriangle, CheckCircle, X, ArrowUpDown, Filter, Users, Briefcase, HardHat
+  AlertTriangle, CheckCircle, X, ArrowUpDown, Filter, Users, Briefcase, HardHat,
+  Download, Loader2
 } from "lucide-react";
 
 // ─── CONFIGURAÇÕES ──────────────────────────────────────────────────────────
@@ -64,6 +65,7 @@ function MatrizPanel() {
   const [filtroNR, setFiltroNR] = useState("all");
   const [filtroEmpresa, setFiltroEmpresa] = useState("all");
   const [showForm, setShowForm] = useState(false);
+  const [seedingNRs, setSeedingNRs] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({
     funcao_id: "", funcao_nome: "", nr_id: "", nr_codigo: "",
@@ -119,6 +121,49 @@ function MatrizPanel() {
   const handleDelete = async (id) => {
     if (!confirm("Remover este vínculo da matriz?")) return;
     await base44.entities.MatrizTreinamento.delete(id);
+    await load();
+  };
+
+  const seedNRsMatriz = async () => {
+    if (!confirm("Isso irá cadastrar as 29 principais NRs automaticamente. Continuar?")) return;
+    setSeedingNRs(true);
+    const nrsData = [
+      {codigo:"NR-01",titulo:"Disposições Gerais e Gerenciamento de Riscos Ocupacionais",categoria:"Geral",obrigatoria:true},
+      {codigo:"NR-04",titulo:"Serviços Especializados em Segurança e Medicina do Trabalho (SESMT)",categoria:"Segurança",obrigatoria:true},
+      {codigo:"NR-05",titulo:"Comissão Interna de Prevenção de Acidentes (CIPA)",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:20},
+      {codigo:"NR-06",titulo:"Equipamentos de Proteção Individual (EPI)",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-07",titulo:"Programa de Controle Médico de Saúde Ocupacional (PCMSO)",categoria:"Medicina",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-09",titulo:"Programa de Prevenção de Riscos Ambientais (PPRA)",categoria:"Saúde",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-10",titulo:"Segurança em Instalações e Serviços em Eletricidade",categoria:"Eletricidade",obrigatoria:true,periodicidade_padrao_meses:24,carga_horaria_minima:40},
+      {codigo:"NR-11",titulo:"Transporte, Movimentação, Armazenagem e Manuseio de Materiais",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:16},
+      {codigo:"NR-12",titulo:"Segurança no Trabalho em Máquinas e Equipamentos",categoria:"Máquinas",obrigatoria:true,periodicidade_padrao_meses:24,carga_horaria_minima:20},
+      {codigo:"NR-13",titulo:"Caldeiras, Vasos de Pressão e Tubulações",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:40},
+      {codigo:"NR-15",titulo:"Atividades e Operações Insalubres",categoria:"Saúde",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-16",titulo:"Atividades e Operações Perigosas",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-17",titulo:"Ergonomia",categoria:"Ergonomia",obrigatoria:true,periodicidade_padrao_meses:24,carga_horaria_minima:8},
+      {codigo:"NR-18",titulo:"Condições e Meio Ambiente de Trabalho na Construção Civil",categoria:"Construção",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:20},
+      {codigo:"NR-20",titulo:"Segurança e Saúde no Trabalho com Inflamáveis e Combustíveis",categoria:"Química",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:16},
+      {codigo:"NR-23",titulo:"Proteção Contra Incêndios",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:8},
+      {codigo:"NR-24",titulo:"Condições Sanitárias e de Conforto nos Locais de Trabalho",categoria:"Saúde",obrigatoria:true},
+      {codigo:"NR-25",titulo:"Resíduos Industriais",categoria:"Saúde",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-26",titulo:"Sinalização de Segurança",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:4},
+      {codigo:"NR-28",titulo:"Fiscalização e Penalidades",categoria:"Geral",obrigatoria:true},
+      {codigo:"NR-30",titulo:"Segurança e Saúde no Trabalho Aquaviário",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:24},
+      {codigo:"NR-31",titulo:"Segurança e Saúde no Trabalho na Agricultura, Pecuária, Silvicultura e Exploração Florestal",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-32",titulo:"Segurança e Saúde no Trabalho em Serviços de Saúde",categoria:"Saúde",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:20},
+      {codigo:"NR-33",titulo:"Segurança e Saúde nos Trabalhos em Espaços Confinados",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:16},
+      {codigo:"NR-34",titulo:"Condições e Meio Ambiente de Trabalho na Indústria da Construção Naval",categoria:"Construção",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-35",titulo:"Trabalho em Altura",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:24,carga_horaria_minima:8},
+      {codigo:"NR-36",titulo:"Segurança e Saúde no Trabalho em Empresas de Abate e Processamento de Carnes e Derivados",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-37",titulo:"Segurança e Saúde em Plataformas de Petróleo",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:16},
+      {codigo:"NR-38",titulo:"Segurança e Saúde no Trabalho nas Atividades de Limpeza Urbana e Manejo de Resíduos Sólidos",categoria:"Saúde",obrigatoria:true,periodicidade_padrao_meses:12},
+    ];
+    let created = 0;
+    for (const nr of nrsData) {
+      try { await base44.entities.NormaRegulamentadora.create(nr); created++; } catch {}
+    }
+    setSeedingNRs(false);
+    alert(`${created} NRs cadastradas!`);
     await load();
   };
 
@@ -443,6 +488,7 @@ function NRsPanel() {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [seedingNRs, setSeedingNRs] = useState(false);
   const [form, setForm] = useState({
     codigo: "", titulo: "", descricao: "", categoria: "Segurança",
     obrigatoria: true, periodicidade_padrao_meses: "", carga_horaria_minima: ""
@@ -478,6 +524,47 @@ function NRsPanel() {
     await load();
   };
 
+  const seedNRs = async () => {
+    if (!confirm("Isso irá cadastrar as 29 principais NRs automaticamente. Continuar?")) return;
+    setSeedingNRs(true);
+    const list = [
+      {codigo:"NR-01",titulo:"Disposições Gerais e Gerenciamento de Riscos Ocupacionais",categoria:"Geral",obrigatoria:true},
+      {codigo:"NR-04",titulo:"Serviços Especializados em Segurança e Medicina do Trabalho (SESMT)",categoria:"Segurança",obrigatoria:true},
+      {codigo:"NR-05",titulo:"Comissão Interna de Prevenção de Acidentes (CIPA)",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:20},
+      {codigo:"NR-06",titulo:"Equipamentos de Proteção Individual (EPI)",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-07",titulo:"Programa de Controle Médico de Saúde Ocupacional (PCMSO)",categoria:"Medicina",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-09",titulo:"Programa de Prevenção de Riscos Ambientais",categoria:"Saúde",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-10",titulo:"Segurança em Instalações e Serviços em Eletricidade",categoria:"Eletricidade",obrigatoria:true,periodicidade_padrao_meses:24,carga_horaria_minima:40},
+      {codigo:"NR-11",titulo:"Transporte, Movimentação, Armazenagem e Manuseio de Materiais",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:16},
+      {codigo:"NR-12",titulo:"Segurança no Trabalho em Máquinas e Equipamentos",categoria:"Máquinas",obrigatoria:true,periodicidade_padrao_meses:24,carga_horaria_minima:20},
+      {codigo:"NR-13",titulo:"Caldeiras, Vasos de Pressão e Tubulações",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:40},
+      {codigo:"NR-15",titulo:"Atividades e Operações Insalubres",categoria:"Saúde",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-16",titulo:"Atividades e Operações Perigosas",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-17",titulo:"Ergonomia",categoria:"Ergonomia",obrigatoria:true,periodicidade_padrao_meses:24,carga_horaria_minima:8},
+      {codigo:"NR-18",titulo:"Construção Civil",categoria:"Construção",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:20},
+      {codigo:"NR-20",titulo:"Segurança com Inflamáveis e Combustíveis",categoria:"Química",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:16},
+      {codigo:"NR-23",titulo:"Proteção Contra Incêndios",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:8},
+      {codigo:"NR-24",titulo:"Condições Sanitárias nos Locais de Trabalho",categoria:"Saúde",obrigatoria:true},
+      {codigo:"NR-25",titulo:"Resíduos Industriais",categoria:"Saúde",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-26",titulo:"Sinalização de Segurança",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:4},
+      {codigo:"NR-28",titulo:"Fiscalização e Penalidades",categoria:"Geral",obrigatoria:true},
+      {codigo:"NR-30",titulo:"Segurança e Saúde no Trabalho Aquaviário",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:24},
+      {codigo:"NR-31",titulo:"Segurança na Agricultura e Florestal",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-32",titulo:"Segurança em Serviços de Saúde",categoria:"Saúde",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:20},
+      {codigo:"NR-33",titulo:"Segurança em Espaços Confinados",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:16},
+      {codigo:"NR-34",titulo:"Indústria da Construção Naval",categoria:"Construção",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-35",titulo:"Trabalho em Altura",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:24,carga_horaria_minima:8},
+      {codigo:"NR-36",titulo:"Empresas de Abate e Processamento de Carnes",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12},
+      {codigo:"NR-37",titulo:"Segurança em Plataformas de Petróleo",categoria:"Segurança",obrigatoria:true,periodicidade_padrao_meses:12,carga_horaria_minima:16},
+      {codigo:"NR-38",titulo:"Limpeza Urbana e Manejo de Resíduos",categoria:"Saúde",obrigatoria:true,periodicidade_padrao_meses:12},
+    ];
+    let c = 0;
+    for (const nr of list) { try { await base44.entities.NormaRegulamentadora.create(nr); c++; } catch {} }
+    setSeedingNRs(false);
+    alert(`${c} NRs cadastradas!`);
+    await load();
+  };
+
   const filtered = nrs.filter(n => !search || n.codigo?.toLowerCase().includes(search.toLowerCase()) || n.titulo?.toLowerCase().includes(search.toLowerCase()));
 
   return (
@@ -488,6 +575,12 @@ function NRsPanel() {
           <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar NR..." className="pl-9 text-sm" />
         </div>
         <div className="text-xs text-gray-500 ml-auto">{nrs.length} norma{nrs.length !== 1 ? "s" : ""}</div>
+        {nrs.length === 0 && (
+          <Button onClick={seedNRs} size="sm" variant="outline" disabled={seedingNRs} className="gap-1.5 border-green-300 text-green-700 hover:bg-green-50">
+            {seedingNRs ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            Carregar 29 NRs Padrão
+          </Button>
+        )}
         <Button onClick={openNew} size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5"><Plus className="w-4 h-4" />Nova NR</Button>
       </div>
       {loading ? (

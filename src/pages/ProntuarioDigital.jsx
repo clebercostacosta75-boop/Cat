@@ -80,6 +80,8 @@ export default function ProntuarioDigital() {
   const [error, setError] = useState("");
   const [searchDone, setSearchDone] = useState(false);
   const [expandedCerts, setExpandedCerts] = useState({});
+  const [conformidade, setConformidade] = useState(null);
+  const [loadingConformidade, setLoadingConformidade] = useState(false);
 
   const handleSearch = async () => {
     const cleaned = cpf.replace(/\D/g, "");
@@ -119,6 +121,19 @@ export default function ProntuarioDigital() {
           if (comp) setCompanies([comp]);
         } catch {}
       }
+
+      // Verificar conformidade da matriz
+      setLoadingConformidade(true);
+      try {
+        const confRes = await base44.functions.invoke('verificarConformidadeMatriz', {
+          student_id: st.id,
+          student_cpf: st.cpf
+        });
+        if (confRes.data && !confRes.data.error) {
+          setConformidade(confRes.data);
+        }
+      } catch {}
+      setLoadingConformidade(false);
 
       setSearchDone(true);
     } catch {
@@ -239,6 +254,51 @@ export default function ProntuarioDigital() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Conformidade Matriz */}
+          {conformidade && conformidade.conformidade !== null && (
+            <div className={`rounded-2xl p-5 ${conformidade.score >= 80 ? "bg-green-50 border border-green-200" : conformidade.score >= 50 ? "bg-yellow-50 border border-yellow-200" : "bg-red-50 border border-red-200"}`}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-indigo-600" />
+                  Conformidade Regulatória (Matriz)
+                </h3>
+                <div className={`text-2xl font-bold ${conformidade.score >= 80 ? "text-green-600" : conformidade.score >= 50 ? "text-yellow-600" : "text-red-600"}`}>
+                  {conformidade.score}%
+                </div>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mb-3">
+                <div className={`h-2.5 rounded-full transition-all ${conformidade.score >= 80 ? "bg-green-500" : conformidade.score >= 50 ? "bg-yellow-500" : "bg-red-500"}`} style={{ width: `${conformidade.score}%` }} />
+              </div>
+              <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                <div><span className="text-green-600 font-bold block">{conformidade.conformes}</span><span className="text-gray-500">Conformes</span></div>
+                <div><span className="text-yellow-600 font-bold block">{conformidade.vencendo}</span><span className="text-gray-500">Vencendo</span></div>
+                <div><span className="text-red-600 font-bold block">{conformidade.vencidos}</span><span className="text-gray-500">Vencidos</span></div>
+                <div><span className="text-gray-600 font-bold block">{conformidade.pendentes}</span><span className="text-gray-500">Pendentes</span></div>
+              </div>
+              {conformidade.funcao && (
+                <p className="text-xs text-gray-500 mt-2">Função: <span className="font-medium">{conformidade.funcao}</span> • {conformidade.total_requisitos} requisitos na matriz</p>
+              )}
+              {!conformidade.funcao && conformidade.message && (
+                <p className="text-xs text-indigo-600 mt-2">{conformidade.message}</p>
+              )}
+              {/* Alertas */}
+              {conformidade.alertas && conformidade.alertas.length > 0 && (
+                <div className="mt-3 space-y-1">
+                  {conformidade.alertas.map((a, i) => (
+                    <div key={i} className={`flex items-start gap-2 text-xs p-2 rounded ${
+                      a.tipo === 'vencido' ? 'bg-red-100 text-red-800' :
+                      a.tipo === 'vencendo' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                      {a.mensagem}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">

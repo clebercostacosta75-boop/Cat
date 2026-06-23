@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import {
-  LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText,
+  LayoutDashboard, Calendar,   Upload, Users, BookOpen, BarChart3, FileText,
   Building2, UserCog, Mail, Bell, Award,
   TrendingUp, PenLine, Settings, Target, MessageSquare, ShieldAlert, Shield, Download, User, ShieldCheck, Grid3X3
 } from "lucide-react";
@@ -48,6 +48,7 @@ const ALL_ITEMS = [
   { title: "Dashboard de Relatórios", url: "/Analytics", icon: BarChart3, key: "Dashboard de Relatórios" },
   { title: "📥 Download de Backups", url: "/BackupDownload", icon: Download, key: "BackupDownload" },
   { title: "Prontuário Digital", url: "/ProntuarioDigital", icon: User, key: "ProntuarioDigital" },
+  { title: "Documentos de Alunos", url: "/GestaoDocumentosAluno", icon: Upload, key: "GestaoDocumentosAluno" },
   { title: "Homologações", url: "/Homologacoes", icon: ShieldCheck, key: "Homologações" },
   { title: "Matriz de Treinamentos", url: "/MatrizTreinamentos", icon: Grid3X3, key: "Matriz de Treinamentos" },
 ];
