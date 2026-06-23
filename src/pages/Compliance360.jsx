@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, Clock,
   Building2, Users, Briefcase, BookOpen, Search, RefreshCw, Loader2,
-  ChevronDown, ChevronUp, Target, ArrowUpDown
+  ChevronDown, ChevronUp, Target, ArrowUpDown, Lock
 } from "lucide-react";
 
 const ScoreBadge = ({ score }) => {
@@ -36,12 +36,15 @@ export default function Compliance360() {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("geral");
   const [search, setSearch] = useState("");
+  const [empresaFiltro, setEmpresaFiltro] = useState("");
+  const [empresas, setEmpresas] = useState([]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (empresaId) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await base44.functions.invoke("calcularCompliance360", {});
+      const payload = empresaId ? { empresa_id: empresaId } : {};
+      const res = await base44.functions.invoke("calcularCompliance360", payload);
       setData(res.data);
     } catch (e) {
       setError(e.message || "Erro ao carregar");
@@ -49,7 +52,11 @@ export default function Compliance360() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load(empresaFiltro || undefined);
+    // Carregar empresas para o filtro (apenas admin/gestor veem todas)
+    base44.entities.Company.list("razao_social", 100).then(emps => setEmpresas(emps)).catch(() => {});
+  }, [load, empresaFiltro]);
 
   if (loading && !data) {
     return (
@@ -83,11 +90,31 @@ export default function Compliance360() {
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">Conformidade regulatória integrada: Matriz × Certificados × Colaboradores</p>
         </div>
-        <Button onClick={load} variant="outline" size="sm" className="gap-1.5" disabled={loading}>
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          Atualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          <select
+            value={empresaFiltro}
+            onChange={e => setEmpresaFiltro(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          >
+            <option value="">Todas as empresas</option>
+            {empresas.map(emp => (
+              <option key={emp.id} value={emp.id}>{emp.razao_social}</option>
+            ))}
+          </select>
+          <Button onClick={() => load(empresaFiltro || undefined)} variant="outline" size="sm" className="gap-1.5" disabled={loading}>
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
+        </div>
       </div>
+
+      {/* Banner de acesso restrito */}
+      {data?.resumo?.acesso_restrito && (
+        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-sm text-amber-800">
+          <Lock className="w-4 h-4 flex-shrink-0" />
+          Visualização restrita às suas empresas. Dados filtrados por permissão de acesso.
+        </div>
+      )}
 
       {/* Score Gauge */}
       <Card className="border-2 border-indigo-100 bg-gradient-to-br from-white to-indigo-50">
@@ -127,7 +154,7 @@ export default function Compliance360() {
                 </div>
               </div>
               <div className="flex gap-6 text-xs text-gray-500 flex-wrap">
-                <span><Users className="w-3 h-3 inline mr-1" />{r.total_alunos} alunos</span>
+                <span><Users className="w-3 h-3 inline mr-1" />{r.total_alunos} alunos{r.acesso_restrito ? ' (suas empresas)' : ''}</span>
                 <span><Building2 className="w-3 h-3 inline mr-1" />{r.empresas} empresas</span>
                 <span><Briefcase className="w-3 h-3 inline mr-1" />{r.funcoes} funções</span>
                 <span><BookOpen className="w-3 h-3 inline mr-1" />{r.nrs_cobertas} NRs cobertas</span>

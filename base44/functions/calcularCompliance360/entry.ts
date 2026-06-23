@@ -6,48 +6,82 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { empresa_id } = await req.json().catch(() => ({}));
+    let { empresa_id } = await req.json().catch(() => ({}));
+    let userEmpresasPermitidas = null; // null = todas
 
-    // 1. Buscar todos os alunos ativos
+    // ─── DETECTAR ESCOPO DE EMPRESAS DO USUÁRIO ──────────────────────────────
+    if (user.role !== 'admin' && user.role !== 'gestor_master') {
+      const profiles = await base44.entities.UserProfile.filter({ user_email: user.email }, '-updated_date', 5);
+      const profile = profiles.find(p => p.role) || profiles[0];
+      
+      if (profile?.company_permissions?.length > 0) {
+        userEmpresasPermitidas = profile.company_permissions
+          .filter(cp => cp.permissions?.includes('view'))
+          .map(cp => cp.company_id);
+        
+        // Se o usuário tem empresas permitidas e empresa_id foi passado, validar
+        if (empresa_id && !userEmpresasPermitidas.includes(empresa_id)) {
+          return Response.json({ error: 'Acesso negado a esta empresa' }, { status: 403 });
+        }
+        // Se não foi passado empresa_id, usar as permitidas
+        if (!empresa_id && userEmpresasPermitidas.length > 0) {
+          // Passar null significa filtrar pelas permitidas depois
+        }
+      } else if (profile?.role === 'cliente') {
+        // Cliente sem company_permissions específico = sem dados
+        return Response.json({
+          resumo: { total_alunos: 0, alunos_com_funcao: 0, alunos_sem_funcao: 0,
+            total_checks: 0, conformes: 0, vencendo: 0, vencidos: 0, pendentes: 0,
+            score_geral: 0, empresas: 0, funcoes: 0, nrs_cobertas: 0 },
+          byCompany: [], byFuncao: [], byNR: [], alunosCriticos: [], alunosDetalhados: [],
+          acesso_restrito: true
+        });
+      }
+    }
+
+    // ─── BUSCAR DADOS ────────────────────────────────────────────────────────
     const allStudents = await base44.asServiceRole.entities.Student.filter({ status: 'Ativo' });
-    const students = empresa_id
-      ? allStudents.filter(s => s.company_id === empresa_id)
-      : allStudents;
+    
+    let students;
+    if (empresa_id) {
+      students = allStudents.filter(s => s.company_id === empresa_id);
+    } else if (userEmpresasPermitidas) {
+      students = allStudents.filter(s => s.company_id && userEmpresasPermitidas.includes(s.company_id));
+    } else {
+      students = allStudents;
+    }
 
-    // 2. Buscar matriz, funções, empresas e certificados
-    const [matrizEntries, funcoes, companies, allCerts] = await Promise.all([
+    // Buscar matriz, funções, empresas e certificados
+    const [matrizEntries, funcoes, allCompanies, allCerts] = await Promise.all([
       base44.asServiceRole.entities.MatrizTreinamento.filter({ obrigatorio: true, ativo: true }),
       base44.asServiceRole.entities.FuncaoCargo.list(),
       base44.asServiceRole.entities.Company.list(),
       base44.asServiceRole.entities.Certificate.filter({ status: 'active' })
     ]);
 
+    // Filtrar empresas visíveis
+    const companies = userEmpresasPermitidas
+      ? allCompanies.filter(c => userEmpresasPermitidas.includes(c.id))
+      : allCompanies;
+
     const now = new Date();
     const companyMap = {};
     const funcaoMap = {};
     const nrMap = {};
-    let totalChecks = 0;
-    let totalConformes = 0;
-    let totalVencendo = 0;
-    let totalVencidos = 0;
-    let totalPendentes = 0;
+    let totalChecks = 0, totalConformes = 0, totalVencendo = 0, totalVencidos = 0, totalPendentes = 0;
     let studentsWithoutFuncao = 0;
     const alunosDetalhados = [];
 
-    // 3. Para cada aluno, cruzar com a matriz
+    // ─── CRUZAR ALUNOS × MATRIZ ──────────────────────────────────────────────
     for (const student of students) {
       const cpf = (student.cpf || '').replace(/\D/g, '');
       if (!student.funcao_id) {
         studentsWithoutFuncao++;
         alunosDetalhados.push({
-          id: student.id,
-          nome: student.full_name,
-          cpf: student.cpf,
-          company_name: student.company_name || '',
-          funcao_nome: null,
-          score: null,
-          conformes: 0, vencendo: 0, vencidos: 0, pendentes: 0, total: 0,
-          sem_funcao: true
+          id: student.id, nome: student.full_name, cpf: student.cpf,
+          company_id: student.company_id, company_name: student.company_name || '',
+          funcao_nome: null, score: null,
+          conformes: 0, vencendo: 0, vencidos: 0, pendentes: 0, total: 0, sem_funcao: true
         });
         continue;
       }
@@ -57,14 +91,13 @@ Deno.serve(async (req) => {
         studentsWithoutFuncao++;
         alunosDetalhados.push({
           id: student.id, nome: student.full_name, cpf: student.cpf,
-          company_name: student.company_name || '', funcao_nome: null,
-          score: null, conformes: 0, vencendo: 0, vencidos: 0, pendentes: 0, total: 0,
-          sem_funcao: true
+          company_id: student.company_id, company_name: student.company_name || '',
+          funcao_nome: null, score: null,
+          conformes: 0, vencendo: 0, vencidos: 0, pendentes: 0, total: 0, sem_funcao: true
         });
         continue;
       }
 
-      // Entradas da matriz para esta função
       const relevantEntries = matrizEntries.filter(e => {
         if (e.funcao_id !== funcao.id) return false;
         if (!e.empresa_id) return true;
@@ -120,13 +153,13 @@ Deno.serve(async (req) => {
 
       alunosDetalhados.push({
         id: student.id, nome: student.full_name, cpf: student.cpf,
-        company_name: student.company_name || '', funcao_nome: funcao.nome,
-        score, conformes, vencendo, vencidos, pendentes, total, sem_funcao: false
+        company_id: student.company_id, company_name: student.company_name || '',
+        funcao_nome: funcao.nome, score,
+        conformes, vencendo, vencidos, pendentes, total, sem_funcao: false
       });
 
-      // Acumular por empresa
-      const cKey = student.company_name || 'Sem empresa';
-      if (!companyMap[cKey]) companyMap[cKey] = { nome: cKey, conformes: 0, vencendo: 0, vencidos: 0, pendentes: 0, total: 0, alunos: 0 };
+      const cKey = student.company_name || student.company_id || 'Sem empresa';
+      if (!companyMap[cKey]) companyMap[cKey] = { nome: student.company_name || 'Sem empresa', company_id: student.company_id, conformes: 0, vencendo: 0, vencidos: 0, pendentes: 0, total: 0, alunos: 0 };
       companyMap[cKey].conformes += conformes;
       companyMap[cKey].vencendo += vencendo;
       companyMap[cKey].vencidos += vencidos;
@@ -134,7 +167,6 @@ Deno.serve(async (req) => {
       companyMap[cKey].total += total;
       companyMap[cKey].alunos++;
 
-      // Acumular por função
       if (!funcaoMap[funcao.nome]) funcaoMap[funcao.nome] = { nome: funcao.nome, conformes: 0, vencendo: 0, vencidos: 0, pendentes: 0, total: 0, alunos: 0 };
       funcaoMap[funcao.nome].conformes += conformes;
       funcaoMap[funcao.nome].vencendo += vencendo;
@@ -143,7 +175,6 @@ Deno.serve(async (req) => {
       funcaoMap[funcao.nome].total += total;
       funcaoMap[funcao.nome].alunos++;
 
-      // Acumular por NR (dos resultados)
       resultados.forEach(r => {
         if (!nrMap[r.nr_codigo]) nrMap[r.nr_codigo] = { nr: r.nr_codigo, conformes: 0, vencendo: 0, vencidos: 0, pendentes: 0, total: 0 };
         nrMap[r.nr_codigo].total++;
@@ -154,7 +185,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 4. Calcular scores
     const scoreGeral = totalChecks > 0 ? Math.round((totalConformes / totalChecks) * 100) : 0;
 
     const byCompany = Object.values(companyMap).map(c => ({
@@ -170,7 +200,10 @@ Deno.serve(async (req) => {
       criticidade: n.total > 0 ? Math.round(((n.vencidos + n.pendentes) / n.total) * 100) : 0
     })).sort((a, b) => b.criticidade - a.criticidade);
 
-    const alunosCriticos = alunosDetalhados.filter(a => a.vencidos > 0 || a.pendentes > 0 || a.sem_funcao).sort((a, b) => (a.score ?? -1) - (b.score ?? -1)).slice(0, 10);
+    const alunosCriticos = alunosDetalhados
+      .filter(a => a.vencidos > 0 || a.pendentes > 0 || a.sem_funcao)
+      .sort((a, b) => (a.score ?? -1) - (b.score ?? -1))
+      .slice(0, 10);
 
     return Response.json({
       resumo: {
@@ -184,14 +217,13 @@ Deno.serve(async (req) => {
         pendentes: totalPendentes,
         score_geral: scoreGeral,
         empresas: companies.length,
+        empresas_escopo: userEmpresasPermitidas ? companies.length : companies.length,
         funcoes: funcoes.length,
         nrs_cobertas: Object.keys(nrMap).length,
+        acesso_restrito: !!userEmpresasPermitidas,
       },
-      byCompany: byCompany.slice(0, 20),
-      byFuncao: byFuncao.slice(0, 20),
-      byNR: byNR.slice(0, 20),
-      alunosCriticos: alunosCriticos,
-      alunosDetalhados: alunosDetalhados,
+      byCompany, byFuncao, byNR,
+      alunosCriticos, alunosDetalhados,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
