@@ -52,6 +52,7 @@ const ALL_ITEMS = [
   { title: "Homologações", url: "/Homologacoes", icon: ShieldCheck, key: "Homologações" },
   { title: "Matriz de Treinamentos", url: "/MatrizTreinamentos", icon: Grid3X3, key: "Matriz de Treinamentos" },
   { title: "Dossiê de Homologação", url: "/DossieHomologacao", icon: FileCheck, key: "DossieHomologacao" },
+  { title: "Compliance 360", url: "/Compliance360", icon: ShieldCheck, key: "Compliance360" },
 ];
 
 const ROLE_LABEL = {

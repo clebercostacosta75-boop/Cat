@@ -101,6 +101,14 @@
       "type": "string",
       "description": "Nome da empresa vinculada"
     },
+    "funcao_id": {
+      "type": "string",
+      "description": "ID da fun\u00e7\u00e3o/cargo do colaborador (refer\u00eancia FuncaoCargo)"
+    },
+    "funcao_nome": {
+      "type": "string",
+      "description": "Nome da fun\u00e7\u00e3o/cargo do colaborador"
+    },
     "status": {
       "type": "string",
       "enum": [
