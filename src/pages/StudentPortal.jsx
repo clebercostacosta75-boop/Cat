@@ -16,6 +16,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { buildCertificateHTMLFromModel } from "@/components/certificates/CertificatePreview";
+import CertificateQRCode from "@/components/certificates/CertificateQRCode";
 
 function formatDate(d) {
   if (!d) return "—";
@@ -270,8 +271,12 @@ export default function StudentPortal() {
                             <p className="text-lg font-bold">{activeCerts[walletIndex].course_name}</p>
                             <p className="text-emerald-200 text-sm">{activeCerts[walletIndex].course_duration}</p>
                           </div>
-                          <div className="bg-white rounded-lg p-1.5">
-                            <QrCode className="w-8 h-8 text-emerald-800" />
+                          <div className="bg-white rounded-lg p-1.5 flex items-center justify-center">
+                            {activeCerts[walletIndex]?.certificate_code ? (
+                              <CertificateQRCode certificateCode={activeCerts[walletIndex].certificate_code} size={48} showLabel={false} />
+                            ) : (
+                              <QrCode className="w-8 h-8 text-emerald-800" />
+                            )}
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-sm mb-3">
