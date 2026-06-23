@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import {
   LayoutDashboard, Calendar,   Upload, Users, BookOpen, BarChart3, FileText,
   Building2, UserCog, Mail, Bell, Award,
-  TrendingUp, PenLine, Settings, Target, MessageSquare, ShieldAlert, Shield, Download, User, ShieldCheck, Grid3X3
+  TrendingUp, PenLine, Settings, Target, MessageSquare, ShieldAlert, Shield, Download, User, ShieldCheck, Grid3X3, FileCheck
 } from "lucide-react";
 
 import NotificationBell from "./components/notifications/NotificationBell";
@@ -51,6 +51,7 @@ const ALL_ITEMS = [
   { title: "Documentos de Alunos", url: "/GestaoDocumentosAluno", icon: Upload, key: "GestaoDocumentosAluno" },
   { title: "Homologações", url: "/Homologacoes", icon: ShieldCheck, key: "Homologações" },
   { title: "Matriz de Treinamentos", url: "/MatrizTreinamentos", icon: Grid3X3, key: "Matriz de Treinamentos" },
+  { title: "Dossiê de Homologação", url: "/DossieHomologacao", icon: FileCheck, key: "DossieHomologacao" },
 ];
 
 const ROLE_LABEL = {
