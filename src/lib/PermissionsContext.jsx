@@ -37,6 +37,7 @@ export const ALL_MODULES = [
   "Log de Auditoria",
   "Auditoria Completa",
   "Log de Acesso",
+  "Homologações",
 ];
 
 // Mapa de chaves de rota → chave de módulo (para ProtectedRoute)

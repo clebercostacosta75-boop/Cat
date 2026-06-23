@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import {
   LayoutDashboard, Calendar, Users, BookOpen, Upload, BarChart3, FileText,
   Building2, UserCog, Mail, Bell, Award,
-  TrendingUp, PenLine, Settings, Target, MessageSquare, ShieldAlert, Shield, Download, User
+  TrendingUp, PenLine, Settings, Target, MessageSquare, ShieldAlert, Shield, Download, User, ShieldCheck
 } from "lucide-react";
 
 import NotificationBell from "./components/notifications/NotificationBell";
@@ -48,6 +48,7 @@ const ALL_ITEMS = [
   { title: "Dashboard de Relatórios", url: "/Analytics", icon: BarChart3, key: "Dashboard de Relatórios" },
   { title: "📥 Download de Backups", url: "/BackupDownload", icon: Download, key: "BackupDownload" },
   { title: "Prontuário Digital", url: "/ProntuarioDigital", icon: User, key: "ProntuarioDigital" },
+  { title: "Homologações", url: "/Homologacoes", icon: ShieldCheck, key: "Homologações" },
 ];
 
 const ROLE_LABEL = {

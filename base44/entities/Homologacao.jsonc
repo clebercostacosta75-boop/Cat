@@ -1,0 +1,124 @@
+{
+  "name": "Homologacao",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo da homologa\u00e7\u00e3o"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Equipamento",
+        "Procedimento",
+        "Treinamento",
+        "Instala\u00e7\u00e3o",
+        "Documento",
+        "Outro"
+      ],
+      "description": "Tipo da homologa\u00e7\u00e3o"
+    },
+    "norma_regulamentadora": {
+      "type": "string",
+      "description": "NR aplic\u00e1vel (ex: NR-12, NR-35)"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o detalhada"
+    },
+    "empresa_id": {
+      "type": "string",
+      "description": "ID da empresa relacionada"
+    },
+    "empresa_nome": {
+      "type": "string",
+      "description": "Nome da empresa"
+    },
+    "unidade": {
+      "type": "string",
+      "description": "Unidade da empresa"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Em An\u00e1lise",
+        "Aprovada",
+        "Rejeitada",
+        "Vencida",
+        "Cancelada"
+      ],
+      "default": "Pendente",
+      "description": "Status da homologa\u00e7\u00e3o"
+    },
+    "data_solicitacao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da solicita\u00e7\u00e3o"
+    },
+    "data_aprovacao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da aprova\u00e7\u00e3o"
+    },
+    "data_validade": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de validade da homologa\u00e7\u00e3o"
+    },
+    "orgao_certificador": {
+      "type": "string",
+      "description": "\u00d3rg\u00e3o certificador / entidade"
+    },
+    "numero_certificado": {
+      "type": "string",
+      "description": "N\u00famero do certificado de homologa\u00e7\u00e3o"
+    },
+    "responsavel_tecnico": {
+      "type": "string",
+      "description": "Nome do respons\u00e1vel t\u00e9cnico"
+    },
+    "documentos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "description": "Nome do documento"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL do arquivo"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "Laudo",
+              "ART",
+              "Certificado",
+              "Relat\u00f3rio",
+              "Projeto",
+              "Foto",
+              "Outro"
+            ]
+          },
+          "data_upload": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "Documentos anexados"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es gerais"
+    }
+  },
+  "required": [
+    "titulo",
+    "tipo",
+    "empresa_nome"
+  ]
+}

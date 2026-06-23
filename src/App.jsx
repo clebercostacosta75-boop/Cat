@@ -52,6 +52,7 @@ import AuditoriaCompleta from './pages/AuditoriaCompleta.jsx';
 import BackupDownload from './pages/BackupDownload.jsx';
 import PortalInstrutor from './pages/PortalInstrutor.jsx';
 import ProntuarioDigital from './pages/ProntuarioDigital.jsx';
+import Homologacoes from './pages/Homologacoes.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -152,6 +153,7 @@ const AuthenticatedApp = () => {
       <Route path="/BackupDownload" element={<LayoutWrapper currentPageName="BackupDownload"><ProtectedRoute pageKey="Dashboard"><BackupDownload /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/PortalInstrutor" element={<PortalInstrutor />} />
       <Route path="/ProntuarioDigital" element={<LayoutWrapper currentPageName="ProntuarioDigital"><ProtectedRoute pageKey="Dashboard"><ProntuarioDigital /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/Homologacoes" element={<LayoutWrapper currentPageName="Homologacoes"><ProtectedRoute pageKey="Homologações"><Homologacoes /></ProtectedRoute></LayoutWrapper>} />
 
       {/* Rotas autenticadas com layout */}
       <Route path="/" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />
