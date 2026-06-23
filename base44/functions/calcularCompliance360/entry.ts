@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
       base44.asServiceRole.entities.MatrizTreinamento.filter({ obrigatorio: true, ativo: true }),
       base44.asServiceRole.entities.FuncaoCargo.list(),
       base44.asServiceRole.entities.Company.list(),
-      base44.asServiceRole.entities.Certificate.filter({ status: 'active' })
+      base44.asServiceRole.entities.Certificate.list()
     ]);
 
     // Filtrar empresas visíveis
