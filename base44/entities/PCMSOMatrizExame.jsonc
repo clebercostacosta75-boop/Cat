@@ -3,83 +3,59 @@
   "type": "object",
   "properties": {
     "pcmso_detalhe_id": {
-      "type": "string"
+      "type": "string",
+      "description": "ID do DocumentoPCMSO vinculado"
     },
     "funcao": {
-      "type": "string"
+      "type": "string",
+      "description": "Nome da fun\u00e7\u00e3o/cargo"
     },
     "setor": {
-      "type": "string"
+      "type": "string",
+      "description": "Setor/departamento"
+    },
+    "cbo": {
+      "type": "string",
+      "description": "C\u00f3digo CBO da fun\u00e7\u00e3o"
     },
     "ghe": {
-      "type": "string"
+      "type": "string",
+      "description": "Grupo Homog\u00eaneo de Exposi\u00e7\u00e3o"
+    },
+    "qtd_trabalhadores": {
+      "type": "number",
+      "description": "Quantidade de trabalhadores nesta fun\u00e7\u00e3o"
     },
     "riscos_ocupacionais": {
-      "type": "string"
+      "type": "string",
+      "description": "Riscos ocupacionais identificados"
     },
     "exames_obrigatorios": {
-      "type": "string"
+      "type": "string",
+      "description": "Exames obrigat\u00f3rios (admissional/peri\u00f3dico)"
     },
     "periodicidade": {
-      "type": "string"
+      "type": "string",
+      "description": "Periodicidade dos exames",
+      "default": "Anual"
+    },
+    "criterio_realizacao": {
+      "type": "string",
+      "description": "Tipos de exame em que se aplica (Admissional, Peri\u00f3dico, etc.)"
+    },
+    "base_tecnica": {
+      "type": "string",
+      "description": "Exames detalhados por tipo de exame (Adm | Per | Ret | Dem)"
+    },
+    "descricao_atividades": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o das atividades/processos da fun\u00e7\u00e3o"
+    },
+    "pgr_vinculado": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se a fun\u00e7\u00e3o foi vinculada ao PGR"
     }
   },
-  "required": [],
-  "rls": {
-    "create": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "gestor_master"
-          }
-        }
-      ]
-    },
-    "read": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "gestor_master"
-          }
-        },
-        {
-          "data.pcmso_detalhe_id": {
-            "$in": "{{user.pcmso_detalhe_ids}}"
-          }
-        }
-      ]
-    },
-    "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "gestor_master"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
-  }
+  "required": []
 }
