@@ -193,7 +193,7 @@ function PGRDetalhe({ leitura, onClose }) {
     for (const r of data.riscos.filter(r => r.classificacao === "Crítico" || r.classificacao === "Alto")) {
       await base44.entities.ComplianceAlerta.create({ empresa_mestre_id: empId, empresa_mestre_nome: empNome, tipo_alerta: "Documento Vencendo", descricao: `Risco ${r.classificacao}: ${r.perigo} (${r.setor})`, prioridade: r.classificacao === "Crítico" ? "Crítico" : "Alto", status: "Ativo", data_alerta: new Date().toISOString().slice(0, 10) }).catch(() => {});
     }
-    alert(`✅ Compliance 360 alimentado!\n• ${data.setores.length} funções\n• ${data.treinamentos.length} treinamentos na Matriz NR\n• ${data.riscos.filter(r => r.classificacao === "Crítico" || r.classificacao === "Alto").length} alertas de risco`);
+    alert(`✅ Compliance 360 alimentado!\n• ${data.setores.length} funções\n• ${data.treinamentos.length} treinamentos na Matriz NR\n• ${data.riscos.filter(r => r.classificacao === "Crítico" || r.classificacao === "Alto").length} alertas de risco\n\nAcesse: Conferência PGR × PCMSO para validar a integração.`);
   };
 
   const ghe_list = [...new Set(data.setores.map(s => s.ghe).filter(Boolean))];

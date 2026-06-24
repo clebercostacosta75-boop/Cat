@@ -114,17 +114,42 @@ export default function PCMSOLeitura() {
       grau_risco: ex.grau_risco || "", qtd_empregados: ex.qtd_empregados ? parseInt(ex.qtd_empregados) : undefined,
     });
 
-    await Promise.all([
-      ...(ex.setores_funcoes || []).map(sf => base44.entities.PCMSOMatrizExame.create({
-        pcmso_detalhe_id: doc.id, funcao: sf.funcao, setor: sf.setor, ghe: sf.ghe, cbo: sf.cbo || "",
-        riscos_ocupacionais: sf.riscos || "", exames_obrigatorios: sf.exames_obrigatorios || "", periodicidade: sf.periodicidade || "Anual"
-      })),
-      ...(ex.matriz_exames || []).map(me => base44.entities.PCMSOMatrizExame.create({
-        pcmso_detalhe_id: doc.id, funcao: me.funcao, setor: me.setor, ghe: me.ghe, cbo: me.cbo || "",
-        riscos_ocupacionais: me.risco_ocupacional || "", exames_obrigatorios: `${me.exame_clinico || ""} ${me.exames_complementares || ""}`.trim(),
-        periodicidade: me.periodicidade || "Anual", criterio_realizacao: me.tipo_exame || "", base_tecnica: me.base_tecnica || ""
-      })),
-    ]);
+    // Buscar funções já existentes no PGR para vincular (sem duplicar)
+    let pgrSetores = [];
+    if (empId) {
+      const pgrs = await base44.entities.PGRLeitura.filter({ empresa_mestre_id: empId }).catch(() => []);
+      if (pgrs.length > 0) {
+        pgrSetores = await base44.entities.PGRSetorCargo.filter({ pgr_leitura_id: pgrs[0].id }).catch(() => []);
+      }
+    }
+
+    const normalize = s => (s || "").trim().toLowerCase();
+    const todasFuncoesPCMSO = [
+      ...(ex.setores_funcoes || []).map(sf => ({ funcao: sf.funcao, setor: sf.setor, ghe: sf.ghe, cbo: sf.cbo || "", riscos_ocupacionais: sf.riscos || "", exames_obrigatorios: sf.exames_obrigatorios || "", periodicidade: sf.periodicidade || "Anual" })),
+      ...(ex.matriz_exames || []).map(me => ({ funcao: me.funcao, setor: me.setor, ghe: me.ghe, cbo: me.cbo || "", riscos_ocupacionais: me.risco_ocupacional || "", exames_obrigatorios: `${me.exame_clinico || ""} ${me.exames_complementares || ""}`.trim(), periodicidade: me.periodicidade || "Anual", criterio_realizacao: me.tipo_exame || "", base_tecnica: me.base_tecnica || "" })),
+    ];
+
+    // Deduplica por função
+    const vistas = new Set();
+    const funcoesSalvar = todasFuncoesPCMSO.filter(m => {
+      const k = normalize(m.funcao);
+      if (!k || vistas.has(k)) return false;
+      vistas.add(k);
+      return true;
+    });
+
+    await Promise.all(funcoesSalvar.map(m => {
+      // Enriquecer com dados do PGR (setor/ghe) se função já existe lá
+      const pgrMatch = pgrSetores.find(s => normalize(s.funcao || s.cargo) === normalize(m.funcao));
+      return base44.entities.PCMSOMatrizExame.create({
+        pcmso_detalhe_id: doc.id,
+        ...m,
+        setor: m.setor || pgrMatch?.setor || "",
+        ghe: m.ghe || pgrMatch?.ghe || "",
+        cbo: m.cbo || pgrMatch?.cbo || "",
+        pgr_vinculado: !!pgrMatch,
+      });
+    }));
     load();
   };
 

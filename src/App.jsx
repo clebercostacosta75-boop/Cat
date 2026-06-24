@@ -72,6 +72,7 @@ import ProntuarioDigitalPage from './pages/colaboradores/ProntuarioDigital.jsx';
 import AgendamentoTreinamentosPage from './pages/agendamentos/AgendamentoTreinamentos.jsx';
 import OrcamentoConformidadePage from './pages/financeiro/OrcamentoConformidade.jsx';
 import PCMSOLeituraPage from './pages/pcmso/PCMSOLeitura.jsx';
+import ConferenciaPGRPCMSO from './pages/sst/ConferenciaPGRPCMSO.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -192,6 +193,7 @@ const AuthenticatedApp = () => {
       <Route path="/AgendamentoTreinamentos" element={<LayoutWrapper currentPageName="AgendamentoTreinamentos"><ProtectedRoute pageKey="Dashboard"><AgendamentoTreinamentosPage /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/OrcamentoConformidade" element={<LayoutWrapper currentPageName="OrcamentoConformidade"><ProtectedRoute pageKey="Dashboard"><OrcamentoConformidadePage /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/PCMSOLeitura" element={<LayoutWrapper currentPageName="PCMSOLeitura"><ProtectedRoute pageKey="Dashboard"><PCMSOLeituraPage /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/ConferenciaPGRPCMSO" element={<LayoutWrapper currentPageName="ConferenciaPGRPCMSO"><ProtectedRoute pageKey="Dashboard"><ConferenciaPGRPCMSO /></ProtectedRoute></LayoutWrapper>} />
 
       {/* Rotas autenticadas com layout */}
       <Route path="/" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />

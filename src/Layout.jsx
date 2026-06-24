@@ -72,6 +72,7 @@ const ALL_ITEMS = [
   // Financeiro SST
   { title: "📊 Orçamento de Conformidade", url: "/OrcamentoConformidade", icon: TrendingUp, key: "OrcamentoConformidade" },
   { title: "🩺 PCMSO Inteligente", url: "/PCMSOLeitura", icon: Heart, key: "PCMSOLeitura" },
+  { title: "🔗 Conferência PGR × PCMSO", url: "/ConferenciaPGRPCMSO", icon: ShieldCheck, key: "ConferenciaPGRPCMSO" },
 ];
 
 const ROLE_LABEL = {
