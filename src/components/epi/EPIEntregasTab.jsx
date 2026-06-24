@@ -1,12 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus } from "lucide-react";
+import { Plus, Sparkles, Upload, Loader2 } from "lucide-react";
 import { differenceInDays, parseISO, format, addMonths } from "date-fns";
+
+function parseBRDate(str) {
+  if (!str) return "";
+  const m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  return str;
+}
 
 const ASSINATURA_COLORS = {
   "Pendente": "bg-amber-100 text-amber-700",
@@ -42,6 +49,90 @@ export default function EPIEntregasTab({ entregas, empresas, epis, colaboradores
   const [savingGrupo, setSavingGrupo] = useState(false);
 
   const openNew = () => { setForm(EMPTY); setModalOpen(true); };
+
+  // Upload IA para ficha de entrega
+  const [iaModalOpen, setIaModalOpen] = useState(false);
+  const [iaStep, setIaStep] = useState(1);
+  const [iaUploading, setIaUploading] = useState(false);
+  const [iaExtracting, setIaExtracting] = useState(false);
+  const [iaItems, setIaItems] = useState([]);
+  const [iaSaving, setIaSaving] = useState(false);
+  const fileRef = useRef();
+
+  const handleIaUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setIaUploading(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setIaUploading(false);
+    setIaExtracting(true);
+    setIaStep(2);
+    setIaItems([]);
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analise este documento (ficha de entrega de EPI, recibo, ou lista de entrega) e extraia TODOS os registros de entrega encontrados. Para cada entrega retorne: nome_colaborador, cpf, funcao, setor, epi_nome, numero_ca, quantidade (número), data_entrega (DD/MM/AAAA), periodicidade_troca_meses (número), responsavel_entrega. Retorne um JSON com array "entregas".`,
+        file_urls: [file_url],
+        response_json_schema: {
+          type: "object",
+          properties: {
+            entregas: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  nome_colaborador: { type: "string" },
+                  cpf: { type: "string" },
+                  funcao: { type: "string" },
+                  setor: { type: "string" },
+                  epi_nome: { type: "string" },
+                  numero_ca: { type: "string" },
+                  quantidade: { type: "number" },
+                  data_entrega: { type: "string" },
+                  periodicidade_troca_meses: { type: "number" },
+                  responsavel_entrega: { type: "string" }
+                }
+              }
+            }
+          }
+        }
+      });
+      const items = (result.entregas || []).map(item => ({
+        nome_colaborador: item.nome_colaborador || "",
+        cpf: item.cpf || "",
+        funcao: item.funcao || "",
+        setor: item.setor || "",
+        epi_nome: item.epi_nome || "",
+        numero_ca: item.numero_ca || "",
+        quantidade: item.quantidade || 1,
+        data_entrega: parseBRDate(item.data_entrega) || new Date().toISOString().split("T")[0],
+        periodicidade_troca_meses: item.periodicidade_troca_meses || "",
+        responsavel_entrega: item.responsavel_entrega || "",
+        status_assinatura: "Pendente",
+        _selected: true
+      }));
+      setIaItems(items.length > 0 ? items : [{ ...EMPTY, _selected: true }]);
+    } catch {
+      setIaItems([{ ...EMPTY, _selected: true }]);
+    }
+    setIaExtracting(false);
+  };
+
+  const saveIaItems = async () => {
+    const selected = iaItems.filter(i => i._selected && i.nome_colaborador);
+    if (!selected.length) return;
+    setIaSaving(true);
+    const registros = selected.map(({ _selected, ...item }) => {
+      const meses = item.periodicidade_troca_meses ? parseInt(item.periodicidade_troca_meses) : null;
+      const proxima = meses && item.data_entrega ? addMonths(parseISO(item.data_entrega), meses).toISOString().split("T")[0] : "";
+      return { ...item, quantidade: parseInt(item.quantidade) || 1, data_proxima_troca: proxima, periodicidade_troca_meses: meses || undefined };
+    });
+    await base44.entities.EPIEntrega.bulkCreate(registros);
+    setIaSaving(false);
+    setIaModalOpen(false);
+    setIaStep(1);
+    setIaItems([]);
+    reload();
+  };
 
   const save = async () => {
     setSaving(true);
@@ -123,7 +214,10 @@ export default function EPIEntregasTab({ entregas, empresas, epis, colaboradores
         </TabsList>
 
         <TabsContent value="individual">
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end mb-4 gap-2">
+            <Button onClick={() => { setIaStep(1); setIaItems([]); setIaModalOpen(true); }} variant="outline" className="gap-1.5 border-purple-300 text-purple-700 hover:bg-purple-50">
+              <Sparkles className="w-4 h-4" /> Importar Ficha por IA
+            </Button>
             <Button onClick={openNew} className="bg-rose-600 hover:bg-rose-700 gap-1.5">
               <Plus className="w-4 h-4" /> Nova Entrega Individual
             </Button>
@@ -230,6 +324,94 @@ export default function EPIEntregasTab({ entregas, empresas, epis, colaboradores
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Modal IA Fichas */}
+      <Dialog open={iaModalOpen} onOpenChange={(open) => { if (!open) { setIaModalOpen(false); setIaStep(1); setIaItems([]); } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              {iaStep === 1 ? "Importar Fichas de Entrega por IA" : "Revisar Entregas Extraídas"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {iaStep === 1 && (
+            <div className="py-6 flex flex-col items-center gap-4">
+              <p className="text-sm text-gray-500 text-center">Envie uma ficha de entrega de EPI (física digitalizada ou PDF). A IA identifica colaboradores, EPIs e datas automaticamente.</p>
+              <div className="w-full border-2 border-dashed border-purple-300 rounded-xl p-10 flex flex-col items-center gap-3 cursor-pointer hover:border-purple-500 hover:bg-purple-50/30 transition-colors"
+                onClick={() => fileRef.current?.click()}>
+                {iaUploading ? (
+                  <><Loader2 className="w-10 h-10 text-purple-500 animate-spin" /><p className="text-sm text-gray-500">Enviando arquivo...</p></>
+                ) : (
+                  <><Upload className="w-10 h-10 text-gray-400" /><p className="font-medium text-gray-700">Selecione a ficha de entrega (PDF, imagem)</p><p className="text-xs text-gray-400">Ficha assinada, recibo, ou lista de entrega</p></>
+                )}
+              </div>
+              <input ref={fileRef} type="file" accept="application/pdf,image/*" className="hidden" onChange={handleIaUpload} />
+            </div>
+          )}
+
+          {iaStep === 2 && (
+            <>
+              {iaExtracting ? (
+                <div className="flex flex-col items-center gap-3 py-10">
+                  <Loader2 className="w-10 h-10 text-purple-500 animate-spin" />
+                  <p className="text-purple-700 font-medium">IA analisando a ficha de entrega...</p>
+                  <p className="text-xs text-gray-400">Extraindo colaboradores, EPIs e datas.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 rounded-lg px-3 py-2 mb-3">
+                    <Sparkles className="w-4 h-4" />
+                    {iaItems.length} entrega(s) identificada(s). Marque as que deseja importar e corrija se necessário.
+                  </div>
+                  <div className="space-y-4">
+                    {iaItems.map((item, idx) => (
+                      <div key={idx} className={`border rounded-xl p-4 ${item._selected ? "border-purple-300 bg-purple-50/20" : "border-gray-200 opacity-60"}`}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <input type="checkbox" checked={!!item._selected}
+                            onChange={e => setIaItems(prev => prev.map((it, i) => i === idx ? { ...it, _selected: e.target.checked } : it))} />
+                          <span className="font-medium text-sm text-gray-700">Entrega {idx + 1}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            ["Colaborador", "nome_colaborador"], ["CPF", "cpf"],
+                            ["Função", "funcao"], ["Setor", "setor"],
+                            ["EPI", "epi_nome"], ["Nº CA", "numero_ca"],
+                            ["Responsável Entrega", "responsavel_entrega"],
+                          ].map(([label, key]) => (
+                            <div key={key}>
+                              <label className="text-xs text-gray-500 block mb-0.5">{label}</label>
+                              <Input value={item[key] || ""} onChange={e => setIaItems(prev => prev.map((it, i) => i === idx ? { ...it, [key]: e.target.value } : it))} className="text-sm h-8" />
+                            </div>
+                          ))}
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-0.5">Data Entrega</label>
+                            <Input type="date" value={item.data_entrega || ""} onChange={e => setIaItems(prev => prev.map((it, i) => i === idx ? { ...it, data_entrega: e.target.value } : it))} className="text-sm h-8" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-0.5">Quantidade</label>
+                            <Input type="number" value={item.quantidade || 1} onChange={e => setIaItems(prev => prev.map((it, i) => i === idx ? { ...it, quantidade: e.target.value } : it))} className="text-sm h-8" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-0.5">Periodicidade Troca (meses)</label>
+                            <Input type="number" value={item.periodicidade_troca_meses || ""} onChange={e => setIaItems(prev => prev.map((it, i) => i === idx ? { ...it, periodicidade_troca_meses: e.target.value } : it))} className="text-sm h-8" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button variant="outline" onClick={() => { setIaStep(1); setIaItems([]); }}>← Novo Upload</Button>
+                    <Button onClick={saveIaItems} disabled={iaSaving || !iaItems.some(i => i._selected && i.nome_colaborador)} className="bg-purple-600 hover:bg-purple-700">
+                      {iaSaving ? "Importando..." : `Importar ${iaItems.filter(i => i._selected && i.nome_colaborador).length} entrega(s)`}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

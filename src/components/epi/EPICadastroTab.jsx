@@ -1,11 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Search, Edit2 } from "lucide-react";
+import { Plus, Search, Edit2, Upload, Loader2, Sparkles } from "lucide-react";
 import { differenceInDays, parseISO, format } from "date-fns";
+
+function parseBRDate(str) {
+  if (!str) return "";
+  const m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  return str;
+}
 
 const CA_COLORS = {
   "Válido": "bg-green-100 text-green-700",
@@ -28,6 +35,88 @@ export default function EPICadastroTab({ epis, empresas, reload }) {
   const [form, setForm] = useState(EMPTY);
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  // Upload IA
+  const [iaModalOpen, setIaModalOpen] = useState(false);
+  const [iaStep, setIaStep] = useState(1); // 1=upload 2=review
+  const [iaUploading, setIaUploading] = useState(false);
+  const [iaExtracting, setIaExtracting] = useState(false);
+  const [iaItems, setIaItems] = useState([]); // lista de EPIs extraídos
+  const [iaSaving, setIaSaving] = useState(false);
+  const fileRef = useRef();
+
+  const handleIaUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setIaUploading(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setIaUploading(false);
+    setIaExtracting(true);
+    setIaStep(2);
+    setIaItems([]);
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analise este documento de EPI (pode ser laudo, certificado CA, ficha técnica ou lista de EPIs) e extraia TODOS os EPIs encontrados. Para cada EPI retorne: nome_epi, numero_ca, fabricante, marca, modelo, data_emissao_ca (DD/MM/AAAA), data_validade_ca (DD/MM/AAAA), riscos_protegidos. Retorne um JSON com array "epis".`,
+        file_urls: [file_url],
+        response_json_schema: {
+          type: "object",
+          properties: {
+            epis: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  nome_epi: { type: "string" },
+                  numero_ca: { type: "string" },
+                  fabricante: { type: "string" },
+                  marca: { type: "string" },
+                  modelo: { type: "string" },
+                  data_emissao_ca: { type: "string" },
+                  data_validade_ca: { type: "string" },
+                  riscos_protegidos: { type: "string" }
+                }
+              }
+            }
+          }
+        }
+      });
+      const items = (result.epis || []).map(item => ({
+        nome_epi: item.nome_epi || "",
+        numero_ca: item.numero_ca || "",
+        fabricante: item.fabricante || "",
+        marca: item.marca || "",
+        modelo: item.modelo || "",
+        data_emissao_ca: parseBRDate(item.data_emissao_ca),
+        data_validade_ca: parseBRDate(item.data_validade_ca),
+        riscos_protegidos: item.riscos_protegidos || "",
+        situacao_ca: "Válido",
+        status: "Ativo",
+        natureza: "Nacional",
+        _selected: true
+      }));
+      setIaItems(items.length > 0 ? items : [{ ...EMPTY, _selected: true }]);
+    } catch {
+      setIaItems([{ ...EMPTY, _selected: true }]);
+    }
+    setIaExtracting(false);
+  };
+
+  const saveIaItems = async () => {
+    const selected = iaItems.filter(i => i._selected && i.nome_epi);
+    if (!selected.length) return;
+    setIaSaving(true);
+    for (const item of selected) {
+      const { _selected, ...payload } = item;
+      await base44.entities.EPICadastro.create(payload);
+    }
+    setIaSaving(false);
+    setIaModalOpen(false);
+    setIaStep(1);
+    setIaItems([]);
+    reload();
+  };
+
+  const openIaModal = () => { setIaStep(1); setIaItems([]); setIaModalOpen(true); };
 
   const getSituacaoCa = (data_validade) => {
     if (!data_validade) return "Não Informado";
@@ -84,9 +173,14 @@ export default function EPICadastroTab({ epis, empresas, reload }) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input placeholder="Buscar EPI, CA, fabricante..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <Button onClick={openNew} className="bg-rose-600 hover:bg-rose-700 gap-1.5">
-          <Plus className="w-4 h-4" /> Novo EPI
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={openIaModal} variant="outline" className="gap-1.5 border-purple-300 text-purple-700 hover:bg-purple-50">
+            <Sparkles className="w-4 h-4" /> Importar por IA
+          </Button>
+          <Button onClick={openNew} className="bg-rose-600 hover:bg-rose-700 gap-1.5">
+            <Plus className="w-4 h-4" /> Novo EPI
+          </Button>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -124,6 +218,98 @@ export default function EPICadastroTab({ epis, empresas, reload }) {
           </tbody>
         </table>
       </div>
+
+      {/* Modal IA */}
+      <Dialog open={iaModalOpen} onOpenChange={(open) => { if (!open) { setIaModalOpen(false); setIaStep(1); setIaItems([]); } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              {iaStep === 1 ? "Importar EPIs por IA — Upload do Documento" : "Revisar EPIs Extraídos"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {iaStep === 1 && (
+            <div className="py-6 flex flex-col items-center gap-4">
+              <p className="text-sm text-gray-500 text-center">Envie um laudo, certificado CA, ficha técnica ou qualquer documento com dados de EPIs. A IA extrai e preenche os campos automaticamente.</p>
+              <div
+                className="w-full border-2 border-dashed border-purple-300 rounded-xl p-10 flex flex-col items-center gap-3 cursor-pointer hover:border-purple-500 hover:bg-purple-50/30 transition-colors"
+                onClick={() => fileRef.current?.click()}
+              >
+                {iaUploading ? (
+                  <><Loader2 className="w-10 h-10 text-purple-500 animate-spin" /><p className="text-sm text-gray-500">Enviando arquivo...</p></>
+                ) : (
+                  <><Upload className="w-10 h-10 text-gray-400" /><p className="font-medium text-gray-700">Selecione o documento (PDF, imagem)</p><p className="text-xs text-gray-400">Certificado CA, laudo, ficha técnica...</p></>
+                )}
+              </div>
+              <input ref={fileRef} type="file" accept="application/pdf,image/*" className="hidden" onChange={handleIaUpload} />
+            </div>
+          )}
+
+          {iaStep === 2 && (
+            <>
+              {iaExtracting ? (
+                <div className="flex flex-col items-center gap-3 py-10">
+                  <Loader2 className="w-10 h-10 text-purple-500 animate-spin" />
+                  <p className="text-purple-700 font-medium">IA analisando o documento...</p>
+                  <p className="text-xs text-gray-400">Extraindo dados dos EPIs, aguarde.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 rounded-lg px-3 py-2 mb-3">
+                    <Sparkles className="w-4 h-4" />
+                    {iaItems.length} EPI(s) identificado(s). Marque os que deseja importar e corrija se necessário.
+                  </div>
+                  <div className="space-y-4">
+                    {iaItems.map((item, idx) => (
+                      <div key={idx} className={`border rounded-xl p-4 ${item._selected ? "border-purple-300 bg-purple-50/20" : "border-gray-200 opacity-60"}`}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <input type="checkbox" checked={!!item._selected}
+                            onChange={e => setIaItems(prev => prev.map((it, i) => i === idx ? { ...it, _selected: e.target.checked } : it))} />
+                          <span className="font-medium text-sm text-gray-700">EPI {idx + 1}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            ["Nome do EPI", "nome_epi"],
+                            ["Nº CA", "numero_ca"],
+                            ["Fabricante", "fabricante"],
+                            ["Marca", "marca"],
+                            ["Modelo", "modelo"],
+                            ["Riscos Protegidos", "riscos_protegidos"],
+                          ].map(([label, key]) => (
+                            <div key={key}>
+                              <label className="text-xs text-gray-500 block mb-0.5">{label}</label>
+                              <Input
+                                value={item[key] || ""}
+                                onChange={e => setIaItems(prev => prev.map((it, i) => i === idx ? { ...it, [key]: e.target.value } : it))}
+                                className="text-sm h-8"
+                              />
+                            </div>
+                          ))}
+                          {[["Data Emissão CA", "data_emissao_ca"], ["Data Validade CA", "data_validade_ca"]].map(([label, key]) => (
+                            <div key={key}>
+                              <label className="text-xs text-gray-500 block mb-0.5">{label}</label>
+                              <Input type="date" value={item[key] || ""}
+                                onChange={e => setIaItems(prev => prev.map((it, i) => i === idx ? { ...it, [key]: e.target.value } : it))}
+                                className="text-sm h-8" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button variant="outline" onClick={() => { setIaStep(1); setIaItems([]); }}>← Novo Upload</Button>
+                    <Button onClick={saveIaItems} disabled={iaSaving || !iaItems.some(i => i._selected && i.nome_epi)} className="bg-purple-600 hover:bg-purple-700">
+                      {iaSaving ? "Importando..." : `Importar ${iaItems.filter(i => i._selected && i.nome_epi).length} EPI(s)`}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
