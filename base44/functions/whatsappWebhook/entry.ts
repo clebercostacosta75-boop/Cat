@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const VERIFY_TOKEN = Deno.env.get("WHATSAPP_VERIFY_TOKEN") || "cat_cursos_webhook_2025";
+const VERIFY_TOKEN = Deno.env.get("WHATSAPP_VERIFY_TOKEN");
+const WEBHOOK_TOKEN = Deno.env.get("WHATSAPP_WEBHOOK_TOKEN");
 const WHATSAPP_BUSINESS_NUMBER = "5591988648079"; // +55 91 98864-8079
 
 Deno.serve(async (req) => {
@@ -11,7 +12,7 @@ Deno.serve(async (req) => {
     const token = url.searchParams.get("hub.verify_token");
     const challenge = url.searchParams.get("hub.challenge");
 
-    if (mode === "subscribe" && token === VERIFY_TOKEN) {
+    if (mode === "subscribe" && token === VERIFY_TOKEN && VERIFY_TOKEN) {
       console.log("Webhook verificado com sucesso pelo Meta.");
       return new Response(challenge, { status: 200 });
     }

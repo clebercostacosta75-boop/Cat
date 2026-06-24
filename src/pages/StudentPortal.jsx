@@ -3,7 +3,7 @@
  * O aluno busca seus certificados pelo CPF.
  * Permite: visualizar status, baixar PDF, copiar link de validação.
  */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -72,7 +72,10 @@ function downloadPDF(cert) {
 }
 
 export default function StudentPortal() {
-  const [cpf, setCpf] = useState("");
+  const urlParams = new URLSearchParams(window.location.search);
+  const cpfParam = urlParams.get("cpf");
+
+  const [cpf, setCpf] = useState(cpfParam ? cpfParam.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : "");
   const [certs, setCerts] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -80,14 +83,19 @@ export default function StudentPortal() {
   const [viewMode, setViewMode] = useState("list"); // "list" | "wallet"
   const [walletIndex, setWalletIndex] = useState(0);
 
-  const handleSearch = async () => {
-    const cleaned = cpf.replace(/\D/g, "");
+  useEffect(() => {
+    if (cpfParam) handleSearch(cpfParam.replace(/\D/g, ""));
+  }, []);
+
+  const handleSearch = async (cpfOverride) => {
+    const cleaned = (cpfOverride || cpf).replace(/\D/g, "");
     if (cleaned.length !== 11) { setError("Digite um CPF válido com 11 dígitos."); return; }
     setError("");
     setLoading(true);
     setCerts(null);
     try {
-      const results = await base44.entities.Certificate.filter({ student_cpf: cpf });
+      const cpfFormatted = cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+      const results = await base44.entities.Certificate.filter({ student_cpf: cpfFormatted });
       // Tentar também sem formatação
       let all = results;
       if (results.length === 0) {

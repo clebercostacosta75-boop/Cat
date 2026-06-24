@@ -169,11 +169,13 @@ export default function CompanyPortal() {
   const [activeTab, setActiveTab] = useState("certificados");
   const [students, setStudents] = useState([]);
   const [activeModules, setActiveModules] = useState([]);
+  const [complianceData, setComplianceData] = useState(null);
+  const [complianceLoading, setComplianceLoading] = useState(false);
 
-  const fetchStudents = async () => {
-    if (!company) return;
+  const fetchStudents = async (companyId) => {
+    if (!companyId) return;
     try {
-      const all = await base44.entities.Student.filter({ company_id: company.id });
+      const all = await base44.entities.Student.filter({ company_id: companyId });
       setStudents(all);
     } catch {}
   };
@@ -204,6 +206,7 @@ export default function CompanyPortal() {
       }
 
       setCompany(companyFull);
+      setComplianceData(null);
 
       // Determinar módulos ativos
       const mods = companyFull.modulos_contratados?.filter(m => m.active) || [];
@@ -216,7 +219,7 @@ export default function CompanyPortal() {
       // Buscar certificados da empresa
       const certs = await base44.entities.Certificate.filter({ client_id: companyFull.id });
       setCertificates(certs);
-      await fetchStudents();
+      await fetchStudents(companyFull.id);
       setSearched(true);
     } catch (e) {
       setError("Erro ao buscar dados. Tente novamente.");
@@ -424,7 +427,7 @@ export default function CompanyPortal() {
                           <tr key={s.id} className="border-b hover:bg-gray-50">
                             <td className="px-4 py-3 text-sm font-medium text-gray-800">{s.full_name}</td>
                             <td className="px-4 py-3 text-sm text-gray-500">{s.cpf}</td>
-                            <td className="px-4 py-3 text-sm text-gray-500">{s.funcao || "—"}</td>
+                            <td className="px-4 py-3 text-sm text-gray-500">{s.funcao_nome || s.funcao || "—"}</td>
                             <td className="px-4 py-3"><Badge className={s.status === "Ativo" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}>{s.status}</Badge></td>
                           </tr>
                         ))}
@@ -453,15 +456,90 @@ export default function CompanyPortal() {
             {/* Tab: Compliance 360 */}
             {activeTab === "compliance_360" && (
               <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-indigo-600" />
-                  <span className="font-semibold text-gray-800 text-sm">Compliance 360</span>
+                <div className="px-4 py-3 border-b flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-indigo-600" />
+                    <span className="font-semibold text-gray-800 text-sm">Compliance 360</span>
+                  </div>
+                  {!complianceData && !complianceLoading && (
+                    <button
+                      onClick={async () => {
+                        setComplianceLoading(true);
+                        try {
+                          const res = await base44.functions.invoke("calcularCompliance360", { company_id: company.id });
+                          setComplianceData(res.data);
+                        } catch { setComplianceData({ error: true }); }
+                        setComplianceLoading(false);
+                      }}
+                      className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md flex items-center gap-1.5"
+                    >
+                      <RefreshCw className="w-3 h-3" /> Calcular Score
+                    </button>
+                  )}
                 </div>
-                <div className="py-12 text-center text-gray-400">
-                  <Shield className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Módulo Compliance 360 em desenvolvimento.</p>
-                  <p className="text-xs mt-1">Em breve: Score de conformidade, matriz de riscos, planos de ação.</p>
-                </div>
+                {complianceLoading && (
+                  <div className="py-12 text-center text-gray-400">
+                    <RefreshCw className="w-8 h-8 mx-auto mb-2 animate-spin text-indigo-500" />
+                    <p className="text-sm">Calculando conformidade...</p>
+                  </div>
+                )}
+                {!complianceLoading && !complianceData && (
+                  <div className="py-12 text-center text-gray-400">
+                    <Shield className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">Clique em "Calcular Score" para ver o índice de conformidade.</p>
+                  </div>
+                )}
+                {!complianceLoading && complianceData && !complianceData.error && (
+                  <div className="p-5 space-y-5">
+                    {/* Score geral */}
+                    <div className="flex items-center gap-6">
+                      <div className={`w-24 h-24 rounded-full flex flex-col items-center justify-center text-white font-bold text-xl border-4 ${
+                        complianceData.resumo?.score_geral >= 80 ? "bg-green-500 border-green-400" :
+                        complianceData.resumo?.score_geral >= 50 ? "bg-yellow-500 border-yellow-400" :
+                        "bg-red-500 border-red-400"
+                      }`}>
+                        <span>{complianceData.resumo?.score_geral ?? 0}%</span>
+                        <span className="text-xs font-normal opacity-80">score</span>
+                      </div>
+                      <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {[
+                          { label: "Conformes", value: complianceData.resumo?.conformes ?? 0, color: "text-green-700 bg-green-50" },
+                          { label: "Pendentes", value: complianceData.resumo?.pendentes ?? 0, color: "text-yellow-700 bg-yellow-50" },
+                          { label: "Vencidos", value: complianceData.resumo?.vencidos ?? 0, color: "text-red-700 bg-red-50" },
+                          { label: "Total checks", value: complianceData.resumo?.total_checks ?? 0, color: "text-gray-700 bg-gray-50" },
+                        ].map(s => (
+                          <div key={s.label} className={`rounded-lg p-3 ${s.color}`}>
+                            <div className="text-2xl font-bold">{s.value}</div>
+                            <div className="text-xs">{s.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Por função */}
+                    {complianceData.byFuncao?.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Por Função</p>
+                        <div className="space-y-2">
+                          {complianceData.byFuncao.slice(0, 5).map((f, i) => (
+                            <div key={i} className="flex items-center gap-3">
+                              <span className="text-sm text-gray-700 w-40 truncate">{f.nome}</span>
+                              <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                <div className={`h-2 rounded-full ${f.score >= 80 ? "bg-green-500" : f.score >= 50 ? "bg-yellow-500" : "bg-red-500"}`} style={{ width: `${f.score}%` }} />
+                              </div>
+                              <span className="text-xs font-semibold w-10 text-right text-gray-600">{f.score}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <button onClick={() => setComplianceData(null)} className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1">
+                      <RefreshCw className="w-3 h-3" /> Recalcular
+                    </button>
+                  </div>
+                )}
+                {!complianceLoading && complianceData?.error && (
+                  <div className="py-8 text-center text-red-500 text-sm">Erro ao calcular. Tente novamente.</div>
+                )}
               </div>
             )}
 
