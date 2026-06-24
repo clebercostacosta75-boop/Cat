@@ -2,9 +2,9 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import {
-  LayoutDashboard, Calendar,   Upload, Users, BookOpen, BarChart3, FileText,
+  LayoutDashboard, Calendar, Upload, Users, BookOpen, BarChart3, FileText,
   Building2, UserCog, Mail, Bell, Award,
-  TrendingUp, PenLine, Settings, Target, MessageSquare, ShieldAlert, Shield, Download, User, ShieldCheck, Grid3X3, FileCheck
+  TrendingUp, PenLine, Settings, Target, MessageSquare, ShieldAlert, Shield, Download, User, ShieldCheck, Grid3X3, FileCheck, Heart
 } from "lucide-react";
 
 import NotificationBell from "./components/notifications/NotificationBell";
@@ -53,6 +53,7 @@ const ALL_ITEMS = [
   { title: "Matriz de Treinamentos", url: "/MatrizTreinamentos", icon: Grid3X3, key: "Matriz de Treinamentos" },
   { title: "Dossiê de Homologação", url: "/DossieHomologacao", icon: FileCheck, key: "DossieHomologacao" },
   { title: "Compliance 360", url: "/Compliance360", icon: ShieldCheck, key: "Compliance360" },
+  { title: "Saúde Ocupacional", url: "/SaudeOcupacional", icon: Heart, key: "SaudeOcupacional" },
 ];
 
 const ROLE_LABEL = {

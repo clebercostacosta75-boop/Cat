@@ -57,6 +57,7 @@ import Homologacoes from './pages/Homologacoes.jsx';
 import MatrizTreinamentos from './pages/MatrizTreinamentos.jsx';
 import DossieHomologacao from './pages/DossieHomologacao.jsx';
 import Compliance360 from './pages/Compliance360.jsx';
+import SaudeOcupacional from './pages/SaudeOcupacional.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -162,6 +163,7 @@ const AuthenticatedApp = () => {
       <Route path="/MatrizTreinamentos" element={<LayoutWrapper currentPageName="MatrizTreinamentos"><ProtectedRoute pageKey="Matriz de Treinamentos"><MatrizTreinamentos /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DossieHomologacao" element={<LayoutWrapper currentPageName="DossieHomologacao"><ProtectedRoute pageKey="Dashboard"><DossieHomologacao /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/Compliance360" element={<LayoutWrapper currentPageName="Compliance360"><ProtectedRoute pageKey="Dashboard"><Compliance360 /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/SaudeOcupacional" element={<LayoutWrapper currentPageName="SaudeOcupacional"><ProtectedRoute pageKey="SaudeOcupacional"><SaudeOcupacional /></ProtectedRoute></LayoutWrapper>} />
 
       {/* Rotas autenticadas com layout */}
       <Route path="/" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />

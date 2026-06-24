@@ -1,0 +1,127 @@
+{
+  "name": "LTCAT",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo do LTCAT"
+    },
+    "empresa_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "empresa_nome": {
+      "type": "string",
+      "description": "Nome da empresa"
+    },
+    "unidade": {
+      "type": "string",
+      "description": "Unidade/setor avaliado"
+    },
+    "responsavel_tecnico": {
+      "type": "string",
+      "description": "Engenheiro de Seguran\u00e7a ou M\u00e9dico do Trabalho"
+    },
+    "crea_crm": {
+      "type": "string",
+      "description": "N\u00famero CREA/CRM"
+    },
+    "data_elaboracao": {
+      "type": "string",
+      "format": "date"
+    },
+    "data_validade": {
+      "type": "string",
+      "format": "date"
+    },
+    "versao": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Elabora\u00e7\u00e3o",
+        "Em Vigor",
+        "Em Revis\u00e3o",
+        "Vencido",
+        "Cancelado"
+      ],
+      "default": "Elabora\u00e7\u00e3o"
+    },
+    "agentes_nocivos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "agente": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "F\u00edsico",
+              "Qu\u00edmico",
+              "Biol\u00f3gico"
+            ]
+          },
+          "setor": {
+            "type": "string"
+          },
+          "nivel_exposicao": {
+            "type": "string"
+          },
+          "limite_tolerancia": {
+            "type": "string"
+          },
+          "conclusao": {
+            "type": "string",
+            "enum": [
+              "Exposto",
+              "N\u00e3o Exposto",
+              "Indeterminado"
+            ]
+          },
+          "epc_utilizado": {
+            "type": "string"
+          },
+          "epi_utilizado": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Agentes nocivos avaliados"
+    },
+    "conclusao_geral": {
+      "type": "string",
+      "description": "Conclus\u00e3o geral do laudo"
+    },
+    "documentos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "data_upload": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "observacoes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "titulo",
+    "empresa_nome"
+  ]
+}

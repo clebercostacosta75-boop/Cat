@@ -1,0 +1,128 @@
+{
+  "name": "ASO",
+  "type": "object",
+  "properties": {
+    "student_id": {
+      "type": "string",
+      "description": "ID do colaborador (Student)"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "Nome do colaborador"
+    },
+    "student_cpf": {
+      "type": "string",
+      "description": "CPF do colaborador"
+    },
+    "empresa_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "empresa_nome": {
+      "type": "string",
+      "description": "Nome da empresa"
+    },
+    "funcao": {
+      "type": "string",
+      "description": "Fun\u00e7\u00e3o/cargo do colaborador"
+    },
+    "setor": {
+      "type": "string",
+      "description": "Setor/departamento"
+    },
+    "tipo_aso": {
+      "type": "string",
+      "enum": [
+        "Admissional",
+        "Peri\u00f3dico",
+        "Retorno ao Trabalho",
+        "Mudan\u00e7a de Fun\u00e7\u00e3o",
+        "Demissional"
+      ],
+      "description": "Tipo do ASO"
+    },
+    "data_exame": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de realiza\u00e7\u00e3o dos exames"
+    },
+    "data_validade": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de validade do ASO"
+    },
+    "medico_examinador": {
+      "type": "string",
+      "description": "Nome do m\u00e9dico examinador"
+    },
+    "crm_medico": {
+      "type": "string",
+      "description": "CRM do m\u00e9dico"
+    },
+    "conclusao": {
+      "type": "string",
+      "enum": [
+        "Apto",
+        "Apto com Restri\u00e7\u00f5es",
+        "Inapto Tempor\u00e1rio",
+        "Inapto"
+      ],
+      "description": "Conclus\u00e3o do ASO"
+    },
+    "restricoes": {
+      "type": "string",
+      "description": "Restri\u00e7\u00f5es (se Apto com Restri\u00e7\u00f5es)"
+    },
+    "exames_realizados": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "exame_id": {
+            "type": "string"
+          },
+          "exame_nome": {
+            "type": "string"
+          },
+          "resultado": {
+            "type": "string"
+          },
+          "data_resultado": {
+            "type": "string",
+            "format": "date"
+          },
+          "laboratorio": {
+            "type": "string"
+          },
+          "normal": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Exames realizados vinculados ao ASO"
+    },
+    "documento_url": {
+      "type": "string",
+      "description": "URL do documento ASO digitalizado"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Realizado",
+        "Vencido",
+        "Cancelado"
+      ],
+      "default": "Pendente"
+    },
+    "observacoes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "student_name",
+    "student_cpf",
+    "empresa_nome",
+    "tipo_aso"
+  ]
+}

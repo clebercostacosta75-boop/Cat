@@ -1,0 +1,105 @@
+{
+  "name": "PCMSO",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo do PCMSO"
+    },
+    "empresa_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "empresa_nome": {
+      "type": "string",
+      "description": "Nome da empresa"
+    },
+    "unidade": {
+      "type": "string",
+      "description": "Unidade/filial"
+    },
+    "medico_coordenador": {
+      "type": "string",
+      "description": "Nome do m\u00e9dico coordenador"
+    },
+    "crm": {
+      "type": "string",
+      "description": "CRM do m\u00e9dico coordenador"
+    },
+    "data_elaboracao": {
+      "type": "string",
+      "format": "date"
+    },
+    "data_validade": {
+      "type": "string",
+      "format": "date"
+    },
+    "ano_vigencia": {
+      "type": "number",
+      "description": "Ano de vig\u00eancia do PCMSO"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Elabora\u00e7\u00e3o",
+        "Em Vigor",
+        "Em Revis\u00e3o",
+        "Vencido",
+        "Cancelado"
+      ],
+      "default": "Elabora\u00e7\u00e3o"
+    },
+    "exames_obrigatorios": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "funcao": {
+            "type": "string"
+          },
+          "exame": {
+            "type": "string"
+          },
+          "periodicidade_meses": {
+            "type": "number"
+          },
+          "criterio": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Exames obrigat\u00f3rios por fun\u00e7\u00e3o/risco"
+    },
+    "total_funcionarios": {
+      "type": "number"
+    },
+    "documentos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "data_upload": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "observacoes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "titulo",
+    "empresa_nome"
+  ]
+}
