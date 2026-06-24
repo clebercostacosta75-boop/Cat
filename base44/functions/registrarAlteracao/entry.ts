@@ -15,7 +15,8 @@ Deno.serve(async (req) => {
     const userEmail = user?.email || 'sistema';
 
     // Determinar tipo de ação
-    let actionType = 'desconhecida';
+    // O enum do AuditLog aceita apenas: login, logout, create, update, delete, view, export, send_credentials, block_user, unblock_user, change_password, sign, send_whatsapp
+    let actionType = 'view'; // fallback seguro dentro do enum
     let details = '';
 
     if (event.type === 'create') {
