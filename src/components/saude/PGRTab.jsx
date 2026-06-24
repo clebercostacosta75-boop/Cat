@@ -90,7 +90,11 @@ export default function PGRTab() {
   const save = async () => {
     setSaving(true);
     const payload = { ...form };
-    if (payload.numero_funcionarios) payload.numero_funcionarios = Number(payload.numero_funcionarios);
+    if (payload.numero_funcionarios !== undefined && payload.numero_funcionarios !== "") {
+      payload.numero_funcionarios = Number(payload.numero_funcionarios);
+    } else {
+      delete payload.numero_funcionarios;
+    }
     if (currentId) {
       await base44.entities.DocumentoPGR.update(currentId, payload);
     }
