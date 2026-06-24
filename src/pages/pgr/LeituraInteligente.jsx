@@ -53,12 +53,18 @@ function PGRDetalhe({ leitura, onClose }) {
   const [novoTrein, setNovoTrein] = useState({ funcao: "", nr_aplicavel: "", treinamento_obrigatorio: "", carga_horaria: "", validade_meses: "", status_colaborador: "Pendente" });
   const [addingTrein, setAddingTrein] = useState(false);
   const [alertasImpacto, setAlertasImpacto] = useState([]);
+  const [controles, setControles] = useState([]);
+  const [novoControle, setNovoControle] = useState({ setor: "", funcao: "", risco: "", tipo: "EPI", medida: "", prazo: "", responsavel: "", status: "Planejado" });
+  const [addingControle, setAddingControle] = useState(false);
+  const [logAlteracoes, setLogAlteracoes] = useState([]);
+  const [iaValidacao, setIaValidacao] = useState([]);
+  const [iaRunning, setIaRunning] = useState(false);
 
   const lid = leitura.id;
 
   const loadAll = async () => {
     setLoading(true);
-    const [ctrl, id_, set_, risc, plan, ep_, trein_] = await Promise.all([
+    const [ctrl, id_, set_, risc, plan, ep_, trein_, logs_] = await Promise.all([
       base44.entities.PGRControleDocumento.filter({ pgr_leitura_id: lid }),
       base44.entities.PGRIdentificacaoEmpresa.filter({ pgr_leitura_id: lid }),
       base44.entities.PGRSetorCargo.filter({ pgr_leitura_id: lid }),
@@ -66,10 +72,12 @@ function PGRDetalhe({ leitura, onClose }) {
       base44.entities.PGRPlanoAcao.filter({ pgr_leitura_id: lid }),
       base44.entities.PGREPIFuncao.filter({ pgr_leitura_id: lid }),
       base44.entities.PGRTreinamentoFuncao.filter({ pgr_leitura_id: lid }),
+      base44.entities.AuditLog.filter({ entity_id: lid }).catch(() => []),
     ]);
     const c0 = ctrl[0] || {}; const i0 = id_[0] || {};
     setData({ controle: c0, identificacao: i0, setores: set_, riscos: risc, plano: plan, epis: ep_, treinamentos: trein_ });
     setControle({ ...c0 }); setIdent({ ...i0 });
+    setLogAlteracoes(logs_);
     setLoading(false);
   };
 
@@ -132,6 +140,43 @@ function PGRDetalhe({ leitura, onClose }) {
     setAddingTrein(false); loadAll();
   };
 
+  const addControle = async () => {
+    await base44.entities.PGRPlanoAcao.create({ pgr_leitura_id: lid, nao_conformidade: `[${novoControle.tipo}] ${novoControle.risco}`, acao_recomendada: novoControle.medida, responsavel: novoControle.responsavel, prazo: novoControle.prazo, status: novoControle.status, prioridade: "Média", medida_tipo: novoControle.tipo });
+    setAddingControle(false); loadAll();
+  };
+
+  const runIaValidacao = async () => {
+    setIaRunning(true);
+    const pendencias = [];
+    // Funções sem GHE
+    data.setores.filter(s => !s.ghe).forEach(s => pendencias.push({ tipo: "⚠️ Sem GHE", funcao: s.funcao || s.cargo, setor: s.setor, severidade: "Alto" }));
+    // Funções sem riscos
+    data.setores.forEach(s => {
+      const fn = s.funcao || s.cargo;
+      if (!data.riscos.find(r => r.cargo_funcao === fn || r.setor === s.setor)) pendencias.push({ tipo: "⚠️ Sem Riscos", funcao: fn, setor: s.setor, severidade: "Alto" });
+    });
+    // Funções sem treinamentos
+    data.setores.forEach(s => {
+      const fn = s.funcao || s.cargo;
+      if (!data.treinamentos.find(t => t.funcao === fn)) pendencias.push({ tipo: "🎓 Sem Treinamento", funcao: fn, setor: s.setor, severidade: "Médio" });
+    });
+    // Funções sem exames
+    data.setores.forEach(s => {
+      const fn = s.funcao || s.cargo;
+      const temRiscoExame = data.riscos.find(r => (r.cargo_funcao === fn || r.setor === s.setor) && r.necessita_exame_pcmso);
+      if (!temRiscoExame) pendencias.push({ tipo: "🩺 Sem Exame PCMSO", funcao: fn, setor: s.setor, severidade: "Baixo" });
+    });
+    // Riscos sem medidas de controle
+    data.riscos.filter(r => r.classificacao === "Crítico" || r.classificacao === "Alto").forEach(r => {
+      const temMedida = data.plano.find(p => p.nao_conformidade?.includes(r.perigo || ""));
+      if (!temMedida) pendencias.push({ tipo: "🛡️ Risco sem Medida", funcao: r.cargo_funcao, setor: r.setor, severidade: "Crítico", detalhe: r.perigo });
+    });
+    // EPIs sem CA
+    data.epis.filter(ep => !ep.certificado_aprovacao_ca).forEach(ep => pendencias.push({ tipo: "🦺 EPI sem CA", funcao: ep.funcao, setor: "—", severidade: "Médio", detalhe: ep.epi_obrigatorio }));
+    setIaValidacao(pendencias);
+    setIaRunning(false);
+  };
+
   const alimentarCompliance360 = async () => {
     if (!leitura.empresa_mestre_id) { alert("Empresa não vinculada ao PGR."); return; }
     const empId = leitura.empresa_mestre_id;
@@ -154,12 +199,12 @@ function PGRDetalhe({ leitura, onClose }) {
   const ghe_list = [...new Set(data.setores.map(s => s.ghe).filter(Boolean))];
   const funcoes_list = [...new Set(data.setores.map(s => s.funcao || s.cargo).filter(Boolean))];
 
-  const ALL_TABS = [
+    const ALL_TABS = [
     ["geral","📊 Visão Geral"],["empresa","🏢 Dados Empresa"],["revisoes","📋 Revisões"],
     ["quadro","👥 Quadro Func."],["setores","🏭 Setores/Funções"],["atividades","📝 Atividades"],
     ["ghe","🔵 GHE"],["inventario","⚠️ Inv. Riscos"],["matriz","🗺️ Matriz Riscos"],
-    ["epi","🦺 EPI"],["treinamentos","🎓 Treinamentos"],["exames","🩺 Exames"],
-    ["plano","📌 Plano de Ação"],["pendencias","🔔 Pendências"],["documentos","📎 Documentos"],
+    ["controles","🛡️ Medidas Controle"],["epi","🦺 EPI"],["treinamentos","🎓 Treinamentos"],["exames","🩺 Exames"],
+    ["plano","📌 Plano de Ação"],["alteracoes","📝 Log Alterações"],["ia_val","🤖 IA Validação"],["pendencias","🔔 Pendências"],["documentos","📎 Documentos"],
   ];
 
   if (loading) return <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-rose-600" /></div>;
@@ -624,6 +669,61 @@ function PGRDetalhe({ leitura, onClose }) {
           </div>
         </TabsContent>
 
+        {/* MEDIDAS DE CONTROLE */}
+        <TabsContent value="controles">
+          <div className="mb-4 bg-gray-50 border rounded-lg p-3 text-sm text-gray-600">
+            Hierarquia de controle: <strong>1. Eliminação → 2. Substituição → 3. Engenharia → 4. Administrativa → 5. EPI</strong>
+          </div>
+          <div className="flex justify-end mb-3">
+            <Button size="sm" className="bg-rose-600 hover:bg-rose-700 gap-1" onClick={() => setAddingControle(true)}><Plus className="w-3.5 h-3.5" /> Nova Medida</Button>
+          </div>
+          {addingControle && (
+            <div className="bg-gray-50 border rounded-xl p-4 mb-4 grid sm:grid-cols-3 gap-3">
+              <FI label="Setor" k="setor" value={novoControle.setor} onChange={v => setNovoControle(s => ({ ...s, setor: v }))} />
+              <FI label="Função" k="funcao" value={novoControle.funcao} onChange={v => setNovoControle(s => ({ ...s, funcao: v }))} />
+              <FI label="Risco Associado" k="risco" value={novoControle.risco} onChange={v => setNovoControle(s => ({ ...s, risco: v }))} />
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Tipo de Controle</label>
+                <select value={novoControle.tipo} onChange={e => setNovoControle(s => ({ ...s, tipo: e.target.value }))} className="w-full border rounded-lg px-3 py-2 text-sm">
+                  {["Eliminação","Substituição","Engenharia","Administrativa","EPI"].map(v => <option key={v}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Status</label>
+                <select value={novoControle.status} onChange={e => setNovoControle(s => ({ ...s, status: e.target.value }))} className="w-full border rounded-lg px-3 py-2 text-sm">
+                  {["Planejado","Em Andamento","Concluído","Atrasado"].map(v => <option key={v}>{v}</option>)}
+                </select>
+              </div>
+              <FI label="Responsável" k="responsavel" value={novoControle.responsavel} onChange={v => setNovoControle(s => ({ ...s, responsavel: v }))} />
+              <FI label="Prazo" k="prazo" type="date" value={novoControle.prazo} onChange={v => setNovoControle(s => ({ ...s, prazo: v }))} />
+              <div className="col-span-3"><FI label="Medida de Controle" k="medida" rows={2} value={novoControle.medida} onChange={v => setNovoControle(s => ({ ...s, medida: v }))} /></div>
+              <div className="col-span-3 flex gap-2 justify-end"><Button variant="outline" onClick={() => setAddingControle(false)}>Cancelar</Button><Button onClick={addControle} className="bg-rose-600 hover:bg-rose-700">Salvar</Button></div>
+            </div>
+          )}
+          {["Eliminação","Substituição","Engenharia","Administrativa","EPI"].map((tipo, idx) => {
+            const items = plano.filter(p => p.medida_tipo === tipo || (tipo === "EPI" && p.nao_conformidade?.startsWith("[EPI]")));
+            return (
+              <div key={tipo} className="bg-white border rounded-xl overflow-hidden mb-3">
+                <div className="bg-gray-50 px-4 py-2 border-b flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-rose-600 text-white text-xs flex items-center justify-center font-bold">{idx + 1}</span>
+                  <span className="font-semibold text-gray-800 text-sm">{tipo}</span>
+                  <Badge className="text-xs bg-gray-200 text-gray-600 ml-auto">{items.length}</Badge>
+                </div>
+                {items.length === 0 ? <p className="px-4 py-3 text-xs text-gray-400">Nenhuma medida cadastrada</p> :
+                  items.map(p => (
+                    <div key={p.id} className="px-4 py-3 border-b text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-gray-800">{p.acao_recomendada || p.nao_conformidade}</span>
+                        <Badge className={`text-xs ${{ "Concluído": "bg-green-100 text-green-700", "Atrasado": "bg-red-100 text-red-700", "Em Andamento": "bg-blue-100 text-blue-700", "Planejado": "bg-gray-100 text-gray-600" }[p.status] || ""}`}>{p.status}</Badge>
+                      </div>
+                      {p.responsavel && <p className="text-xs text-gray-500 mt-0.5">👤 {p.responsavel} {p.prazo ? `• 📅 ${p.prazo}` : ""}</p>}
+                    </div>
+                  ))}
+              </div>
+            );
+          })}
+        </TabsContent>
+
         {/* 13. PLANO DE AÇÃO */}
         <TabsContent value="plano">
           <div className="flex justify-end mb-3">
@@ -667,6 +767,95 @@ function PGRDetalhe({ leitura, onClose }) {
                 </div>
               ))}
           </div>
+        </TabsContent>
+
+        {/* LOG DE ALTERAÇÕES */}
+        <TabsContent value="alteracoes">
+          <div className="bg-white border rounded-xl overflow-hidden">
+            <div className="bg-gray-50 px-4 py-3 border-b">
+              <h3 className="font-semibold text-gray-800 text-sm">Histórico de Alterações do PGR</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Campos críticos (CNAE, Grau de Risco, Função, GHE) geram revisão obrigatória.</p>
+            </div>
+            {logAlteracoes.length === 0 ? (
+              <div className="px-4 py-8 text-center text-gray-400">
+                <p className="text-sm">Nenhum log de alteração registrado.</p>
+                <p className="text-xs mt-1">Alterações em campos sensíveis serão registradas automaticamente.</p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {logAlteracoes.map(log => (
+                  <div key={log.id} className="px-4 py-3">
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                      <span>👤 {log.user_email || "Sistema"}</span>
+                      <span>{log.created_date ? new Date(log.created_date).toLocaleString("pt-BR") : "—"}</span>
+                    </div>
+                    <p className="text-sm text-gray-800">{log.description || log.action || "Alteração registrada"}</p>
+                    {log.changes && <p className="text-xs text-gray-500 mt-0.5">{JSON.stringify(log.changes)}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <h3 className="font-semibold text-amber-800 text-sm mb-2">Campos que exigem revisão obrigatória ao alterar:</h3>
+            <div className="grid sm:grid-cols-2 gap-1 text-xs text-amber-700">
+              {["CNAE","Grau de Risco","Função","GHE","Risco Ocupacional","Medida de Controle","EPI","Treinamento","Exame"].map(c => <span key={c}>⚠️ {c}</span>)}
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* IA DE VALIDAÇÃO */}
+        <TabsContent value="ia_val">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold text-gray-800">Validação Inteligente do PGR</h3>
+              <p className="text-xs text-gray-500">A IA analisa consistência entre funções, riscos, medidas, EPIs e treinamentos.</p>
+            </div>
+            <Button onClick={runIaValidacao} disabled={iaRunning} className="bg-purple-600 hover:bg-purple-700 gap-1.5">
+              {iaRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>🤖</span>}
+              {iaRunning ? "Analisando..." : "Executar Validação IA"}
+            </Button>
+          </div>
+          {iaValidacao.length === 0 && !iaRunning && (
+            <div className="text-center py-10 text-gray-400 bg-gray-50 rounded-xl border">
+              <p className="text-sm">Clique em "Executar Validação IA" para analisar o PGR.</p>
+              <p className="text-xs mt-1">A IA verifica: GHE, riscos, treinamentos, exames, medidas de controle e CAs.</p>
+            </div>
+          )}
+          {iaValidacao.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex gap-3 mb-3">
+                {["Crítico","Alto","Médio","Baixo"].map(s => {
+                  const cnt = iaValidacao.filter(p => p.severidade === s).length;
+                  return cnt > 0 ? <Badge key={s} className={`text-xs ${{ "Crítico": "bg-red-600 text-white", "Alto": "bg-orange-500 text-white", "Médio": "bg-yellow-400 text-gray-900", "Baixo": "bg-green-500 text-white" }[s]}`}>{s}: {cnt}</Badge> : null;
+                })}
+              </div>
+              {["Crítico","Alto","Médio","Baixo"].map(sev => {
+                const items = iaValidacao.filter(p => p.severidade === sev);
+                return items.map((p, i) => (
+                  <div key={`${sev}-${i}`} className={`border-l-4 rounded-lg px-4 py-3 ${{ "Crítico": "border-red-500 bg-red-50", "Alto": "border-orange-500 bg-orange-50", "Médio": "border-yellow-500 bg-yellow-50", "Baixo": "border-green-500 bg-green-50" }[p.severidade]}`}>
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-sm text-gray-800">{p.tipo}</p>
+                      <Badge className={`text-xs ${{ "Crítico": "bg-red-600 text-white", "Alto": "bg-orange-500 text-white", "Médio": "bg-yellow-400 text-gray-900", "Baixo": "bg-green-500 text-white" }[p.severidade]}`}>{p.severidade}</Badge>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-0.5">Função: <strong>{p.funcao || "—"}</strong> | Setor: {p.setor || "—"}</p>
+                    {p.detalhe && <p className="text-xs text-gray-500 mt-0.5">{p.detalhe}</p>}
+                  </div>
+                ));
+              })}
+              <div className="mt-4 flex justify-end">
+                <Button size="sm" className="bg-rose-600 hover:bg-rose-700" onClick={async () => {
+                  if (!leitura.empresa_mestre_id) return;
+                  for (const p of iaValidacao.filter(x => x.severidade === "Crítico" || x.severidade === "Alto")) {
+                    await base44.entities.ComplianceAlerta.create({ empresa_mestre_id: leitura.empresa_mestre_id, empresa_mestre_nome: leitura.empresa_mestre_nome, tipo_alerta: "Documento Vencendo", descricao: `PGR — ${p.tipo}: ${p.funcao} (${p.setor})`, prioridade: p.severidade, status: "Ativo", data_alerta: new Date().toISOString().slice(0, 10) }).catch(() => {});
+                  }
+                  alert(`${iaValidacao.filter(x => x.severidade === "Crítico" || x.severidade === "Alto").length} pendências criadas no Compliance 360.`);
+                }}>
+                  Enviar Pendências ao Compliance 360
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         {/* 14. PENDÊNCIAS E ALTERAÇÕES */}
