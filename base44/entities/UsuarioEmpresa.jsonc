@@ -1,0 +1,57 @@
+{
+  "name": "UsuarioEmpresa",
+  "type": "object",
+  "properties": {
+    "empresa_mestre_id": {
+      "type": "string"
+    },
+    "empresa_mestre_nome": {
+      "type": "string"
+    },
+    "nome": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "senha_temp": {
+      "type": "string"
+    },
+    "perfil": {
+      "type": "string",
+      "enum": [
+        "Gestor Master",
+        "RH",
+        "SST",
+        "M\u00e9dico do Trabalho",
+        "Financeiro",
+        "Visualizador"
+      ],
+      "default": "Visualizador"
+    },
+    "modulos_permitidos": {
+      "type": "string",
+      "description": "JSON com lista de m\u00f3dulos liberados"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true
+    },
+    "ultimo_acesso": {
+      "type": "string",
+      "format": "date"
+    },
+    "criado_por": {
+      "type": "string"
+    },
+    "data_criacao": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "empresa_mestre_id",
+    "nome",
+    "email"
+  ]
+}

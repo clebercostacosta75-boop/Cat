@@ -63,6 +63,8 @@ const ALL_ITEMS = [
   { title: "🏥 Colaboradores SST", url: "/ColaboradoresSST", icon: Users, key: "ColaboradoresSST" },
   { title: "🏥 Gestão de Exames", url: "/GestaoExames", icon: Grid3X3, key: "GestaoExames" },
   { title: "🦺 Gestão de EPI", url: "/GestaoEPI", icon: ShieldCheck, key: "GestaoEPI" },
+  // Compliance 360
+  { title: "📊 Portal da Empresa", url: "/Compliance360", icon: Building2, key: "Compliance360" },
 ];
 
 const ROLE_LABEL = {

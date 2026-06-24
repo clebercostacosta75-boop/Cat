@@ -1,0 +1,65 @@
+{
+  "name": "ComplianceAlerta",
+  "type": "object",
+  "properties": {
+    "empresa_mestre_id": {
+      "type": "string"
+    },
+    "empresa_mestre_nome": {
+      "type": "string"
+    },
+    "tipo_alerta": {
+      "type": "string",
+      "enum": [
+        "Documento Vencendo",
+        "Documento Vencido",
+        "Certificado Vencendo",
+        "Certificado Vencido",
+        "Exame Pendente",
+        "EPI Vencendo",
+        "Treinamento Pendente",
+        "CA Vencendo"
+      ]
+    },
+    "descricao": {
+      "type": "string"
+    },
+    "entidade_ref": {
+      "type": "string"
+    },
+    "id_ref": {
+      "type": "string"
+    },
+    "data_alerta": {
+      "type": "string",
+      "format": "date"
+    },
+    "dias_para_vencer": {
+      "type": "number"
+    },
+    "prioridade": {
+      "type": "string",
+      "enum": [
+        "Cr\u00edtico",
+        "Alto",
+        "M\u00e9dio",
+        "Baixo"
+      ],
+      "default": "M\u00e9dio"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ativo",
+        "Resolvido",
+        "Ignorado"
+      ],
+      "default": "Ativo"
+    },
+    "data_resolucao": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": []
+}
