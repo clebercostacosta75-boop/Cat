@@ -71,6 +71,7 @@ const ALL_ITEMS = [
   { title: "📁 Prontuário Digital", url: "/ProntuarioDigital", icon: Users, key: "ProntuarioDigital" },
   // Financeiro SST
   { title: "📊 Orçamento de Conformidade", url: "/OrcamentoConformidade", icon: TrendingUp, key: "OrcamentoConformidade" },
+  { title: "🩺 PCMSO Inteligente", url: "/PCMSOLeitura", icon: Heart, key: "PCMSOLeitura" },
 ];
 
 const ROLE_LABEL = {
