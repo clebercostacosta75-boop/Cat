@@ -63,8 +63,7 @@ const ALL_ITEMS = [
   { title: "🏥 Colaboradores SST", url: "/ColaboradoresSST", icon: Users, key: "ColaboradoresSST" },
   { title: "🏥 Gestão de Exames", url: "/GestaoExames", icon: Grid3X3, key: "GestaoExames" },
   { title: "🦺 Gestão de EPI", url: "/GestaoEPI", icon: ShieldCheck, key: "GestaoEPI" },
-  // Compliance 360
-  { title: "📊 Portal da Empresa", url: "/Compliance360", icon: Building2, key: "Compliance360" },
+  // Compliance 360 — acessível via rota direta, sem item de menu duplicado
   // Treinamentos
   { title: "📋 Matriz NR × Função", url: "/MatrizTreinamentos", icon: Grid3X3, key: "MatrizTreinamentos" },
   { title: "📅 Agendamento e Cronograma", url: "/AgendamentoTreinamentos", icon: Calendar, key: "AgendamentoTreinamentos" },
