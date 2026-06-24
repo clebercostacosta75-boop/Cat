@@ -73,6 +73,7 @@ const ALL_ITEMS = [
   { title: "📊 Orçamento de Conformidade", url: "/OrcamentoConformidade", icon: TrendingUp, key: "OrcamentoConformidade" },
   { title: "🩺 PCMSO Inteligente", url: "/PCMSOLeitura", icon: Heart, key: "PCMSOLeitura" },
   { title: "🔗 Conferência PGR × PCMSO", url: "/ConferenciaPGRPCMSO", icon: ShieldCheck, key: "ConferenciaPGRPCMSO" },
+  { title: "📋 Auditoria do Sistema", url: "/AuditoriaApp", icon: FileCheck, key: "AuditoriaApp" },
 ];
 
 const ROLE_LABEL = {
