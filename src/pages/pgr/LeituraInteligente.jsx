@@ -289,7 +289,7 @@ function PGRDetalhe({ leitura, onClose }) {
           <div className="bg-white border rounded-xl p-5">
             <h3 className="font-semibold text-gray-800 mb-4">Identificação da Empresa</h3>
             <div className="grid sm:grid-cols-2 gap-3">
-              {[["Razão Social","razao_social"],["Nome Fantasia","nome_fantasia"],["CNPJ","cnpj"],["CNAE","cnae"],["Atividade Principal","cnae_descricao"],["Grau de Risco (NR-04)","grau_risco"],["Endereço","endereco"],["Município","municipio"],["Estado","estado"],["Horário de Trabalho","horario_trabalho"],["Data Elaboração","data_elaboracao","date"],["Responsável Técnico","responsavel_tecnico"],["Conselho Profissional (CREA)","crea_registro"],["Total Funcionários","qtd_funcionarios","number"],["Total Homens","qtd_homens","number"],["Total Mulheres","qtd_mulheres","number"]].map(([l, k, t]) => (
+              {[["Razão Social","razao_social"],["Nome Fantasia","nome_fantasia"],["CNPJ","cnpj"],["CNAE","cnae"],["Atividade Principal","cnae_descricao"],["Grau de Risco (NR-04)","grau_risco"],["Endereço","endereco"],["Município","municipio"],["Estado","estado"],["CEP","cep"],["Horário de Trabalho","horario_trabalho"],["Data Elaboração","data_elaboracao","date"],["Data da Revisão","data_revisao","date"],["Data de Vencimento","data_vencimento","date"],["Responsável Técnico","responsavel_tecnico"],["Conselho Profissional (CREA)","crea_registro"],["Total Funcionários","qtd_funcionarios","number"],["Total Homens","qtd_homens","number"],["Total Mulheres","qtd_mulheres","number"]].map(([l, k, t]) => (
                 <FI key={k} label={l} k={k} type={t || "text"} value={ident[k]} onChange={v => setIdent(s => ({ ...s, [k]: v }))} />
               ))}
               <div className="col-span-2">
@@ -418,15 +418,24 @@ function PGRDetalhe({ leitura, onClose }) {
         <TabsContent value="atividades">
           <div className="space-y-4">
             {setores.map(s => (
-              <div key={s.id} className="bg-white border rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
+              <details key={s.id} className="bg-white border rounded-xl">
+                <summary className="px-4 py-3 cursor-pointer flex items-center gap-2">
                   <span className="font-semibold text-gray-800">{s.funcao || s.cargo}</span>
                   <Badge className="text-xs bg-gray-100 text-gray-600">{s.setor}</Badge>
                   {s.ghe && <Badge className="text-xs bg-purple-100 text-purple-700">GHE: {s.ghe}</Badge>}
+                  {s.cbo && <span className="text-xs text-blue-600 ml-1">CBO: {s.cbo}</span>}
+                </summary>
+                <div className="px-4 pb-4 pt-1 grid sm:grid-cols-2 gap-3 text-sm">
+                  {[["Descrição Geral","descricao_atividades"],["Atividades Rotineiras","atividades_rotineiras"],["Atividades Não Rotineiras","atividades_nao_rotineiras"],["Equipamentos Utilizados","equipamentos_utilizados"],["Ferramentas Utilizadas","ferramentas_utilizadas"],["Ambiente de Trabalho","ambiente_trabalho"]].map(([l, k]) => s[k] ? (
+                    <div key={k} className={k === "descricao_atividades" ? "col-span-2" : ""}>
+                      <p className="text-xs font-medium text-gray-500 mb-0.5">{l}</p>
+                      <p className="text-gray-700 whitespace-pre-wrap">{s[k]}</p>
+                    </div>
+                  ) : null)}
+                  {s.jornada_trabalho && <p className="text-xs text-gray-500 col-span-2">⏰ Jornada: {s.jornada_trabalho}</p>}
+                  <p className="text-xs text-gray-400 col-span-2 mt-1">Utilizado por: PCMSO · PPP · LTCAT · Matriz de Treinamentos</p>
                 </div>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{s.descricao_atividades || "Sem descrição cadastrada"}</p>
-                {s.jornada_trabalho && <p className="text-xs text-gray-500 mt-1">Jornada: {s.jornada_trabalho}</p>}
-              </div>
+              </details>
             ))}
             {setores.length === 0 && <p className="text-center py-8 text-gray-400">Nenhuma função com descrição</p>}
           </div>
@@ -506,21 +515,23 @@ function PGRDetalhe({ leitura, onClose }) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse bg-white rounded-xl overflow-hidden shadow-sm">
               <thead><tr className="bg-gray-50 border-b">
-                {["Setor","Função","Perigo","Tipo","Prob.","Grav.","NR","Classificação","EPI","EPC"].map(h => <th key={h} className="text-left px-3 py-2 font-medium text-gray-600">{h}</th>)}
+                {["Setor","Função","GHE","Perigo","eSocial","Tipo","Prob.","Grav.","NR","Classif.","Medidas Exist.","EPI"].map(h => <th key={h} className="text-left px-3 py-2 font-medium text-gray-600 text-xs">{h}</th>)}
               </tr></thead>
               <tbody>
-                {riscos.length === 0 ? <tr><td colSpan={10} className="text-center py-8 text-gray-400">Nenhum risco</td></tr> :
+                {riscos.length === 0 ? <tr><td colSpan={12} className="text-center py-8 text-gray-400">Nenhum risco</td></tr> :
                   riscos.map(r => <tr key={r.id} className={`border-b hover:bg-gray-50 ${r.classificacao === "Crítico" ? "bg-red-50" : r.classificacao === "Alto" ? "bg-orange-50" : ""}`}>
-                    <td className="px-3 py-2">{r.setor || "—"}</td>
+                    <td className="px-3 py-2 text-xs">{r.setor || "—"}</td>
                     <td className="px-3 py-2 text-xs">{r.cargo_funcao || "—"}</td>
-                    <td className="px-3 py-2 max-w-[120px] truncate" title={r.perigo}>{r.perigo || "—"}</td>
+                    <td className="px-3 py-2 text-xs">{r.ghe || "—"}</td>
+                    <td className="px-3 py-2 max-w-[100px] truncate text-xs" title={r.perigo}>{r.perigo || "—"}</td>
+                    <td className="px-3 py-2 font-mono text-xs">{r.codigo_esocial || "—"}</td>
                     <td className="px-3 py-2"><Badge className="text-xs bg-gray-100 text-gray-700">{r.tipo_risco || "—"}</Badge></td>
-                    <td className="px-3 py-2 text-center">{r.probabilidade || "—"}</td>
-                    <td className="px-3 py-2 text-center">{r.gravidade || "—"}</td>
-                    <td className="px-3 py-2 text-center font-bold">{r.nivel_risco || "—"}</td>
+                    <td className="px-3 py-2 text-center text-xs">{r.probabilidade || "—"}</td>
+                    <td className="px-3 py-2 text-center text-xs">{r.gravidade || "—"}</td>
+                    <td className="px-3 py-2 text-center font-bold text-xs">{r.nivel_risco || "—"}</td>
                     <td className="px-3 py-2"><Badge className={`text-xs ${CLASSIF_COLORS[r.classificacao] || "bg-gray-200 text-gray-700"}`}>{r.classificacao || "—"}</Badge></td>
+                    <td className="px-3 py-2 text-xs max-w-[100px] truncate" title={r.medidas_existentes}>{r.medidas_existentes || "—"}</td>
                     <td className="px-3 py-2 text-xs">{r.epi || "—"}</td>
-                    <td className="px-3 py-2 text-xs">{r.epc || "—"}</td>
                   </tr>)}
               </tbody>
             </table>
@@ -966,7 +977,7 @@ export default function LeituraInteligente() {
     let extracted = {};
     try {
       extracted = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analise este PGR (Programa de Gerenciamento de Riscos) e extraia em JSON completo: cnpj, razao_social, nome_fantasia, cnae, cnae_descricao, grau_risco (número 1-4 como string), municipio, estado, responsavel_legal, endereco, horario_trabalho, qtd_funcionarios (inteiro), qtd_homens (inteiro), qtd_mulheres (inteiro), responsavel_tecnico, registro_crea, data_elaboracao (DD/MM/AAAA), vigencia_inicio (DD/MM/AAAA), vigencia_fim (DD/MM/AAAA), nome_documento, numero_revisao, setores_cargos (array de {setor, cargo, funcao, cbo, qtd_trabalhadores, qtd_homens, qtd_mulheres, ghe, descricao_atividades, jornada_trabalho}), riscos (array de {setor, cargo_funcao, perigo, tipo_risco, fonte_circunstancia, possiveis_lesoes, classificacao, probabilidade, gravidade, epc, epi, necessita_treinamento, necessita_exame_pcmso}), plano_acao (array de {nao_conformidade, acao_recomendada, prioridade, responsavel, prazo}), epis (array de {funcao, risco_associado, epi_obrigatorio, ca, fabricante}), treinamentos (array de {funcao, nr_aplicavel, treinamento_obrigatorio, carga_horaria, validade_meses}).`,
+        prompt: `Analise este PGR (Programa de Gerenciamento de Riscos) e extraia em JSON completo: cnpj, razao_social, nome_fantasia, cnae, cnae_descricao, grau_risco (número 1-4 como string), municipio, estado, cep, responsavel_legal, endereco, horario_trabalho, qtd_funcionarios (inteiro), qtd_homens (inteiro), qtd_mulheres (inteiro), responsavel_tecnico, registro_crea, data_elaboracao (DD/MM/AAAA), data_revisao (DD/MM/AAAA), vigencia_inicio (DD/MM/AAAA), vigencia_fim (DD/MM/AAAA), nome_documento, numero_revisao, setores_cargos (array de {setor, cargo, funcao, cbo, qtd_trabalhadores, qtd_homens, qtd_mulheres, ghe, descricao_atividades, atividades_rotineiras, atividades_nao_rotineiras, equipamentos_utilizados, ferramentas_utilizadas, ambiente_trabalho, jornada_trabalho}), riscos (array de {setor, cargo_funcao, ghe, atividade, perigo, tipo_risco, codigo_esocial, fonte_circunstancia, exposicao, possiveis_lesoes, classificacao, probabilidade, gravidade, medidas_existentes, medidas_recomendadas, epc, epi, necessita_treinamento, necessita_exame_pcmso}), plano_acao (array de {evidencia, acao, responsavel, prazo, status, prioridade}), epis (array de {funcao, risco_associado, epi_obrigatorio, ca, fabricante, marca, validade_ca, periodicidade_troca_meses}), treinamentos (array de {funcao, risco, nr_aplicavel, treinamento_obrigatorio, carga_horaria, validade_meses, tipo_reciclagem}).`,
         file_urls: [file_url],
         response_json_schema: {
           type: "object",
@@ -1018,10 +1029,10 @@ export default function LeituraInteligente() {
     const lid = leitura.id;
     await Promise.all([
       base44.entities.PGRControleDocumento.create({ pgr_leitura_id: lid, nome_documento: extracted.nome_documento || "", numero_revisao: extracted.numero_revisao || "", responsavel_tecnico: extracted.responsavel_tecnico || "", data_emissao: parseBRDate(extracted.data_elaboracao), vigencia_inicio: parseBRDate(extracted.vigencia_inicio), vigencia_fim: parseBRDate(extracted.vigencia_fim), status_doc: "Vigente" }),
-      base44.entities.PGRIdentificacaoEmpresa.create({ pgr_leitura_id: lid, cnpj, razao_social: extracted.razao_social || "", nome_fantasia: extracted.nome_fantasia || "", cnae: extracted.cnae || "", cnae_descricao: extracted.cnae_descricao || "", grau_risco: extracted.grau_risco || "", municipio: extracted.municipio || "", estado: extracted.estado || "", endereco: extracted.endereco || "", horario_trabalho: extracted.horario_trabalho || "", responsavel_legal: extracted.responsavel_legal || "", responsavel_tecnico: extracted.responsavel_tecnico || "", crea_registro: extracted.registro_crea || "", qtd_funcionarios: extracted.qtd_funcionarios ? parseInt(extracted.qtd_funcionarios) : undefined, qtd_homens: extracted.qtd_homens ? parseInt(extracted.qtd_homens) : undefined, qtd_mulheres: extracted.qtd_mulheres ? parseInt(extracted.qtd_mulheres) : undefined }),
+      base44.entities.PGRIdentificacaoEmpresa.create({ pgr_leitura_id: lid, cnpj, razao_social: extracted.razao_social || "", nome_fantasia: extracted.nome_fantasia || "", cnae: extracted.cnae || "", cnae_descricao: extracted.cnae_descricao || "", grau_risco: extracted.grau_risco || "", municipio: extracted.municipio || "", estado: extracted.estado || "", cep: extracted.cep || "", endereco: extracted.endereco || "", horario_trabalho: extracted.horario_trabalho || "", responsavel_legal: extracted.responsavel_legal || "", responsavel_tecnico: extracted.responsavel_tecnico || "", crea_registro: extracted.registro_crea || "", qtd_funcionarios: extracted.qtd_funcionarios ? parseInt(extracted.qtd_funcionarios) : undefined, qtd_homens: extracted.qtd_homens ? parseInt(extracted.qtd_homens) : undefined, qtd_mulheres: extracted.qtd_mulheres ? parseInt(extracted.qtd_mulheres) : undefined }),
       ...(extracted.setores_cargos || []).map(sc => base44.entities.PGRSetorCargo.create({ pgr_leitura_id: lid, ...sc, cbo: sc.cbo || "", qtd_trabalhadores: parseInt(sc.qtd_trabalhadores) || 0, qtd_homens: parseInt(sc.qtd_homens) || 0, qtd_mulheres: parseInt(sc.qtd_mulheres) || 0 })),
-      ...(extracted.riscos || []).map(r => base44.entities.PGRInventarioRisco.create({ pgr_leitura_id: lid, ...r, nivel_risco: r.probabilidade && r.gravidade ? parseInt(r.probabilidade) * parseInt(r.gravidade) : undefined })),
-      ...(extracted.plano_acao || []).map(p => base44.entities.PGRPlanoAcao.create({ pgr_leitura_id: lid, ...p, status: "Pendente" })),
+      ...(extracted.riscos || []).map(r => base44.entities.PGRInventarioRisco.create({ pgr_leitura_id: lid, ...r, nivel_risco: r.probabilidade && r.gravidade ? parseInt(r.probabilidade) * parseInt(r.gravidade) : undefined, codigo_esocial: r.codigo_esocial || "" })),
+      ...(extracted.plano_acao || []).map(p => base44.entities.PGRPlanoAcao.create({ pgr_leitura_id: lid, nao_conformidade: p.evidencia || p.nao_conformidade || "", acao_recomendada: p.acao || p.acao_recomendada || "", responsavel: p.responsavel || "", prazo: p.prazo || "", status: p.status || "Pendente", prioridade: p.prioridade || "Média" })),
       ...(extracted.epis || []).map(ep => base44.entities.PGREPIFuncao.create({ pgr_leitura_id: lid, funcao: ep.funcao, risco_associado: ep.risco_associado, epi_obrigatorio: ep.epi_obrigatorio, certificado_aprovacao_ca: ep.ca, fabricante: ep.fabricante, status_epi: "Pendente" })),
       ...(extracted.treinamentos || []).map(t => base44.entities.PGRTreinamentoFuncao.create({ pgr_leitura_id: lid, funcao: t.funcao, nr_aplicavel: t.nr_aplicavel, treinamento_obrigatorio: t.treinamento_obrigatorio, carga_horaria: t.carga_horaria ? parseInt(t.carga_horaria) : undefined, validade_meses: t.validade_meses ? parseInt(t.validade_meses) : undefined, status_colaborador: "Pendente" })),
     ]);
