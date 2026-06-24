@@ -26,7 +26,7 @@ function parseBRDate(str) {
   return str;
 }
 
-export default function ASOTab({ empresa }) {
+export default function ASOTab() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -42,14 +42,12 @@ export default function ASOTab({ empresa }) {
 
   const load = async () => {
     setLoading(true);
-    const data = empresa?.cnpj
-      ? await base44.entities.DocumentoASA.filter({ cnpj: empresa.cnpj })
-      : await base44.entities.DocumentoASA.list("-created_date", 100);
-    setRecords(data.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
+    const data = await base44.entities.DocumentoASA.list("-created_date", 100);
+    setRecords(data);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [empresa?.id]);
+  useEffect(() => { load(); }, []);
 
   const filtered = records.filter(r =>
     r.empresa_nome?.toLowerCase().includes(search.toLowerCase()) ||

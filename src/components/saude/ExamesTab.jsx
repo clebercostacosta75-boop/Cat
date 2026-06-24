@@ -33,7 +33,7 @@ function parseBRDate(str) {
   return str;
 }
 
-export default function ExamesTab({ empresa }) {
+export default function ExamesTab() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -49,14 +49,12 @@ export default function ExamesTab({ empresa }) {
 
   const load = async () => {
     setLoading(true);
-    const data = empresa?.razao_social
-      ? await base44.entities.RegistroExame.filter({ empresa_nome: empresa.razao_social })
-      : await base44.entities.RegistroExame.list("-created_date", 200);
-    setRecords(data.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
+    const data = await base44.entities.RegistroExame.list("-created_date", 200);
+    setRecords(data);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [empresa?.id]);
+  useEffect(() => { load(); }, []);
 
   const filtered = records.filter(r =>
     r.colaborador_nome?.toLowerCase().includes(search.toLowerCase()) ||
@@ -106,7 +104,6 @@ export default function ExamesTab({ empresa }) {
         }
       });
 
-      // Normaliza tipo_exame para enum válido
       const tiposValidos = ["Admissional", "Periódico", "Demissional", "Retorno ao Trabalho", "Mudança de Risco"];
       const tipoRaw = result.tipo_exame || "";
       const tipoNorm = tiposValidos.find(t => t.toLowerCase().includes(tipoRaw.toLowerCase())) || "Admissional";

@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Search, FileText, Edit2, Trash2, Upload, Loader2, Sparkles } from "lucide-react";
+import { Plus, Search, FileText, Edit2, Trash2, Upload, Loader2, CheckCircle, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 
 const STATUS_COLORS = {
@@ -14,6 +14,14 @@ const STATUS_COLORS = {
   "Em Revisão": "bg-amber-100 text-amber-700",
 };
 
+const EMPTY_FORM = {
+  empresa_nome: "", cnpj: "", cnae: "", cnae_descricao: "", endereco: "",
+  responsavel_tecnico: "", registro_crea: "", data_elaboracao: "",
+  vigencia_inicio: "", vigencia_fim: "", numero_funcionarios: "",
+  status: "Rascunho", observacoes: ""
+};
+
+// Converte data DD/MM/AAAA para YYYY-MM-DD
 function parseBRDate(str) {
   if (!str) return "";
   const m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -21,45 +29,32 @@ function parseBRDate(str) {
   return str;
 }
 
-function makeEmptyForm(empresa) {
-  return {
-    empresa_nome: empresa?.razao_social || "",
-    cnpj: empresa?.cnpj || "",
-    cnae: empresa?.cnae || "",
-    cnae_descricao: empresa?.cnae_descricao || "",
-    responsavel_tecnico: "",
-    registro_crea: "",
-    data_elaboracao: "",
-    vigencia_inicio: "",
-    vigencia_fim: "",
-    numero_funcionarios: empresa?.qtd_colaboradores ? String(empresa.qtd_colaboradores) : "",
-    status: "Rascunho",
-    observacoes: ""
-  };
-}
-
-export default function PGRTab({ empresa, onEmpresaAtualizada }) {
+export default function PGRTab() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+
+  // Modal state
   const [modalOpen, setModalOpen] = useState(false);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(1); // 1 = upload, 2 = identify
   const [uploading, setUploading] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [currentId, setCurrentId] = useState(null);
-  const [form, setForm] = useState(() => makeEmptyForm(empresa));
+  const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState(null);
+
   const fileRef = useRef();
 
   const load = async () => {
     setLoading(true);
-    const data = await base44.entities.DocumentoPGR.filter({ cnpj: empresa.cnpj });
-    setRecords(data.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
+    const data = await base44.entities.DocumentoPGR.list("-created_date", 100);
+    setRecords(data);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [empresa.id]);
+  useEffect(() => { load(); }, []);
 
   const filtered = records.filter(r =>
     r.empresa_nome?.toLowerCase().includes(search.toLowerCase()) ||
@@ -69,30 +64,43 @@ export default function PGRTab({ empresa, onEmpresaAtualizada }) {
   const isVencido = (d) => d && new Date(d + "T00:00:00") < new Date();
 
   const openNew = () => {
-    setStep(1); setCurrentId(null); setEditingId(null);
-    setForm(makeEmptyForm(empresa)); setModalOpen(true);
+    setStep(1);
+    setCurrentId(null);
+    setPdfUrl(null);
+    setForm(EMPTY_FORM);
+    setEditingId(null);
+    setModalOpen(true);
   };
 
   const openEdit = (r) => {
-    setForm({ ...r }); setEditingId(r.id);
-    setCurrentId(r.id); setStep(2); setModalOpen(true);
+    setForm({ ...r });
+    setEditingId(r.id);
+    setCurrentId(r.id);
+    setPdfUrl(r.arquivo_pdf || null);
+    setStep(2);
+    setModalOpen(true);
   };
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     setUploading(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     const today = new Date().toISOString().split("T")[0];
     const record = await base44.entities.DocumentoPGR.create({
-      arquivo_pdf: file_url, status: "Rascunho", data_upload: today,
-      empresa_mestre_id: empresa.id, cnpj: empresa.cnpj, empresa_nome: empresa.razao_social
+      arquivo_pdf: file_url,
+      status: "Rascunho",
+      data_upload: today
     });
     setCurrentId(record.id);
+    setPdfUrl(file_url);
     setUploading(false);
+
+    // Extração automática por IA
     setExtracting(true);
     setStep(2);
-    setForm(makeEmptyForm(empresa));
+    setForm(EMPTY_FORM);
 
     try {
       const result = await base44.integrations.Core.InvokeLLM({
@@ -101,59 +109,67 @@ export default function PGRTab({ empresa, onEmpresaAtualizada }) {
         response_json_schema: {
           type: "object",
           properties: {
-            empresa_nome: { type: "string" }, cnpj: { type: "string" },
-            cnae: { type: "string" }, cnae_descricao: { type: "string" },
-            responsavel_tecnico: { type: "string" }, registro_crea: { type: "string" },
-            data_elaboracao: { type: "string" }, vigencia_inicio: { type: "string" },
-            vigencia_fim: { type: "string" }, numero_funcionarios: { type: "number" }
+            empresa_nome: { type: "string" },
+            cnpj: { type: "string" },
+            cnae: { type: "string" },
+            cnae_descricao: { type: "string" },
+            responsavel_tecnico: { type: "string" },
+            registro_crea: { type: "string" },
+            data_elaboracao: { type: "string" },
+            vigencia_inicio: { type: "string" },
+            vigencia_fim: { type: "string" },
+            numero_funcionarios: { type: "number" }
           }
         }
       });
 
       const extracted = {
-        empresa_nome: result.empresa_nome || empresa.razao_social || "",
-        cnpj: result.cnpj || empresa.cnpj || "",
-        cnae: result.cnae || empresa.cnae || "",
-        cnae_descricao: result.cnae_descricao || empresa.cnae_descricao || "",
+        empresa_nome: result.empresa_nome || "",
+        cnpj: result.cnpj || "",
+        cnae: result.cnae || "",
+        cnae_descricao: result.cnae_descricao || "",
         responsavel_tecnico: result.responsavel_tecnico || "",
         registro_crea: result.registro_crea || "",
-        data_elaboracao: parseBRDate(result.data_elaboracao),
-        vigencia_inicio: parseBRDate(result.vigencia_inicio),
-        vigencia_fim: parseBRDate(result.vigencia_fim),
+        data_elaboracao: parseBRDate(result.data_elaboracao) || "",
+        vigencia_inicio: parseBRDate(result.vigencia_inicio) || "",
+        vigencia_fim: parseBRDate(result.vigencia_fim) || "",
         numero_funcionarios: result.numero_funcionarios ? String(result.numero_funcionarios) : "",
-        status: "Ativo", observacoes: "", extraido_por_ia: true,
-        empresa_mestre_id: empresa.id
+        status: "Ativo",
+        observacoes: "",
+        extraido_por_ia: true
       };
 
+      // Salvar dados extraídos automaticamente no registro
       await base44.entities.DocumentoPGR.update(record.id, {
         ...extracted,
         numero_funcionarios: result.numero_funcionarios ? parseInt(result.numero_funcionarios) : undefined
       });
 
-      // Atualiza EmpresaMestre com dados extraídos
-      const atualizacaoEmpresa = {};
-      if (result.cnae && !empresa.cnae) atualizacaoEmpresa.cnae = result.cnae;
-      if (result.cnae_descricao && !empresa.cnae_descricao) atualizacaoEmpresa.cnae_descricao = result.cnae_descricao;
-      if (result.numero_funcionarios && !empresa.qtd_colaboradores) atualizacaoEmpresa.qtd_colaboradores = parseInt(result.numero_funcionarios);
-      if (Object.keys(atualizacaoEmpresa).length > 0) {
-        await base44.entities.EmpresaMestre.update(empresa.id, atualizacaoEmpresa);
-        if (onEmpresaAtualizada) onEmpresaAtualizada(atualizacaoEmpresa);
-      }
-
       setForm(extracted);
-    } catch { setForm(makeEmptyForm(empresa)); }
+    } catch (err) {
+      // Se a IA falhar, apenas exibe o formulário em branco para preenchimento manual
+      setForm(EMPTY_FORM);
+    }
+
     setExtracting(false);
   };
 
-  const save = async () => {
-    setSaving(true);
-    const payload = { ...form, empresa_mestre_id: empresa.id };
+  const buildPayload = (f) => {
+    const payload = { ...f };
     if (payload.numero_funcionarios !== undefined && payload.numero_funcionarios !== "") {
       payload.numero_funcionarios = parseInt(payload.numero_funcionarios, 10);
     } else {
       delete payload.numero_funcionarios;
     }
-    if (currentId) await base44.entities.DocumentoPGR.update(currentId, payload);
+    return payload;
+  };
+
+  const save = async () => {
+    setSaving(true);
+    const payload = buildPayload(form);
+    if (currentId) {
+      await base44.entities.DocumentoPGR.update(currentId, payload);
+    }
     setSaving(false);
     setModalOpen(false);
     load();
@@ -174,33 +190,34 @@ export default function PGRTab({ empresa, onEmpresaAtualizada }) {
 
   return (
     <div className="space-y-4">
+      {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input placeholder="Buscar PGR..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder="Buscar por empresa ou CNPJ..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Button onClick={openNew} className="gap-1.5 bg-rose-600 hover:bg-rose-700">
-          <Plus className="w-4 h-4" /> Importar PGR
+          <Plus className="w-4 h-4" /> Novo PGR
         </Button>
       </div>
 
+      {/* Lista */}
       {loading ? (
         <div className="text-center py-12 text-gray-400">Carregando...</div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 bg-gray-50 rounded-xl border">
           <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 font-medium">Nenhum PGR cadastrado para {empresa.razao_social}</p>
-          <p className="text-gray-400 text-sm mt-1">Clique em "Importar PGR" para fazer upload do documento</p>
+          <p className="text-gray-500 font-medium">Nenhum PGR cadastrado</p>
+          <p className="text-gray-400 text-sm mt-1">Clique em "+ Novo PGR" para começar</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Responsável Técnico</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">CNAE</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Empresa</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">CNPJ</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Vigência (Fim)</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Funcionários</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Status</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-600">Ações</th>
               </tr>
@@ -210,15 +227,17 @@ export default function PGRTab({ empresa, onEmpresaAtualizada }) {
                 const vencido = isVencido(r.vigencia_fim);
                 return (
                   <tr key={r.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${vencido ? "bg-red-50/50" : ""}`}>
-                    <td className="px-4 py-3 font-medium text-gray-900">{r.responsavel_tecnico || <span className="text-gray-400 italic">—</span>}</td>
-                    <td className="px-4 py-3 text-gray-600">{r.cnae || "—"}{r.cnae_descricao ? <span className="block text-xs text-gray-400">{r.cnae_descricao}</span> : null}</td>
-                    <td className={`px-4 py-3 font-medium ${vencido ? "text-red-600" : "text-gray-700"}`}>
-                      {r.vigencia_fim ? <span>{vencido ? "⚠ " : ""}{format(new Date(r.vigencia_fim + "T00:00:00"), "dd/MM/yyyy")}</span> : <span className="text-gray-400">—</span>}
+                    <td className={`px-4 py-3 font-medium ${vencido ? "text-red-700" : "text-gray-900"}`}>
+                      {r.empresa_nome || <span className="text-gray-400 italic">Não identificada</span>}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{r.numero_funcionarios || "—"}</td>
+                    <td className="px-4 py-3 text-gray-600">{r.cnpj || "—"}</td>
+                    <td className={`px-4 py-3 font-medium ${vencido ? "text-red-600" : "text-gray-700"}`}>
+                      {r.vigencia_fim
+                        ? <span>{vencido ? "⚠ " : ""}{format(new Date(r.vigencia_fim + "T00:00:00"), "dd/MM/yyyy")}</span>
+                        : <span className="text-gray-400">—</span>}
+                    </td>
                     <td className="px-4 py-3">
                       <Badge className={`text-xs ${STATUS_COLORS[r.status] || "bg-gray-100 text-gray-600"}`}>{r.status || "Rascunho"}</Badge>
-                      {r.extraido_por_ia && <span className="ml-1 text-xs text-purple-500">✦ IA</span>}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex gap-1 justify-end">
@@ -239,22 +258,33 @@ export default function PGRTab({ empresa, onEmpresaAtualizada }) {
         </div>
       )}
 
+      {/* Modal */}
       <Dialog open={modalOpen} onOpenChange={(open) => { if (!open) cancel(); }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{step === 1 ? "Importar PGR — Upload do Documento" : editingId ? "Editar PGR" : "Identificar PGR"}</DialogTitle>
+            <DialogTitle>
+              {step === 1 ? "Novo PGR — Upload do Documento" : editingId ? "Editar PGR" : "Identificar PGR"}
+            </DialogTitle>
           </DialogHeader>
 
+          {/* ETAPA 1 — Upload */}
           {step === 1 && (
             <div className="py-6 flex flex-col items-center gap-4">
-              <div className="w-full border-2 border-dashed border-gray-300 rounded-xl p-10 flex flex-col items-center gap-3 cursor-pointer hover:border-rose-400 hover:bg-rose-50/30 transition-colors"
-                onClick={() => fileRef.current?.click()}>
+              <div
+                className="w-full border-2 border-dashed border-gray-300 rounded-xl p-10 flex flex-col items-center gap-3 cursor-pointer hover:border-rose-400 hover:bg-rose-50/30 transition-colors"
+                onClick={() => fileRef.current?.click()}
+              >
                 {uploading ? (
-                  <><Loader2 className="w-10 h-10 text-rose-500 animate-spin" /><p className="text-sm text-gray-500">Enviando arquivo...</p></>
+                  <>
+                    <Loader2 className="w-10 h-10 text-rose-500 animate-spin" />
+                    <p className="text-sm text-gray-500">Enviando arquivo...</p>
+                  </>
                 ) : (
-                  <><Upload className="w-10 h-10 text-gray-400" />
-                  <p className="font-medium text-gray-700">Selecione o PGR em PDF</p>
-                  <p className="text-xs text-gray-400">A IA irá extrair os dados automaticamente</p></>
+                  <>
+                    <Upload className="w-10 h-10 text-gray-400" />
+                    <p className="font-medium text-gray-700">Selecione o arquivo PGR em PDF</p>
+                    <p className="text-xs text-gray-400">Clique aqui ou arraste o arquivo</p>
+                  </>
                 )}
               </div>
               <input ref={fileRef} type="file" accept="application/pdf" className="hidden" onChange={handleFileUpload} />
@@ -262,19 +292,27 @@ export default function PGRTab({ empresa, onEmpresaAtualizada }) {
             </div>
           )}
 
+          {/* ETAPA 2 — Identificar / Editar */}
           {step === 2 && (
             <>
+              {/* Banner de extração IA */}
               {extracting ? (
                 <div className="flex items-center gap-3 text-sm text-purple-700 bg-purple-50 rounded-lg px-4 py-3 mb-2">
                   <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
                   <span><strong>IA extraindo dados do PDF...</strong> Aguarde um momento.</span>
                 </div>
+              ) : editingId ? (
+                <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2 mb-2">
+                  <Edit2 className="w-4 h-4 flex-shrink-0" />
+                  Edite os campos abaixo e clique em Salvar para confirmar.
+                </div>
               ) : (
                 <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 rounded-lg px-3 py-2 mb-2">
                   <Sparkles className="w-4 h-4 flex-shrink-0" />
-                  {editingId ? "Edite os campos abaixo e salve." : "Dados extraídos pela IA. Confira e corrija se necessário."}
+                  Dados extraídos automaticamente pelo IA. Confira e corrija se necessário.
                 </div>
               )}
+
               <div className="grid gap-3 py-1">
                 {[
                   ["Empresa", "empresa_nome", "text"],
@@ -290,21 +328,34 @@ export default function PGRTab({ empresa, onEmpresaAtualizada }) {
                 ].map(([label, key, type]) => (
                   <div key={key}>
                     <label className="text-xs font-medium text-gray-600 block mb-1">{label}</label>
-                    <Input type={type} value={form[key] || ""} disabled={extracting} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
+                    <Input
+                      type={type}
+                      value={form[key] || ""}
+                      disabled={extracting}
+                      onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                    />
                   </div>
                 ))}
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1">Status</label>
-                  <select value={form.status || "Rascunho"} disabled={extracting} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:opacity-50">
+                  <select
+                    value={form.status || "Rascunho"}
+                    disabled={extracting}
+                    onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
+                  >
                     {["Rascunho", "Ativo", "Vencido", "Em Revisão"].map(s => <option key={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1">Observações</label>
-                  <textarea rows={3} value={form.observacoes || ""} disabled={extracting}
+                  <textarea
+                    rows={3}
+                    value={form.observacoes || ""}
+                    disabled={extracting}
                     onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none disabled:opacity-50" />
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none disabled:opacity-50"
+                  />
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-2">

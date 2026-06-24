@@ -56,7 +56,9 @@ const ALL_ITEMS = [
   // Grupo SST
   { title: "🏥 Dashboard SST", url: "/SSTDashboard", icon: Heart, key: "SSTDashboard" },
   { title: "🏥 Central de Empresas", url: "/EmpresaMestre", icon: Building2, key: "EmpresaMestre" },
-  { title: "🏥 Saúde Ocupacional", url: "/SaudeOcupacional", icon: Heart, key: "SaudeOcupacional" },
+  { title: "🏥 Leitura Inteligente PGR", url: "/LeituraInteligentePGR", icon: ShieldAlert, key: "LeituraInteligentePGR" },
+  { title: "🏥 PCMSO Detalhe", url: "/PCMSODetalhe", icon: FileText, key: "PCMSODetalhe" },
+  { title: "🏥 LTCAT Detalhe", url: "/LTCATDetalhe", icon: FileText, key: "LTCATDetalhe" },
   { title: "🏥 Colaboradores SST", url: "/ColaboradoresSST", icon: Users, key: "ColaboradoresSST" },
   { title: "🏥 Gestão de Exames", url: "/GestaoExames", icon: Grid3X3, key: "GestaoExames" },
   { title: "🦺 Gestão de EPI", url: "/GestaoEPI", icon: ShieldCheck, key: "GestaoEPI" },
