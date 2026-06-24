@@ -1,0 +1,56 @@
+{
+  "name": "OrcamentoConformidade",
+  "type": "object",
+  "properties": {
+    "empresa_mestre_id": {
+      "type": "string"
+    },
+    "empresa_mestre_nome": {
+      "type": "string"
+    },
+    "ano_referencia": {
+      "type": "number"
+    },
+    "orcamento_total": {
+      "type": "number"
+    },
+    "orcamento_pgr": {
+      "type": "number"
+    },
+    "orcamento_pcmso": {
+      "type": "number"
+    },
+    "orcamento_ltcat": {
+      "type": "number"
+    },
+    "orcamento_exames": {
+      "type": "number"
+    },
+    "orcamento_epi": {
+      "type": "number"
+    },
+    "orcamento_treinamentos": {
+      "type": "number"
+    },
+    "orcamento_outros": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Rascunho",
+        "Aprovado",
+        "Em Execu\u00e7\u00e3o",
+        "Encerrado"
+      ],
+      "default": "Rascunho"
+    },
+    "observacoes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "empresa_mestre_id",
+    "ano_referencia"
+  ]
+}

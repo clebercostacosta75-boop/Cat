@@ -70,6 +70,8 @@ const ALL_ITEMS = [
   { title: "📅 Agendamento e Cronograma", url: "/AgendamentoTreinamentos", icon: Calendar, key: "AgendamentoTreinamentos" },
   // Colaboradores
   { title: "📁 Prontuário Digital", url: "/ProntuarioDigital", icon: Users, key: "ProntuarioDigital" },
+  // Financeiro SST
+  { title: "📊 Orçamento de Conformidade", url: "/OrcamentoConformidade", icon: TrendingUp, key: "OrcamentoConformidade" },
 ];
 
 const ROLE_LABEL = {

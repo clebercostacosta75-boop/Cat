@@ -1,0 +1,87 @@
+{
+  "name": "CustoConformidade",
+  "type": "object",
+  "properties": {
+    "empresa_mestre_id": {
+      "type": "string"
+    },
+    "empresa_mestre_nome": {
+      "type": "string"
+    },
+    "orcamento_conformidade_id": {
+      "type": "string"
+    },
+    "categoria": {
+      "type": "string",
+      "enum": [
+        "PGR",
+        "PCMSO",
+        "LTCAT",
+        "Exame M\u00e9dico",
+        "EPI",
+        "Treinamento",
+        "Outro"
+      ]
+    },
+    "subcategoria": {
+      "type": "string"
+    },
+    "fornecedor": {
+      "type": "string"
+    },
+    "descricao": {
+      "type": "string"
+    },
+    "quantidade": {
+      "type": "number"
+    },
+    "valor_unitario": {
+      "type": "number"
+    },
+    "valor_total": {
+      "type": "number"
+    },
+    "data_competencia": {
+      "type": "string",
+      "format": "date"
+    },
+    "data_vencimento_pagamento": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Or\u00e7ado",
+        "Proposta Recebida",
+        "Aprovado",
+        "Pago",
+        "Cancelado"
+      ],
+      "default": "Or\u00e7ado"
+    },
+    "nota_fiscal": {
+      "type": "string"
+    },
+    "arquivo_proposta": {
+      "type": "string"
+    },
+    "observacoes": {
+      "type": "string"
+    },
+    "nr_relacionada": {
+      "type": "string"
+    },
+    "documento_relacionado": {
+      "type": "string"
+    },
+    "aprovado_por": {
+      "type": "string"
+    },
+    "aprovado_em": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": []
+}

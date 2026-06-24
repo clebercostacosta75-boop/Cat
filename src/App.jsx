@@ -70,6 +70,7 @@ import Compliance360Page from './pages/compliance/Compliance360.jsx';
 import MatrizTreinamentosPage from './pages/treinamentos/MatrizTreinamentos.jsx';
 import ProntuarioDigitalPage from './pages/colaboradores/ProntuarioDigital.jsx';
 import AgendamentoTreinamentosPage from './pages/agendamentos/AgendamentoTreinamentos.jsx';
+import OrcamentoConformidadePage from './pages/financeiro/OrcamentoConformidade.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -188,6 +189,7 @@ const AuthenticatedApp = () => {
       <Route path="/MatrizTreinamentos" element={<LayoutWrapper currentPageName="MatrizTreinamentos"><ProtectedRoute pageKey="Dashboard"><MatrizTreinamentosPage /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/ProntuarioDigital" element={<LayoutWrapper currentPageName="ProntuarioDigital"><ProtectedRoute pageKey="Dashboard"><ProntuarioDigitalPage /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AgendamentoTreinamentos" element={<LayoutWrapper currentPageName="AgendamentoTreinamentos"><ProtectedRoute pageKey="Dashboard"><AgendamentoTreinamentosPage /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/OrcamentoConformidade" element={<LayoutWrapper currentPageName="OrcamentoConformidade"><ProtectedRoute pageKey="Dashboard"><OrcamentoConformidadePage /></ProtectedRoute></LayoutWrapper>} />
 
       {/* Rotas autenticadas com layout */}
       <Route path="/" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />
