@@ -63,79 +63,20 @@
         "Vencido"
       ],
       "default": "V\u00e1lido"
+    },
+    "observacoes_aso": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es do ASO \u2014 inclui exames obrigat\u00f3rios e periodicidade quando gerado automaticamente"
+    },
+    "gerado_automaticamente": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o ASO foi gerado automaticamente pelo processamento do PCMSO via IA"
+    },
+    "pcmso_id": {
+      "type": "string",
+      "description": "ID do DocumentoPCMSO que originou este ASO (quando gerado automaticamente)"
     }
   },
-  "required": [],
-  "rls": {
-    "create": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "gestor_master"
-          }
-        },
-        {
-          "data.empresa_mestre_id": {
-            "$in": "{{user.company_permissions.company_id}}"
-          }
-        },
-        {
-          "data.colaborador_sst_id": {
-            "$in": "{{user.colaborador_sst_ids}}"
-          }
-        }
-      ]
-    },
-    "read": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "gestor_master"
-          }
-        },
-        {
-          "data.empresa_mestre_id": {
-            "$in": "{{user.company_permissions.company_id}}"
-          }
-        },
-        {
-          "data.colaborador_sst_id": {
-            "$in": "{{user.colaborador_sst_ids}}"
-          }
-        }
-      ]
-    },
-    "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "gestor_master"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
-  }
+  "required": []
 }
