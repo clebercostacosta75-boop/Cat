@@ -52,7 +52,45 @@ export default function PCMSOLeitura() {
     let ex = {};
     try {
       ex = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analise este PCMSO (Programa de Controle Médico de Saúde Ocupacional) e extraia em JSON completo: razao_social, nome_fantasia, cnpj, cnae, cnae_descricao, grau_risco (string 1-4), municipio, estado, endereco, qtd_empregados (inteiro), medico_responsavel, crm, rqe, especialidade, empresa_elaboradora, cnpj_elaboradora, telefone_elaboradora, email_elaboradora, data_elaboracao (DD/MM/AAAA), vigencia_inicio (DD/MM/AAAA), vigencia_fim (DD/MM/AAAA), numero_revisao, setores_funcoes (array de {setor, funcao, cbo, qtd_trabalhadores, ghe, riscos, exames_obrigatorios, periodicidade}), matriz_exames (array de {funcao, setor, ghe, cbo, risco_ocupacional, exame_clinico, exames_complementares, periodicidade, tipo_exame, base_tecnica}), vacinas_requeridas (array de {vacina, dose, funcao, motivo}).`,
+        prompt: `Analise COMPLETAMENTE este documento PCMSO (Programa de Controle Médico de Saúde Ocupacional) e extraia TODOS os dados estruturados em JSON.
+
+Extraia os seguintes campos:
+- razao_social: nome da empresa avaliada
+- nome_fantasia: nome fantasia se houver
+- cnpj: CNPJ da empresa avaliada
+- cnae: código CNAE principal
+- cnae_descricao: descrição da atividade econômica
+- grau_risco: grau de risco (1, 2, 3 ou 4)
+- municipio: município da empresa
+- estado: UF da empresa
+- endereco: endereço completo
+- qtd_empregados: número total de empregados (inteiro)
+- medico_responsavel: nome completo do médico responsável pelo PCMSO
+- crm: CRM do médico responsável (ex: CREMEPA 11988)
+- rqe: RQE se houver
+- especialidade: especialidade do médico
+- empresa_elaboradora: nome da empresa que elaborou o PCMSO
+- cnpj_elaboradora: CNPJ da empresa elaboradora
+- telefone_elaboradora: telefone da empresa elaboradora
+- email_elaboradora: email da empresa elaboradora
+- data_elaboracao: data de elaboração no formato DD/MM/AAAA
+- vigencia_inicio: início da vigência DD/MM/AAAA (se não explícito, use a data de elaboração)
+- vigencia_fim: fim da vigência DD/MM/AAAA (geralmente 1 ano após elaboração)
+- numero_revisao: número/versão da revisão
+- atividade_principal: descrição da atividade principal da empresa
+- vacinas_obrigatorias: lista de vacinas obrigatórias separadas por vírgula (ex: Tétano, Hepatite B, Covid-19)
+
+- setores_funcoes: ARRAY com TODOS os setores e funções encontrados na tabela de identificação/quadro de funcionários:
+  [{ setor, funcao, cbo, qtd_trabalhadores (inteiro), ghe, descricao_atividades, riscos_ocupacionais, exames_obrigatorios, periodicidade }]
+
+- matriz_exames: ARRAY com a tabela completa de Funções x Exames Ocupacionais (seção "Relações das Funções/Exames Ocupacionais"):
+  Para cada função, extraia os exames para cada tipo: admissional, periodico_anual, retorno_trabalho, mudanca_risco, demissional
+  [{ funcao, setor, cbo, admissional, periodico_anual, retorno_trabalho, mudanca_risco, demissional, exames_complementares_admissional, exames_complementares_periodico }]
+
+- inventario_riscos: ARRAY com o inventário de riscos por setor/GHE (seção "Relações das Funções com Riscos e Agentes"):
+  [{ setor, ghe, planilha_nr, funcoes, tipo_risco, perigo, fonte, exposicao, possivel_lesao, probabilidade, gravidade, nivel_risco, classificacao, epis_utilizados, medidas_controle }]
+
+Seja MUITO DETALHADO e extraia TODOS os registros das tabelas, não resuma.`,
         file_urls: [file_url],
         response_json_schema: {
           type: "object",
@@ -60,15 +98,50 @@ export default function PCMSOLeitura() {
             razao_social: { type: "string" }, nome_fantasia: { type: "string" }, cnpj: { type: "string" },
             cnae: { type: "string" }, cnae_descricao: { type: "string" }, grau_risco: { type: "string" },
             municipio: { type: "string" }, estado: { type: "string" }, endereco: { type: "string" },
+            atividade_principal: { type: "string" },
             qtd_empregados: { type: "number" }, medico_responsavel: { type: "string" },
             crm: { type: "string" }, rqe: { type: "string" }, especialidade: { type: "string" },
             empresa_elaboradora: { type: "string" }, cnpj_elaboradora: { type: "string" },
             telefone_elaboradora: { type: "string" }, email_elaboradora: { type: "string" },
             data_elaboracao: { type: "string" }, vigencia_inicio: { type: "string" }, vigencia_fim: { type: "string" },
-            numero_revisao: { type: "string" },
-            setores_funcoes: { type: "array", items: { type: "object" } },
-            matriz_exames: { type: "array", items: { type: "object" } },
-            vacinas_requeridas: { type: "array", items: { type: "object" } },
+            numero_revisao: { type: "string" }, vacinas_obrigatorias: { type: "string" },
+            setores_funcoes: {
+              type: "array", items: {
+                type: "object",
+                properties: {
+                  setor: { type: "string" }, funcao: { type: "string" }, cbo: { type: "string" },
+                  qtd_trabalhadores: { type: "number" }, ghe: { type: "string" },
+                  descricao_atividades: { type: "string" }, riscos_ocupacionais: { type: "string" },
+                  exames_obrigatorios: { type: "string" }, periodicidade: { type: "string" }
+                }
+              }
+            },
+            matriz_exames: {
+              type: "array", items: {
+                type: "object",
+                properties: {
+                  funcao: { type: "string" }, setor: { type: "string" }, cbo: { type: "string" },
+                  admissional: { type: "string" }, periodico_anual: { type: "string" },
+                  retorno_trabalho: { type: "string" }, mudanca_risco: { type: "string" },
+                  demissional: { type: "string" },
+                  exames_complementares_admissional: { type: "string" },
+                  exames_complementares_periodico: { type: "string" }
+                }
+              }
+            },
+            inventario_riscos: {
+              type: "array", items: {
+                type: "object",
+                properties: {
+                  setor: { type: "string" }, ghe: { type: "string" }, planilha_nr: { type: "string" },
+                  funcoes: { type: "string" }, tipo_risco: { type: "string" }, perigo: { type: "string" },
+                  fonte: { type: "string" }, exposicao: { type: "string" }, possivel_lesao: { type: "string" },
+                  probabilidade: { type: "string" }, gravidade: { type: "string" },
+                  nivel_risco: { type: "string" }, classificacao: { type: "string" },
+                  epis_utilizados: { type: "string" }, medidas_controle: { type: "string" }
+                }
+              }
+            },
           }
         }
       });
@@ -112,6 +185,10 @@ export default function PCMSOLeitura() {
       vigencia_fim: parseBRDate(ex.vigencia_fim), arquivo_pdf: file_url,
       status: "Ativo", data_upload: today, extraido_por_ia: true,
       grau_risco: ex.grau_risco || "", qtd_empregados: ex.qtd_empregados ? parseInt(ex.qtd_empregados) : undefined,
+      cnae: ex.cnae || "", cnae_descricao: ex.cnae_descricao || "",
+      municipio: ex.municipio || "", estado: ex.estado || "", endereco: ex.endereco || "",
+      atividade_principal: ex.atividade_principal || "",
+      vacinas_obrigatorias: ex.vacinas_obrigatorias || "",
     });
 
     // Buscar funções já existentes no PGR para vincular (sem duplicar)
@@ -124,26 +201,69 @@ export default function PCMSOLeitura() {
     }
 
     const normalize = s => (s || "").trim().toLowerCase();
-    const todasFuncoesPCMSO = [
-      ...(ex.setores_funcoes || []).map(sf => ({ funcao: sf.funcao, setor: sf.setor, ghe: sf.ghe, cbo: sf.cbo || "", riscos_ocupacionais: sf.riscos || "", exames_obrigatorios: sf.exames_obrigatorios || "", periodicidade: sf.periodicidade || "Anual" })),
-      ...(ex.matriz_exames || []).map(me => ({ funcao: me.funcao, setor: me.setor, ghe: me.ghe, cbo: me.cbo || "", riscos_ocupacionais: me.risco_ocupacional || "", exames_obrigatorios: `${me.exame_clinico || ""} ${me.exames_complementares || ""}`.trim(), periodicidade: me.periodicidade || "Anual", criterio_realizacao: me.tipo_exame || "", base_tecnica: me.base_tecnica || "" })),
-    ];
 
-    // Deduplica por função
+    // Prioridade: usar matriz_exames (tabela Função x Exames Ocupacionais) como fonte principal
+    // Complementar com setores_funcoes para dados de setor, CBO, quantidade, riscos
+    const mapaSetoresFuncoes = {};
+    (ex.setores_funcoes || []).forEach(sf => {
+      const k = normalize(sf.funcao);
+      if (k) mapaSetoresFuncoes[k] = sf;
+    });
+
+    // Inventário de riscos por setor — enriquecer matrizes
+    const mapaRiscos = {};
+    (ex.inventario_riscos || []).forEach(ir => {
+      const key = normalize(ir.setor);
+      if (!mapaRiscos[key]) mapaRiscos[key] = [];
+      mapaRiscos[key].push(ir);
+    });
+
     const vistas = new Set();
-    const funcoesSalvar = todasFuncoesPCMSO.filter(m => {
-      const k = normalize(m.funcao);
-      if (!k || vistas.has(k)) return false;
+    const funcoesSalvar = [];
+
+    // 1. Processar a tabela de matriz de exames (mais rica, contém exames por tipo)
+    (ex.matriz_exames || []).forEach(me => {
+      const k = normalize(me.funcao);
+      if (!k || vistas.has(k)) return;
       vistas.add(k);
-      return true;
+      const sfData = mapaSetoresFuncoes[k] || {};
+      const setorKey = normalize(me.setor || sfData.setor);
+      const riscosSetor = mapaRiscos[setorKey] || [];
+      const riscoText = riscosSetor.map(r => r.perigo).filter(Boolean).join("; ") || sfData.riscos_ocupacionais || "";
+      const examesAdm = [me.admissional, me.exames_complementares_admissional].filter(Boolean).join(", ");
+      const examesPer = [me.periodico_anual, me.exames_complementares_periodico].filter(Boolean).join(", ");
+      funcoesSalvar.push({
+        funcao: me.funcao, setor: me.setor || sfData.setor || "",
+        cbo: me.cbo || sfData.cbo || "", ghe: sfData.ghe || "",
+        qtd_trabalhadores: sfData.qtd_trabalhadores || undefined,
+        riscos_ocupacionais: riscoText,
+        exames_obrigatorios: examesAdm || examesPer || "Exame Clínico",
+        periodicidade: sfData.periodicidade || "Anual",
+        criterio_realizacao: [me.admissional && "Admissional", me.periodico_anual && "Periódico", me.retorno_trabalho && "Retorno", me.demissional && "Demissional"].filter(Boolean).join(", "),
+        base_tecnica: `Adm: ${me.admissional || "—"} | Per: ${me.periodico_anual || "—"} | Ret: ${me.retorno_trabalho || "—"} | Dem: ${me.demissional || "—"}`,
+        descricao_atividades: sfData.descricao_atividades || "",
+      });
+    });
+
+    // 2. Completar com setores_funcoes que não foram cobertos pela matriz
+    (ex.setores_funcoes || []).forEach(sf => {
+      const k = normalize(sf.funcao);
+      if (!k || vistas.has(k)) return;
+      vistas.add(k);
+      funcoesSalvar.push({
+        funcao: sf.funcao, setor: sf.setor || "", cbo: sf.cbo || "", ghe: sf.ghe || "",
+        qtd_trabalhadores: sf.qtd_trabalhadores || undefined,
+        riscos_ocupacionais: sf.riscos_ocupacionais || sf.riscos || "",
+        exames_obrigatorios: sf.exames_obrigatorios || "Exame Clínico",
+        periodicidade: sf.periodicidade || "Anual",
+        descricao_atividades: sf.descricao_atividades || "",
+      });
     });
 
     await Promise.all(funcoesSalvar.map(m => {
-      // Enriquecer com dados do PGR (setor/ghe) se função já existe lá
       const pgrMatch = pgrSetores.find(s => normalize(s.funcao || s.cargo) === normalize(m.funcao));
       return base44.entities.PCMSOMatrizExame.create({
-        pcmso_detalhe_id: doc.id,
-        ...m,
+        pcmso_detalhe_id: doc.id, ...m,
         setor: m.setor || pgrMatch?.setor || "",
         ghe: m.ghe || pgrMatch?.ghe || "",
         cbo: m.cbo || pgrMatch?.cbo || "",

@@ -248,10 +248,16 @@ export default function PCMSODetalheCompleto({ doc, onClose }) {
           <div className="bg-white border rounded-xl p-5">
             <h3 className="font-semibold text-gray-800 mb-4">Identificação da Empresa</h3>
             <div className="grid sm:grid-cols-2 gap-3">
-              {[["Razão Social","empresa_nome"],["Nome Fantasia","nome_fantasia"],["CNPJ","cnpj"],["CNAE","cnae"],["Descrição CNAE","cnae_descricao"],["Grau de Risco","grau_risco"],["Município","municipio"],["Estado","estado"],["Endereço","endereco"]].map(([l, k]) => (
+              {[["Razão Social","empresa_nome"],["Nome Fantasia","nome_fantasia"],["CNPJ","cnpj"],["CNAE","cnae"],["Descrição CNAE","cnae_descricao"],["Atividade Principal","atividade_principal"],["Grau de Risco","grau_risco"],["Município","municipio"],["Estado","estado"],["Endereço","endereco"]].map(([l, k]) => (
                 <FI key={k} label={l} value={sf[k]} onChange={v => setF(k, v)} />
               ))}
               <FI label="Total de Empregados" type="number" value={sf.qtd_empregados} onChange={v => setF("qtd_empregados", v)} />
+              {sf.vacinas_obrigatorias && (
+                <div className="col-span-2 bg-teal-50 border border-teal-200 rounded-lg p-3">
+                  <p className="text-xs font-semibold text-teal-700 mb-1">💉 Vacinas Obrigatórias (extraído do PCMSO)</p>
+                  <p className="text-sm text-teal-800">{sf.vacinas_obrigatorias}</p>
+                </div>
+              )}
             </div>
             <div className="flex justify-end mt-4"><Button onClick={saveForm} disabled={saving} className="bg-blue-600 hover:bg-blue-700">{saving ? "Salvando..." : "Salvar"}</Button></div>
           </div>
@@ -297,22 +303,23 @@ export default function PCMSODetalheCompleto({ doc, onClose }) {
               <h3 className="font-semibold text-sm text-gray-800">Setores e Funções do PCMSO</h3>
             </div>
             <table className="w-full text-sm">
-              <thead><tr className="bg-gray-50 border-b">
-                {["Setor","Função","CBO","Qtd","GHE","Riscos","Exames","Periodicidade"].map(h => <th key={h} className="text-left px-3 py-2 font-medium text-gray-600">{h}</th>)}
-              </tr></thead>
-              <tbody>
-                {matrizes.length === 0 ? <tr><td colSpan={8} className="text-center py-8 text-gray-400">Nenhuma função cadastrada</td></tr> :
-                  matrizes.map(m => <tr key={m.id} className="border-b hover:bg-gray-50">
-                    <td className="px-3 py-2">{m.setor || "—"}</td>
-                    <td className="px-3 py-2 font-medium">{m.funcao || "—"}</td>
-                    <td className="px-3 py-2 font-mono text-xs">{m.cbo || "—"}</td>
-                    <td className="px-3 py-2 text-center">{m.qtd_trabalhadores || "—"}</td>
-                    <td className="px-3 py-2">{m.ghe || "—"}</td>
-                    <td className="px-3 py-2 text-xs text-gray-600 max-w-[120px] truncate">{m.riscos_ocupacionais || "—"}</td>
-                    <td className="px-3 py-2 text-xs text-gray-700">{m.exames_obrigatorios || "—"}</td>
-                    <td className="px-3 py-2"><Badge className="text-xs bg-blue-100 text-blue-700">{m.periodicidade || "Anual"}</Badge></td>
-                  </tr>)}
-              </tbody>
+            <thead><tr className="bg-gray-50 border-b">
+              {["Setor","Função","CBO","Qtd","GHE","Riscos","Exames (Admissional/Periódico)","Periocidade","Exames por Tipo"].map(h => <th key={h} className="text-left px-3 py-2 font-medium text-gray-600 text-xs">{h}</th>)}
+            </tr></thead>
+            <tbody>
+              {matrizes.length === 0 ? <tr><td colSpan={9} className="text-center py-8 text-gray-400">Nenhuma função cadastrada</td></tr> :
+                matrizes.map(m => <tr key={m.id} className="border-b hover:bg-gray-50">
+                  <td className="px-3 py-2 text-xs">{m.setor || "—"}</td>
+                  <td className="px-3 py-2 font-medium text-xs">{m.funcao || "—"}</td>
+                  <td className="px-3 py-2 font-mono text-xs">{m.cbo || "—"}</td>
+                  <td className="px-3 py-2 text-center text-xs">{m.qtd_trabalhadores || "—"}</td>
+                  <td className="px-3 py-2 text-xs">{m.ghe || "—"}</td>
+                  <td className="px-3 py-2 text-xs text-gray-600 max-w-[100px] truncate" title={m.riscos_ocupacionais}>{m.riscos_ocupacionais || "—"}</td>
+                  <td className="px-3 py-2 text-xs text-blue-700 max-w-[120px]">{m.exames_obrigatorios || "—"}</td>
+                  <td className="px-3 py-2"><Badge className="text-xs bg-blue-100 text-blue-700">{m.periodicidade || "Anual"}</Badge></td>
+                  <td className="px-3 py-2 text-xs text-gray-500 max-w-[150px]" title={m.base_tecnica}>{m.base_tecnica ? <span className="truncate block max-w-[150px]">{m.base_tecnica}</span> : "—"}</td>
+                </tr>)}
+            </tbody>
             </table>
           </div>
           {/* Alertas de funções faltantes no PGR */}

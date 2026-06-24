@@ -4,11 +4,57 @@
   "properties": {
     "empresa_nome": {
       "type": "string",
-      "description": "Nome da empresa"
+      "description": "Raz\u00e3o social da empresa avaliada"
+    },
+    "nome_fantasia": {
+      "type": "string",
+      "description": "Nome fantasia da empresa"
     },
     "cnpj": {
       "type": "string",
-      "description": "CNPJ da empresa"
+      "description": "CNPJ da empresa avaliada"
+    },
+    "empresa_mestre_id": {
+      "type": "string",
+      "description": "ID da EmpresaMestre vinculada"
+    },
+    "cnae": {
+      "type": "string",
+      "description": "C\u00f3digo CNAE principal"
+    },
+    "cnae_descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o da atividade econ\u00f4mica"
+    },
+    "atividade_principal": {
+      "type": "string",
+      "description": "Atividade principal da empresa"
+    },
+    "grau_risco": {
+      "type": "string",
+      "enum": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "description": "Grau de risco NR-4"
+    },
+    "qtd_empregados": {
+      "type": "number",
+      "description": "N\u00famero total de empregados"
+    },
+    "municipio": {
+      "type": "string",
+      "description": "Munic\u00edpio da empresa"
+    },
+    "estado": {
+      "type": "string",
+      "description": "UF da empresa"
+    },
+    "endereco": {
+      "type": "string",
+      "description": "Endere\u00e7o completo da empresa"
     },
     "medico_responsavel": {
       "type": "string",
@@ -17,6 +63,34 @@
     "crm": {
       "type": "string",
       "description": "N\u00famero de registro no CRM"
+    },
+    "rqe": {
+      "type": "string",
+      "description": "Registro de Qualifica\u00e7\u00e3o de Especialista"
+    },
+    "especialidade": {
+      "type": "string",
+      "description": "Especialidade m\u00e9dica"
+    },
+    "empresa_elaboradora": {
+      "type": "string",
+      "description": "Empresa respons\u00e1vel pela elabora\u00e7\u00e3o do PCMSO"
+    },
+    "cnpj_elaboradora": {
+      "type": "string",
+      "description": "CNPJ da empresa elaboradora"
+    },
+    "telefone_elaboradora": {
+      "type": "string",
+      "description": "Telefone da empresa elaboradora"
+    },
+    "email_elaboradora": {
+      "type": "string",
+      "description": "E-mail da empresa elaboradora"
+    },
+    "numero_revisao": {
+      "type": "string",
+      "description": "N\u00famero/vers\u00e3o da revis\u00e3o do PCMSO"
     },
     "data_elaboracao": {
       "type": "string",
@@ -32,6 +106,10 @@
       "type": "string",
       "format": "date",
       "description": "Fim da vig\u00eancia do PCMSO"
+    },
+    "vacinas_obrigatorias": {
+      "type": "string",
+      "description": "Vacinas obrigat\u00f3rias listadas no PCMSO"
     },
     "arquivo_pdf": {
       "type": "string",
