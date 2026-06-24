@@ -62,6 +62,7 @@ const ALL_ITEMS = [
   { title: "🏥 LTCAT Detalhe", url: "/LTCATDetalhe", icon: FileText, key: "LTCATDetalhe" },
   { title: "🏥 Colaboradores SST", url: "/ColaboradoresSST", icon: Users, key: "ColaboradoresSST" },
   { title: "🏥 Gestão de Exames", url: "/GestaoExames", icon: Grid3X3, key: "GestaoExames" },
+  { title: "🦺 Gestão de EPI", url: "/GestaoEPI", icon: ShieldCheck, key: "GestaoEPI" },
 ];
 
 const ROLE_LABEL = {

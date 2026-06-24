@@ -65,6 +65,7 @@ import PCMSODetalhePage from './pages/sst/PCMSODetalhe.jsx';
 import LTCATDetalhePage from './pages/sst/LTCATDetalhe.jsx';
 import ColaboradoresSST from './pages/sst/ColaboradoresSST.jsx';
 import GestaoExames from './pages/sst/GestaoExames.jsx';
+import GestaoEPI from './pages/epi/GestaoEPI.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -178,6 +179,7 @@ const AuthenticatedApp = () => {
       <Route path="/LTCATDetalhe" element={<LayoutWrapper currentPageName="LTCATDetalhe"><ProtectedRoute pageKey="Dashboard"><LTCATDetalhePage /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/ColaboradoresSST" element={<LayoutWrapper currentPageName="ColaboradoresSST"><ProtectedRoute pageKey="Dashboard"><ColaboradoresSST /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/GestaoExames" element={<LayoutWrapper currentPageName="GestaoExames"><ProtectedRoute pageKey="Dashboard"><GestaoExames /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/GestaoEPI" element={<LayoutWrapper currentPageName="GestaoEPI"><ProtectedRoute pageKey="Dashboard"><GestaoEPI /></ProtectedRoute></LayoutWrapper>} />
 
       {/* Rotas autenticadas com layout */}
       <Route path="/" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />

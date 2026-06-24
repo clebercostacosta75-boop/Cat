@@ -1,0 +1,51 @@
+{
+  "name": "EPIFuncaoMatriz",
+  "type": "object",
+  "properties": {
+    "empresa_mestre_id": {
+      "type": "string"
+    },
+    "empresa_mestre_nome": {
+      "type": "string"
+    },
+    "pgr_leitura_id": {
+      "type": "string"
+    },
+    "funcao": {
+      "type": "string"
+    },
+    "setor": {
+      "type": "string"
+    },
+    "atividade": {
+      "type": "string"
+    },
+    "risco_identificado": {
+      "type": "string"
+    },
+    "epi_cadastro_id": {
+      "type": "string"
+    },
+    "epi_nome": {
+      "type": "string"
+    },
+    "epi_ca": {
+      "type": "string"
+    },
+    "periodicidade_troca_meses": {
+      "type": "number"
+    },
+    "treinamento_necessario": {
+      "type": "string"
+    },
+    "exame_relacionado": {
+      "type": "string"
+    },
+    "responsavel_validacao": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "funcao"
+  ]
+}

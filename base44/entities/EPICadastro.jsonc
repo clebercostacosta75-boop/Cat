@@ -1,0 +1,102 @@
+{
+  "name": "EPICadastro",
+  "type": "object",
+  "properties": {
+    "nome_epi": {
+      "type": "string",
+      "description": "Nome oficial do EPI"
+    },
+    "nome_personalizado": {
+      "type": "string"
+    },
+    "tipo_esocial": {
+      "type": "string"
+    },
+    "numero_ca": {
+      "type": "string",
+      "description": "N\u00famero do Certificado de Aprova\u00e7\u00e3o"
+    },
+    "fabricante": {
+      "type": "string"
+    },
+    "cnpj_fabricante": {
+      "type": "string"
+    },
+    "marca": {
+      "type": "string"
+    },
+    "modelo": {
+      "type": "string"
+    },
+    "tamanho": {
+      "type": "string"
+    },
+    "unidade_medida": {
+      "type": "string"
+    },
+    "data_emissao_ca": {
+      "type": "string",
+      "format": "date"
+    },
+    "data_validade_ca": {
+      "type": "string",
+      "format": "date"
+    },
+    "situacao_ca": {
+      "type": "string",
+      "enum": [
+        "V\u00e1lido",
+        "Vencendo",
+        "Vencido",
+        "N\u00e3o Informado"
+      ],
+      "default": "V\u00e1lido"
+    },
+    "numero_processo": {
+      "type": "string"
+    },
+    "numero_laudo": {
+      "type": "string"
+    },
+    "laboratorio": {
+      "type": "string"
+    },
+    "natureza": {
+      "type": "string",
+      "enum": [
+        "Nacional",
+        "Importado"
+      ],
+      "default": "Nacional"
+    },
+    "restricoes_uso": {
+      "type": "string"
+    },
+    "riscos_protegidos": {
+      "type": "string"
+    },
+    "foto_epi": {
+      "type": "string"
+    },
+    "ficha_tecnica": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ativo",
+        "Inativo"
+      ],
+      "default": "Ativo"
+    },
+    "empresa_mestre_id": {
+      "type": "string"
+    },
+    "empresa_mestre_nome": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "nome_epi"
+  ]
+}

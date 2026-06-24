@@ -1,0 +1,59 @@
+{
+  "name": "EPIFichaColaborador",
+  "type": "object",
+  "properties": {
+    "colaborador_sst_id": {
+      "type": "string"
+    },
+    "empresa_mestre_id": {
+      "type": "string"
+    },
+    "empresa_mestre_nome": {
+      "type": "string"
+    },
+    "nome_colaborador": {
+      "type": "string"
+    },
+    "cpf": {
+      "type": "string"
+    },
+    "matricula": {
+      "type": "string"
+    },
+    "cargo": {
+      "type": "string"
+    },
+    "funcao": {
+      "type": "string"
+    },
+    "setor": {
+      "type": "string"
+    },
+    "total_epis_entregues": {
+      "type": "number",
+      "default": 0
+    },
+    "total_epis_pendentes": {
+      "type": "number",
+      "default": 0
+    },
+    "total_epis_vencidos": {
+      "type": "number",
+      "default": 0
+    },
+    "status_geral": {
+      "type": "string",
+      "enum": [
+        "Em Dia",
+        "Pendente",
+        "Vencido"
+      ],
+      "default": "Pendente"
+    },
+    "ultima_atualizacao": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": []
+}

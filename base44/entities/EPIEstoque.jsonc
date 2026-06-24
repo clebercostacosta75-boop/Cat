@@ -1,0 +1,59 @@
+{
+  "name": "EPIEstoque",
+  "type": "object",
+  "properties": {
+    "empresa_mestre_id": {
+      "type": "string"
+    },
+    "empresa_mestre_nome": {
+      "type": "string"
+    },
+    "epi_cadastro_id": {
+      "type": "string"
+    },
+    "epi_nome": {
+      "type": "string"
+    },
+    "epi_ca": {
+      "type": "string"
+    },
+    "unidade": {
+      "type": "string"
+    },
+    "quantidade_disponivel": {
+      "type": "number",
+      "default": 0
+    },
+    "quantidade_minima": {
+      "type": "number",
+      "default": 0
+    },
+    "quantidade_entregue": {
+      "type": "number",
+      "default": 0
+    },
+    "data_entrada": {
+      "type": "string",
+      "format": "date"
+    },
+    "local_armazenamento": {
+      "type": "string"
+    },
+    "responsavel_estoque": {
+      "type": "string"
+    },
+    "status_estoque": {
+      "type": "string",
+      "enum": [
+        "Normal",
+        "Baixo",
+        "Cr\u00edtico",
+        "Zerado"
+      ],
+      "default": "Normal"
+    }
+  },
+  "required": [
+    "empresa_mestre_id"
+  ]
+}

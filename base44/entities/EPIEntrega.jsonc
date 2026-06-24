@@ -1,0 +1,90 @@
+{
+  "name": "EPIEntrega",
+  "type": "object",
+  "properties": {
+    "empresa_mestre_id": {
+      "type": "string"
+    },
+    "empresa_mestre_nome": {
+      "type": "string"
+    },
+    "colaborador_sst_id": {
+      "type": "string"
+    },
+    "nome_colaborador": {
+      "type": "string"
+    },
+    "cpf": {
+      "type": "string"
+    },
+    "matricula": {
+      "type": "string"
+    },
+    "setor": {
+      "type": "string"
+    },
+    "funcao": {
+      "type": "string"
+    },
+    "epi_cadastro_id": {
+      "type": "string"
+    },
+    "epi_nome": {
+      "type": "string"
+    },
+    "numero_ca": {
+      "type": "string"
+    },
+    "fabricante": {
+      "type": "string"
+    },
+    "tamanho": {
+      "type": "string"
+    },
+    "quantidade": {
+      "type": "number",
+      "default": 1
+    },
+    "data_entrega": {
+      "type": "string",
+      "format": "date"
+    },
+    "periodicidade_troca_meses": {
+      "type": "number"
+    },
+    "data_proxima_troca": {
+      "type": "string",
+      "format": "date"
+    },
+    "responsavel_entrega": {
+      "type": "string"
+    },
+    "status_assinatura": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Assinado",
+        "Recusado"
+      ],
+      "default": "Pendente"
+    },
+    "data_assinatura": {
+      "type": "string",
+      "format": "date"
+    },
+    "ip_assinatura": {
+      "type": "string"
+    },
+    "dispositivo_assinatura": {
+      "type": "string"
+    },
+    "observacoes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "nome_colaborador",
+    "epi_cadastro_id",
+    "data_entrega"
+  ]
+}
