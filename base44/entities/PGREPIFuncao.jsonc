@@ -1,0 +1,31 @@
+{
+  "name": "PGREPIFuncao",
+  "type": "object",
+  "properties": {
+    "pgr_leitura_id": {
+      "type": "string"
+    },
+    "funcao": {
+      "type": "string"
+    },
+    "risco_associado": {
+      "type": "string"
+    },
+    "epi_obrigatorio": {
+      "type": "string"
+    },
+    "certificado_aprovacao_ca": {
+      "type": "string"
+    },
+    "status_epi": {
+      "type": "string",
+      "enum": [
+        "Entregue",
+        "Pendente",
+        "Vencido"
+      ],
+      "default": "Pendente"
+    }
+  },
+  "required": []
+}

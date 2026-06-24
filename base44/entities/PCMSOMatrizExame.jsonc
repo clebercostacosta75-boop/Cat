@@ -1,0 +1,28 @@
+{
+  "name": "PCMSOMatrizExame",
+  "type": "object",
+  "properties": {
+    "pcmso_detalhe_id": {
+      "type": "string"
+    },
+    "funcao": {
+      "type": "string"
+    },
+    "setor": {
+      "type": "string"
+    },
+    "ghe": {
+      "type": "string"
+    },
+    "riscos_ocupacionais": {
+      "type": "string"
+    },
+    "exames_obrigatorios": {
+      "type": "string"
+    },
+    "periodicidade": {
+      "type": "string"
+    }
+  },
+  "required": []
+}

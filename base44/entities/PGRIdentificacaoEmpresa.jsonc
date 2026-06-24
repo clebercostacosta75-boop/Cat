@@ -1,0 +1,66 @@
+{
+  "name": "PGRIdentificacaoEmpresa",
+  "type": "object",
+  "properties": {
+    "pgr_leitura_id": {
+      "type": "string"
+    },
+    "razao_social": {
+      "type": "string"
+    },
+    "cnpj": {
+      "type": "string"
+    },
+    "cnae": {
+      "type": "string"
+    },
+    "grau_risco": {
+      "type": "string",
+      "enum": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ]
+    },
+    "endereco": {
+      "type": "string"
+    },
+    "municipio": {
+      "type": "string"
+    },
+    "estado": {
+      "type": "string"
+    },
+    "responsavel_legal": {
+      "type": "string"
+    },
+    "qtd_funcionarios": {
+      "type": "number"
+    },
+    "qtd_homens": {
+      "type": "number"
+    },
+    "qtd_mulheres": {
+      "type": "number"
+    },
+    "qtd_pcd": {
+      "type": "number"
+    },
+    "horario_trabalho": {
+      "type": "string"
+    },
+    "funcoes_existentes": {
+      "type": "string"
+    },
+    "divergencia_cnae": {
+      "type": "boolean",
+      "default": false
+    },
+    "divergencia_grau_risco": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": []
+}

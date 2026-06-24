@@ -1,0 +1,57 @@
+{
+  "name": "PCMSODetalhe",
+  "type": "object",
+  "properties": {
+    "empresa_mestre_id": {
+      "type": "string"
+    },
+    "empresa_mestre_nome": {
+      "type": "string"
+    },
+    "documento_pcmso_id": {
+      "type": "string"
+    },
+    "medico_coordenador": {
+      "type": "string"
+    },
+    "crm": {
+      "type": "string"
+    },
+    "rqe": {
+      "type": "string"
+    },
+    "numero_revisao": {
+      "type": "string"
+    },
+    "data_revisao": {
+      "type": "string",
+      "format": "date"
+    },
+    "vigencia_fim": {
+      "type": "string",
+      "format": "date"
+    },
+    "status_doc": {
+      "type": "string",
+      "enum": [
+        "Vigente",
+        "Vencendo",
+        "Vencido"
+      ],
+      "default": "Vigente"
+    },
+    "total_colaboradores": {
+      "type": "number"
+    },
+    "total_aptos": {
+      "type": "number"
+    },
+    "total_inaptos": {
+      "type": "number"
+    },
+    "total_aptos_restricao": {
+      "type": "number"
+    }
+  },
+  "required": []
+}

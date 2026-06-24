@@ -1,0 +1,47 @@
+{
+  "name": "PGRLeitura",
+  "type": "object",
+  "properties": {
+    "empresa_mestre_id": {
+      "type": "string",
+      "description": "ID da Empresa Mestre"
+    },
+    "empresa_mestre_cnpj": {
+      "type": "string"
+    },
+    "empresa_mestre_nome": {
+      "type": "string"
+    },
+    "documento_pgr_id": {
+      "type": "string",
+      "description": "ID do DocumentoPGR"
+    },
+    "arquivo_pdf": {
+      "type": "string"
+    },
+    "status_processamento": {
+      "type": "string",
+      "enum": [
+        "Processando",
+        "Completo",
+        "Erro"
+      ],
+      "default": "Processando"
+    },
+    "data_processamento": {
+      "type": "string",
+      "format": "date"
+    },
+    "vigencia_fim": {
+      "type": "string",
+      "format": "date"
+    },
+    "data_upload": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "empresa_mestre_id"
+  ]
+}

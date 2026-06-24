@@ -58,6 +58,13 @@ import MatrizTreinamentos from './pages/MatrizTreinamentos.jsx';
 import DossieHomologacao from './pages/DossieHomologacao.jsx';
 import Compliance360 from './pages/Compliance360.jsx';
 import SaudeOcupacional from './pages/SaudeOcupacional.jsx';
+import EmpresaMestre from './pages/empresa/EmpresaMestre.jsx';
+import LeituraInteligente from './pages/pgr/LeituraInteligente.jsx';
+import DashboardSST from './pages/sst/DashboardSST.jsx';
+import PCMSODetalhePage from './pages/sst/PCMSODetalhe.jsx';
+import LTCATDetalhePage from './pages/sst/LTCATDetalhe.jsx';
+import ColaboradoresSST from './pages/sst/ColaboradoresSST.jsx';
+import GestaoExames from './pages/sst/GestaoExames.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -164,6 +171,13 @@ const AuthenticatedApp = () => {
       <Route path="/DossieHomologacao" element={<LayoutWrapper currentPageName="DossieHomologacao"><ProtectedRoute pageKey="Dashboard"><DossieHomologacao /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/Compliance360" element={<LayoutWrapper currentPageName="Compliance360"><ProtectedRoute pageKey="Dashboard"><Compliance360 /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/SaudeOcupacional" element={<LayoutWrapper currentPageName="SaudeOcupacional"><ProtectedRoute pageKey="SaudeOcupacional"><SaudeOcupacional /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/EmpresaMestre" element={<LayoutWrapper currentPageName="EmpresaMestre"><ProtectedRoute pageKey="Dashboard"><EmpresaMestre /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/LeituraInteligentePGR" element={<LayoutWrapper currentPageName="LeituraInteligentePGR"><ProtectedRoute pageKey="Dashboard"><LeituraInteligente /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/SSTDashboard" element={<LayoutWrapper currentPageName="SSTDashboard"><ProtectedRoute pageKey="Dashboard"><DashboardSST /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/PCMSODetalhe" element={<LayoutWrapper currentPageName="PCMSODetalhe"><ProtectedRoute pageKey="Dashboard"><PCMSODetalhePage /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/LTCATDetalhe" element={<LayoutWrapper currentPageName="LTCATDetalhe"><ProtectedRoute pageKey="Dashboard"><LTCATDetalhePage /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/ColaboradoresSST" element={<LayoutWrapper currentPageName="ColaboradoresSST"><ProtectedRoute pageKey="Dashboard"><ColaboradoresSST /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/GestaoExames" element={<LayoutWrapper currentPageName="GestaoExames"><ProtectedRoute pageKey="Dashboard"><GestaoExames /></ProtectedRoute></LayoutWrapper>} />
 
       {/* Rotas autenticadas com layout */}
       <Route path="/" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />

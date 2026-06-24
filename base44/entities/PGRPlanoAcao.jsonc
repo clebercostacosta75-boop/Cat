@@ -1,0 +1,45 @@
+{
+  "name": "PGRPlanoAcao",
+  "type": "object",
+  "properties": {
+    "pgr_leitura_id": {
+      "type": "string"
+    },
+    "nao_conformidade": {
+      "type": "string"
+    },
+    "acao_recomendada": {
+      "type": "string"
+    },
+    "prioridade": {
+      "type": "string",
+      "enum": [
+        "Alta",
+        "M\u00e9dia",
+        "Baixa"
+      ],
+      "default": "M\u00e9dia"
+    },
+    "responsavel": {
+      "type": "string"
+    },
+    "prazo": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Em Andamento",
+        "Conclu\u00eddo",
+        "Vencido"
+      ],
+      "default": "Pendente"
+    },
+    "observacao_tecnica": {
+      "type": "string"
+    }
+  },
+  "required": []
+}

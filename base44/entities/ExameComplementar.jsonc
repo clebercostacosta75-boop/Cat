@@ -1,0 +1,63 @@
+{
+  "name": "ExameComplementar",
+  "type": "object",
+  "properties": {
+    "empresa_mestre_id": {
+      "type": "string"
+    },
+    "colaborador_sst_id": {
+      "type": "string"
+    },
+    "colaborador_nome": {
+      "type": "string"
+    },
+    "aso_registro_id": {
+      "type": "string"
+    },
+    "tipo_exame": {
+      "type": "string",
+      "enum": [
+        "Hemograma",
+        "Glicemia",
+        "Colesterol",
+        "Audiometria",
+        "Espirometria",
+        "Acuidade Visual",
+        "Teste de Daltonismo",
+        "ECG",
+        "EEG",
+        "Raio-X",
+        "Avalia\u00e7\u00e3o Psicol\u00f3gica",
+        "Exame Toxicol\u00f3gico",
+        "Outro"
+      ]
+    },
+    "data_realizacao": {
+      "type": "string",
+      "format": "date"
+    },
+    "resultado": {
+      "type": "string"
+    },
+    "laboratorio": {
+      "type": "string"
+    },
+    "data_vencimento": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "V\u00e1lido",
+        "Vencendo",
+        "Vencido"
+      ],
+      "default": "V\u00e1lido"
+    },
+    "arquivo_resultado": {
+      "type": "string"
+    }
+  },
+  "required": []
+}

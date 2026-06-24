@@ -1,0 +1,38 @@
+{
+  "name": "LTCATDetalhe",
+  "type": "object",
+  "properties": {
+    "empresa_mestre_id": {
+      "type": "string"
+    },
+    "empresa_mestre_nome": {
+      "type": "string"
+    },
+    "documento_ltcat_id": {
+      "type": "string"
+    },
+    "numero_ltcat": {
+      "type": "string"
+    },
+    "crea": {
+      "type": "string"
+    },
+    "art": {
+      "type": "string"
+    },
+    "vigencia_fim": {
+      "type": "string",
+      "format": "date"
+    },
+    "status_doc": {
+      "type": "string",
+      "enum": [
+        "Vigente",
+        "Vencendo",
+        "Vencido"
+      ],
+      "default": "Vigente"
+    }
+  },
+  "required": []
+}

@@ -1,0 +1,105 @@
+{
+  "name": "PGRInventarioRisco",
+  "type": "object",
+  "properties": {
+    "pgr_leitura_id": {
+      "type": "string"
+    },
+    "setor": {
+      "type": "string"
+    },
+    "cargo_funcao": {
+      "type": "string"
+    },
+    "atividade": {
+      "type": "string"
+    },
+    "perigo": {
+      "type": "string"
+    },
+    "fonte_geradora": {
+      "type": "string"
+    },
+    "tipo_risco": {
+      "type": "string",
+      "enum": [
+        "F\u00edsico",
+        "Qu\u00edmico",
+        "Biol\u00f3gico",
+        "Ergon\u00f4mico",
+        "Acidente",
+        "Psicossocial"
+      ]
+    },
+    "possiveis_danos": {
+      "type": "string"
+    },
+    "trabalhadores_expostos": {
+      "type": "number"
+    },
+    "probabilidade": {
+      "type": "string",
+      "enum": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ]
+    },
+    "gravidade": {
+      "type": "string",
+      "enum": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ]
+    },
+    "nivel_risco": {
+      "type": "number"
+    },
+    "classificacao": {
+      "type": "string",
+      "enum": [
+        "Irrelevante",
+        "Baixo",
+        "M\u00e9dio",
+        "Alto",
+        "Cr\u00edtico"
+      ]
+    },
+    "epc": {
+      "type": "string"
+    },
+    "epi": {
+      "type": "string"
+    },
+    "necessita_treinamento": {
+      "type": "boolean",
+      "default": false
+    },
+    "necessita_exame_pcmso": {
+      "type": "boolean",
+      "default": false
+    },
+    "responsavel_acao": {
+      "type": "string"
+    },
+    "prazo": {
+      "type": "string",
+      "format": "date"
+    },
+    "status_acao": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Em Andamento",
+        "Conclu\u00eddo"
+      ],
+      "default": "Pendente"
+    }
+  },
+  "required": []
+}

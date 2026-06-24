@@ -1,0 +1,31 @@
+{
+  "name": "PGRSetorCargo",
+  "type": "object",
+  "properties": {
+    "pgr_leitura_id": {
+      "type": "string"
+    },
+    "setor": {
+      "type": "string"
+    },
+    "cargo": {
+      "type": "string"
+    },
+    "funcao": {
+      "type": "string"
+    },
+    "qtd_trabalhadores": {
+      "type": "number"
+    },
+    "ghe": {
+      "type": "string"
+    },
+    "descricao_atividades": {
+      "type": "string"
+    },
+    "jornada_trabalho": {
+      "type": "string"
+    }
+  },
+  "required": []
+}

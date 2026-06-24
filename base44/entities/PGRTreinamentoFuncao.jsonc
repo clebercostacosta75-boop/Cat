@@ -1,0 +1,39 @@
+{
+  "name": "PGRTreinamentoFuncao",
+  "type": "object",
+  "properties": {
+    "pgr_leitura_id": {
+      "type": "string"
+    },
+    "funcao": {
+      "type": "string"
+    },
+    "nr_aplicavel": {
+      "type": "string"
+    },
+    "treinamento_obrigatorio": {
+      "type": "string"
+    },
+    "carga_horaria": {
+      "type": "number"
+    },
+    "validade_meses": {
+      "type": "number"
+    },
+    "status_colaborador": {
+      "type": "string",
+      "enum": [
+        "Treinado",
+        "Pendente",
+        "Vencendo",
+        "Vencido"
+      ],
+      "default": "Pendente"
+    },
+    "data_vencimento": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": []
+}

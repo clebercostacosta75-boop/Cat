@@ -1,0 +1,57 @@
+{
+  "name": "PGRControleDocumento",
+  "type": "object",
+  "properties": {
+    "pgr_leitura_id": {
+      "type": "string"
+    },
+    "nome_documento": {
+      "type": "string"
+    },
+    "numero_revisao": {
+      "type": "string"
+    },
+    "data_revisao": {
+      "type": "string",
+      "format": "date"
+    },
+    "descricao_revisao": {
+      "type": "string"
+    },
+    "elaborado_por": {
+      "type": "string"
+    },
+    "verificado_por": {
+      "type": "string"
+    },
+    "aprovado_por": {
+      "type": "string"
+    },
+    "responsavel_tecnico": {
+      "type": "string"
+    },
+    "data_emissao": {
+      "type": "string",
+      "format": "date"
+    },
+    "vigencia_inicio": {
+      "type": "string",
+      "format": "date"
+    },
+    "vigencia_fim": {
+      "type": "string",
+      "format": "date"
+    },
+    "status_doc": {
+      "type": "string",
+      "enum": [
+        "Vigente",
+        "Vencendo",
+        "Vencido",
+        "Em Revis\u00e3o"
+      ],
+      "default": "Vigente"
+    }
+  },
+  "required": []
+}

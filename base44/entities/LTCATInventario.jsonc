@@ -1,0 +1,43 @@
+{
+  "name": "LTCATInventario",
+  "type": "object",
+  "properties": {
+    "ltcat_detalhe_id": {
+      "type": "string"
+    },
+    "setor": {
+      "type": "string"
+    },
+    "cargo": {
+      "type": "string"
+    },
+    "agente_nocivo": {
+      "type": "string"
+    },
+    "tipo_agente": {
+      "type": "string",
+      "enum": [
+        "F\u00edsico",
+        "Qu\u00edmico",
+        "Biol\u00f3gico"
+      ]
+    },
+    "intensidade_concentracao": {
+      "type": "string"
+    },
+    "tempo_exposicao": {
+      "type": "string"
+    },
+    "enquadramento_previdenciario": {
+      "type": "string"
+    },
+    "codigo_esocial": {
+      "type": "string"
+    },
+    "aposentadoria_especial": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": []
+}

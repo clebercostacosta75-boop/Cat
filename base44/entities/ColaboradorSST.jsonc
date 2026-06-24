@@ -1,0 +1,47 @@
+{
+  "name": "ColaboradorSST",
+  "type": "object",
+  "properties": {
+    "empresa_mestre_id": {
+      "type": "string"
+    },
+    "empresa_mestre_nome": {
+      "type": "string"
+    },
+    "nome": {
+      "type": "string"
+    },
+    "cpf": {
+      "type": "string"
+    },
+    "matricula": {
+      "type": "string"
+    },
+    "cargo": {
+      "type": "string"
+    },
+    "funcao": {
+      "type": "string"
+    },
+    "setor": {
+      "type": "string"
+    },
+    "data_admissao": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ativo",
+        "Inativo",
+        "Afastado"
+      ],
+      "default": "Ativo"
+    }
+  },
+  "required": [
+    "nome",
+    "empresa_mestre_id"
+  ]
+}
