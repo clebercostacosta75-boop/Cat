@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, CheckCircle, Plus, Loader2, FileText, Stethoscope, Trash2 } from "lucide-react";
+import ASOAutoGerador from "@/components/pcmso/ASOAutoGerador";
 import { differenceInDays, parseISO } from "date-fns";
 
 const IMPACT_DOCS = ["PGR","PCMSO","LTCAT","CIPA","Matriz de Treinamentos","Matriz de Exames","EPI","PPP","ASO","Prontuário Digital"];
@@ -220,6 +221,11 @@ export default function PCMSODetalheCompleto({ doc, onClose }) {
               </div>
             ))}
           </div>
+          {/* Geração automática de ASOs — acesso rápido na visão geral */}
+          <div className="mb-4">
+            <ASOAutoGerador doc={doc} matrizes={matrizes} onConcluido={loadAll} />
+          </div>
+
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="bg-white border rounded-xl p-4">
               <h3 className="font-semibold text-sm text-gray-700 mb-3">Status dos ASOs</h3>
@@ -452,8 +458,16 @@ export default function PCMSODetalheCompleto({ doc, onClose }) {
 
         {/* 10. ASO */}
         <TabsContent value="aso">
+          {/* Geração automática via PCMSO */}
+          <div className="mb-4">
+            <ASOAutoGerador
+              doc={doc}
+              matrizes={matrizes}
+              onConcluido={loadAll}
+            />
+          </div>
           <div className="flex justify-end mb-3">
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 gap-1" onClick={() => setAddingASO(true)}><Plus className="w-3.5 h-3.5" /> Novo ASO</Button>
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 gap-1" onClick={() => setAddingASO(true)}><Plus className="w-3.5 h-3.5" /> Novo ASO Manual</Button>
           </div>
           {addingASO && (
             <div className="bg-gray-50 border rounded-xl p-4 mb-4 grid sm:grid-cols-3 gap-3">
