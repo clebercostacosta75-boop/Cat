@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Search, FileText, Edit2, Trash2, Upload, Loader2, CheckCircle } from "lucide-react";
+import { Plus, Search, FileText, Edit2, Trash2, Upload, Loader2, CheckCircle, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 
 const STATUS_COLORS = {
@@ -22,6 +21,14 @@ const EMPTY_FORM = {
   status: "Rascunho", observacoes: ""
 };
 
+// Converte data DD/MM/AAAA para YYYY-MM-DD
+function parseBRDate(str) {
+  if (!str) return "";
+  const m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  return str;
+}
+
 export default function PGRTab() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,10 +38,12 @@ export default function PGRTab() {
   const [modalOpen, setModalOpen] = useState(false);
   const [step, setStep] = useState(1); // 1 = upload, 2 = identify
   const [uploading, setUploading] = useState(false);
+  const [extracting, setExtracting] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState(null);
 
   const fileRef = useRef();
 
@@ -57,6 +66,7 @@ export default function PGRTab() {
   const openNew = () => {
     setStep(1);
     setCurrentId(null);
+    setPdfUrl(null);
     setForm(EMPTY_FORM);
     setEditingId(null);
     setModalOpen(true);
@@ -66,6 +76,7 @@ export default function PGRTab() {
     setForm({ ...r });
     setEditingId(r.id);
     setCurrentId(r.id);
+    setPdfUrl(r.arquivo_pdf || null);
     setStep(2);
     setModalOpen(true);
   };
@@ -73,6 +84,7 @@ export default function PGRTab() {
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     setUploading(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     const today = new Date().toISOString().split("T")[0];
@@ -82,19 +94,79 @@ export default function PGRTab() {
       data_upload: today
     });
     setCurrentId(record.id);
-    setForm(EMPTY_FORM);
+    setPdfUrl(file_url);
     setUploading(false);
+
+    // Extração automática por IA
+    setExtracting(true);
     setStep(2);
+    setForm(EMPTY_FORM);
+
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analise este documento PGR (Programa de Gerenciamento de Riscos) e extraia em JSON: empresa_nome, cnpj, cnae, cnae_descricao, responsavel_tecnico, registro_crea, data_elaboracao (formato DD/MM/AAAA), vigencia_inicio (formato DD/MM/AAAA), vigencia_fim (formato DD/MM/AAAA), numero_funcionarios (número inteiro). Retorne APENAS o JSON, sem texto adicional.`,
+        file_urls: [file_url],
+        response_json_schema: {
+          type: "object",
+          properties: {
+            empresa_nome: { type: "string" },
+            cnpj: { type: "string" },
+            cnae: { type: "string" },
+            cnae_descricao: { type: "string" },
+            responsavel_tecnico: { type: "string" },
+            registro_crea: { type: "string" },
+            data_elaboracao: { type: "string" },
+            vigencia_inicio: { type: "string" },
+            vigencia_fim: { type: "string" },
+            numero_funcionarios: { type: "number" }
+          }
+        }
+      });
+
+      const extracted = {
+        empresa_nome: result.empresa_nome || "",
+        cnpj: result.cnpj || "",
+        cnae: result.cnae || "",
+        cnae_descricao: result.cnae_descricao || "",
+        responsavel_tecnico: result.responsavel_tecnico || "",
+        registro_crea: result.registro_crea || "",
+        data_elaboracao: parseBRDate(result.data_elaboracao) || "",
+        vigencia_inicio: parseBRDate(result.vigencia_inicio) || "",
+        vigencia_fim: parseBRDate(result.vigencia_fim) || "",
+        numero_funcionarios: result.numero_funcionarios ? String(result.numero_funcionarios) : "",
+        status: "Ativo",
+        observacoes: "",
+        extraido_por_ia: true
+      };
+
+      // Salvar dados extraídos automaticamente no registro
+      await base44.entities.DocumentoPGR.update(record.id, {
+        ...extracted,
+        numero_funcionarios: result.numero_funcionarios ? parseInt(result.numero_funcionarios) : undefined
+      });
+
+      setForm(extracted);
+    } catch (err) {
+      // Se a IA falhar, apenas exibe o formulário em branco para preenchimento manual
+      setForm(EMPTY_FORM);
+    }
+
+    setExtracting(false);
+  };
+
+  const buildPayload = (f) => {
+    const payload = { ...f };
+    if (payload.numero_funcionarios !== undefined && payload.numero_funcionarios !== "") {
+      payload.numero_funcionarios = parseInt(payload.numero_funcionarios, 10);
+    } else {
+      delete payload.numero_funcionarios;
+    }
+    return payload;
   };
 
   const save = async () => {
     setSaving(true);
-    const payload = { ...form };
-    if (payload.numero_funcionarios !== undefined && payload.numero_funcionarios !== "") {
-      payload.numero_funcionarios = Number(payload.numero_funcionarios);
-    } else {
-      delete payload.numero_funcionarios;
-    }
+    const payload = buildPayload(form);
     if (currentId) {
       await base44.entities.DocumentoPGR.update(currentId, payload);
     }
@@ -104,7 +176,6 @@ export default function PGRTab() {
   };
 
   const cancel = async () => {
-    // Se estava no step 2 de um novo registro (sem ter salvo), excluir o rascunho criado
     if (step === 2 && currentId && !editingId) {
       await base44.entities.DocumentoPGR.delete(currentId);
     }
@@ -191,7 +262,9 @@ export default function PGRTab() {
       <Dialog open={modalOpen} onOpenChange={(open) => { if (!open) cancel(); }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{step === 1 ? "Novo PGR — Upload do Documento" : "Identificar PGR"}</DialogTitle>
+            <DialogTitle>
+              {step === 1 ? "Novo PGR — Upload do Documento" : editingId ? "Editar PGR" : "Identificar PGR"}
+            </DialogTitle>
           </DialogHeader>
 
           {/* ETAPA 1 — Upload */}
@@ -219,18 +292,33 @@ export default function PGRTab() {
             </div>
           )}
 
-          {/* ETAPA 2 — Identificar */}
+          {/* ETAPA 2 — Identificar / Editar */}
           {step === 2 && (
             <>
-              <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 rounded-lg px-3 py-2 mb-2">
-                <CheckCircle className="w-4 h-4 flex-shrink-0" />
-                PDF anexado com sucesso. Preencha os dados de identificação abaixo.
-              </div>
+              {/* Banner de extração IA */}
+              {extracting ? (
+                <div className="flex items-center gap-3 text-sm text-purple-700 bg-purple-50 rounded-lg px-4 py-3 mb-2">
+                  <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                  <span><strong>IA extraindo dados do PDF...</strong> Aguarde um momento.</span>
+                </div>
+              ) : editingId ? (
+                <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2 mb-2">
+                  <Edit2 className="w-4 h-4 flex-shrink-0" />
+                  Edite os campos abaixo e clique em Salvar para confirmar.
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 rounded-lg px-3 py-2 mb-2">
+                  <Sparkles className="w-4 h-4 flex-shrink-0" />
+                  Dados extraídos automaticamente pelo IA. Confira e corrija se necessário.
+                </div>
+              )}
+
               <div className="grid gap-3 py-1">
                 {[
                   ["Empresa", "empresa_nome", "text"],
                   ["CNPJ", "cnpj", "text"],
                   ["CNAE", "cnae", "text"],
+                  ["Descrição CNAE", "cnae_descricao", "text"],
                   ["Responsável Técnico", "responsavel_tecnico", "text"],
                   ["CREA/CRO", "registro_crea", "text"],
                   ["Data de Elaboração", "data_elaboracao", "date"],
@@ -243,6 +331,7 @@ export default function PGRTab() {
                     <Input
                       type={type}
                       value={form[key] || ""}
+                      disabled={extracting}
                       onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
                     />
                   </div>
@@ -251,8 +340,9 @@ export default function PGRTab() {
                   <label className="text-xs font-medium text-gray-600 block mb-1">Status</label>
                   <select
                     value={form.status || "Rascunho"}
+                    disabled={extracting}
                     onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
                   >
                     {["Rascunho", "Ativo", "Vencido", "Em Revisão"].map(s => <option key={s}>{s}</option>)}
                   </select>
@@ -262,14 +352,15 @@ export default function PGRTab() {
                   <textarea
                     rows={3}
                     value={form.observacoes || ""}
+                    disabled={extracting}
                     onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none disabled:opacity-50"
                   />
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={cancel}>Cancelar</Button>
-                <Button onClick={save} disabled={saving} className="bg-rose-600 hover:bg-rose-700">
+                <Button variant="outline" onClick={cancel} disabled={extracting}>Cancelar</Button>
+                <Button onClick={save} disabled={saving || extracting} className="bg-rose-600 hover:bg-rose-700">
                   {saving ? "Salvando..." : "Salvar"}
                 </Button>
               </div>
