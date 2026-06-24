@@ -371,56 +371,5 @@
     "razao_social",
     "nome_fantasia",
     "cnpj"
-  ],
-  "rls": {
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "read": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "Operacional"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "Financeiro"
-          }
-        },
-        {
-          "id": "{{user.data.company_id}}"
-        }
-      ]
-    },
-    "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "Operacional"
-          }
-        },
-        {
-          "id": "{{user.data.company_id}}"
-        }
-      ]
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
-  }
+  ]
 }
