@@ -1,0 +1,67 @@
+{
+  "name": "DocumentoPCMSO",
+  "type": "object",
+  "properties": {
+    "empresa_nome": {
+      "type": "string",
+      "description": "Nome da empresa"
+    },
+    "cnpj": {
+      "type": "string",
+      "description": "CNPJ da empresa"
+    },
+    "medico_responsavel": {
+      "type": "string",
+      "description": "Nome do m\u00e9dico coordenador do PCMSO"
+    },
+    "crm": {
+      "type": "string",
+      "description": "N\u00famero de registro no CRM"
+    },
+    "data_elaboracao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de elabora\u00e7\u00e3o do documento"
+    },
+    "vigencia_inicio": {
+      "type": "string",
+      "format": "date",
+      "description": "In\u00edcio da vig\u00eancia do PCMSO"
+    },
+    "vigencia_fim": {
+      "type": "string",
+      "format": "date",
+      "description": "Fim da vig\u00eancia do PCMSO"
+    },
+    "arquivo_pdf": {
+      "type": "string",
+      "description": "URL do arquivo PDF do PCMSO"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Rascunho",
+        "Ativo",
+        "Vencido",
+        "Em Revis\u00e3o"
+      ],
+      "default": "Rascunho",
+      "description": "Status do documento"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es adicionais sobre o documento"
+    },
+    "extraido_por_ia": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se os dados foram extra\u00eddos automaticamente por IA"
+    },
+    "data_upload": {
+      "type": "string",
+      "format": "date",
+      "description": "Data em que o documento foi enviado"
+    }
+  },
+  "required": []
+}
