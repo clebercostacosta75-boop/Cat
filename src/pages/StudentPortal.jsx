@@ -15,8 +15,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { buildCertificateHTMLFromModel } from "@/components/certificates/CertificatePreview";
 import CertificateQRCode from "@/components/certificates/CertificateQRCode";
+import CertificateDownloader from "@/components/certificates/CertificateDownloader";
 
 function formatDate(d) {
   if (!d) return "—";
@@ -46,30 +46,7 @@ function StatusBadge({ status, validUntil }) {
   return <Badge className="bg-green-100 text-green-700 border border-green-300 flex items-center gap-1"><CheckCircle className="w-3 h-3" />Válido</Badge>;
 }
 
-function downloadPDF(cert) {
-  const html = buildCertificateHTMLFromModel(null, {
-    student_name: cert.student_name,
-    student_cpf: cert.student_cpf,
-    course_name: cert.course_name,
-    course_duration: cert.course_duration,
-    course_modality: cert.course_modality,
-    start_date: cert.start_date,
-    end_date: cert.end_date,
-    valid_until: cert.valid_until,
-    location_and_date: cert.location_and_date,
-    client_name: cert.client_name,
-    instructor_name: cert.instructor_name,
-    certificate_code: cert.certificate_code,
-    signature_url: cert.signature_url,
-    programmatic_content: cert.programmatic_content || [],
-    technical_responsibles: cert.technical_responsibles || [],
-    show_programmatic_hours: cert.show_programmatic_hours !== false,
-  });
-  const win = window.open("", "_blank");
-  win.document.write(html);
-  win.document.close();
-  setTimeout(() => win.print(), 800);
-}
+
 
 export default function StudentPortal() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -309,9 +286,11 @@ export default function StudentPortal() {
                             <button onClick={() => copyValidationLink(activeCerts[walletIndex])} className="p-1.5 rounded-md bg-white/20 hover:bg-white/30" title="Copiar link de validação">
                               {copiedId === activeCerts[walletIndex].id ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                             </button>
-                            <button onClick={() => downloadPDF(activeCerts[walletIndex])} className="p-1.5 rounded-md bg-white/20 hover:bg-white/30" title="Baixar PDF">
-                              <Download className="w-4 h-4" />
-                            </button>
+                            <CertificateDownloader
+                              certificate={activeCerts[walletIndex]}
+                              size="icon"
+                              className="p-1.5 rounded-md bg-white/20 hover:bg-white/30 border-0 h-auto w-auto"
+                            />
                             <button
                               onClick={() => window.open(`${window.location.origin}/CertificateValidate?code=${activeCerts[walletIndex].certificate_code}`, "_blank")}
                               className="p-1.5 rounded-md bg-white/20 hover:bg-white/30" title="Validar"
@@ -356,7 +335,7 @@ export default function StudentPortal() {
                       Certificados Válidos
                     </h2>
                     <div className="space-y-3">
-                      {activeCerts.map(cert => <CertCard key={cert.id} cert={cert} onDownload={downloadPDF} onCopy={copyValidationLink} copiedId={copiedId} />)}
+                      {activeCerts.map(cert => <CertCard key={cert.id} cert={cert} onCopy={copyValidationLink} copiedId={copiedId} />)}
                     </div>
                   </div>
                 )}
@@ -369,7 +348,7 @@ export default function StudentPortal() {
                       Histórico — Vencidos / Revogados
                     </h2>
                     <div className="space-y-3 opacity-80">
-                      {expiredCerts.map(cert => <CertCard key={cert.id} cert={cert} onDownload={downloadPDF} onCopy={copyValidationLink} copiedId={copiedId} expired />)}
+                      {expiredCerts.map(cert => <CertCard key={cert.id} cert={cert} onCopy={copyValidationLink} copiedId={copiedId} expired />)}
                     </div>
                   </div>
                 )}
@@ -396,7 +375,7 @@ export default function StudentPortal() {
   );
 }
 
-function CertCard({ cert, onDownload, onCopy, copiedId, expired = false }) {
+function CertCard({ cert, onCopy, copiedId, expired = false }) {
   const days = getDaysLeft(cert.valid_until);
   const validationUrl = `${window.location.origin}/CertificateValidate?code=${cert.certificate_code}`;
 
@@ -501,13 +480,7 @@ function CertCard({ cert, onDownload, onCopy, copiedId, expired = false }) {
               </Button>
             )}
             {/* Download PDF */}
-            <Button
-              size="sm"
-              className="text-xs h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700"
-              onClick={() => onDownload(cert)}
-            >
-              <Download className="w-3 h-3" />Baixar PDF
-            </Button>
+            <CertificateDownloader certificate={cert} size="sm" />
           </div>
         </div>
       </div>
