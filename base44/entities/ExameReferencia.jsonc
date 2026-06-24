@@ -1,0 +1,70 @@
+{
+  "name": "ExameReferencia",
+  "type": "object",
+  "properties": {
+    "nome_exame": {
+      "type": "string",
+      "description": "Nome do exame ocupacional (ex: Audiometria, Espirometria, Acuidade Visual)"
+    },
+    "codigo_esocial": {
+      "type": "string",
+      "description": "C\u00f3digo do exame no eSocial"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Cl\u00ednico",
+        "Complementar",
+        "Laboratorial",
+        "Toxicol\u00f3gico"
+      ],
+      "description": "Tipo do exame"
+    },
+    "indicacao_risco": {
+      "type": "string",
+      "description": "Risco ocupacional indicado (ex: Ru\u00eddo, Altura, Qu\u00edmico, Biol\u00f3gico)"
+    },
+    "nr_aplicavel": {
+      "type": "string",
+      "description": "Norma Regulamentadora aplic\u00e1vel (ex: NR-35, NR-33, NR-10)"
+    },
+    "periodicidade_padrao_meses": {
+      "type": "number",
+      "default": 12,
+      "description": "Periodicidade padr\u00e3o de realiza\u00e7\u00e3o em meses"
+    },
+    "admissional": {
+      "type": "boolean",
+      "default": true,
+      "description": "Realizado no exame admissional"
+    },
+    "periodico": {
+      "type": "boolean",
+      "default": true,
+      "description": "Realizado no exame peri\u00f3dico"
+    },
+    "demissional": {
+      "type": "boolean",
+      "default": true,
+      "description": "Realizado no exame demissional"
+    },
+    "retorno_trabalho": {
+      "type": "boolean",
+      "default": true,
+      "description": "Realizado no retorno ao trabalho"
+    },
+    "mudanca_risco": {
+      "type": "boolean",
+      "default": false,
+      "description": "Realizado em mudan\u00e7a de fun\u00e7\u00e3o/risco"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o exame est\u00e1 ativo no cat\u00e1logo"
+    }
+  },
+  "required": [
+    "nome_exame"
+  ]
+}
