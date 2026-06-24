@@ -1,0 +1,58 @@
+{
+  "name": "DocumentoASA",
+  "type": "object",
+  "properties": {
+    "empresa_nome": {
+      "type": "string",
+      "description": "Nome da empresa"
+    },
+    "cnpj": {
+      "type": "string",
+      "description": "CNPJ da empresa"
+    },
+    "medico_responsavel": {
+      "type": "string",
+      "description": "Nome do m\u00e9dico respons\u00e1vel"
+    },
+    "crm": {
+      "type": "string",
+      "description": "CRM do m\u00e9dico"
+    },
+    "data_emissao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de emiss\u00e3o"
+    },
+    "data_validade": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de validade"
+    },
+    "arquivo_pdf": {
+      "type": "string",
+      "description": "URL do arquivo PDF"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Rascunho",
+        "Ativo",
+        "Vencido",
+        "Em Revis\u00e3o"
+      ],
+      "default": "Rascunho"
+    },
+    "observacoes": {
+      "type": "string"
+    },
+    "extraido_por_ia": {
+      "type": "boolean",
+      "default": false
+    },
+    "data_upload": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": []
+}
