@@ -14,12 +14,6 @@ const STATUS_COLORS = {
   "Em Revisão": "bg-amber-100 text-amber-700",
 };
 
-const EMPTY_FORM = {
-  empresa_nome: "", cnpj: "", medico_responsavel: "", crm: "",
-  data_elaboracao: "", vigencia_inicio: "", vigencia_fim: "",
-  status: "Rascunho", observacoes: ""
-};
-
 function parseBRDate(str) {
   if (!str) return "";
   const m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -27,7 +21,17 @@ function parseBRDate(str) {
   return str;
 }
 
-export default function PCMSOTab() {
+function makeEmptyForm(empresa) {
+  return {
+    empresa_nome: empresa?.razao_social || "",
+    cnpj: empresa?.cnpj || "",
+    medico_responsavel: "", crm: "",
+    data_elaboracao: "", vigencia_inicio: "", vigencia_fim: "",
+    status: "Rascunho", observacoes: ""
+  };
+}
+
+export default function PCMSOTab({ empresa, onEmpresaAtualizada }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -37,18 +41,18 @@ export default function PCMSOTab() {
   const [extracting, setExtracting] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState(() => makeEmptyForm(empresa));
   const [saving, setSaving] = useState(false);
   const fileRef = useRef();
 
   const load = async () => {
     setLoading(true);
-    const data = await base44.entities.DocumentoPCMSO.list("-created_date", 100);
-    setRecords(data);
+    const data = await base44.entities.DocumentoPCMSO.filter({ cnpj: empresa.cnpj });
+    setRecords(data.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [empresa.id]);
 
   const filtered = records.filter(r =>
     r.empresa_nome?.toLowerCase().includes(search.toLowerCase()) ||
@@ -59,7 +63,7 @@ export default function PCMSOTab() {
 
   const openNew = () => {
     setStep(1); setCurrentId(null); setEditingId(null);
-    setForm(EMPTY_FORM); setModalOpen(true);
+    setForm(makeEmptyForm(empresa)); setModalOpen(true);
   };
 
   const openEdit = (r) => {
@@ -74,13 +78,15 @@ export default function PCMSOTab() {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     const today = new Date().toISOString().split("T")[0];
     const record = await base44.entities.DocumentoPCMSO.create({
-      arquivo_pdf: file_url, status: "Rascunho", data_upload: today
+      arquivo_pdf: file_url, status: "Rascunho", data_upload: today,
+      empresa_mestre_id: empresa.id, cnpj: empresa.cnpj, empresa_nome: empresa.razao_social
     });
     setCurrentId(record.id);
     setUploading(false);
     setExtracting(true);
     setStep(2);
-    setForm(EMPTY_FORM);
+    setForm(makeEmptyForm(empresa));
+
     try {
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `Analise este documento PCMSO (Programa de Controle Médico de Saúde Ocupacional) e extraia em JSON: empresa_nome, cnpj, medico_responsavel, crm, data_elaboracao (DD/MM/AAAA), vigencia_inicio (DD/MM/AAAA), vigencia_fim (DD/MM/AAAA). Retorne APENAS o JSON.`,
@@ -95,25 +101,28 @@ export default function PCMSOTab() {
           }
         }
       });
+
       const extracted = {
-        empresa_nome: result.empresa_nome || "",
-        cnpj: result.cnpj || "",
+        empresa_nome: result.empresa_nome || empresa.razao_social || "",
+        cnpj: result.cnpj || empresa.cnpj || "",
         medico_responsavel: result.medico_responsavel || "",
         crm: result.crm || "",
         data_elaboracao: parseBRDate(result.data_elaboracao),
         vigencia_inicio: parseBRDate(result.vigencia_inicio),
         vigencia_fim: parseBRDate(result.vigencia_fim),
-        status: "Ativo", observacoes: "", extraido_por_ia: true
+        status: "Ativo", observacoes: "", extraido_por_ia: true,
+        empresa_mestre_id: empresa.id
       };
+
       await base44.entities.DocumentoPCMSO.update(record.id, extracted);
       setForm(extracted);
-    } catch { setForm(EMPTY_FORM); }
+    } catch { setForm(makeEmptyForm(empresa)); }
     setExtracting(false);
   };
 
   const save = async () => {
     setSaving(true);
-    if (currentId) await base44.entities.DocumentoPCMSO.update(currentId, form);
+    if (currentId) await base44.entities.DocumentoPCMSO.update(currentId, { ...form, empresa_mestre_id: empresa.id });
     setSaving(false);
     setModalOpen(false);
     load();
@@ -137,10 +146,10 @@ export default function PCMSOTab() {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input placeholder="Buscar por empresa ou CNPJ..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder="Buscar PCMSO..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Button onClick={openNew} className="gap-1.5 bg-rose-600 hover:bg-rose-700">
-          <Plus className="w-4 h-4" /> Novo PCMSO
+          <Plus className="w-4 h-4" /> Importar PCMSO
         </Button>
       </div>
 
@@ -149,17 +158,16 @@ export default function PCMSOTab() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 bg-gray-50 rounded-xl border">
           <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 font-medium">Nenhum PCMSO cadastrado</p>
-          <p className="text-gray-400 text-sm mt-1">Clique em "+ Novo PCMSO" para começar</p>
+          <p className="text-gray-500 font-medium">Nenhum PCMSO cadastrado para {empresa.razao_social}</p>
+          <p className="text-gray-400 text-sm mt-1">Clique em "Importar PCMSO" para fazer upload do documento</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Empresa</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">CNPJ</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Médico Responsável</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">CRM</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Vigência (Fim)</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Status</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-600">Ações</th>
@@ -170,18 +178,14 @@ export default function PCMSOTab() {
                 const vencido = isVencido(r.vigencia_fim);
                 return (
                   <tr key={r.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${vencido ? "bg-red-50/50" : ""}`}>
-                    <td className={`px-4 py-3 font-medium ${vencido ? "text-red-700" : "text-gray-900"}`}>
-                      {r.empresa_nome || <span className="text-gray-400 italic">Não identificada</span>}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{r.cnpj || "—"}</td>
-                    <td className="px-4 py-3 text-gray-600">{r.medico_responsavel || "—"}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900">{r.medico_responsavel || <span className="text-gray-400 italic">—</span>}</td>
+                    <td className="px-4 py-3 text-gray-600">{r.crm || "—"}</td>
                     <td className={`px-4 py-3 font-medium ${vencido ? "text-red-600" : "text-gray-700"}`}>
-                      {r.vigencia_fim
-                        ? <span>{vencido ? "⚠ " : ""}{format(new Date(r.vigencia_fim + "T00:00:00"), "dd/MM/yyyy")}</span>
-                        : <span className="text-gray-400">—</span>}
+                      {r.vigencia_fim ? <span>{vencido ? "⚠ " : ""}{format(new Date(r.vigencia_fim + "T00:00:00"), "dd/MM/yyyy")}</span> : <span className="text-gray-400">—</span>}
                     </td>
                     <td className="px-4 py-3">
                       <Badge className={`text-xs ${STATUS_COLORS[r.status] || "bg-gray-100 text-gray-600"}`}>{r.status || "Rascunho"}</Badge>
+                      {r.extraido_por_ia && <span className="ml-1 text-xs text-purple-500">✦ IA</span>}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex gap-1 justify-end">
@@ -205,7 +209,7 @@ export default function PCMSOTab() {
       <Dialog open={modalOpen} onOpenChange={(open) => { if (!open) cancel(); }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{step === 1 ? "Novo PCMSO — Upload do Documento" : editingId ? "Editar PCMSO" : "Identificar PCMSO"}</DialogTitle>
+            <DialogTitle>{step === 1 ? "Importar PCMSO — Upload do Documento" : editingId ? "Editar PCMSO" : "Identificar PCMSO"}</DialogTitle>
           </DialogHeader>
 
           {step === 1 && (
@@ -215,7 +219,9 @@ export default function PCMSOTab() {
                 {uploading ? (
                   <><Loader2 className="w-10 h-10 text-rose-500 animate-spin" /><p className="text-sm text-gray-500">Enviando arquivo...</p></>
                 ) : (
-                  <><Upload className="w-10 h-10 text-gray-400" /><p className="font-medium text-gray-700">Selecione o arquivo PCMSO em PDF</p><p className="text-xs text-gray-400">Clique aqui ou arraste o arquivo</p></>
+                  <><Upload className="w-10 h-10 text-gray-400" />
+                  <p className="font-medium text-gray-700">Selecione o PCMSO em PDF</p>
+                  <p className="text-xs text-gray-400">A IA irá extrair os dados automaticamente</p></>
                 )}
               </div>
               <input ref={fileRef} type="file" accept="application/pdf" className="hidden" onChange={handleFileUpload} />
