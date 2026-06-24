@@ -1,0 +1,101 @@
+{
+  "name": "SolicitacaoTreinamento",
+  "type": "object",
+  "properties": {
+    "empresa_mestre_id": {
+      "type": "string"
+    },
+    "empresa_mestre_nome": {
+      "type": "string"
+    },
+    "tipo_solicitacao": {
+      "type": "string",
+      "enum": [
+        "Empresa Solicita",
+        "CAT Programa"
+      ],
+      "default": "Empresa Solicita"
+    },
+    "origem": {
+      "type": "string",
+      "enum": [
+        "Portal Empresa",
+        "Portal CAT"
+      ],
+      "default": "Portal Empresa"
+    },
+    "titulo_treinamento": {
+      "type": "string"
+    },
+    "descricao": {
+      "type": "string"
+    },
+    "nr_relacionada": {
+      "type": "string"
+    },
+    "numero_participantes": {
+      "type": "number"
+    },
+    "colaboradores_nomes": {
+      "type": "string"
+    },
+    "data_preferencial": {
+      "type": "string",
+      "format": "date"
+    },
+    "local_preferencial": {
+      "type": "string",
+      "enum": [
+        "Presencial",
+        "Online",
+        "H\u00edbrido"
+      ],
+      "default": "Presencial"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Aguardando An\u00e1lise",
+        "Em An\u00e1lise",
+        "Aprovado",
+        "Agendado",
+        "Conclu\u00eddo",
+        "Cancelado"
+      ],
+      "default": "Aguardando An\u00e1lise"
+    },
+    "instrutor_designado": {
+      "type": "string"
+    },
+    "custo_estimado": {
+      "type": "number"
+    },
+    "data_confirmada": {
+      "type": "string",
+      "format": "date"
+    },
+    "horario_inicio": {
+      "type": "string"
+    },
+    "horario_fim": {
+      "type": "string"
+    },
+    "link_online": {
+      "type": "string"
+    },
+    "observacoes_cat": {
+      "type": "string"
+    },
+    "notificacao_enviada": {
+      "type": "boolean",
+      "default": false
+    },
+    "data_notificacao": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "titulo_treinamento"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "name": "NRReferencia",
+  "type": "object",
+  "properties": {
+    "codigo": {
+      "type": "string"
+    },
+    "nome": {
+      "type": "string"
+    },
+    "descricao": {
+      "type": "string"
+    },
+    "orgao_emissor": {
+      "type": "string",
+      "default": "MTE"
+    },
+    "periodicidade_revisao_meses": {
+      "type": "number"
+    },
+    "aplicavel_grau_risco": {
+      "type": "string",
+      "enum": [
+        "Todos",
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "default": "Todos"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "codigo",
+    "nome"
+  ]
+}

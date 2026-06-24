@@ -1,0 +1,58 @@
+{
+  "name": "MatrizTreinamentoNR",
+  "type": "object",
+  "properties": {
+    "empresa_mestre_id": {
+      "type": "string"
+    },
+    "empresa_mestre_nome": {
+      "type": "string"
+    },
+    "funcao": {
+      "type": "string"
+    },
+    "setor": {
+      "type": "string"
+    },
+    "nr_referencia_id": {
+      "type": "string"
+    },
+    "nr_codigo": {
+      "type": "string"
+    },
+    "nr_nome": {
+      "type": "string"
+    },
+    "curso_obrigatorio": {
+      "type": "string"
+    },
+    "carga_horaria": {
+      "type": "number"
+    },
+    "periodicidade_meses": {
+      "type": "number",
+      "default": 0
+    },
+    "justificativa": {
+      "type": "string"
+    },
+    "nivel_risco": {
+      "type": "string",
+      "enum": [
+        "Cr\u00edtico",
+        "Alto",
+        "M\u00e9dio",
+        "Baixo"
+      ],
+      "default": "M\u00e9dio"
+    },
+    "prazo_inicial_dias": {
+      "type": "number"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": []
+}

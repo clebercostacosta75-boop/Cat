@@ -67,6 +67,9 @@ import ColaboradoresSST from './pages/sst/ColaboradoresSST.jsx';
 import GestaoExames from './pages/sst/GestaoExames.jsx';
 import GestaoEPI from './pages/epi/GestaoEPI.jsx';
 import Compliance360Page from './pages/compliance/Compliance360.jsx';
+import MatrizTreinamentosPage from './pages/treinamentos/MatrizTreinamentos.jsx';
+import ProntuarioDigitalPage from './pages/colaboradores/ProntuarioDigital.jsx';
+import AgendamentoTreinamentosPage from './pages/agendamentos/AgendamentoTreinamentos.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -182,6 +185,9 @@ const AuthenticatedApp = () => {
       <Route path="/GestaoExames" element={<LayoutWrapper currentPageName="GestaoExames"><ProtectedRoute pageKey="Dashboard"><GestaoExames /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/GestaoEPI" element={<LayoutWrapper currentPageName="GestaoEPI"><ProtectedRoute pageKey="Dashboard"><GestaoEPI /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/Compliance360" element={<LayoutWrapper currentPageName="Compliance360"><ProtectedRoute pageKey="Dashboard"><Compliance360Page /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/MatrizTreinamentos" element={<LayoutWrapper currentPageName="MatrizTreinamentos"><ProtectedRoute pageKey="Dashboard"><MatrizTreinamentosPage /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/ProntuarioDigital" element={<LayoutWrapper currentPageName="ProntuarioDigital"><ProtectedRoute pageKey="Dashboard"><ProntuarioDigitalPage /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/AgendamentoTreinamentos" element={<LayoutWrapper currentPageName="AgendamentoTreinamentos"><ProtectedRoute pageKey="Dashboard"><AgendamentoTreinamentosPage /></ProtectedRoute></LayoutWrapper>} />
 
       {/* Rotas autenticadas com layout */}
       <Route path="/" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />

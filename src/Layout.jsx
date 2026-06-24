@@ -65,6 +65,11 @@ const ALL_ITEMS = [
   { title: "🦺 Gestão de EPI", url: "/GestaoEPI", icon: ShieldCheck, key: "GestaoEPI" },
   // Compliance 360
   { title: "📊 Portal da Empresa", url: "/Compliance360", icon: Building2, key: "Compliance360" },
+  // Treinamentos
+  { title: "📋 Matriz NR × Função", url: "/MatrizTreinamentos", icon: Grid3X3, key: "MatrizTreinamentos" },
+  { title: "📅 Agendamento e Cronograma", url: "/AgendamentoTreinamentos", icon: Calendar, key: "AgendamentoTreinamentos" },
+  // Colaboradores
+  { title: "📁 Prontuário Digital", url: "/ProntuarioDigital", icon: Users, key: "ProntuarioDigital" },
 ];
 
 const ROLE_LABEL = {
