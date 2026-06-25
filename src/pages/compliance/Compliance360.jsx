@@ -10,9 +10,11 @@ import C360Treinamentos from "@/components/compliance/C360Treinamentos";
 import C360Certificados from "@/components/compliance/C360Certificados";
 import C360Relatorios from "@/components/compliance/C360Relatorios";
 import C360Usuarios from "@/components/compliance/C360Usuarios";
+import C360MotorInteligencia from "@/components/compliance/C360MotorInteligencia";
 
 const TABS = [
   { value: "dashboard", label: "📊 Dashboard" },
+  { value: "motor", label: "🧠 Motor IA" },
   { value: "documentos", label: "📄 Documentos SST" },
   { value: "colaboradores", label: "👥 Colaboradores" },
   { value: "epi", label: "🦺 EPI" },
@@ -153,6 +155,7 @@ export default function Compliance360() {
             return (
               <>
                 <TabsContent value="dashboard"><C360Dashboard {...shared} /></TabsContent>
+                <TabsContent value="motor"><C360MotorInteligencia {...shared} /></TabsContent>
                 <TabsContent value="documentos"><C360DocumentosSST {...shared} /></TabsContent>
                 <TabsContent value="colaboradores"><C360Colaboradores {...shared} /></TabsContent>
                 <TabsContent value="epi"><C360GestaoEPI {...shared} /></TabsContent>

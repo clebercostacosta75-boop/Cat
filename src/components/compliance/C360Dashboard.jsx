@@ -1,13 +1,8 @@
 import React from "react";
 import { differenceInDays, parseISO, format } from "date-fns";
-import { AlertTriangle, CheckCircle, XCircle, Clock } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-function semaforo(pct) {
-  if (pct >= 80) return { color: "#22c55e", bg: "bg-green-50", border: "border-green-200", text: "text-green-700" };
-  if (pct >= 50) return { color: "#eab308", bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-700" };
-  return { color: "#ef4444", bg: "bg-red-50", border: "border-red-200", text: "text-red-700" };
-}
+import C360ScoreModulos from "./C360ScoreModulos";
 
 const PRIORIDADE_STYLE = {
   "Crítico": "bg-red-100 text-red-700 border-red-200",
@@ -16,40 +11,9 @@ const PRIORIDADE_STYLE = {
   "Baixo": "bg-blue-50 text-blue-600 border-blue-100",
 };
 
-export default function C360Dashboard({ pgrs, pcmsos, ltcats, colaboradores, asos, epis, entregas, estoques, alertas, certificados }) {
+export default function C360Dashboard({ empresa, pgrs, pcmsos, ltcats, colaboradores, asos, epis, entregas, estoques, alertas, certificados }) {
   const today = new Date();
   const isValid = (d) => d && differenceInDays(parseISO(d), today) >= 0;
-
-  // Documentos SST
-  const docsTotal = (pgrs?.length || 0) + (pcmsos?.length || 0) + (ltcats?.length || 0);
-  const docsVigentes = [
-    ...(pgrs || []), ...(pcmsos || []), ...(ltcats || [])
-  ].filter(d => d.vigencia_fim && isValid(d.vigencia_fim)).length;
-  const docsPct = docsTotal > 0 ? Math.round((docsVigentes / docsTotal) * 100) : 0;
-
-  // ASOs
-  const asosValidos = (asos || []).filter(a => a.data_vencimento && isValid(a.data_vencimento)).length;
-  const asosPct = asos?.length > 0 ? Math.round((asosValidos / asos.length) * 100) : 0;
-
-  // EPIs
-  const episOk = (entregas || []).filter(e => !e.data_proxima_troca || isValid(e.data_proxima_troca)).length;
-  const episPct = entregas?.length > 0 ? Math.round((episOk / entregas.length) * 100) : 0;
-
-  // Certificados
-  const certsAtivos = (certificados || []).filter(c => c.valid_until && isValid(c.valid_until)).length;
-  const certsPct = certificados?.length > 0 ? Math.round((certsAtivos / certificados.length) * 100) : 0;
-
-  // Índice Geral
-  const scores = [docsPct, asosPct, episPct, certsPct].filter((_, i) => [docsTotal, asos?.length, entregas?.length, certificados?.length][i] > 0);
-  const indiceGeral = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
-
-  const indicadores = [
-    { label: "Índice de Conformidade", value: `${indiceGeral}%`, pct: indiceGeral, sub: "Geral" },
-    { label: "Documentos SST", value: `${docsVigentes}/${docsTotal}`, pct: docsPct, sub: "Vigentes" },
-    { label: "Colaboradores", value: `${asosValidos}/${asos?.length || 0}`, pct: asosPct, sub: "ASO Válido" },
-    { label: "EPIs sob Controle", value: `${episOk}/${entregas?.length || 0}`, pct: episPct, sub: "Dentro do prazo" },
-    { label: "Certificados Ativos", value: `${certsAtivos}`, pct: certsPct, sub: `de ${certificados?.length || 0}` },
-  ];
 
   const alertasAtivos = (alertas || []).filter(a => a.status === "Ativo" && (a.prioridade === "Crítico" || a.prioridade === "Alto"));
 
@@ -75,20 +39,39 @@ export default function C360Dashboard({ pgrs, pcmsos, ltcats, colaboradores, aso
   });
   eventos90.sort((a, b) => a.dias - b.dias);
 
+  // Contadores rápidos
+  const asosVencidos = (asos || []).filter(a => a.data_vencimento && !isValid(a.data_vencimento)).length;
+  const inaptos = (asos || []).filter(a => a.resultado === "Inapto").length;
+  const certsVencidos = (certificados || []).filter(c => c.valid_until && !isValid(c.valid_until)).length;
+
   return (
-    <div className="space-y-6">
-      {/* Indicadores */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        {indicadores.map(ind => {
-          const s = semaforo(ind.pct);
-          return (
-            <div key={ind.label} className={`${s.bg} ${s.border} border rounded-xl p-4 text-center`}>
-              <p className={`text-3xl font-bold ${s.text}`}>{ind.value}</p>
-              <p className="text-xs font-medium text-gray-700 mt-1">{ind.label}</p>
-              <p className="text-xs text-gray-500">{ind.sub}</p>
-            </div>
-          );
-        })}
+    <div className="space-y-5">
+      {/* Score por módulo */}
+      <C360ScoreModulos
+        pgrs={pgrs} pcmsos={pcmsos} ltcats={ltcats}
+        colaboradores={colaboradores} asos={asos}
+        epis={epis} entregas={entregas} certificados={certificados}
+        empresa={empresa}
+      />
+
+      {/* KPIs rápidos */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-center">
+          <p className="text-2xl font-bold text-blue-700">{colaboradores?.length || 0}</p>
+          <p className="text-xs text-gray-500">Colaboradores</p>
+        </div>
+        <div className={`border rounded-xl p-3 text-center ${asosVencidos > 0 ? "bg-red-50 border-red-200" : "bg-green-50 border-green-100"}`}>
+          <p className={`text-2xl font-bold ${asosVencidos > 0 ? "text-red-600" : "text-green-600"}`}>{asosVencidos}</p>
+          <p className="text-xs text-gray-500">ASOs Vencidos</p>
+        </div>
+        <div className={`border rounded-xl p-3 text-center ${inaptos > 0 ? "bg-red-50 border-red-200" : "bg-green-50 border-green-100"}`}>
+          <p className={`text-2xl font-bold ${inaptos > 0 ? "text-red-700" : "text-green-600"}`}>{inaptos}</p>
+          <p className="text-xs text-gray-500">ASOs Inaptos</p>
+        </div>
+        <div className={`border rounded-xl p-3 text-center ${certsVencidos > 0 ? "bg-orange-50 border-orange-200" : "bg-gray-50 border-gray-100"}`}>
+          <p className={`text-2xl font-bold ${certsVencidos > 0 ? "text-orange-600" : "text-gray-500"}`}>{certsVencidos}</p>
+          <p className="text-xs text-gray-500">Certs. Vencidos</p>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-5">
@@ -109,7 +92,7 @@ export default function C360Dashboard({ pgrs, pcmsos, ltcats, colaboradores, aso
                     <p className="text-sm font-medium">{a.descricao}</p>
                     <Badge className={`text-xs ${PRIORIDADE_STYLE[a.prioridade] || ""}`}>{a.prioridade}</Badge>
                   </div>
-                  <p className="text-xs mt-1 opacity-70">{a.tipo_alerta} {a.dias_para_vencer !== undefined ? `· ${a.dias_para_vencer}d` : ""}</p>
+                  <p className="text-xs mt-1 opacity-70">{a.tipo_alerta}{a.dias_para_vencer !== undefined ? ` · ${a.dias_para_vencer}d` : ""}</p>
                 </div>
               ))}
             </div>
@@ -119,21 +102,22 @@ export default function C360Dashboard({ pgrs, pcmsos, ltcats, colaboradores, aso
         {/* Próximos 90 dias */}
         <div className="bg-white border rounded-xl p-4">
           <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-blue-500" /> Próximos Vencimentos (90 dias)
+            <Clock className="w-4 h-4 text-blue-500" /> Próximos Vencimentos — 90 dias ({eventos90.length})
           </h3>
           {eventos90.length === 0 ? (
             <p className="text-sm text-gray-400 py-4 text-center">Nenhum vencimento nos próximos 90 dias</p>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {eventos90.slice(0, 15).map((ev, i) => {
-                const s = ev.dias <= 15 ? "text-red-600" : ev.dias <= 30 ? "text-orange-500" : ev.dias <= 60 ? "text-yellow-600" : "text-gray-600";
+                const s = ev.dias <= 15 ? "text-red-600 font-bold" : ev.dias <= 30 ? "text-orange-500 font-semibold" : ev.dias <= 60 ? "text-yellow-600" : "text-gray-500";
+                const tipoColor = ev.tipo === "ASO" ? "bg-blue-100 text-blue-600" : ev.tipo === "Documento" ? "bg-purple-100 text-purple-600" : "bg-green-100 text-green-600";
                 return (
-                  <div key={i} className="flex items-center justify-between border-b pb-2 last:border-0">
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{ev.desc}</p>
-                      <p className="text-xs text-gray-500">{ev.tipo} · {format(parseISO(ev.data), "dd/MM/yyyy")}</p>
+                  <div key={i} className="flex items-center justify-between border-b pb-2 last:border-0 gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Badge className={`text-xs shrink-0 ${tipoColor}`}>{ev.tipo}</Badge>
+                      <p className="text-sm text-gray-800 truncate">{ev.desc}</p>
                     </div>
-                    <span className={`text-sm font-bold ${s}`}>{ev.dias}d</span>
+                    <span className={`text-sm shrink-0 ${s}`}>{ev.dias}d</span>
                   </div>
                 );
               })}
