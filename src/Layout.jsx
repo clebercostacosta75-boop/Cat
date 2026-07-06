@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import {
   LayoutDashboard, Calendar, Upload, Users, BookOpen, BarChart3, FileText,
   Building2, UserCog, Mail, Bell, Award,
-  TrendingUp, PenLine, Settings, Target, MessageSquare, ShieldAlert, Shield, Download, User, ShieldCheck, Grid3X3, FileCheck, Heart
+  TrendingUp, PenLine, Target, Shield, Download, User
 } from "lucide-react";
 
 import NotificationBell from "./components/notifications/NotificationBell";
@@ -29,8 +29,6 @@ const ALL_ITEMS = [
   { title: "Empresas", url: createPageUrl("Companies"), icon: Building2, key: "Empresas" },
   { title: "Contratadas", url: createPageUrl("Contractors"), icon: Building2, key: "Contratadas" },
   { title: "Cursos", url: createPageUrl("Courses"), icon: BookOpen, key: "Cursos" },
-  // Dashboard Financeiro acessível via aba no Dashboard Central
-  // { title: "Dashboard Financeiro", url: "/DashboardFinanceiro", icon: TrendingUp, key: "Dashboard Financeiro" },
   { title: "Alunos Individuais (PF)", url: "/GestaoAlunosIndividuais", icon: Users, key: "Alunos Individuais (PF)" },
   { title: "Gestão de Contratos", url: "/GestaoContratos", icon: FileText, key: "Gestão de Contratos" },
   { title: "Certificações", url: "/Certificacoes", icon: Award, key: "Certificações" },
@@ -42,37 +40,15 @@ const ALL_ITEMS = [
   { title: "Usuários", url: createPageUrl("Users"), icon: UserCog, key: "Usuários" },
   { title: "Log de Auditoria", url: createPageUrl("AuditLog"), icon: FileText, key: "Log de Auditoria" },
   { title: "Auditoria Completa", url: "/AuditoriaCompleta", icon: FileText, key: "Auditoria Completa" },
-  { title: "Log de Acesso", url: "/AccessLog", icon: ShieldAlert, key: "Log de Acesso" },
+  { title: "Log de Acesso", url: "/AccessLog", icon: FileText, key: "Log de Acesso" },
   { title: "Dashboard Comercial", url: "/DashboardComercial", icon: Target, key: "Dashboard Comercial" },
   { title: "Dashboard Operacional", url: "/DashboardOperacionalV2", icon: BarChart3, key: "Dashboard Operacional" },
   { title: "Dashboard de Relatórios", url: "/Analytics", icon: BarChart3, key: "Dashboard de Relatórios" },
   { title: "📥 Download de Backups", url: "/BackupDownload", icon: Download, key: "BackupDownload" },
   { title: "Prontuário Digital", url: "/ProntuarioDigital", icon: User, key: "ProntuarioDigital" },
   { title: "Documentos de Alunos", url: "/GestaoDocumentosAluno", icon: Upload, key: "GestaoDocumentosAluno" },
-  { title: "Homologações", url: "/Homologacoes", icon: ShieldCheck, key: "Homologações" },
-  { title: "Matriz de Treinamentos", url: "/MatrizTreinamentos", icon: Grid3X3, key: "Matriz de Treinamentos" },
-  { title: "Dossiê de Homologação", url: "/DossieHomologacao", icon: FileCheck, key: "DossieHomologacao" },
-  { title: "Compliance 360", url: "/Compliance360", icon: ShieldCheck, key: "Compliance360" },
-  // Grupo SST
-  { title: "🏥 Dashboard SST", url: "/SSTDashboard", icon: Heart, key: "SSTDashboard" },
-  { title: "🏥 Central de Empresas", url: "/EmpresaMestre", icon: Building2, key: "EmpresaMestre" },
-  { title: "🏥 Leitura Inteligente PGR", url: "/LeituraInteligentePGR", icon: ShieldAlert, key: "LeituraInteligentePGR" },
-  { title: "🏥 PCMSO Detalhe", url: "/PCMSODetalhe", icon: FileText, key: "PCMSODetalhe" },
-  { title: "🏥 LTCAT Detalhe", url: "/LTCATDetalhe", icon: FileText, key: "LTCATDetalhe" },
-  { title: "🏥 Colaboradores SST", url: "/ColaboradoresSST", icon: Users, key: "ColaboradoresSST" },
-  { title: "🏥 Gestão de Exames", url: "/GestaoExames", icon: Grid3X3, key: "GestaoExames" },
-  { title: "🦺 Gestão de EPI", url: "/GestaoEPI", icon: ShieldCheck, key: "GestaoEPI" },
-  // Compliance 360 — acessível via rota direta, sem item de menu duplicado
-  // Treinamentos
-  { title: "📋 Matriz NR × Função", url: "/MatrizTreinamentos", icon: Grid3X3, key: "MatrizTreinamentos" },
-  { title: "📅 Agendamento e Cronograma", url: "/AgendamentoTreinamentos", icon: Calendar, key: "AgendamentoTreinamentos" },
-  // Colaboradores
-  { title: "📁 Prontuário Digital", url: "/ProntuarioDigital", icon: Users, key: "ProntuarioDigital" },
-  // Financeiro SST
-  { title: "📊 Orçamento de Conformidade", url: "/OrcamentoConformidade", icon: TrendingUp, key: "OrcamentoConformidade" },
-  { title: "🩺 PCMSO Inteligente", url: "/PCMSOLeitura", icon: Heart, key: "PCMSOLeitura" },
-  { title: "🔗 Conferência PGR × PCMSO", url: "/ConferenciaPGRPCMSO", icon: ShieldCheck, key: "ConferenciaPGRPCMSO" },
-  { title: "📋 Auditoria do Sistema", url: "/AuditoriaApp", icon: FileCheck, key: "AuditoriaApp" },
+  { title: "Homologações", url: "/Homologacoes", icon: FileText, key: "Homologações" },
+  { title: "Dossiê de Homologação", url: "/DossieHomologacao", icon: FileText, key: "DossieHomologacao" },
 ];
 
 const ROLE_LABEL = {

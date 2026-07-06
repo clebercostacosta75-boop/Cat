@@ -56,23 +56,6 @@ import GestaoDocumentosAluno from './pages/GestaoDocumentosAluno.jsx';
 import Homologacoes from './pages/Homologacoes.jsx';
 import MatrizTreinamentos from './pages/MatrizTreinamentos.jsx';
 import DossieHomologacao from './pages/DossieHomologacao.jsx';
-import Compliance360 from './pages/Compliance360.jsx';
-import SaudeOcupacional from './pages/SaudeOcupacional.jsx';
-import EmpresaMestre from './pages/empresa/EmpresaMestre.jsx';
-import LeituraInteligente from './pages/pgr/LeituraInteligente.jsx';
-import DashboardSST from './pages/sst/DashboardSST.jsx';
-import PCMSODetalhePage from './pages/sst/PCMSODetalhe.jsx';
-import LTCATDetalhePage from './pages/sst/LTCATDetalhe.jsx';
-import ColaboradoresSST from './pages/sst/ColaboradoresSST.jsx';
-import GestaoExames from './pages/sst/GestaoExames.jsx';
-import GestaoEPI from './pages/epi/GestaoEPI.jsx';
-import Compliance360Page from './pages/compliance/Compliance360.jsx';
-import MatrizTreinamentosPage from './pages/treinamentos/MatrizTreinamentos.jsx';
-import ProntuarioDigitalPage from './pages/colaboradores/ProntuarioDigital.jsx';
-import AgendamentoTreinamentosPage from './pages/agendamentos/AgendamentoTreinamentos.jsx';
-import OrcamentoConformidadePage from './pages/financeiro/OrcamentoConformidade.jsx';
-import PCMSOLeituraPage from './pages/pcmso/PCMSOLeitura.jsx';
-import ConferenciaPGRPCMSO from './pages/sst/ConferenciaPGRPCMSO.jsx';
 import AuditoriaApp from './pages/AuditoriaApp.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -178,23 +161,6 @@ const AuthenticatedApp = () => {
       <Route path="/Homologacoes" element={<LayoutWrapper currentPageName="Homologacoes"><ProtectedRoute pageKey="Homologações"><Homologacoes /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/MatrizTreinamentos" element={<LayoutWrapper currentPageName="MatrizTreinamentos"><ProtectedRoute pageKey="Matriz de Treinamentos"><MatrizTreinamentos /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DossieHomologacao" element={<LayoutWrapper currentPageName="DossieHomologacao"><ProtectedRoute pageKey="Dashboard"><DossieHomologacao /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/Compliance360" element={<LayoutWrapper currentPageName="Compliance360"><ProtectedRoute pageKey="Dashboard"><Compliance360 /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/SaudeOcupacional" element={<LayoutWrapper currentPageName="SaudeOcupacional"><ProtectedRoute pageKey="SaudeOcupacional"><SaudeOcupacional /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/EmpresaMestre" element={<LayoutWrapper currentPageName="EmpresaMestre"><ProtectedRoute pageKey="Dashboard"><EmpresaMestre /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/LeituraInteligentePGR" element={<LayoutWrapper currentPageName="LeituraInteligentePGR"><ProtectedRoute pageKey="Dashboard"><LeituraInteligente /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/SSTDashboard" element={<LayoutWrapper currentPageName="SSTDashboard"><ProtectedRoute pageKey="Dashboard"><DashboardSST /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/PCMSODetalhe" element={<LayoutWrapper currentPageName="PCMSODetalhe"><ProtectedRoute pageKey="Dashboard"><PCMSODetalhePage /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/LTCATDetalhe" element={<LayoutWrapper currentPageName="LTCATDetalhe"><ProtectedRoute pageKey="Dashboard"><LTCATDetalhePage /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/ColaboradoresSST" element={<LayoutWrapper currentPageName="ColaboradoresSST"><ProtectedRoute pageKey="Dashboard"><ColaboradoresSST /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/GestaoExames" element={<LayoutWrapper currentPageName="GestaoExames"><ProtectedRoute pageKey="Dashboard"><GestaoExames /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/GestaoEPI" element={<LayoutWrapper currentPageName="GestaoEPI"><ProtectedRoute pageKey="Dashboard"><GestaoEPI /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/Compliance360" element={<LayoutWrapper currentPageName="Compliance360"><ProtectedRoute pageKey="Dashboard"><Compliance360Page /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/MatrizTreinamentos" element={<LayoutWrapper currentPageName="MatrizTreinamentos"><ProtectedRoute pageKey="Dashboard"><MatrizTreinamentosPage /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/ProntuarioDigital" element={<LayoutWrapper currentPageName="ProntuarioDigital"><ProtectedRoute pageKey="Dashboard"><ProntuarioDigitalPage /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/AgendamentoTreinamentos" element={<LayoutWrapper currentPageName="AgendamentoTreinamentos"><ProtectedRoute pageKey="Dashboard"><AgendamentoTreinamentosPage /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/OrcamentoConformidade" element={<LayoutWrapper currentPageName="OrcamentoConformidade"><ProtectedRoute pageKey="Dashboard"><OrcamentoConformidadePage /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/PCMSOLeitura" element={<LayoutWrapper currentPageName="PCMSOLeitura"><ProtectedRoute pageKey="Dashboard"><PCMSOLeituraPage /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/ConferenciaPGRPCMSO" element={<LayoutWrapper currentPageName="ConferenciaPGRPCMSO"><ProtectedRoute pageKey="Dashboard"><ConferenciaPGRPCMSO /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AuditoriaApp" element={<LayoutWrapper currentPageName="AuditoriaApp"><ProtectedRoute pageKey="Dashboard"><AuditoriaApp /></ProtectedRoute></LayoutWrapper>} />
 
       {/* Rotas autenticadas com layout */}
