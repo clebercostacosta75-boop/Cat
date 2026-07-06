@@ -1,0 +1,204 @@
+{
+  "name": "LancamentoFinanceiro",
+  "type": "object",
+  "properties": {
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Receita",
+        "Despesa"
+      ],
+      "description": "Tipo do lan\u00e7amento"
+    },
+    "natureza": {
+      "type": "string",
+      "enum": [
+        "Previsto",
+        "Realizado",
+        "Cancelado"
+      ],
+      "default": "Previsto",
+      "description": "Natureza do lan\u00e7amento"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Aprovado",
+        "Pago",
+        "Recebido",
+        "Vencido",
+        "Cancelado",
+        "Parcial"
+      ],
+      "default": "Pendente"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do lan\u00e7amento"
+    },
+    "valor": {
+      "type": "number",
+      "description": "Valor total do lan\u00e7amento"
+    },
+    "valor_pago": {
+      "type": "number",
+      "default": 0,
+      "description": "Valor j\u00e1 pago/recebido"
+    },
+    "valor_desconto": {
+      "type": "number",
+      "default": 0
+    },
+    "valor_juros": {
+      "type": "number",
+      "default": 0
+    },
+    "valor_multa": {
+      "type": "number",
+      "default": 0
+    },
+    "data_competencia": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de compet\u00eancia"
+    },
+    "data_vencimento": {
+      "type": "string",
+      "format": "date"
+    },
+    "data_pagamento": {
+      "type": "string",
+      "format": "date"
+    },
+    "forma_pagamento": {
+      "type": "string",
+      "enum": [
+        "Dinheiro",
+        "PIX",
+        "TED",
+        "DOC",
+        "Boleto",
+        "Cart\u00e3o de Cr\u00e9dito",
+        "Cart\u00e3o de D\u00e9bito",
+        "Cheque",
+        "Transfer\u00eancia",
+        "Outro"
+      ]
+    },
+    "categoria_id": {
+      "type": "string",
+      "description": "ID da CategoriaFinanceira"
+    },
+    "categoria_nome": {
+      "type": "string"
+    },
+    "centro_custo_id": {
+      "type": "string",
+      "description": "ID do CentroCusto"
+    },
+    "centro_custo_nome": {
+      "type": "string"
+    },
+    "plano_conta_id": {
+      "type": "string",
+      "description": "ID do PlanoConta"
+    },
+    "plano_conta_codigo": {
+      "type": "string"
+    },
+    "conta_bancaria_id": {
+      "type": "string",
+      "description": "ID da ContaBancaria"
+    },
+    "conta_bancaria_nome": {
+      "type": "string"
+    },
+    "origem_modulo": {
+      "type": "string",
+      "enum": [
+        "Manual",
+        "Turma",
+        "Matr\u00edcula",
+        "Contrato",
+        "Proposta",
+        "Instrutor",
+        "CustoConformidade",
+        "OrcamentoConformidade",
+        "SolicitacaoTreinamento",
+        "Compra",
+        "Outro"
+      ],
+      "default": "Manual",
+      "description": "M\u00f3dulo que originou o lan\u00e7amento"
+    },
+    "origem_id": {
+      "type": "string",
+      "description": "ID do registro de origem"
+    },
+    "cliente_id": {
+      "type": "string"
+    },
+    "cliente_nome": {
+      "type": "string"
+    },
+    "fornecedor_id": {
+      "type": "string"
+    },
+    "fornecedor_nome": {
+      "type": "string"
+    },
+    "instrutor_id": {
+      "type": "string"
+    },
+    "instrutor_nome": {
+      "type": "string"
+    },
+    "curso_id": {
+      "type": "string"
+    },
+    "curso_nome": {
+      "type": "string"
+    },
+    "turma_id": {
+      "type": "string"
+    },
+    "numero_parcela": {
+      "type": "number",
+      "default": 1
+    },
+    "total_parcelas": {
+      "type": "number",
+      "default": 1
+    },
+    "parcela_pai_id": {
+      "type": "string",
+      "description": "ID do lan\u00e7amento pai (para parcelamentos)"
+    },
+    "numero_documento": {
+      "type": "string",
+      "description": "N\u00famero da NF, boleto, recibo, etc."
+    },
+    "anexo_url": {
+      "type": "string",
+      "description": "URL do comprovante/NF"
+    },
+    "observacoes": {
+      "type": "string"
+    },
+    "conciliado": {
+      "type": "boolean",
+      "default": false
+    },
+    "conciliado_em": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "tipo",
+    "descricao",
+    "valor",
+    "data_vencimento"
+  ]
+}

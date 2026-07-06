@@ -1,0 +1,34 @@
+{
+  "name": "CentroCusto",
+  "type": "object",
+  "properties": {
+    "codigo": {
+      "type": "string",
+      "description": "C\u00f3digo identificador (ex: CC-001)"
+    },
+    "nome": {
+      "type": "string"
+    },
+    "descricao": {
+      "type": "string"
+    },
+    "responsavel": {
+      "type": "string"
+    },
+    "orcamento_mensal": {
+      "type": "number",
+      "default": 0
+    },
+    "orcamento_anual": {
+      "type": "number",
+      "default": 0
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

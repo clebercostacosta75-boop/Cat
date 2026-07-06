@@ -1,0 +1,99 @@
+{
+  "name": "OrcamentoAnual",
+  "type": "object",
+  "properties": {
+    "ano": {
+      "type": "number",
+      "description": "Ano de refer\u00eancia"
+    },
+    "centro_custo_id": {
+      "type": "string"
+    },
+    "centro_custo_nome": {
+      "type": "string"
+    },
+    "categoria_id": {
+      "type": "string"
+    },
+    "categoria_nome": {
+      "type": "string"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Receita",
+        "Despesa"
+      ]
+    },
+    "valor_jan": {
+      "type": "number",
+      "default": 0
+    },
+    "valor_fev": {
+      "type": "number",
+      "default": 0
+    },
+    "valor_mar": {
+      "type": "number",
+      "default": 0
+    },
+    "valor_abr": {
+      "type": "number",
+      "default": 0
+    },
+    "valor_mai": {
+      "type": "number",
+      "default": 0
+    },
+    "valor_jun": {
+      "type": "number",
+      "default": 0
+    },
+    "valor_jul": {
+      "type": "number",
+      "default": 0
+    },
+    "valor_ago": {
+      "type": "number",
+      "default": 0
+    },
+    "valor_set": {
+      "type": "number",
+      "default": 0
+    },
+    "valor_out": {
+      "type": "number",
+      "default": 0
+    },
+    "valor_nov": {
+      "type": "number",
+      "default": 0
+    },
+    "valor_dez": {
+      "type": "number",
+      "default": 0
+    },
+    "valor_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Soma total do ano"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Rascunho",
+        "Aprovado",
+        "Em Execu\u00e7\u00e3o",
+        "Encerrado"
+      ],
+      "default": "Rascunho"
+    },
+    "observacoes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "ano",
+    "tipo"
+  ]
+}

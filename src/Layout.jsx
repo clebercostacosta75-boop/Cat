@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import {
   LayoutDashboard, Calendar, Upload, Users, BookOpen, BarChart3, FileText,
   Building2, UserCog, Mail, Bell, Award,
-  TrendingUp, PenLine, Target, Shield, Download, User
+  TrendingUp, PenLine, Target, Shield, Download, User, DollarSign
 } from "lucide-react";
 
 import NotificationBell from "./components/notifications/NotificationBell";
@@ -41,6 +41,7 @@ const ALL_ITEMS = [
   { title: "Log de Auditoria", url: createPageUrl("AuditLog"), icon: FileText, key: "Log de Auditoria" },
   { title: "Auditoria Completa", url: "/AuditoriaCompleta", icon: FileText, key: "Auditoria Completa" },
   { title: "Log de Acesso", url: "/AccessLog", icon: FileText, key: "Log de Acesso" },
+  { title: "💰 Financeiro", url: "/Financeiro", icon: DollarSign, key: "Financeiro" },
   { title: "Dashboard Comercial", url: "/DashboardComercial", icon: Target, key: "Dashboard Comercial" },
   { title: "Dashboard Operacional", url: "/DashboardOperacionalV2", icon: BarChart3, key: "Dashboard Operacional" },
   { title: "Dashboard de Relatórios", url: "/Analytics", icon: BarChart3, key: "Dashboard de Relatórios" },

@@ -1,0 +1,46 @@
+{
+  "name": "PlanoConta",
+  "type": "object",
+  "properties": {
+    "codigo": {
+      "type": "string",
+      "description": "C\u00f3digo cont\u00e1bil (ex: 1.1.01)"
+    },
+    "nome": {
+      "type": "string"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Receita",
+        "Custo",
+        "Despesa",
+        "Ativo",
+        "Passivo",
+        "Patrim\u00f4nio"
+      ]
+    },
+    "nivel": {
+      "type": "number",
+      "description": "N\u00edvel hier\u00e1rquico (1=grupo, 2=subgrupo, 3=conta)"
+    },
+    "conta_pai_id": {
+      "type": "string",
+      "description": "ID da conta pai para hierarquia"
+    },
+    "aceita_lancamentos": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se aceita lan\u00e7amentos diretos (apenas contas anal\u00edticas)"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "codigo",
+    "nome",
+    "tipo"
+  ]
+}
