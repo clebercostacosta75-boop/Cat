@@ -26,7 +26,6 @@ import CertificateAuditPanel from './pages/CertificateAuditPanel';
 import Certificacoes from './pages/Certificacoes';
 import CompanyPortal from './pages/CompanyPortal';
 import DashboardOperacional from './pages/DashboardOperacional';
-import DashboardOperacionalV2 from './pages/DashboardOperacional';
 import DashboardFinanceiro from './pages/DashboardFinanceiro';
 import DashboardCertificacao from './pages/DashboardCertificacao';
 import DashboardMaster from './pages/DashboardMaster';
@@ -35,8 +34,6 @@ import DashboardCentral from './pages/DashboardCentral';
 import AcessoNegado from './pages/AcessoNegado';
 import ProposalEntry from './pages/ProposalEntry';
 import DashboardComercial from './pages/DashboardComercial.jsx';
-import GestaoLeads from './pages/GestaoLeads.jsx';
-import BaseConhecimento from './pages/BaseConhecimento.jsx';
 import GestaoBMM from './pages/GestaoBMM.jsx';
 import GestaoAlunosIndividuais from './pages/GestaoAlunosIndividuais.jsx';
 import AutoCadastroAluno from './pages/AutoCadastroAluno.jsx';
@@ -56,7 +53,6 @@ import GestaoDocumentosAluno from './pages/GestaoDocumentosAluno.jsx';
 import Homologacoes from './pages/Homologacoes.jsx';
 import MatrizTreinamentos from './pages/MatrizTreinamentos.jsx';
 import DossieHomologacao from './pages/DossieHomologacao.jsx';
-import AuditoriaApp from './pages/AuditoriaApp.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -80,7 +76,6 @@ const AuthenticatedApp = () => {
         const user = await base44.auth.me();
         if (!user) { setConsentChecked(true); return; }
 
-        // gestor_master e admin nunca precisam de gates
         if (['admin', 'gestor_master', 'Administrador Master'].includes(user.role)) {
           setConsentChecked(true);
           return;
@@ -88,7 +83,6 @@ const AuthenticatedApp = () => {
 
         const profiles = await base44.entities.UserProfile.filter({ user_email: user.email });
         const profile = profiles[0];
-        // Só pede consentimento se: perfil existe, nunca aceitou, e ainda não trocou a senha
         if (profile && !profile.consent_accepted_at && !profile.password_changed) {
           setNeedsConsent(true);
         } else if (profile && profile.status === "pending_password_change" && !profile.password_changed) {
@@ -101,7 +95,6 @@ const AuthenticatedApp = () => {
     else setConsentChecked(true);
   }, [isAuthenticated]);
 
-  // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth || !consentChecked) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
@@ -110,28 +103,23 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Handle authentication errors
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
       navigateToLogin();
       return null;
     }
   }
 
-  // Gate de consentimento LGPD
   if (needsConsent) {
     return <ConsentForm onConsented={() => setNeedsConsent(false)} />;
   }
 
-  // Gate de troca de senha obrigatória no primeiro acesso
   if (needsPasswordChange) {
     return <TrocarSenha onPasswordChanged={() => setNeedsPasswordChange(false)} />;
   }
 
-  // Render the main app
   return (
     <Routes>
       {/* Rotas públicas (sem layout) */}
@@ -143,11 +131,16 @@ const AuthenticatedApp = () => {
       <Route path="/CompanyPortal" element={<CompanyPortal />} />
       <Route path="/AcessoNegado" element={<AcessoNegado />} />
       <Route path="/AutoCadastroAluno" element={<AutoCadastroAluno />} />
-      <Route path="/GestaoContratos" element={<LayoutWrapper currentPageName="GestaoContratos"><ProtectedRoute pageKey="Gestão de Contratos"><GestaoContratos /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
+      <Route path="/PortalInstrutor" element={<PortalInstrutor />} />
+
+      {/* Rotas autenticadas com layout */}
+      <Route path="/" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/Dashboard" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/DashboardCentral" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/GestaoContratos" element={<LayoutWrapper currentPageName="GestaoContratos"><ProtectedRoute pageKey="Gestão de Contratos"><GestaoContratos /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardComercial" element={<LayoutWrapper currentPageName="DashboardComercial"><ProtectedRoute pageKey="Dashboard Comercial"><DashboardComercial /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/GestaoLeads" element={<LayoutWrapper currentPageName="DashboardComercial"><ProtectedRoute pageKey="Dashboard Comercial"><DashboardComercial /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/BaseConhecimento" element={<LayoutWrapper currentPageName="DashboardComercial"><ProtectedRoute pageKey="Dashboard Comercial"><DashboardComercial /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/Analytics" element={<LayoutWrapper currentPageName="Analytics"><ProtectedRoute pageKey="Dashboard de Relatórios"><Analytics /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AccessLog" element={<LayoutWrapper currentPageName="AccessLog"><ProtectedRoute pageKey="Log de Acesso"><AccessLog /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AuditoriaCompleta" element={<LayoutWrapper currentPageName="AuditoriaCompleta"><ProtectedRoute pageKey="Auditoria Completa"><AuditoriaCompleta /></ProtectedRoute></LayoutWrapper>} />
@@ -155,18 +148,11 @@ const AuthenticatedApp = () => {
       <Route path="/GestaoBMM" element={<LayoutWrapper currentPageName="GestaoBMM"><ProtectedRoute pageKey="Gestão de BMM"><GestaoBMM /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/GestaoAlunosIndividuais" element={<LayoutWrapper currentPageName="GestaoAlunosIndividuais"><ProtectedRoute pageKey="Alunos Individuais (PF)"><GestaoAlunosIndividuais /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/BackupDownload" element={<LayoutWrapper currentPageName="BackupDownload"><ProtectedRoute pageKey="Dashboard"><BackupDownload /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/PortalInstrutor" element={<PortalInstrutor />} />
       <Route path="/ProntuarioDigital" element={<LayoutWrapper currentPageName="ProntuarioDigital"><ProtectedRoute pageKey="Dashboard"><ProntuarioDigital /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/GestaoDocumentosAluno" element={<LayoutWrapper currentPageName="GestaoDocumentosAluno"><ProtectedRoute pageKey="Dashboard"><GestaoDocumentosAluno /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/Homologacoes" element={<LayoutWrapper currentPageName="Homologacoes"><ProtectedRoute pageKey="Homologações"><Homologacoes /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/MatrizTreinamentos" element={<LayoutWrapper currentPageName="MatrizTreinamentos"><ProtectedRoute pageKey="Matriz de Treinamentos"><MatrizTreinamentos /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DossieHomologacao" element={<LayoutWrapper currentPageName="DossieHomologacao"><ProtectedRoute pageKey="Dashboard"><DossieHomologacao /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/AuditoriaApp" element={<LayoutWrapper currentPageName="AuditoriaApp"><ProtectedRoute pageKey="Dashboard"><AuditoriaApp /></ProtectedRoute></LayoutWrapper>} />
-
-      {/* Rotas autenticadas com layout */}
-      <Route path="/" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/Dashboard" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/DashboardCentral" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/CertificateEmissao" element={<LayoutWrapper currentPageName="CertificateEmissao"><ProtectedRoute pageKey="Certificações"><CertificateEmissao /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DigitalSignatures" element={<LayoutWrapper currentPageName="DigitalSignatures"><ProtectedRoute pageKey="Assinaturas Digitais"><DigitalSignatures /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AlertasConfig" element={<LayoutWrapper currentPageName="AlertasConfig"><AlertasConfig /></LayoutWrapper>} />
@@ -176,12 +162,11 @@ const AuthenticatedApp = () => {
       <Route path="/Certificacoes" element={<LayoutWrapper currentPageName="Certificacoes"><ProtectedRoute pageKey="Certificações"><Certificacoes /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardMaster" element={<LayoutWrapper currentPageName="DashboardMaster"><ProtectedRoute pageKey="Dashboard"><DashboardMaster /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardOperacional" element={<LayoutWrapper currentPageName="DashboardOperacional"><ProtectedRoute pageKey="Dashboard"><DashboardOperacional /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/DashboardOperacionalV2" element={<LayoutWrapper currentPageName="DashboardOperacionalV2"><ProtectedRoute pageKey="Dashboard Operacional"><DashboardOperacionalV2 /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/DashboardOperacionalV2" element={<LayoutWrapper currentPageName="DashboardOperacionalV2"><ProtectedRoute pageKey="Dashboard Operacional"><DashboardOperacional /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardFinanceiro" element={<LayoutWrapper currentPageName="DashboardFinanceiro"><ProtectedRoute pageKey="Dashboard Financeiro"><DashboardFinanceiro /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardCertificacao" element={<LayoutWrapper currentPageName="DashboardCertificacao"><ProtectedRoute pageKey="Dashboard"><DashboardCertificacao /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardInstrutor" element={<LayoutWrapper currentPageName="DashboardInstrutor"><ProtectedRoute pageKey="Dashboard"><DashboardInstrutor /></ProtectedRoute></LayoutWrapper>} />
       {Object.entries(Pages).map(([path, Page]) => {
-        // Mapeamento de path para chave de permissão do menu
         const PAGE_PERMISSION_KEYS = {
           AuditLog: "Log de Auditoria",
           Schedule: "Cronograma",
@@ -217,7 +202,6 @@ const AuthenticatedApp = () => {
 
 
 function App() {
-
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
