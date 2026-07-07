@@ -148,26 +148,26 @@ const AuthenticatedApp = () => {
       <Route path="/ProposalEntry" element={<LayoutWrapper currentPageName="ProposalEntry"><ProtectedRoute pageKey="Entrada de Propostas"><ProposalEntry /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/GestaoBMM" element={<LayoutWrapper currentPageName="GestaoBMM"><ProtectedRoute pageKey="Gestão de BMM"><GestaoBMM /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/GestaoAlunosIndividuais" element={<LayoutWrapper currentPageName="GestaoAlunosIndividuais"><ProtectedRoute pageKey="Alunos Individuais (PF)"><GestaoAlunosIndividuais /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/BackupDownload" element={<LayoutWrapper currentPageName="BackupDownload"><ProtectedRoute pageKey="Dashboard"><BackupDownload /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/ProntuarioDigital" element={<LayoutWrapper currentPageName="ProntuarioDigital"><ProtectedRoute pageKey="Dashboard"><ProntuarioDigital /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/GestaoDocumentosAluno" element={<LayoutWrapper currentPageName="GestaoDocumentosAluno"><ProtectedRoute pageKey="Dashboard"><GestaoDocumentosAluno /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/BackupDownload" element={<LayoutWrapper currentPageName="BackupDownload"><ProtectedRoute pageKey="BackupDownload"><BackupDownload /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/ProntuarioDigital" element={<LayoutWrapper currentPageName="ProntuarioDigital"><ProtectedRoute pageKey="ProntuarioDigital"><ProntuarioDigital /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/GestaoDocumentosAluno" element={<LayoutWrapper currentPageName="GestaoDocumentosAluno"><ProtectedRoute pageKey="GestaoDocumentosAluno"><GestaoDocumentosAluno /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/Homologacoes" element={<LayoutWrapper currentPageName="Homologacoes"><ProtectedRoute pageKey="Homologações"><Homologacoes /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/MatrizTreinamentos" element={<LayoutWrapper currentPageName="MatrizTreinamentos"><ProtectedRoute pageKey="Matriz de Treinamentos"><MatrizTreinamentos /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/Financeiro" element={<LayoutWrapper currentPageName="Financeiro"><ProtectedRoute pageKey="Dashboard"><FinanceiroHub /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/DossieHomologacao" element={<LayoutWrapper currentPageName="DossieHomologacao"><ProtectedRoute pageKey="Dashboard"><DossieHomologacao /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/Financeiro" element={<LayoutWrapper currentPageName="Financeiro"><ProtectedRoute pageKey="Financeiro"><FinanceiroHub /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/DossieHomologacao" element={<LayoutWrapper currentPageName="DossieHomologacao"><ProtectedRoute pageKey="DossieHomologacao"><DossieHomologacao /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/CertificateEmissao" element={<LayoutWrapper currentPageName="CertificateEmissao"><ProtectedRoute pageKey="Certificações"><CertificateEmissao /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DigitalSignatures" element={<LayoutWrapper currentPageName="DigitalSignatures"><ProtectedRoute pageKey="Assinaturas Digitais"><DigitalSignatures /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/AlertasConfig" element={<LayoutWrapper currentPageName="AlertasConfig"><AlertasConfig /></LayoutWrapper>} />
+      <Route path="/AlertasConfig" element={<LayoutWrapper currentPageName="AlertasConfig"><ProtectedRoute pageKey="AlertasConfig"><AlertasConfig /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AgendaTreinamentos" element={<LayoutWrapper currentPageName="AgendaTreinamentos"><ProtectedRoute pageKey="Agenda de Treinamentos"><AgendaTreinamentos /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AdminDashboard" element={<LayoutWrapper currentPageName="AdminDashboard"><ProtectedRoute pageKey="Dashboard Admin"><AdminDashboard /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/CertificateAuditPanel" element={<LayoutWrapper currentPageName="CertificateAuditPanel"><ProtectedRoute pageKey="Auditoria de Certificados"><CertificateAuditPanel /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/Certificacoes" element={<LayoutWrapper currentPageName="Certificacoes"><ProtectedRoute pageKey="Certificações"><Certificacoes /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/DashboardMaster" element={<LayoutWrapper currentPageName="DashboardMaster"><ProtectedRoute pageKey="Dashboard"><DashboardMaster /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/DashboardOperacional" element={<LayoutWrapper currentPageName="DashboardOperacional"><ProtectedRoute pageKey="Dashboard"><DashboardOperacional /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/DashboardMaster" element={<LayoutWrapper currentPageName="DashboardMaster"><ProtectedRoute pageKey="DashboardMaster"><DashboardMaster /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/DashboardOperacional" element={<LayoutWrapper currentPageName="DashboardOperacional"><ProtectedRoute pageKey="Dashboard Operacional"><DashboardOperacional /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardOperacionalV2" element={<LayoutWrapper currentPageName="DashboardOperacionalV2"><ProtectedRoute pageKey="Dashboard Operacional"><DashboardOperacional /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardFinanceiro" element={<LayoutWrapper currentPageName="DashboardFinanceiro"><ProtectedRoute pageKey="Dashboard Financeiro"><DashboardFinanceiro /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/DashboardCertificacao" element={<LayoutWrapper currentPageName="DashboardCertificacao"><ProtectedRoute pageKey="Dashboard"><DashboardCertificacao /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/DashboardInstrutor" element={<LayoutWrapper currentPageName="DashboardInstrutor"><ProtectedRoute pageKey="Dashboard"><DashboardInstrutor /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/DashboardCertificacao" element={<LayoutWrapper currentPageName="DashboardCertificacao"><ProtectedRoute pageKey="DashboardCertificacao"><DashboardCertificacao /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/DashboardInstrutor" element={<LayoutWrapper currentPageName="DashboardInstrutor"><ProtectedRoute pageKey="DashboardInstrutor"><DashboardInstrutor /></ProtectedRoute></LayoutWrapper>} />
       {Object.entries(Pages).map(([path, Page]) => {
         const PAGE_PERMISSION_KEYS = {
           AuditLog: "Log de Auditoria",
