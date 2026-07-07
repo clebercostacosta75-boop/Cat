@@ -73,6 +73,8 @@ const ADMIN_MODULES = [
   "Auditoria Completa",
   "Log de Acesso",
   "Dashboard Admin",
+  "BackupDownload",
+  "AlertasConfig",
 ];
 
 // Módulos do perfil Cliente
