@@ -39,6 +39,16 @@ export const ALL_MODULES = [
   "Log de Acesso",
   "Homologações",
   "Matriz de Treinamentos",
+  // Adicionados em correção de RBAC (rotas que checavam "Dashboard" indevidamente)
+  "Financeiro",
+  "BackupDownload",
+  "ProntuarioDigital",
+  "GestaoDocumentosAluno",
+  "DossieHomologacao",
+  "DashboardMaster",
+  "DashboardCertificacao",
+  "DashboardInstrutor",
+  "AlertasConfig",
 ];
 
 // Mapa de chaves de rota → chave de módulo (para ProtectedRoute)
