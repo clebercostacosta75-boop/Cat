@@ -1,6 +1,6 @@
 /**
  * Prontuário Digital do Colaborador — página interna.
- * Visão integrada: dados pessoais, função, treinamentos, certificados, ASO, exames, riscos.
+ * Visão integrada: dados pessoais, função, matriz de treinamentos, auditorias e vencimento de certificados.
  */
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
@@ -165,7 +165,7 @@ export default function ProntuarioDigital() {
           <User className="w-6 h-6 text-emerald-600" />
           Prontuário Digital do Colaborador
         </h1>
-        <p className="text-gray-500 text-sm mt-1">Visão integrada de dados, treinamentos e certificados</p>
+        <p className="text-gray-500 text-sm mt-1">Visão integrada de dados, matriz de treinamentos, auditorias e vencimento de certificados</p>
       </div>
 
       <Card>
