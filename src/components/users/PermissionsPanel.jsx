@@ -10,12 +10,13 @@ import { ALL_MODULES } from "@/lib/PermissionsContext";
 
 const MODULE_GROUPS = [
   { label: "Geral", color: "bg-gray-100 text-gray-700", items: ["Dashboard", "Cronograma", "Agenda de Treinamentos", "Chamada Presencial"] },
-  { label: "Operacional", color: "bg-blue-100 text-blue-700", items: ["Entrada de Propostas", "Gestão de BMM", "Instrutores", "Empresas", "Contratadas", "Cursos", "Alunos Individuais (PF)", "Gestão de Contratos", "Dashboard Operacional", "Dashboard Financeiro"] },
+  { label: "Operacional", color: "bg-blue-100 text-blue-700", items: ["Entrada de Propostas", "Gestão de BMM", "Instrutores", "Empresas", "Contratadas", "Cursos", "Alunos Individuais (PF)", "Gestão de Contratos", "Dashboard Operacional", "Dashboard Financeiro", "Financeiro", "ProntuarioDigital", "GestaoDocumentosAluno"] },
   { label: "Certificações", color: "bg-yellow-100 text-yellow-700", items: ["Certificações", "Alertas de Vencimento", "Designer de Certificados", "Assinaturas Digitais", "Auditoria de Certificados"] },
   { label: "Comercial", color: "bg-purple-100 text-purple-700", items: ["Dashboard Comercial"] },
   { label: "Comunicação", color: "bg-pink-100 text-pink-700", items: ["Central de Comunicação"] },
-  { label: "Relatórios", color: "bg-indigo-100 text-indigo-700", items: ["Dashboard de Relatórios", "Dashboard Admin"] },
-  { label: "Administração", color: "bg-red-100 text-red-700", items: ["Usuários", "Log de Auditoria", "Auditoria Completa", "Log de Acesso"] },
+  { label: "Relatórios", color: "bg-indigo-100 text-indigo-700", items: ["Dashboard de Relatórios", "Dashboard Admin", "DashboardMaster", "DashboardCertificacao", "DashboardInstrutor"] },
+  { label: "Homologação", color: "bg-teal-100 text-teal-700", items: ["Homologações", "DossieHomologacao", "Matriz de Treinamentos"] },
+  { label: "Administração", color: "bg-red-100 text-red-700", items: ["Usuários", "Log de Auditoria", "Auditoria Completa", "Log de Acesso", "BackupDownload", "AlertasConfig"] },
 ];
 
 function CustomPermissionEditor({ profile, onSaved }) {
