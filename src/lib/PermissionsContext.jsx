@@ -49,6 +49,27 @@ export const ALL_MODULES = [
   "DashboardCertificacao",
   "DashboardInstrutor",
   "AlertasConfig",
+  // Módulo SST — Segurança e Saúde do Trabalho (conectado ao roteamento)
+  "Assistente de Cadastros",
+  "Base de Conhecimento",
+  "Compliance 360°",
+  "Contas Sociais",
+  "Log de Notificações",
+  "Saúde Ocupacional",
+  "Auditoria do Sistema",
+  "Dashboard SST",
+  "Empresas Mestre (SST)",
+  "Colaboradores SST",
+  "PGR — Leitura Inteligente",
+  "PCMSO — Leitura Inteligente",
+  "Conferência PGR × PCMSO",
+  "LTCAT",
+  "Gestão de Exames",
+  "Matriz de Exames por Função",
+  "PCMSO — Detalhe Completo",
+  "Gestão de EPI",
+  "Orçamento de Conformidade",
+  "Agendamento de Treinamentos SST",
 ];
 
 // Mapa de chaves de rota → chave de módulo (para ProtectedRoute)
