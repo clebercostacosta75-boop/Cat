@@ -270,6 +270,41 @@ export default function ProposalEntry() {
         contractId = newContract.id;
       }
 
+      // Garantir contractNumber populado (caso contrato já vinculado)
+      if (!contractNumber && contractId) {
+        try {
+          const cData = await base44.entities.Contract.filter({ id: contractId });
+          if (cData.length > 0) contractNumber = cData[0].contract_number;
+        } catch {}
+      }
+
+      // ─── Gerar lançamento financeiro a receber do contrato (evita duplicidade) ───
+      const existingLanc = await base44.entities.LancamentoFinanceiro.filter({
+        origem_modulo: 'Contrato', origem_id: contractId
+      });
+      if (existingLanc.length === 0) {
+        const contractTotalValue = parseFloat(editData.total_value) || 0;
+        const firstStartDate = editData.courses?.[0]?.start_date || new Date().toISOString().split('T')[0];
+        const courseNames = (editData.courses || []).map(c => c.course_name).join('; ');
+        await base44.entities.LancamentoFinanceiro.create({
+          tipo: 'Receita',
+          natureza: 'Previsto',
+          status: 'Pendente',
+          descricao: `Contrato ${contractNumber || contractId.substring(0, 8)} — ${editData.company_name || 'Empresa'}${courseNames ? ` — ${courseNames}` : ''}`,
+          valor: contractTotalValue,
+          data_vencimento: firstStartDate,
+          origem_modulo: 'Contrato',
+          origem_id: contractId,
+          cliente_id: resolvedCompanyId || editData.company_id || '',
+          cliente_nome: editData.company_name || '',
+          curso_nome: courseNames,
+          turma_id: classIds[0] || '',
+          numero_parcela: 1,
+          total_parcelas: 1,
+          observacoes: `Lançamento gerado automaticamente da Proposta ${selectedProposal.file_name}`,
+        });
+      }
+
       await base44.entities.Proposal.update(selectedProposal.id, {
         ...editData,
         company_id: resolvedCompanyId || editData.company_id || null,

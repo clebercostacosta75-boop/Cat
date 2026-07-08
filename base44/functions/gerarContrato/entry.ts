@@ -425,6 +425,44 @@ Deno.serve(async (req) => {
 
     const contract = await base44.asServiceRole.entities.Contract.create(contractData);
 
+    // ─── Gerar lançamentos financeiros a receber (evita duplicidade) ───
+    const existingLancs = await base44.asServiceRole.entities.LancamentoFinanceiro.filter({
+      origem_modulo: 'Contrato', origem_id: contract.id
+    });
+    if (existingLancs.length === 0) {
+      const numParc = numParcelas || 1;
+      const valorParc = numParc > 1 ? valorParcela : courseValue;
+      const baseDate = enrollment?.data_vencimento_pagamento || new Date().toISOString().split('T')[0];
+      const lancamentos = [];
+      for (let i = 1; i <= numParc; i++) {
+        let venc = baseDate;
+        if (numParc > 1 && i > 1) {
+          const d = new Date(baseDate + 'T00:00:00');
+          d.setMonth(d.getMonth() + (i - 1));
+          venc = d.toISOString().split('T')[0];
+        }
+        lancamentos.push({
+          tipo: 'Receita',
+          natureza: 'Previsto',
+          status: 'Pendente',
+          descricao: `Contrato ${contractNumber}${numParc > 1 ? ` — Parcela ${i}/${numParc}` : ''} — ${student.full_name} — ${enrollment?.course_name || ''}`,
+          valor: valorParc,
+          data_vencimento: venc,
+          origem_modulo: 'Contrato',
+          origem_id: contract.id,
+          cliente_id: student.id,
+          cliente_nome: student.full_name,
+          curso_nome: enrollment?.course_name || '',
+          numero_parcela: i,
+          total_parcelas: numParc,
+          observacoes: 'Lançamento gerado automaticamente pelo gerarContrato',
+        });
+      }
+      if (lancamentos.length > 0) {
+        await base44.asServiceRole.entities.LancamentoFinanceiro.bulkCreate(lancamentos);
+      }
+    }
+
     // Timeline
     await base44.asServiceRole.entities.StudentTimeline.create({
       student_id: student.id,
