@@ -437,7 +437,9 @@ export default function SchedulePage() {
         item.local?.toLowerCase().includes(q);
       const matchStatus = filterStatus === "todos" || item.status === filterStatus;
       // Filtro de mês: ignorado quando um status específico está selecionado
+      // Turmas sem data (status "Aguardando", vindas de propostas aprovadas) sempre aparecem
       const matchMonth = !filterMonth || filterStatus !== "todos" ||
+        !item.data_inicio ||
         (item.data_inicio && item.data_inicio.substring(0, 7) === filterMonth);
       return matchSearch && matchStatus && matchMonth;
     });
@@ -449,6 +451,7 @@ export default function SchedulePage() {
     const datasTermino = allItems.map(i => i.data_fim || i.data_inicio).filter(Boolean).sort();
     return {
       total: allItems.length,
+      aguardando: allItems.filter((c) => c.status === "Aguardando").length,
       agendado: allItems.filter((c) => c.status === "Agendado").length,
       emAndamento: allItems.filter((c) => c.status === "Em Andamento").length,
       concluido: allItems.filter((c) => c.status === "Concluído").length,
@@ -604,8 +607,9 @@ export default function SchedulePage() {
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
+          { label: "Aguardando", value: stats.aguardando, icon: CalendarPlus, color: "text-orange-600 bg-orange-50" },
           { label: "Agendadas", value: stats.agendado, icon: Calendar, color: "text-blue-600 bg-blue-50" },
           { label: "Em Andamento", value: stats.emAndamento, icon: Clock, color: "text-yellow-600 bg-yellow-50" },
           { label: "Concluídas", value: stats.concluido, icon: BookOpen, color: "text-gray-600 bg-gray-50" },
