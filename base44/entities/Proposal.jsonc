@@ -93,6 +93,10 @@
         "type": "string"
       },
       "description": "IDs das turmas criadas a partir desta proposta"
+    },
+    "contract_id": {
+      "type": "string",
+      "description": "ID do contrato vinculado a esta proposta (preenchido quando a proposta \u00e9 aprovada)"
     }
   },
   "required": [

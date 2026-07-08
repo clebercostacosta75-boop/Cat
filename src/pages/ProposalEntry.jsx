@@ -224,16 +224,64 @@ export default function ProposalEntry() {
         }
       }
 
+      // ─── Gerar/vincular contrato da proposta (evita duplicidade) ───
+      let contractId = selectedProposal.contract_id || null;
+      let contractNumber = null;
+
+      if (!contractId) {
+        const existingContracts = await base44.entities.Contract.filter({ proposal_id: selectedProposal.id });
+        if (existingContracts.length > 0) {
+          contractId = existingContracts[0].id;
+          contractNumber = existingContracts[0].contract_number;
+        }
+      }
+
+      if (!contractId) {
+        const allContracts = await base44.entities.Contract.list('-created_date', 1);
+        const lastNum = allContracts.length > 0
+          ? parseInt((allContracts[0].contract_number || 'CAT-2026-0000').split('-')[2] || '0') + 1
+          : 1;
+        const yr = new Date().getFullYear();
+        contractNumber = `CAT-${yr}-${String(lastNum).padStart(4, '0')}`;
+        const authCode = `CAT-AUTH-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+        const coursesSummary = (editData.courses || []).map(c =>
+          `${c.course_name} (${c.workload_hours || 0}h, ${c.students_count || 0} alunos)`
+        ).join('; ');
+        const totalHours = (editData.courses || []).reduce((s, c) => s + (parseFloat(c.workload_hours) || 0), 0);
+
+        let approverEmail = '-';
+        try { const me = await base44.auth.me(); if (me?.email) approverEmail = me.email; } catch {}
+
+        const newContract = await base44.entities.Contract.create({
+          contract_number: contractNumber,
+          auth_code: authCode,
+          proposal_id: selectedProposal.id,
+          student_id: resolvedCompanyId || editData.company_id || '',
+          student_name: editData.company_name || 'Empresa',
+          student_cpf: editData.company_cnpj || '',
+          enrollment_id: '',
+          course_name: coursesSummary || (editData.courses[0]?.course_name || ''),
+          course_value: parseFloat(editData.total_value) || 0,
+          course_duration: totalHours > 0 ? `${totalHours}h` : '',
+          status: 'Gerado_Automaticamente',
+          notes: `Contrato gerado da Proposta ${selectedProposal.file_name}.\nTurmas: ${classIds.join(', ')}\nResponsável comercial: ${approverEmail}`,
+        });
+        contractId = newContract.id;
+      }
+
       await base44.entities.Proposal.update(selectedProposal.id, {
         ...editData,
         company_id: resolvedCompanyId || editData.company_id || null,
         status: 'Aprovada',
         class_schedule_ids: classIds,
+        contract_id: contractId,
       });
 
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
       queryClient.invalidateQueries({ queryKey: ['classSchedules'] });
-      toast.success(`✅ Proposta aprovada! ${classIds.length} turma(s) criada(s) no Cronograma. Complete datas e instrutor lá.`);
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      toast.success(`✅ Proposta aprovada! ${classIds.length} turma(s) criada(s) e contrato ${contractNumber} vinculado.`);
       setReviewOpen(false);
     } catch (err) {
       toast.error('Erro ao aprovar: ' + err.message);

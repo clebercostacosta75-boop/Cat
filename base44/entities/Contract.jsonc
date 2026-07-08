@@ -14,17 +14,21 @@
       "type": "string",
       "description": "Nome do modelo"
     },
+    "proposal_id": {
+      "type": "string",
+      "description": "ID da proposta que originou este contrato (quando gerado via proposta aprovada)"
+    },
     "student_id": {
       "type": "string",
-      "description": "ID do aluno"
+      "description": "ID do aluno (ou ID da empresa em contratos de proposta B2B)"
     },
     "student_name": {
       "type": "string",
-      "description": "Nome do aluno"
+      "description": "Nome do aluno (ou raz\u00e3o social da empresa em contratos de proposta B2B)"
     },
     "student_cpf": {
       "type": "string",
-      "description": "CPF do aluno"
+      "description": "CPF do aluno (ou CNPJ da empresa em contratos de proposta B2B)"
     },
     "student_email": {
       "type": "string",
