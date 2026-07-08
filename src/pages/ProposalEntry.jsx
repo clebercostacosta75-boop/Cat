@@ -300,6 +300,7 @@ export default function ProposalEntry() {
           valor: contractTotalValue,
           data_vencimento: firstStartDate,
           origem_modulo: 'Contrato',
+          origem_receita: 'Empresa',
           origem_id: contractId,
           cliente_id: resolvedCompanyId || editData.company_id || '',
           cliente_nome: editData.company_name || '',

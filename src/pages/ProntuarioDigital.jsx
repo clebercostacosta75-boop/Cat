@@ -75,6 +75,7 @@ export default function ProntuarioDigital() {
   const [student, setStudent] = useState(null);
   const [certs, setCerts] = useState([]);
   const [enrollments, setEnrollments] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -99,10 +100,12 @@ export default function ProntuarioDigital() {
       const st = students[0];
       setStudent(st);
 
-      const [allCerts, allEnrollments] = await Promise.all([
+      const [allCerts, allEnrollments, allDocs] = await Promise.all([
         base44.entities.Certificate.filter({ student_cpf: st.cpf }),
         base44.entities.StudentCourseEnrollment.filter({ student_cpf: st.cpf }),
+        base44.entities.StudentDocument.filter({ student_cpf: st.cpf }),
       ]);
+      setDocuments(allDocs);
 
       allCerts.sort((a, b) => {
         const da = getDaysLeft(a.valid_until) ?? 9999;
@@ -359,6 +362,44 @@ export default function ProntuarioDigital() {
                       e.status === "Aguardando Autorização" ? "bg-yellow-100 text-yellow-700" :
                       e.status === "Vencido" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"
                     }>{e.status}</Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Documentos do Aluno */}
+          {documents.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-indigo-500" /> Documentos ({documents.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {documents.map((doc) => (
+                  <div key={doc.id} className="flex items-center justify-between p-3 border-b last:border-0 hover:bg-gray-50">
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">{doc.document_type?.replace(/_/g, " ")}</p>
+                      <p className="text-xs text-gray-400">{doc.file_name || "arquivo"}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className={
+                        doc.status === "Aprovado" ? "bg-green-100 text-green-700" :
+                        doc.status === "Rejeitado" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"
+                      }>{doc.status?.replace(/_/g, " ")}</Badge>
+                      {doc.file_uri && (
+                        <Button
+                          size="sm" variant="ghost" className="h-7 w-7 p-0" title="Abrir documento"
+                          onClick={async () => {
+                            const res = await base44.integrations.Core.CreateFileSignedUrl({ file_uri: doc.file_uri });
+                            if (res?.signed_url) window.open(res.signed_url, "_blank");
+                          }}
+                        >
+                          <ExternalLink className="w-3.5 h-3.5 text-gray-500" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </CardContent>

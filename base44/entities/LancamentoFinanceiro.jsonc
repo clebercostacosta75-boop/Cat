@@ -132,6 +132,14 @@
       "default": "Manual",
       "description": "M\u00f3dulo que originou o lan\u00e7amento"
     },
+    "origem_receita": {
+      "type": "string",
+      "enum": [
+        "Empresa",
+        "Comunidade"
+      ],
+      "description": "Origem da receita: Empresa (B2B \u2014 contratos/propostas) ou Comunidade (aluno PF)"
+    },
     "origem_id": {
       "type": "string",
       "description": "ID do registro de origem"

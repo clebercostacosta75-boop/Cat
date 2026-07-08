@@ -41,6 +41,13 @@ export default function AttendanceCall() {
     initialData: [],
   });
 
+  const { data: enrollments = [] } = useQuery({
+    queryKey: ["enrollments-attendance", selectedClassId],
+    queryFn: () => base44.entities.StudentCourseEnrollment.filter({ class_schedule_id: selectedClassId }),
+    enabled: !!selectedClassId,
+    initialData: [],
+  });
+
   const { data: existingRecord } = useQuery({
     queryKey: ["daily-record", selectedClassId, selectedDate],
     queryFn: async () => {
@@ -65,9 +72,26 @@ export default function AttendanceCall() {
     return selectedClass.realization_dates.filter(Boolean).sort();
   }, [selectedClass]);
 
-  // Lista de alunos: combina certificados + número esperado
+  // Lista de alunos — prioridade: matrículas da turma → inscritos da Agenda → certificados → slots
   const studentList = useMemo(() => {
     if (!selectedClass) return [];
+    if (enrollments.length > 0) {
+      return enrollments.map(e => ({
+        id: e.id,
+        name: e.student_name,
+        cpf: e.student_cpf || "",
+        hasCert: !!e.certificate_id,
+      }));
+    }
+    const inscritos = selectedClass.alunos_inscritos || [];
+    if (inscritos.length > 0) {
+      return inscritos.map((a, i) => ({
+        id: a.cpf || `insc-${i}`,
+        name: a.nome || `Aluno ${i + 1}`,
+        cpf: a.cpf || "",
+        hasCert: false,
+      }));
+    }
     if (certificates.length > 0) {
       return certificates.map(c => ({
         id: c.id,
@@ -84,7 +108,7 @@ export default function AttendanceCall() {
       cpf: "",
       hasCert: false,
     }));
-  }, [certificates, selectedClass]);
+  }, [enrollments, certificates, selectedClass]);
 
   // Inicializar presença quando a lista muda
   React.useEffect(() => {
@@ -161,7 +185,7 @@ export default function AttendanceCall() {
 
   // Turmas ativas (agendadas ou em andamento)
   const activeClasses = classes.filter(c =>
-    c.status === "Agendado" || c.status === "Em Andamento" || c.status === "Concluído"
+    c.status === "Agendado" || c.status === "Confirmado" || c.status === "Em Andamento" || c.status === "Concluído"
   );
 
   return (
@@ -303,7 +327,7 @@ export default function AttendanceCall() {
                   <div className="text-center py-10 text-gray-400">
                     <Users className="w-10 h-10 mx-auto mb-2 text-gray-300" />
                     <p className="text-sm">Nenhum aluno cadastrado nesta turma.</p>
-                    <p className="text-xs mt-1">Emita certificados para que os alunos apareçam aqui.</p>
+                    <p className="text-xs mt-1">Matricule alunos nesta turma ou inscreva-os pela Agenda para que apareçam aqui.</p>
                   </div>
                 ) : (
                   <ul className="divide-y divide-gray-100">

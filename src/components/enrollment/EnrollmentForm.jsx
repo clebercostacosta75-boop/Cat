@@ -12,6 +12,7 @@ export default function EnrollmentForm({ onSuccess, onCancel, initialData = null
   const [companies, setCompanies] = useState([]);
   const [instructors, setInstructors] = useState([]);
   const [certModels, setCertModels] = useState([]);
+  const [classSchedules, setClassSchedules] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
@@ -28,6 +29,7 @@ export default function EnrollmentForm({ onSuccess, onCancel, initialData = null
     company_name: "",
     instructor_id: "",
     instructor_name: "",
+    class_schedule_id: "",
     start_date: "",
     end_date: "",
     valid_until: "",
@@ -43,13 +45,15 @@ export default function EnrollmentForm({ onSuccess, onCancel, initialData = null
       base44.entities.Course.list(),
       base44.entities.Company.list(),
       base44.entities.Instructor.list(),
-      base44.entities.CertificateModel.list()
-    ]).then(([s, c, co, i, cm]) => {
+      base44.entities.CertificateModel.list(),
+      base44.entities.ClassSchedule.list("-created_date", 200)
+    ]).then(([s, c, co, i, cm, cs]) => {
       setStudents(s);
       setCourses(c);
       setCompanies(co);
       setInstructors(i);
       setCertModels(cm);
+      setClassSchedules(cs);
     });
   }, []);
 
@@ -219,6 +223,33 @@ export default function EnrollmentForm({ onSuccess, onCancel, initialData = null
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Turma (vínculo oficial com o Cronograma) */}
+        <div>
+          <Label>Turma (Cronograma)</Label>
+          <Select
+            value={form.class_schedule_id}
+            onValueChange={(id) => {
+              const turma = classSchedules.find(t => t.id === id);
+              setForm(f => ({
+                ...f,
+                class_schedule_id: id,
+                instructor_name: f.instructor_name || turma?.instructor_name || "",
+                instructor_id: f.instructor_id || turma?.instructor_id || "",
+              }));
+            }}
+          >
+            <SelectTrigger><SelectValue placeholder="Vincular a uma turma..." /></SelectTrigger>
+            <SelectContent>
+              {classSchedules.map(t => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.training_name} — {t.company_name} ({t.status})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-gray-400 mt-1">Vincula a matrícula à turma para chamada e certificação</p>
         </div>
 
         {/* Validade em meses */}
