@@ -61,27 +61,6 @@ function normalizeClassSchedule(c) {
   };
 }
 
-function normalizeAgendaTreinamento(a) {
-  return {
-    id: a.id,
-    _source: "AgendaTreinamento",
-    _raw: a,
-    titulo: a.titulo || a.curso_nome,
-    curso_nome: a.curso_nome,
-    empresa_nome: a.empresa_nome || "—",
-    instrutor_nome: a.instrutor_nome || "—",
-    data_inicio: a.data_inicio || null,
-    horario: a.horario_inicio ? `${a.horario_inicio}${a.horario_fim ? ` - ${a.horario_fim}` : ""}` : "—",
-    local: a.local || "—",
-    carga_horaria: "—",
-    status: a.status || "Agendado",
-    alunos: a.alunos_inscritos?.length || 0,
-    modalidade: a.modalidade || "—",
-    notes: a.observacoes,
-    datas_realizacao: a.data_inicio ? [a.data_inicio] : [],
-  };
-}
-
 // ─── Cores de status ─────────────────────────────────────────────────────────
 const STATUS_COLORS = {
   Agendado:      "bg-blue-100 text-blue-800 border-blue-200",
@@ -392,26 +371,18 @@ export default function SchedulePage() {
     initialData: [],
   });
 
-  const { data: agendamentos = [], isLoading: loadingAgenda } = useQuery({
-    queryKey: ["agendamentos"],
-    queryFn: () => base44.entities.AgendaTreinamento.list("-data_inicio", 300),
-    initialData: [],
-  });
+  const isLoading = loadingClasses;
 
-  const isLoading = loadingClasses || loadingAgenda;
-
-  // Normaliza e combina
+  // Normaliza — fonte única: ClassSchedule
   const allItems = useMemo(() => {
-    const cs = classes.map(normalizeClassSchedule);
-    const ag = agendamentos.map(normalizeAgendaTreinamento);
-    const combined = [...cs, ...ag];
+    const combined = classes.map(normalizeClassSchedule);
     combined.sort((a, b) => {
       if (!a.data_inicio) return 1;
       if (!b.data_inicio) return -1;
       return new Date(b.data_inicio) - new Date(a.data_inicio);
     });
     return combined;
-  }, [classes, agendamentos]);
+  }, [classes]);
 
   // Empresas do mês selecionado (para sugestão na busca)
   const empresasDoMes = useMemo(() => {

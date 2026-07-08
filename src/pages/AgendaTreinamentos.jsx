@@ -6,11 +6,76 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Calendar, List, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { format, eachDayOfInterval, parseISO } from "date-fns";
 import AgendaCalendario from "@/components/agenda/AgendaCalendario";
 import AgendaDayPanel from "@/components/agenda/AgendaDayPanel";
 import AgendaFormModal from "@/components/agenda/AgendaFormModal";
+
+// ─── Adaptadores: ClassSchedule (fonte oficial) ⇄ formato de exibição da Agenda ───
+function parseHorario(schedule) {
+  if (!schedule) return ["", ""];
+  const parts = schedule.split(/\s*(?:às|as|-|a)\s*/i).map(p => p.trim()).filter(Boolean);
+  return [parts[0] || "", parts[1] || ""];
+}
+
+export function toAgendaView(c) {
+  const dates = (c.realization_dates || []).filter(Boolean).sort();
+  const [horario_inicio, horario_fim] = parseHorario(c.training_schedule);
+  return {
+    id: c.id,
+    _raw: c,
+    titulo: c.training_name,
+    curso_nome: c.training_name,
+    empresa_nome: c.company_name,
+    instrutor_nome: c.instructor_name || "",
+    data_inicio: dates[0] || null,
+    data_fim: dates.length > 1 ? dates[dates.length - 1] : (dates[0] || null),
+    horario_inicio,
+    horario_fim,
+    local: c.location || "",
+    modalidade: c.category || "Presencial",
+    status: c.status || "Agendado",
+    vagas_total: c.vagas_total || "",
+    alunos_inscritos: c.alunos_inscritos || [],
+    confirmacao_enviada: c.confirmacao_enviada || false,
+    link_online: c.link_online || "",
+    observacoes: c.notes || "",
+  };
+}
+
+function toClassSchedule(form) {
+  // Monta realization_dates com cada dia entre início e fim
+  let realization_dates = [];
+  if (form.data_inicio) {
+    try {
+      const start = parseISO(form.data_inicio);
+      const end = form.data_fim ? parseISO(form.data_fim) : start;
+      realization_dates = (end >= start ? eachDayOfInterval({ start, end }) : [start])
+        .map(d => format(d, "yyyy-MM-dd"));
+    } catch {
+      realization_dates = [form.data_inicio];
+    }
+  }
+  const alunos = form.alunos_inscritos || [];
+  const data = {
+    training_name: form.titulo || form.curso_nome,
+    company_name: form.empresa_nome || "—",
+    instructor_name: form.instrutor_nome || "",
+    realization_dates,
+    training_schedule: form.horario_inicio
+      ? `${form.horario_inicio}${form.horario_fim ? ` às ${form.horario_fim}` : ""}`
+      : "",
+    location: form.local || "",
+    category: form.modalidade || "Presencial",
+    status: form.status || "Agendado",
+    vagas_total: form.vagas_total ? Number(form.vagas_total) : 0,
+    alunos_inscritos: alunos,
+    link_online: form.link_online || "",
+    notes: form.observacoes || "",
+  };
+  if (alunos.length > 0) data.students_count = alunos.length;
+  return data;
+}
 
 export default function AgendaTreinamentos() {
   const queryClient = useQueryClient();
@@ -30,19 +95,17 @@ export default function AgendaTreinamentos() {
 
     if (company_id || company_name) {
       setPreloadData({
-        empresa_id: company_id,
         empresa_nome: company_name ? decodeURIComponent(company_name) : '',
       });
       setModalOpen(true);
-      // Limpar URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
 
-  // Dados
-  const { data: agendamentos = [], isLoading } = useQuery({
-    queryKey: ["agendamentos"],
-    queryFn: () => base44.entities.AgendaTreinamento.list("-data_inicio", 200),
+  // Dados — fonte oficial: ClassSchedule (mesma base do Cronograma)
+  const { data: classes = [], isLoading } = useQuery({
+    queryKey: ["classSchedules"],
+    queryFn: () => base44.entities.ClassSchedule.list("-created_date", 300),
   });
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -57,37 +120,42 @@ export default function AgendaTreinamentos() {
     queryFn: () => base44.entities.Course.list("name", 100),
   });
 
-  // Mutações
+  const agendamentos = classes.map(toAgendaView);
+
+  // Mutações — gravam direto na turma (ClassSchedule)
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.AgendaTreinamento.create(data),
+    mutationFn: (form) => base44.entities.ClassSchedule.create(toClassSchedule(form)),
     onSuccess: () => {
-      queryClient.invalidateQueries(["agendamentos"]);
+      queryClient.invalidateQueries({ queryKey: ["classSchedules"] });
       setModalOpen(false);
       toast.success("Agendamento criado com sucesso!");
     },
+    onError: (e) => toast.error("Erro ao criar agendamento: " + e.message),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.AgendaTreinamento.update(id, data),
+    mutationFn: ({ id, form }) => base44.entities.ClassSchedule.update(id, toClassSchedule(form)),
     onSuccess: () => {
-      queryClient.invalidateQueries(["agendamentos"]);
+      queryClient.invalidateQueries({ queryKey: ["classSchedules"] });
       setModalOpen(false);
       setEditingItem(null);
       toast.success("Agendamento atualizado!");
     },
+    onError: (e) => toast.error("Erro ao atualizar: " + e.message),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.AgendaTreinamento.delete(id),
+    mutationFn: (id) => base44.entities.ClassSchedule.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(["agendamentos"]);
+      queryClient.invalidateQueries({ queryKey: ["classSchedules"] });
       toast.success("Agendamento removido.");
     },
+    onError: (e) => toast.error("Erro ao remover: " + e.message),
   });
 
   const handleSave = (formData) => {
     if (editingItem?.id) {
-      updateMutation.mutate({ id: editingItem.id, data: formData });
+      updateMutation.mutate({ id: editingItem.id, form: formData });
     } else {
       createMutation.mutate(formData);
     }
@@ -113,7 +181,7 @@ export default function AgendaTreinamentos() {
       const res = await base44.functions.invoke("enviarConfirmacaoAgendamento", { agenda_id: agenda.id });
       if (res.data?.success) {
         toast.success(res.data.message || "E-mails enviados com sucesso!");
-        queryClient.invalidateQueries(["agendamentos"]);
+        queryClient.invalidateQueries({ queryKey: ["classSchedules"] });
       } else {
         toast.error(res.data?.message || "Erro ao enviar e-mails.");
       }
@@ -137,6 +205,7 @@ export default function AgendaTreinamentos() {
   });
 
   const STATUS_COLORS = {
+    Aguardando: "bg-orange-100 text-orange-800",
     Agendado: "bg-blue-100 text-blue-800",
     Confirmado: "bg-green-100 text-green-800",
     "Em Andamento": "bg-yellow-100 text-yellow-800",
@@ -150,7 +219,7 @@ export default function AgendaTreinamentos() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Agenda de Treinamentos</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{agendamentos.length} treinamento(s) cadastrado(s)</p>
+          <p className="text-sm text-gray-500 mt-0.5">{agendamentos.length} turma(s) — mesma base do Cronograma</p>
         </div>
         <div className="flex items-center gap-2">
           {/* Toggle view */}
@@ -235,7 +304,6 @@ export default function AgendaTreinamentos() {
                 <tr key={a.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <div className="font-medium text-gray-900">{a.titulo || a.curso_nome}</div>
-                    {a.curso_nome && a.titulo && <div className="text-xs text-gray-500">{a.curso_nome}</div>}
                     {a.instrutor_nome && <div className="text-xs text-gray-400">{a.instrutor_nome}</div>}
                   </td>
                   <td className="px-4 py-3 text-gray-700">{a.empresa_nome || "—"}</td>
@@ -244,7 +312,7 @@ export default function AgendaTreinamentos() {
                     {a.horario_inicio && <div className="text-xs text-gray-400">{a.horario_inicio}{a.horario_fim ? ` - ${a.horario_fim}` : ""}</div>}
                   </td>
                   <td className="px-4 py-3 text-gray-700">
-                    {(a.alunos_inscritos?.length || 0)} / {a.vagas_total || "∞"}
+                    {(a.alunos_inscritos?.length || 0)} / {a.vagas_total || a._raw?.students_count || "∞"}
                     {a.confirmacao_enviada && <div className="text-xs text-green-600">✓ Confirmados</div>}
                   </td>
                   <td className="px-4 py-3">

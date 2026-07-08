@@ -18,6 +18,14 @@
       "type": "string",
       "description": "ID da empresa"
     },
+    "proposal_id": {
+      "type": "string",
+      "description": "ID da proposta que originou esta turma"
+    },
+    "contract_id": {
+      "type": "string",
+      "description": "ID do contrato vinculado a esta turma"
+    },
     "location": {
       "type": "string",
       "description": "Local (Ex: Tail\u00e2ndia, Bel\u00e9m)"
@@ -26,10 +34,57 @@
       "type": "number",
       "description": "N\u00famero de alunos"
     },
+    "vagas_total": {
+      "type": "number",
+      "description": "Total de vagas dispon\u00edveis na turma"
+    },
+    "alunos_inscritos": {
+      "type": "array",
+      "description": "Lista de alunos inscritos na turma (usado pela Agenda)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "cpf": {
+            "type": "string"
+          },
+          "empresa": {
+            "type": "string"
+          },
+          "confirmacao_enviada": {
+            "type": "boolean",
+            "default": false
+          },
+          "confirmacao_enviada_em": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "confirmacao_enviada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se os e-mails de confirma\u00e7\u00e3o j\u00e1 foram disparados"
+    },
+    "confirmacao_enviada_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do disparo dos e-mails de confirma\u00e7\u00e3o"
+    },
+    "link_online": {
+      "type": "string",
+      "description": "Link de acesso para treinamento online/h\u00edbrido"
+    },
     "status": {
       "type": "string",
       "enum": [
         "Agendado",
+        "Confirmado",
         "Em Andamento",
         "Conclu\u00eddo",
         "Cancelado",

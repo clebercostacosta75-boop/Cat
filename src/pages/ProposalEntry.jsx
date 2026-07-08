@@ -217,6 +217,7 @@ export default function ProposalEntry() {
             unit_value: parseFloat(course.unit_value) || 0,
             total_value: parseFloat(course.unit_value || 0) * (parseInt(course.students_count) || 1),
             category: course.modality === 'Online' ? 'Online' : course.modality === 'Híbrido' ? 'Híbrido' : 'Presencial',
+            proposal_id: selectedProposal.id,
             status: 'Aguardando',
             notes: `📋 Proposta: ${selectedProposal.file_name}${numTurmas > 1 ? ` — Turma ${t}/${numTurmas}` : ''}`,
           });
@@ -276,6 +277,11 @@ export default function ProposalEntry() {
           const cData = await base44.entities.Contract.filter({ id: contractId });
           if (cData.length > 0) contractNumber = cData[0].contract_number;
         } catch {}
+      }
+
+      // ─── Vincular o contrato às turmas criadas ───
+      if (contractId && classIds.length > 0) {
+        await base44.entities.ClassSchedule.bulkUpdate(classIds.map(id => ({ id, contract_id: contractId })));
       }
 
       // ─── Gerar lançamento financeiro a receber do contrato (evita duplicidade) ───
