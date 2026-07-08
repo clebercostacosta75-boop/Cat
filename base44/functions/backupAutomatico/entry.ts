@@ -3,11 +3,18 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    
-    if (!user || user.role !== 'admin') {
+
+    // Permite chamada tanto por automação agendada (sem user) quanto por admin manualmente
+    let user = null;
+    try {
+      user = await base44.auth.me();
+    } catch {
+      // Chamada via automação agendada sem usuário autenticado — permitido
+    }
+    if (user && user.role !== 'admin') {
       return Response.json({ error: 'Acesso negado - apenas admin' }, { status: 403 });
     }
+    const backupUserEmail = user?.email || 'sistema@catcursos.com.br';
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const entities = [
@@ -38,10 +45,10 @@ Deno.serve(async (req) => {
     
     // Log de backup
     await base44.asServiceRole.entities.AuditLog.create({
-      user_email: user.email,
+      user_email: backupUserEmail,
       entity_type: 'System',
       entity_name: 'Backup Automático',
-      action: 'backup_executado',
+      action: 'export',
       details: `Backup automático executado com ${totalRecords} registros de ${entities.length} entidades`,
       ip_address: 'system'
     });

@@ -5,7 +5,7 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const payload = await req.json();
 
-    const { event, data, old_data, changed_fields } = payload;
+    const { event, data, old_data, changed_fields, payload_too_large } = payload;
 
     if (!event || !event.entity_name) {
       return Response.json({ ok: true, msg: 'Evento inválido' });
@@ -14,9 +14,29 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me().catch(() => null);
     const userEmail = user?.email || 'sistema';
 
-    // Determinar tipo de ação
-    // O enum do AuditLog aceita apenas: login, logout, create, update, delete, view, export, send_credentials, block_user, unblock_user, change_password, sign, send_whatsapp
-    let actionType = 'view'; // fallback seguro dentro do enum
+    // Se o payload for muito grande, buscar dados da entidade diretamente
+    let entityData = data;
+    let entityOldData = old_data;
+    if (payload_too_large && event.entity_id) {
+      try {
+        entityData = await base44.asServiceRole.entities[event.entity_name]?.get(event.entity_id) || null;
+      } catch {
+        entityData = null;
+      }
+    }
+
+    // Helper: trunca valores longos para não estourar o campo details do AuditLog
+    const truncateVal = (v) => {
+      if (typeof v === 'string' && v.length > 200) return v.substring(0, 200) + '...';
+      if (v && typeof v === 'object') {
+        const s = JSON.stringify(v);
+        if (s.length > 200) return s.substring(0, 200) + '...';
+      }
+      return v;
+    };
+
+    // Determinar tipo de ação (enum do AuditLog: create, update, delete, view, etc.)
+    let actionType = 'view';
     let details = '';
 
     if (event.type === 'create') {
@@ -24,19 +44,20 @@ Deno.serve(async (req) => {
       details = `Novo registro criado`;
     } else if (event.type === 'update') {
       actionType = 'update';
-      const changedFieldsList = changed_fields?.join(', ') || 'campos desconhecidos';
+      const changedFieldsList = changed_fields?.slice(0, 15).join(', ') || 'campos desconhecidos';
       details = `Campos alterados: ${changedFieldsList}`;
 
-      // Capturar valores anteriores vs novos
-      if (old_data && data) {
+      if (entityOldData && entityData) {
         const changes = {};
-        for (const field of changed_fields || []) {
+        for (const field of (changed_fields || []).slice(0, 10)) {
           changes[field] = {
-            antes: old_data[field],
-            depois: data[field]
+            antes: truncateVal(entityOldData[field]),
+            depois: truncateVal(entityData[field])
           };
         }
-        details += ` | Mudanças: ${JSON.stringify(changes)}`;
+        let changesStr = JSON.stringify(changes);
+        if (changesStr.length > 1500) changesStr = changesStr.substring(0, 1500) + '...[truncado]';
+        details += ` | Mudanças: ${changesStr}`;
       }
     } else if (event.type === 'delete') {
       actionType = 'delete';
@@ -49,7 +70,7 @@ Deno.serve(async (req) => {
       action: actionType,
       entity_type: event.entity_name,
       entity_id: event.entity_id,
-      entity_name: data?.full_name || data?.name || data?.student_name || event.entity_id,
+      entity_name: entityData?.full_name || entityData?.name || entityData?.student_name || event.entity_id,
       details: details,
       ip_address: 'entity-automation'
     });
