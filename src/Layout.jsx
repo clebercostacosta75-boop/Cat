@@ -29,7 +29,7 @@ const ALL_ITEMS = [
   { title: "Empresas", url: createPageUrl("Companies"), icon: Building2, key: "Empresas" },
   { title: "Contratadas", url: createPageUrl("Contractors"), icon: Building2, key: "Contratadas" },
   { title: "Cursos", url: createPageUrl("Courses"), icon: BookOpen, key: "Cursos" },
-  { title: "Alunos Individuais (PF)", url: "/GestaoAlunosIndividuais", icon: Users, key: "Alunos Individuais (PF)" },
+  { title: "Gestão Acadêmica", url: "/GestaoAlunosIndividuais", icon: Users, key: "Alunos Individuais (PF)" },
   { title: "Gestão de Contratos", url: "/GestaoContratos", icon: FileText, key: "Gestão de Contratos" },
   { title: "Certificações", url: "/Certificacoes", icon: Award, key: "Certificações" },
   { title: "Alertas de Vencimento", url: createPageUrl("CertificateAlerts"), icon: Bell, key: "Alertas de Vencimento" },

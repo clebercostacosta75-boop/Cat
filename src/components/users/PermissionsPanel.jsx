@@ -8,6 +8,9 @@ import { Check, ChevronDown, ChevronUp, Search, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { ALL_MODULES } from "@/lib/PermissionsContext";
 
+// Nomes de exibição (a chave interna de permissão permanece inalterada)
+const MODULE_DISPLAY = { "Alunos Individuais (PF)": "Gestão Acadêmica" };
+
 const MODULE_GROUPS = [
   { label: "Geral", color: "bg-gray-100 text-gray-700", items: ["Dashboard", "Cronograma", "Agenda de Treinamentos", "Chamada Presencial"] },
   { label: "Operacional", color: "bg-blue-100 text-blue-700", items: ["Entrada de Propostas", "Gestão de BMM", "Instrutores", "Empresas", "Contratadas", "Cursos", "Alunos Individuais (PF)", "Gestão de Contratos", "Dashboard Operacional", "Dashboard Financeiro", "Financeiro", "ProntuarioDigital", "GestaoDocumentosAluno"] },
@@ -91,7 +94,7 @@ function CustomPermissionEditor({ profile, onSaved }) {
                   selected.has(perm) ? "bg-blue-50 border-blue-400 text-blue-800" : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
                 }`}>
                   <input type="checkbox" checked={selected.has(perm)} onChange={() => toggle(perm)} className="w-4 h-4 accent-blue-600" />
-                  {perm}
+                  {MODULE_DISPLAY[perm] || perm}
                 </label>
               ))}
             </div>
