@@ -19,6 +19,28 @@
       "type": "string",
       "description": "Nome do instrutor"
     },
+    "attendance_list": {
+      "type": "object",
+      "description": "Mapa de presen\u00e7a por aluno (chave: id da matr\u00edcula/aluno, valor: true=presente, false=ausente)",
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    },
+    "present_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Total de alunos presentes no dia"
+    },
+    "absent_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Total de alunos ausentes no dia"
+    },
+    "total_students": {
+      "type": "number",
+      "default": 0,
+      "description": "Total de alunos da turma no dia"
+    },
     "lunch_cost": {
       "type": "number",
       "default": 0,
