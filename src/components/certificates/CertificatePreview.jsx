@@ -155,7 +155,7 @@ function buildLegacyCertificateHTML(model, certData) {
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     body { background: #f3f4f6; font-family: Arial, sans-serif; }
     @media print {
-      @page { size: ${pageW}mm ${pageH}mm; margin: 0; }
+      @page { size: ${pageW === 297 && pageH === 210 ? "A4 landscape" : `${pageW}mm ${pageH}mm`}; margin: 0; }
       body { background: white; }
       .page-break { page-break-after: always; }
     }

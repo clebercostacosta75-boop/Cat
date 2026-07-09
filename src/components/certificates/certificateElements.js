@@ -278,7 +278,7 @@ export function buildCertificateHTMLFromElements(model, certData) {
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     body { background: #f3f4f6; font-family: Arial, sans-serif; }
     @media print {
-      @page { size: ${m.page_width || 297}mm ${m.page_height || 210}mm; margin: 0; }
+      @page { size: ${(m.page_width || 297) === 297 && (m.page_height || 210) === 210 ? "A4 landscape" : `${m.page_width || 297}mm ${m.page_height || 210}mm`}; margin: 0; }
       body { background: white; }
       .page-break { page-break-after: always; }
     }
