@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Users, UserPlus, BookOpen, DollarSign, Shield, Search, Edit, Trash2,
-  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, FileText, Copy, LayoutDashboard, Bell, PenLine, TrendingUp, Calendar, XCircle, ChevronRight, Lightbulb
+  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, FileText, Copy, LayoutDashboard, Bell, PenLine, TrendingUp, Calendar, XCircle, ChevronRight, Lightbulb, Upload
 } from "lucide-react";
 import { toast } from "sonner";
 import PagamentosAsaas from "@/components/alunos/PagamentosAsaas";
@@ -25,6 +25,7 @@ import CadastroUnificado from "@/components/alunos/CadastroUnificado";
 import NovoCursoModal from "@/components/alunos/NovoCursoModal";
 import NovaMatriculaModal from "@/components/alunos/NovaMatriculaModal";
 import BaseConhecimentoTab from "@/components/alunos/BaseConhecimentoTab";
+import ImportarAlunosPlanilha from "@/components/alunos/ImportarAlunosPlanilha";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -709,6 +710,7 @@ function MatriculasCursos() {
   const [searchAluno, setSearchAluno] = useState("");
   const [financeiroEnrollment, setFinanceiroEnrollment] = useState(null);
   const [confirmandoPix, setConfirmandoPix] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
@@ -798,6 +800,13 @@ function MatriculasCursos() {
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] })}
       />
 
+      {/* Importação Inteligente por Planilha */}
+      <ImportarAlunosPlanilha
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={() => { queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] }); queryClient.invalidateQueries({ queryKey: ["students-pf"] }); }}
+      />
+
       {/* Modal Nova Matrícula com busca de aluno */}
       <NovaMatriculaModal
         open={modalOpen}
@@ -852,9 +861,14 @@ function MatriculasCursos() {
               className="pl-10"
             />
           </div>
-          <Button onClick={() => setModalOpen(true)} className="bg-gray-900 hover:bg-gray-800 flex-shrink-0">
-            <Plus className="w-4 h-4 mr-2" /> Nova Matrícula
-          </Button>
+          <div className="flex gap-2 flex-shrink-0">
+            <Button variant="outline" onClick={() => setImportOpen(true)} className="border-emerald-400 text-emerald-800 hover:bg-emerald-50">
+              <Upload className="w-4 h-4 mr-2" /> Importar Alunos por Planilha
+            </Button>
+            <Button onClick={() => setModalOpen(true)} className="bg-gray-900 hover:bg-gray-800">
+              <Plus className="w-4 h-4 mr-2" /> Nova Matrícula
+            </Button>
+          </div>
         </div>
 
         {/* Filtros avançados */}
