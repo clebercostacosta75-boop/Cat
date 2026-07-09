@@ -13,11 +13,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Save, Trash2, Eye, Award, ChevronLeft, Copy, Wand2 } from "lucide-react";
+import { Plus, Save, Trash2, Eye, Award, ChevronLeft, Copy } from "lucide-react";
 import { toast } from "sonner";
 import CertificatePreview from "@/components/certificates/CertificatePreview";
 import BackgroundUploader from "@/components/certificates/BackgroundUploader";
-import CanvasEditor from "@/components/certificates/CanvasEditor";
+// Editor Visual (CanvasEditor) desativado na interface — código preservado em
+// src/components/certificates/CanvasEditor.jsx e dados editor_canvas_data mantidos.
 
 const DEFAULT_MODEL = {
   name: "",
@@ -64,7 +65,6 @@ export default function CertDesigner() {
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(DEFAULT_MODEL);
   const [creating, setCreating] = useState(false);
-  const [editorMode, setEditorMode] = useState("form"); // "form" | "canvas"
 
   const { data: models = [], isLoading } = useQuery({
     queryKey: ["certificateModels"],
@@ -175,13 +175,6 @@ export default function CertDesigner() {
     });
   };
 
-  const handleSaveCanvas = ({ front, back, mode }) => {
-    const canvasData = { front, back };
-    const updated = { ...form, editor_canvas_data: canvasData };
-    setForm(updated);
-    saveMutation.mutate(updated);
-  };
-
   const isEditing = selectedId || creating;
 
   return (
@@ -214,22 +207,6 @@ export default function CertDesigner() {
           )}
         </div>
         <div className="p-3 border-t border-gray-100 space-y-2">
-          {isEditing && (
-            <div className="flex rounded overflow-hidden border border-gray-200 w-full">
-              <button
-                onClick={() => setEditorMode("form")}
-                className={`flex-1 py-1.5 text-xs font-medium flex items-center justify-center gap-1 ${editorMode === "form" ? "bg-emerald-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
-              >
-                <Eye className="w-3 h-3" /> Campos
-              </button>
-              <button
-                onClick={() => setEditorMode("canvas")}
-                className={`flex-1 py-1.5 text-xs font-medium flex items-center justify-center gap-1 ${editorMode === "canvas" ? "bg-emerald-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
-              >
-                <Wand2 className="w-3 h-3" /> Editor Visual
-              </button>
-            </div>
-          )}
           <Button onClick={startNew} className="w-full bg-emerald-600 hover:bg-emerald-700" size="sm">
             <Plus className="w-4 h-4 mr-1" /> Novo Modelo
           </Button>
@@ -251,19 +228,8 @@ export default function CertDesigner() {
           </div>
         ) : (
           <div className="flex-1 flex overflow-hidden">
-            {/* Canvas Editor Mode */}
-            {editorMode === "canvas" && (
-              <div className="flex-1 overflow-hidden">
-                <CanvasEditor
-                  model={form}
-                  signatures={digitalSignatures}
-                  onSaveCanvas={handleSaveCanvas}
-                />
-              </div>
-            )}
-
             {/* Form panel */}
-            {editorMode === "form" && <div className="w-96 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
+            <div className="w-96 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
               <div className="p-4 border-b border-gray-100 flex items-center gap-2">
                 <button onClick={() => { setSelectedId(null); setCreating(false); }} className="text-gray-400 hover:text-gray-600">
                   <ChevronLeft className="w-4 h-4" />
@@ -272,21 +238,6 @@ export default function CertDesigner() {
                   {selectedId ? form.name || "Editar Modelo" : "Novo Modelo"}
                 </h3>
                 <div className="flex gap-1 flex-wrap">
-                  {/* Toggle editor mode */}
-                  <div className="flex rounded overflow-hidden border border-gray-200">
-                    <button
-                      onClick={() => setEditorMode("form")}
-                      className={`px-2 py-1 text-xs font-medium flex items-center gap-1 ${editorMode === "form" ? "bg-emerald-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
-                    >
-                      <Eye className="w-3 h-3" /> Campos
-                    </button>
-                    <button
-                      onClick={() => setEditorMode("canvas")}
-                      className={`px-2 py-1 text-xs font-medium flex items-center gap-1 ${editorMode === "canvas" ? "bg-emerald-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
-                    >
-                      <Wand2 className="w-3 h-3" /> Visual
-                    </button>
-                  </div>
                   {selectedId && (
                     <Button
                       size="sm"
@@ -604,16 +555,16 @@ export default function CertDesigner() {
                   </TabsContent>
                 </Tabs>
               </div>
-            </div>}
+            </div>
 
             {/* Preview panel */}
-            {editorMode === "form" && <div className="flex-1 bg-gray-100 overflow-y-auto p-6">
+            <div className="flex-1 bg-gray-100 overflow-y-auto p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Eye className="w-4 h-4 text-gray-500" />
                 <span className="text-sm font-medium text-gray-600">Pré-visualização (atualiza em tempo real)</span>
               </div>
               <CertificatePreview model={form} cert={{ course_name: form.name || "Nome do Modelo", course_duration: form.duration || "" }} scale={0.42} />
-            </div>}
+            </div>
           </div>
         )}
       </div>
