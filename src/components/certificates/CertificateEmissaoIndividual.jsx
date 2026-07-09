@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Award, Building2, FileText, User, Loader2, Search, AlertTriangle, CheckCircle2, X } from "lucide-react";
 import { format, addMonths } from "date-fns";
+import { gerarCodigoInternoControle } from "@/lib/certControl";
 
 // CNPJ da empresa CAT que deve ser pré-selecionada
 const CAT_CNPJ = "07.238.084/0001-45";
@@ -196,6 +197,8 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
 
       const certData = {
         certificate_code: code,
+        internal_control_code: gerarCodigoInternoControle(),
+        certification_type: selectedEnrollment?.certification_type || "Formação",
         student_name: form.student_name,
         student_cpf: form.student_cpf,
         student_phone: form.student_phone || null,

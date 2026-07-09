@@ -6,6 +6,19 @@
       "type": "string",
       "description": "C\u00f3digo \u00fanico de valida\u00e7\u00e3o (ex: CAT-2025-XXXXXXXX)"
     },
+    "internal_control_code": {
+      "type": "string",
+      "description": "C\u00f3digo interno \u00fanico de controle (independente do QR Code e do c\u00f3digo p\u00fablico)"
+    },
+    "certification_type": {
+      "type": "string",
+      "enum": [
+        "Forma\u00e7\u00e3o",
+        "Atualiza\u00e7\u00e3o",
+        "Reciclagem"
+      ],
+      "description": "Tipo da certifica\u00e7\u00e3o: Forma\u00e7\u00e3o, Atualiza\u00e7\u00e3o ou Reciclagem"
+    },
     "student_id": {
       "type": "string",
       "description": "ID do aluno vinculado (refer\u00eancia \u00e0 entidade Student)"
@@ -226,6 +239,26 @@
       "type": "string",
       "format": "date-time",
       "description": "Data/hora em que o certificado foi baixado (opcional)"
+    },
+    "certificate_model_id": {
+      "type": "string",
+      "description": "ID do modelo de certificado utilizado"
+    },
+    "certificate_model_name": {
+      "type": "string",
+      "description": "Nome do modelo de certificado"
+    },
+    "detran_registro": {
+      "type": "string",
+      "description": "N\u00ba Registro DETRAN/PA (opcional)"
+    },
+    "renach": {
+      "type": "string",
+      "description": "N\u00famero do RENACH (opcional)"
+    },
+    "categoria_cnh": {
+      "type": "string",
+      "description": "Categoria CNH (opcional)"
     }
   },
   "required": [

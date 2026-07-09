@@ -24,6 +24,7 @@ export default function EnrollmentForm({ onSuccess, onCancel, initialData = null
     course_id: "",
     course_name: "",
     course_duration: "",
+    certification_type: "Formação",
     validity_months: 12,
     company_id: "",
     company_name: "",
@@ -149,18 +150,22 @@ export default function EnrollmentForm({ onSuccess, onCancel, initialData = null
       return;
     }
     setLoading(true);
-    // Evitar duplicidade: mesmo aluno + curso (+ turma, se informada)
+    // Duplicidade APENAS quando: mesmo aluno + mesmo curso + mesma turma + mesmo período + mesmo tipo de certificação.
+    // O aluno pode ter múltiplos cursos e múltiplas certificações ao longo do tempo.
     const existing = await base44.entities.StudentCourseEnrollment.filter({
       student_id: form.student_id,
       course_id: form.course_id,
     });
     const duplicated = existing.filter(e =>
       e.status !== "Revogado" && e.status !== "Vencido" &&
-      (!form.class_schedule_id || !e.class_schedule_id || e.class_schedule_id === form.class_schedule_id)
+      (e.class_schedule_id || "") === (form.class_schedule_id || "") &&
+      e.start_date === form.start_date &&
+      e.end_date === form.end_date &&
+      (e.certification_type || "Formação") === (form.certification_type || "Formação")
     );
     if (duplicated.length > 0) {
       setLoading(false);
-      alert("Este aluno já possui matrícula ativa neste curso. Matrícula duplicada não é permitida.");
+      alert("Já existe uma matrícula idêntica (mesmo aluno, curso, turma, período e tipo de certificação). Matrícula duplicada não é permitida.");
       return;
     }
     await base44.entities.StudentCourseEnrollment.create({
@@ -266,6 +271,19 @@ export default function EnrollmentForm({ onSuccess, onCancel, initialData = null
             </SelectContent>
           </Select>
           <p className="text-xs text-gray-400 mt-1">Vincula a matrícula à turma para chamada e certificação</p>
+        </div>
+
+        {/* Tipo de Certificação */}
+        <div>
+          <Label>Tipo de Certificação</Label>
+          <Select value={form.certification_type} onValueChange={v => setForm(f => ({ ...f, certification_type: v }))}>
+            <SelectTrigger><SelectValue placeholder="Selecionar tipo..." /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Formação">Formação</SelectItem>
+              <SelectItem value="Atualização">Atualização</SelectItem>
+              <SelectItem value="Reciclagem">Reciclagem</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Validade em meses */}

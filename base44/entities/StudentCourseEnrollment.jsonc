@@ -34,6 +34,16 @@
       "type": "string",
       "description": "Carga hor\u00e1ria do curso (ex: 8h)"
     },
+    "certification_type": {
+      "type": "string",
+      "enum": [
+        "Forma\u00e7\u00e3o",
+        "Atualiza\u00e7\u00e3o",
+        "Reciclagem"
+      ],
+      "default": "Forma\u00e7\u00e3o",
+      "description": "Tipo da certifica\u00e7\u00e3o: Forma\u00e7\u00e3o, Atualiza\u00e7\u00e3o ou Reciclagem"
+    },
     "validity_months": {
       "type": "number",
       "description": "Validade em meses (vinda do modelo de certificado ou curso)"

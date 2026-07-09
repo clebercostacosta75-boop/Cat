@@ -23,6 +23,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import RevocationDialog from "./RevocationDialog";
 import CertificateStatusBadge from "./CertificateStatusBadge";
 import GerarCertificadoWizard from "./GerarCertificadoWizard";
+import { gerarCodigoInternoControle } from "@/lib/certControl";
 
 const AUTHORIZED_ROLES = ["admin", "gestor_master", "Administrador Master", "Certificacao", "Certificação"];
 
@@ -106,6 +107,8 @@ export default function CertificateControlPanel() {
 
       const certData = {
         certificate_code: code,
+        internal_control_code: gerarCodigoInternoControle(),
+        certification_type: enrollment.certification_type || "Formação",
         student_id: enrollment.student_id,
         student_name: enrollment.student_name,
         student_cpf: enrollment.student_cpf,

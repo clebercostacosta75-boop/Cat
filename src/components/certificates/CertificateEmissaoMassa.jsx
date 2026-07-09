@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Building2, FileText, Upload, Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { format, addMonths } from "date-fns";
+import { gerarCodigoInternoControle } from "@/lib/certControl";
 
 const MODELO_PADRAO = `Nome;CPF;Telefone;Data_Inicio;Data_Termino
 João Silva;123.456.789-00;(91) 99999-9999;2025-01-01;2025-01-10
@@ -103,6 +104,7 @@ export default function CertificateEmissaoMassa({ onSuccess }) {
 
         const certData = {
           certificate_code: code,
+          internal_control_code: gerarCodigoInternoControle(),
           student_name: name,
           student_cpf: cpf,
           student_phone: phone || null,
