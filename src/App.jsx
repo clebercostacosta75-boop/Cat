@@ -17,6 +17,7 @@ import ContractSign from './pages/ContractSign';
 import CertificateValidate from './pages/CertificateValidate';
 import CertificateEmissao from './pages/CertificateEmissao';
 import StudentPortal from './pages/StudentPortal';
+import PortalAluno from './pages/PortalAluno.jsx';
 import AttendanceConfirm from './pages/AttendanceConfirm';
 import DigitalSignatures from './pages/DigitalSignatures';
 import AlertasConfig from './pages/AlertasConfig';
@@ -136,6 +137,7 @@ const AuthenticatedApp = () => {
       <Route path="/ContractSign" element={<ContractSign />} />
       <Route path="/CertificateValidate" element={<CertificateValidate />} />
       <Route path="/StudentPortal" element={<StudentPortal />} />
+      <Route path="/PortalAluno" element={<PortalAluno />} />
       <Route path="/AttendanceConfirm" element={<AttendanceConfirm />} />
       <Route path="/CompanyPortal" element={<CompanyPortal />} />
       <Route path="/AcessoNegado" element={<AcessoNegado />} />
