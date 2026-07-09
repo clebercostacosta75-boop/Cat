@@ -5,6 +5,7 @@
  * Quando `cert` é null/undefined, usa dados de exemplo para pré-visualização.
  */
 import React from "react";
+import { hasCanvasLayout, buildCertificateHTMLFromElements } from "./certificateElements";
 
 export const PREVIEW_CERT = {
   student_name: "JOÃO DA SILVA SANTOS",
@@ -47,7 +48,20 @@ function addMonths(dateStr, months) {
   }
 }
 
+/**
+ * MOTOR ÚNICO: se o modelo possui layout do Editor Visual (editor_canvas_data),
+ * renderiza a partir dos elementos — preview, emissão e PDF idênticos ao editor.
+ * Modelos antigos sem editor_canvas_data continuam usando o template legado (fallback).
+ */
 export function buildCertificateHTMLFromModel(model, certData) {
+  if (hasCanvasLayout(model)) {
+    return buildCertificateHTMLFromElements(model, certData);
+  }
+  return buildLegacyCertificateHTML(model, certData);
+}
+
+// ─── Template legado (fallback para modelos sem editor_canvas_data) ───
+function buildLegacyCertificateHTML(model, certData) {
   const cert = { ...PREVIEW_CERT, ...certData };
   const m = model || {};
 

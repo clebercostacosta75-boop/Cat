@@ -5,57 +5,29 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Type, Image, QrCode, PenLine, Plus, Trash2,
+  Type, Image, QrCode, PenLine, Plus, Trash2, Table, Users,
   Copy, ChevronUp, ChevronDown, Grid3X3, Save,
   Eye, EyeOff, Lock, Unlock, AlignCenter, AlignLeft, AlignRight,
   Bold, Italic, Underline as UnderlineIcon, ChevronLeft, ChevronRight,
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  MM_TO_PX, CANVAS_W, CANVAS_H, DEFAULT_FRONT, DEFAULT_BACK,
+  SAMPLE_CERT, buildCertContext, resolveElementText, substituteVars,
+  programmaticInnerHTML, responsiblesInnerHTML,
+} from "./certificateElements";
 
-const MM_TO_PX = 3.7795;
-const CANVAS_W = Math.round(297 * MM_TO_PX);
-const CANVAS_H = Math.round(210 * MM_TO_PX);
 const SNAP = 4;
 
 function snapToGrid(val) {
   return Math.round(val / SNAP) * SNAP;
 }
 
-// ─── Default elements for FRONT ────────────────────────────────────────────
-const DEFAULT_FRONT = (model) => {
-  const hl = model?.text_formatting?.highlightColor || "#059669";
-  const dark = "#222222";
-  const font = "Arial, sans-serif";
-  return [
-    { id: "title", type: "text", label: "Título", x: 200, y: 30, w: 720, h: 60, text: model?.front_title || "CERTIFICADO", fontSize: 36, bold: true, italic: false, underline: false, color: dark, align: "center", fontFamily: font, locked: false, visible: true, zIndex: 10 },
-    { id: "subtitle", type: "text", label: "Subtítulo", x: 200, y: 90, w: 720, h: 36, text: model?.front_subtitle || "CAPACITAÇÃO PROFISSIONAL", fontSize: 14, bold: false, italic: false, underline: false, color: hl, align: "center", fontFamily: font, locked: false, visible: true, zIndex: 11 },
-    { id: "cert_label", type: "text", label: "Certificamos que", x: 200, y: 160, w: 720, h: 28, text: model?.front_certification_label || "CERTIFICAMOS QUE", fontSize: 11, bold: false, italic: false, underline: false, color: dark, align: "center", fontFamily: font, locked: false, visible: true, zIndex: 12 },
-    { id: "student_name", type: "text", label: "Nome do Aluno", x: 100, y: 200, w: 920, h: 50, text: "JOÃO DA SILVA SANTOS", fontSize: 26, bold: true, italic: false, underline: true, color: dark, align: "center", fontFamily: font, locked: false, visible: true, zIndex: 13 },
-    { id: "body_text", type: "text", label: "Texto do Corpo", x: 100, y: 270, w: 920, h: 100, text: "concluiu com êxito o treinamento, sendo considerado APTO para o desempenho seguro de suas atividades.", fontSize: 11, bold: false, italic: false, underline: false, color: dark, align: "justify", fontFamily: font, locked: false, visible: true, zIndex: 14 },
-    { id: "location_date", type: "text", label: "Local e Data", x: 200, y: 390, w: 720, h: 28, text: model?.front_location_date || "Barcarena/PA, [DATA_EMISSAO]", fontSize: 11, bold: false, italic: false, underline: false, color: dark, align: "center", fontFamily: font, locked: false, visible: true, zIndex: 15 },
-    { id: "footer_url", type: "text", label: "Rodapé", x: 20, y: 740, w: 400, h: 24, text: model?.front_footer_line2 || "www.catcursos.com.br", fontSize: 8, bold: false, italic: false, underline: false, color: "#9ca3af", align: "left", fontFamily: font, locked: false, visible: true, zIndex: 16 },
-    { id: "qrcode", type: "qrcode", label: "QR Code", x: 1010, y: 710, w: 80, h: 80, locked: false, visible: true, zIndex: 9 },
-  ];
-};
-
-// ─── Default elements for BACK ─────────────────────────────────────────────
-const DEFAULT_BACK = (model) => {
-  const hl = model?.text_formatting?.highlightColor || "#059669";
-  const dark = "#222222";
-  const font = "Arial, sans-serif";
-  return [
-    { id: "back_header", type: "text", label: "Cabeçalho do Verso", x: 50, y: 30, w: 1020, h: 36, text: model?.back_header_text || "Este certificado possui registro interno para verificação de autenticidade.", fontSize: 9, bold: false, italic: false, underline: false, color: "#6b7280", align: "justify", fontFamily: font, locked: false, visible: true, zIndex: 10 },
-    { id: "back_course_name", type: "text", label: "Nome do Curso", x: 50, y: 80, w: 1020, h: 32, text: "NR-35 – TRABALHO EM ALTURA", fontSize: 12, bold: true, italic: false, underline: false, color: hl, align: "center", fontFamily: font, locked: false, visible: true, zIndex: 11 },
-    { id: "back_content_title", type: "text", label: "Título Conteúdo", x: 50, y: 120, w: 500, h: 28, text: model?.back_content_title || "CONTEÚDO PROGRAMÁTICO", fontSize: 10, bold: true, italic: false, underline: false, color: dark, align: "left", fontFamily: font, locked: false, visible: true, zIndex: 12 },
-    { id: "back_responsibles_title", type: "text", label: "Título Responsáveis", x: 50, y: 460, w: 1020, h: 28, text: model?.back_responsibles_title || "AUTORIDADE E RESPONSABILIDADE TÉCNICA", fontSize: 10, bold: true, italic: false, underline: false, color: dark, align: "left", fontFamily: font, locked: false, visible: true, zIndex: 13 },
-    { id: "back_footer", type: "text", label: "Rodapé Verso", x: 50, y: 740, w: 700, h: 24, text: (model?.back_footer_line1 || "eadcatcursos.com.br") + " · " + (model?.back_footer_line2 || "www.catcursos.com.br"), fontSize: 8, bold: false, italic: false, underline: false, color: "#9ca3af", align: "left", fontFamily: font, locked: false, visible: true, zIndex: 14 },
-    { id: "back_qrcode", type: "qrcode", label: "QR Code Verso", x: 1010, y: 710, w: 80, h: 80, locked: false, visible: true, zIndex: 9 },
-  ];
-};
-
 // ─── Element Renderer ───────────────────────────────────────────────────────
-function ElementRenderer({ el, isSelected, onSelect, onDragStart, onResizeStart }) {
+// Usa o mesmo contexto de dados do motor de emissão (certificateElements)
+// para exibir no editor exatamente o que sairá no certificado.
+function ElementRenderer({ el, isSelected, onSelect, onDragStart, onResizeStart, ctx }) {
   const handleMouseDown = (e) => {
     if (el.locked) return;
     e.stopPropagation();
@@ -75,23 +47,27 @@ function ElementRenderer({ el, isSelected, onSelect, onDragStart, onResizeStart 
   if (el.type === "text") {
     content = (
       <div style={{ width: "100%", height: "100%", fontFamily: el.fontFamily || "Arial, sans-serif", fontSize: el.fontSize || 12, fontWeight: el.bold ? "bold" : "normal", fontStyle: el.italic ? "italic" : "normal", textDecoration: el.underline ? "underline" : "none", color: el.color || "#222", textAlign: el.align || "left", lineHeight: 1.4, whiteSpace: "pre-wrap", overflow: "hidden", padding: "2px", pointerEvents: "none" }}>
-        {el.text}
+        {ctx ? resolveElementText(el, ctx) : el.text}
       </div>
     );
   } else if (el.type === "image") {
     content = <img src={el.src} alt={el.label} style={{ width: "100%", height: "100%", objectFit: "contain", pointerEvents: "none" }} draggable={false} />;
   } else if (el.type === "qrcode") {
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://catcursos.com.br/validar&format=svg&margin=2`;
+    const qrUrl = ctx?.qrUrl || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://catcursos.com.br/validar&format=svg&margin=2`;
     content = <img src={qrUrl} alt="QR Code" style={{ width: "100%", height: "100%", objectFit: "contain", pointerEvents: "none" }} draggable={false} />;
   } else if (el.type === "signature") {
     content = (
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", pointerEvents: "none" }}>
         {el.src && <img src={el.src} alt="Assinatura" style={{ maxHeight: "60%", objectFit: "contain" }} draggable={false} />}
         <div style={{ borderTop: "1.5px solid #374151", width: "100%", paddingTop: 2, textAlign: "center" }}>
-          <span style={{ fontFamily: "Arial, sans-serif", fontSize: 9, color: "#374151" }}>{el.text || "Assinatura"}</span>
+          <span style={{ fontFamily: "Arial, sans-serif", fontSize: 9, color: "#374151" }}>{ctx ? substituteVars(el.text, ctx) : (el.text || "Assinatura")}</span>
         </div>
       </div>
     );
+  } else if (el.type === "programmatic") {
+    content = <div style={{ width: "100%", height: "100%", overflow: "hidden", pointerEvents: "none" }} dangerouslySetInnerHTML={{ __html: programmaticInnerHTML(ctx || { programmaticContent: [], showHours: true, highlightColor: "#059669" }) }} />;
+  } else if (el.type === "responsibles") {
+    content = <div style={{ width: "100%", height: "100%", overflow: "hidden", pointerEvents: "none" }} dangerouslySetInnerHTML={{ __html: responsiblesInnerHTML(ctx || { responsibles: [] }) }} />;
   }
 
   const handles = [
@@ -347,6 +323,8 @@ export default function CanvasEditor({ model, signatures = [], onSaveCanvas }) {
     else if (type === "image") el = { ...base, type: "image", label: "Imagem", w: 120, h: 80, src: "" };
     else if (type === "qrcode") el = { ...base, type: "qrcode", label: "QR Code", w: 80, h: 80 };
     else if (type === "signature") el = { ...base, type: "signature", label: "Assinatura", w: 200, h: 80, text: "Nome do Responsável", src: "" };
+    else if (type === "programmatic") el = { ...base, type: "programmatic", label: "Conteúdo Programático", w: 700, h: 250 };
+    else if (type === "responsibles") el = { ...base, type: "responsibles", label: "Responsáveis Técnicos", w: 900, h: 150 };
     setElements(prev => [...prev, el]);
     setSelected(id);
   }, [setElements]);
@@ -405,6 +383,9 @@ export default function CanvasEditor({ model, signatures = [], onSaveCanvas }) {
 
   const sortedEls = [...elements].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
 
+  // Contexto de dados de exemplo — mesmo motor da emissão, garantindo WYSIWYG
+  const sampleCtx = buildCertContext(model, SAMPLE_CERT);
+
   return (
     <div className="flex flex-col h-full bg-gray-900">
       {showSaveModal && <SaveModal onSaveGlobal={handleSave} onClose={() => setShowSaveModal(false)} />}
@@ -423,7 +404,7 @@ export default function CanvasEditor({ model, signatures = [], onSaveCanvas }) {
         <div className="w-px h-5 bg-gray-600" />
 
         {/* Add elements */}
-        {[["text", <Type className="w-3 h-3" />, "+ Texto"], ["image", <Image className="w-3 h-3" />, "+ Imagem"], ["qrcode", <QrCode className="w-3 h-3" />, "+ QR Code"], ["signature", <PenLine className="w-3 h-3" />, "+ Assinatura"]].map(([type, icon, label]) => (
+        {[["text", <Type className="w-3 h-3" />, "+ Texto"], ["image", <Image className="w-3 h-3" />, "+ Imagem"], ["qrcode", <QrCode className="w-3 h-3" />, "+ QR Code"], ["signature", <PenLine className="w-3 h-3" />, "+ Assinatura"], ["programmatic", <Table className="w-3 h-3" />, "+ Conteúdo"], ["responsibles", <Users className="w-3 h-3" />, "+ Responsáveis"]].map(([type, icon, label]) => (
           <button key={type} onClick={() => addElement(type)} className="flex items-center gap-1 bg-gray-700 hover:bg-gray-600 text-white text-xs px-2 py-1 rounded">
             {icon} {label}
           </button>
@@ -476,7 +457,7 @@ export default function CanvasEditor({ model, signatures = [], onSaveCanvas }) {
                 </svg>
               )}
               {sortedEls.map(el => (
-                <ElementRenderer key={el.id} el={el} isSelected={selected === el.id} onSelect={setSelected} onDragStart={onDragStart} onResizeStart={onResizeStart} />
+                <ElementRenderer key={el.id} el={el} isSelected={selected === el.id} onSelect={setSelected} onDragStart={onDragStart} onResizeStart={onResizeStart} ctx={sampleCtx} />
               ))}
             </div>
           </div>
@@ -496,6 +477,8 @@ export default function CanvasEditor({ model, signatures = [], onSaveCanvas }) {
                   {el.type === "image" && <Image className="w-3 h-3 flex-shrink-0 text-gray-400" />}
                   {el.type === "qrcode" && <QrCode className="w-3 h-3 flex-shrink-0 text-gray-400" />}
                   {el.type === "signature" && <PenLine className="w-3 h-3 flex-shrink-0 text-gray-400" />}
+                  {el.type === "programmatic" && <Table className="w-3 h-3 flex-shrink-0 text-gray-400" />}
+                  {el.type === "responsibles" && <Users className="w-3 h-3 flex-shrink-0 text-gray-400" />}
                   <span className="truncate">{el.label}</span>
                   {!el.visible && <EyeOff className="w-3 h-3 ml-auto text-gray-300" />}
                   {el.locked && <Lock className="w-3 h-3 ml-auto text-red-300" />}
