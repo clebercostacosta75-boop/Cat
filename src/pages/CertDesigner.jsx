@@ -17,6 +17,11 @@ import { Plus, Save, Trash2, Eye, Award, ChevronLeft, Copy } from "lucide-react"
 import { toast } from "sonner";
 import CertificatePreview from "@/components/certificates/CertificatePreview";
 import CourseSearchSelect, { extractDuration } from "@/components/certificates/CourseSearchSelect";
+import SmartModelTextDialog from "@/components/certificates/SmartModelTextDialog";
+import ModelReviewDialog from "@/components/certificates/ModelReviewDialog";
+import { COURSE_TYPES, REQUIRED_FIELDS_BY_TYPE, detectCourseType, parseValidityMonths } from "@/components/certificates/courseTypeFields";
+import { Badge } from "@/components/ui/badge";
+import { ClipboardPaste } from "lucide-react";
 import BackgroundUploader from "@/components/certificates/BackgroundUploader";
 // Editor Visual (CanvasEditor) desativado na interface — código preservado em
 // src/components/certificates/CanvasEditor.jsx e dados editor_canvas_data mantidos.
@@ -25,6 +30,7 @@ const DEFAULT_MODEL = {
   name: "",
   duration: "",
   modality: "Presencial",
+  course_type: "Outro",
   validity_period_months: 12,
   front_title: "CERTIFICADO",
   front_subtitle: "CAPACITAÇÃO PROFISSIONAL",
@@ -66,6 +72,8 @@ export default function CertDesigner() {
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(DEFAULT_MODEL);
   const [creating, setCreating] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [textDialogOpen, setTextDialogOpen] = useState(false);
 
   const { data: models = [], isLoading } = useQuery({
     queryKey: ["certificateModels"],
@@ -163,17 +171,40 @@ export default function CertDesigner() {
   const handleSave = () => {
     if (!form.name) return toast.error("Informe o nome do modelo.");
     if (!form.duration) return toast.error("Informe a carga horária.");
+    setReviewOpen(true);
+  };
+
+  const confirmSave = () => {
+    setReviewOpen(false);
     saveMutation.mutate(form);
   };
 
   const handleDuplicate = (model) => {
-    const copy = { ...model, name: `${model.name} (cópia)`, id: undefined };
+    const copy = { ...model, name: `${model.name} (cópia)` };
     delete copy.id;
-    saveMutation.mutate(copy);
-    toast.success("Modelo duplicado!");
+    delete copy.created_date;
+    delete copy.updated_date;
+    delete copy.created_by_id;
+    setSelectedId(null);
+    setCreating(true);
+    setForm({ ...DEFAULT_MODEL, ...copy });
+    toast.info("Cópia criada como novo modelo — ajuste os dados e clique em Salvar.");
     logAction("modelo_duplicado", "CertificateModel", model.id, model.name, {
-      descricao: `Modelo "${model.name}" duplicado como "${model.name} (cópia)"`,
+      descricao: `Modelo "${model.name}" duplicado como rascunho "${model.name} (cópia)"`,
     });
+  };
+
+  const applyParsedText = (parsed) => {
+    setForm(f => ({
+      ...f,
+      ...(parsed.name ? { name: parsed.name, course_type: detectCourseType(parsed.name) } : {}),
+      ...(parsed.duration ? { duration: parsed.duration } : {}),
+      ...(parsed.modality ? { modality: parsed.modality } : {}),
+      ...(parsed.validity_period_months != null ? { validity_period_months: parsed.validity_period_months } : {}),
+      ...(parsed.programmatic_content?.length ? { programmatic_content: parsed.programmatic_content } : {}),
+      ...(parsed.technical_responsibles?.length ? { technical_responsibles: parsed.technical_responsibles } : {}),
+    }));
+    toast.success("Campos preenchidos a partir do texto. Revise antes de salvar.");
   };
 
   const isEditing = selectedId || creating;
@@ -277,16 +308,26 @@ export default function CertDesigner() {
 
                   {/* GERAL */}
                   <TabsContent value="geral" className="space-y-4">
-                    <FieldGroup label="Nome do Modelo *">
+                    <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => setTextDialogOpen(true)}>
+                      <ClipboardPaste className="w-3 h-3 mr-1" /> Preencher modelo com texto
+                    </Button>
+                    <FieldGroup label="Nome do Modelo * (criar a partir de curso cadastrado)">
                       <CourseSearchSelect
                         courses={courses}
                         value={form.name}
                         onSelect={(course) => {
                           const duration = extractDuration(course.name);
-                          setForm(f => ({ ...f, name: course.name, ...(duration ? { duration } : {}) }));
+                          const months = parseValidityMonths(course.validity);
+                          setForm(f => ({
+                            ...f,
+                            name: course.name,
+                            course_type: detectCourseType(course.name),
+                            ...(duration ? { duration } : {}),
+                            ...(months ? { validity_period_months: months } : {}),
+                          }));
                         }}
                       />
-                      <p className="text-xs text-gray-400">Busque digitando as iniciais ou o nome do curso cadastrado em Cursos.</p>
+                      <p className="text-xs text-gray-400">Busque digitando as iniciais ou o nome do curso — carga horária, validade e tipo são preenchidos automaticamente.</p>
                     </FieldGroup>
                     <FieldGroup label="Carga Horária *">
                       <Input value={form.duration} onChange={e => set("duration", e.target.value)} placeholder="Ex: 8h" />
@@ -307,6 +348,25 @@ export default function CertDesigner() {
                     <FieldGroup label="Validade (meses)">
                       <Input type="number" value={form.validity_period_months} onChange={e => set("validity_period_months", +e.target.value)} />
                     </FieldGroup>
+                    <FieldGroup label="Tipo do Curso">
+                      <Select value={form.course_type || "Outro"} onValueChange={v => set("course_type", v)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {COURSE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </FieldGroup>
+                    <div className="bg-gray-50 border rounded-lg p-3">
+                      <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1.5">Campos obrigatórios deste tipo</p>
+                      <div className="flex flex-wrap gap-1">
+                        {(REQUIRED_FIELDS_BY_TYPE[form.course_type || "Outro"] || []).map(f => (
+                          <Badge key={f} variant="secondary" className="text-[10px]">{f}</Badge>
+                        ))}
+                      </div>
+                      {form.course_type === "DETRAN" && (
+                        <p className="text-[10px] text-amber-600 mt-1.5">Cursos DETRAN exigem Registro DETRAN, RENACH e Categoria CNH na emissão.</p>
+                      )}
+                    </div>
 
                     <div className="border-t pt-4">
                       <Label className="text-xs text-gray-500 uppercase tracking-wider">Conteúdo Programático</Label>
@@ -562,6 +622,9 @@ export default function CertDesigner() {
               </div>
               <CertificatePreview model={form} cert={{ course_name: form.name || "Nome do Modelo", course_duration: form.duration || "" }} scale={0.42} />
             </div>
+
+            <SmartModelTextDialog open={textDialogOpen} onOpenChange={setTextDialogOpen} onApply={applyParsedText} />
+            <ModelReviewDialog open={reviewOpen} onOpenChange={setReviewOpen} form={form} onConfirm={confirmSave} saving={saveMutation.isPending} />
           </div>
         )}
       </div>
