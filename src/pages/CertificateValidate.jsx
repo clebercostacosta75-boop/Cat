@@ -7,6 +7,13 @@ import CertificateDownloader from "@/components/certificates/CertificateDownload
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+// Máscara de CPF — nunca exibir CPF completo em página pública
+function maskCpf(cpf) {
+  const d = (cpf || "").replace(/\D/g, "");
+  if (d.length !== 11) return "***.***.***-**";
+  return `***.***.${d.slice(6, 9)}-**`;
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return "-";
   try {
@@ -35,6 +42,9 @@ export default function CertificateValidate() {
     try {
       const results = await base44.entities.Certificate.filter({ certificate_code: q });
       setResult(results && results.length > 0 ? results[0] : null);
+      if (results && results.length > 0) {
+        base44.functions.invoke("certificadoPublico", { action: "log", code: q, event: "validacao_publica" }).catch(() => {});
+      }
     } catch {
       setResult(null);
     } finally {
@@ -124,7 +134,7 @@ export default function CertificateValidate() {
                   <div className="text-center border-b pb-4">
                     <Award className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
                     <p className="text-lg sm:text-xl font-bold text-gray-900">{result.student_name}</p>
-                    <p className="text-xs sm:text-sm text-gray-500">CPF: {result.student_cpf}</p>
+                    <p className="text-xs sm:text-sm text-gray-500">CPF: {maskCpf(result.student_cpf)}</p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">

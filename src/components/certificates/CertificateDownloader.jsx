@@ -72,10 +72,40 @@ async function renderPageToCanvas(html, pageIndex) {
   });
 }
 
+// Regras de bloqueio de download — retorna o motivo do bloqueio ou null se permitido
+export function getDownloadBlockReason(cert) {
+  if (!cert) return "Certificado não encontrado";
+  const now = new Date();
+  if (cert.status === "revoked") return "Certificado revogado — download não permitido.";
+  if (cert.is_blocked) return "O download deste certificado está bloqueado. Entre em contato com a CAT Cursos.";
+  if (cert.download_deadline && new Date(cert.download_deadline) < now) return "O prazo para download deste certificado expirou.";
+  if (cert.valid_until && new Date(cert.valid_until) < now) return "Certificado vencido — download não permitido.";
+  return null;
+}
+
+function logDownloadEvent(cert, event, details) {
+  if (!cert?.certificate_code) return;
+  base44.functions.invoke("certificadoPublico", {
+    action: "log",
+    code: cert.certificate_code,
+    event,
+    details,
+  }).catch(() => {});
+}
+
 export default function CertificateDownloader({ certificate, model: modelProp, size = "default", className = "" }) {
   const [downloading, setDownloading] = useState(false);
 
+  const blockReason = getDownloadBlockReason(certificate);
+
   const downloadPDF = async () => {
+    // Controle de download: is_blocked, download_deadline, valid_until, status
+    if (blockReason) {
+      toast.error(blockReason);
+      logDownloadEvent(certificate, "download_bloqueado", blockReason);
+      return;
+    }
+    logDownloadEvent(certificate, "download_permitido");
     setDownloading(true);
     const toastId = toast.loading("Gerando PDF do certificado...");
     try {
@@ -128,6 +158,11 @@ export default function CertificateDownloader({ certificate, model: modelProp, s
         <>
           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
           Gerando PDF...
+        </>
+      ) : blockReason ? (
+        <>
+          <Download className="w-4 h-4" />
+          Download Bloqueado
         </>
       ) : (
         <>

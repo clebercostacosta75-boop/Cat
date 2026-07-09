@@ -8,6 +8,18 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import CertificateDownloader from "@/components/certificates/CertificateDownloader";
 
+// Máscara de CPF — nunca exibir CPF completo em página pública
+function maskCpf(cpf) {
+  const d = (cpf || "").replace(/\D/g, "");
+  if (d.length !== 11) return "***.***.***-**";
+  return `***.***.${d.slice(6, 9)}-**`;
+}
+
+// Registro de eventos de auditoria pública (fire-and-forget)
+function logEvent(code, event, details) {
+  base44.functions.invoke("certificadoPublico", { action: "log", code, event, details }).catch(() => {});
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return "-";
   try {
@@ -38,8 +50,11 @@ export default function CertificateSign() {
     base44.entities.Certificate.filter({ certificate_code: certCode })
       .then(results => {
         if (!results || results.length === 0) { setError("Certificado não encontrado."); setLoading(false); return; }
-        setCert(results[0]);
+        const c = results[0];
+        setCert(c);
         setLoading(false);
+        const expired = c.status === "pending_signature" && c.signature_link_expires_at && new Date(c.signature_link_expires_at) < new Date();
+        logEvent(certCode, expired ? "link_expirado" : "link_acesso");
       })
       .catch(() => { setError("Erro ao carregar certificado."); setLoading(false); });
   }, [certCode]);
@@ -102,11 +117,15 @@ export default function CertificateSign() {
     const certCpf = (cert.student_cpf || "").replace(/\D/g, "");
     if (cleaned !== certCpf) {
       setCpfError("CPF não corresponde ao cadastrado. Verifique e tente novamente.");
+      logEvent(certCode, "cpf_incorreto");
       return;
     }
     setCpfError("");
     setStep("sign");
   };
+
+  const linkExpired = cert && cert.status === "pending_signature" &&
+    cert.signature_link_expires_at && new Date(cert.signature_link_expires_at) < new Date();
 
   const handleSign = async () => {
     if (!hasDrawn) return;
@@ -120,17 +139,22 @@ export default function CertificateSign() {
       const file = new File([blob], "assinatura.png", { type: "image/png" });
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      await base44.entities.Certificate.update(cert.id, {
-        status: "signed",
-        signature_url: file_url,
-        signed_at: new Date().toISOString(),
-        signed_device: navigator.userAgent,
+      // Assinatura validada e gravada no backend (CPF, expiração, IP, dispositivo, auditoria)
+      const res = await base44.functions.invoke("certificadoPublico", {
+        action: "sign",
+        code: certCode,
+        cpf: cpfInput,
+        signature_file_url: file_url,
       });
 
-      setCert(prev => ({ ...prev, status: "signed", signature_url: file_url, signed_at: new Date().toISOString() }));
+      setCert(prev => ({ ...prev, status: "signed", signature_url: file_url, signed_at: res.data?.signed_at || new Date().toISOString() }));
       setStep("done");
     } catch (err) {
-      alert("Erro ao registrar assinatura. Tente novamente.");
+      const code = err?.response?.data?.error;
+      if (code === "link_expirado") alert("Este link de assinatura expirou. Solicite um novo link à CAT Cursos.");
+      else if (code === "cpf_incorreto") alert("CPF não confere com o certificado. Assinatura bloqueada.");
+      else if (code === "certificado_revogado") alert("Este certificado foi revogado e não pode ser assinado.");
+      else alert("Erro ao registrar assinatura. Tente novamente.");
     } finally {
       setSigning(false);
     }
@@ -148,6 +172,16 @@ export default function CertificateSign() {
         <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
         <h2 className="text-xl font-bold text-gray-800 mb-2">Certificado não encontrado</h2>
         <p className="text-gray-500">{error}</p>
+      </div>
+    </div>
+  );
+
+  if (linkExpired) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="text-center max-w-md">
+        <AlertTriangle className="w-16 h-16 text-amber-400 mx-auto mb-4" />
+        <h2 className="text-xl font-bold text-gray-800 mb-2">Link de Assinatura Expirado</h2>
+        <p className="text-gray-500">Este link de assinatura expirou e não pode mais ser utilizado. Entre em contato com a CAT Cursos para solicitar um novo link.</p>
       </div>
     </div>
   );
@@ -209,7 +243,7 @@ export default function CertificateSign() {
                 <div className="text-center py-4 border-b border-gray-100">
                   <p className="text-sm text-gray-500 uppercase tracking-wider mb-1">Certificamos que</p>
                   <p className="text-2xl font-bold text-gray-900">{cert.student_name}</p>
-                  <p className="text-gray-500 text-sm mt-1">CPF: {cert.student_cpf}</p>
+                  <p className="text-gray-500 text-sm mt-1">CPF: {maskCpf(cert.student_cpf)}</p>
                 </div>
 
                 <div className="text-center py-2 border-b border-gray-100">
