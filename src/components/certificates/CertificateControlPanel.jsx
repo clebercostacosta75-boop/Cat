@@ -24,6 +24,8 @@ import RevocationDialog from "./RevocationDialog";
 import CertificateStatusBadge from "./CertificateStatusBadge";
 import GerarCertificadoWizard from "./GerarCertificadoWizard";
 import { gerarCodigoInternoControle } from "@/lib/certControl";
+import { classificarFila, verificarAptidao } from "@/lib/aptidaoCertificacao";
+import FilaPendenciasBloqueados from "./FilaPendenciasBloqueados";
 
 const AUTHORIZED_ROLES = ["admin", "gestor_master", "Administrador Master", "Certificacao", "Certificação"];
 
@@ -59,6 +61,11 @@ export default function CertificateControlPanel() {
     refetchInterval: 30000,
   });
 
+  const { data: certModels = [] } = useQuery({
+    queryKey: ["cert-models-control"],
+    queryFn: () => base44.entities.CertificateModel.list(),
+  });
+
   const updateEnrollment = useMutation({
     mutationFn: ({ id, data }) => base44.entities.StudentCourseEnrollment.update(id, data),
     onSuccess: () => queryClient.invalidateQueries(["enrollments-control"]),
@@ -77,9 +84,9 @@ export default function CertificateControlPanel() {
     onSuccess: () => queryClient.invalidateQueries(["certificates-control"]),
   });
 
-  // Fila de certificação: alunos com status "Autorizado" aguardando ação manual
-  const certQueue = enrollments
-    .filter(e => e.status === "Autorizado")
+  // Fila de Certificação (SPR-A): classificação automática por aptidão
+  const fila = classificarFila(enrollments, { certModels, certificates });
+  const certQueue = fila.aguardando
     .sort((a, b) => {
       const da = a.end_date ? new Date(a.end_date) : new Date(a.created_date);
       const db = b.end_date ? new Date(b.end_date) : new Date(b.created_date);
@@ -90,6 +97,23 @@ export default function CertificateControlPanel() {
   const awaitingAuth = enrollments.filter(e => e.status === "Aguardando Autorização");
 
   const handleAuthorize = async (enrollment) => {
+    // SPR-A: autorização exige resultado acadêmico Aprovado
+    if (enrollment.resultado_academico && enrollment.resultado_academico !== "Aprovado") {
+      toast.error(`Bloqueado: resultado acadêmico "${enrollment.resultado_academico}". Defina como Aprovado na Gestão Acadêmica.`);
+      try {
+        const user = await base44.auth.me();
+        await base44.entities.AuditLog.create({
+          user_email: user?.email || "desconhecido",
+          user_name: user?.full_name || user?.email || "desconhecido",
+          action: "update",
+          entity_type: "StudentCourseEnrollment",
+          entity_id: enrollment.id,
+          entity_name: `${enrollment.student_name} — ${enrollment.course_name}`,
+          details: `TENTATIVA DE AUTORIZAÇÃO BLOQUEADA em ${new Date().toLocaleString("pt-BR")}. Resultado acadêmico: ${enrollment.resultado_academico}.`,
+        });
+      } catch { /* log não bloqueia */ }
+      return;
+    }
     await updateEnrollment.mutateAsync({
       id: enrollment.id,
       data: { status: "Autorizado", authorized_at: new Date().toISOString() },
@@ -101,6 +125,27 @@ export default function CertificateControlPanel() {
     setGeneratingId(enrollment.id);
     try {
       const user = await base44.auth.me();
+
+      // SPR-A: bloqueio de emissão para matrículas não aptas
+      const aval = verificarAptidao(enrollment, { certModels, certificates });
+      if (aval.grupo !== "aguardando") {
+        const motivo = aval.bloqueios.join("; ") || "Matrícula não apta para certificação";
+        try {
+          await base44.entities.AuditLog.create({
+            user_email: user?.email || "desconhecido",
+            user_name: user?.full_name || user?.email || "desconhecido",
+            action: "update",
+            entity_type: "StudentCourseEnrollment",
+            entity_id: enrollment.id,
+            entity_name: `${enrollment.student_name} — ${enrollment.course_name}`,
+            details: `TENTATIVA DE EMISSÃO DE CERTIFICADO BLOQUEADA em ${new Date().toLocaleString("pt-BR")}. Motivo: ${motivo}`,
+          });
+        } catch { /* log não bloqueia */ }
+        toast.error("Emissão bloqueada: " + motivo);
+        setWizardEnrollment(null);
+        return;
+      }
+
       const code = generateCertCode();
       const now = new Date();
       const expiresAt = addDays(now, 7);
@@ -378,6 +423,9 @@ export default function CertificateControlPanel() {
           </table>
         )}
       </div>
+
+      {/* PENDÊNCIAS E BLOQUEADOS (SPR-A) */}
+      <FilaPendenciasBloqueados pendencias={fila.pendencias} bloqueados={fila.bloqueados} />
 
       {/* CERTIFICADOS EMITIDOS */}
       <div className="border rounded-lg overflow-hidden">

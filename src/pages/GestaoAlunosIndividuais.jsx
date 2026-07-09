@@ -26,6 +26,7 @@ import NovoCursoModal from "@/components/alunos/NovoCursoModal";
 import NovaMatriculaModal from "@/components/alunos/NovaMatriculaModal";
 import BaseConhecimentoTab from "@/components/alunos/BaseConhecimentoTab";
 import ImportarAlunosPlanilha from "@/components/alunos/ImportarAlunosPlanilha";
+import ResultadoAcademicoModal from "@/components/alunos/ResultadoAcademicoModal";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -711,6 +712,7 @@ function MatriculasCursos() {
   const [financeiroEnrollment, setFinanceiroEnrollment] = useState(null);
   const [confirmandoPix, setConfirmandoPix] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [resultadoEnrollment, setResultadoEnrollment] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
@@ -753,6 +755,13 @@ function MatriculasCursos() {
     "Assinado": "bg-purple-100 text-purple-800",
     "Vencido": "bg-red-100 text-red-800",
     "Revogado": "bg-gray-100 text-gray-800",
+  };
+
+  const RESULTADO_COLORS = {
+    "Aprovado": "bg-green-100 text-green-800",
+    "Reprovado": "bg-red-100 text-red-700",
+    "Não Concluiu": "bg-yellow-100 text-yellow-800",
+    "Pendente": "bg-gray-100 text-gray-600",
   };
 
   const pagamentoColors = {
@@ -806,6 +815,15 @@ function MatriculasCursos() {
         onClose={() => setImportOpen(false)}
         onImported={() => { queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] }); queryClient.invalidateQueries({ queryKey: ["students-pf"] }); }}
       />
+
+      {/* Modal Resultado Acadêmico (SPR-A) */}
+      {resultadoEnrollment && (
+        <ResultadoAcademicoModal
+          enrollment={resultadoEnrollment}
+          onClose={() => setResultadoEnrollment(null)}
+          onSaved={() => queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] })}
+        />
+      )}
 
       {/* Modal Nova Matrícula com busca de aluno */}
       <NovaMatriculaModal
@@ -976,6 +994,9 @@ function MatriculasCursos() {
                       </div>
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         <Badge className={`text-xs ${statusColors[e.status] || "bg-gray-100 text-gray-800"}`}>{e.status}</Badge>
+                        <Badge className={`text-xs ${RESULTADO_COLORS[e.resultado_academico] || "bg-gray-100 text-gray-500"}`}>
+                          🎓 {e.resultado_academico || "Sem resultado"}
+                        </Badge>
                         {e.status_pagamento && (
                           <Badge className={`text-xs ${
                             e.forma_pagamento === "Pix" && e.status_pagamento === "Pendente"
@@ -1035,12 +1056,29 @@ function MatriculasCursos() {
                         </Button>
                       )}
 
-                      {/* Autorizar */}
+                      {/* Resultado Acadêmico (SPR-A) */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7 border-indigo-300 text-indigo-700 hover:bg-indigo-50 w-full"
+                        onClick={() => setResultadoEnrollment(e)}
+                      >
+                        🎓 Resultado
+                      </Button>
+
+                      {/* Autorizar — exige Resultado Acadêmico Aprovado */}
                       {e.status === "Aguardando Autorização" && (
                         <Button
                           size="sm"
                           className="bg-green-600 hover:bg-green-700 text-white text-xs h-7 w-full"
-                          onClick={() => updateStatusMutation.mutate({ id: e.id, status: "Autorizado" })}
+                          onClick={() => {
+                            if (e.resultado_academico !== "Aprovado") {
+                              toast.error("Defina o Resultado Acadêmico como Aprovado antes de autorizar a certificação.");
+                              setResultadoEnrollment(e);
+                              return;
+                            }
+                            updateStatusMutation.mutate({ id: e.id, status: "Autorizado" });
+                          }}
                         >
                           <CheckCircle className="w-3 h-3 mr-1" /> ✅ Autorizar
                         </Button>

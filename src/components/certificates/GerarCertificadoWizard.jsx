@@ -29,7 +29,7 @@ const STEPS = ["Verificar Dados", "Escolher Modelo", "Pré-visualizar e Confirma
 export default function GerarCertificadoWizard({ enrollment, onConfirm, onCancel, isLoading }) {
   const [step, setStep] = useState(0);
   const [selectedModelId, setSelectedModelId] = useState(enrollment?.certificate_model_id || "");
-  const [resultado, setResultado] = useState("Aprovado");
+  const [resultado, setResultado] = useState(enrollment?.resultado_academico || "Aprovado");
   const [observacoes, setObservacoes] = useState("");
   const [showPreview, setShowPreview] = useState(false);
 
@@ -210,6 +210,14 @@ export default function GerarCertificadoWizard({ enrollment, onConfirm, onCancel
             {/* Resultado e observações */}
             <div className="border rounded-lg p-4 space-y-3">
               <h4 className="font-semibold text-sm text-gray-700">Resultado do Treinamento</h4>
+              {enrollment?.resultado_academico ? (
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-green-100 text-green-800">{enrollment.resultado_academico}</Badge>
+                  <span className="text-xs text-gray-500">
+                    Definido na Gestão Acadêmica{enrollment.responsavel_resultado ? ` por ${enrollment.responsavel_resultado}` : ""} — somente leitura
+                  </span>
+                </div>
+              ) : (
               <div className="flex gap-2">
                 {[
                   { value: "Aprovado", label: "🟢 Aprovado", cls: "border-green-300 text-green-700 bg-green-50" },
@@ -227,6 +235,7 @@ export default function GerarCertificadoWizard({ enrollment, onConfirm, onCancel
                   </button>
                 ))}
               </div>
+              )}
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Observações (opcional)</label>
                 <textarea
