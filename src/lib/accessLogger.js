@@ -44,6 +44,47 @@ export async function logLoginSuccess() {
   }
 }
 
+// Registra falha de acesso (login negado) via backend — uma vez por sessão/motivo
+export async function logAccessDenied(eventType, reason) {
+  try {
+    const key = `cat_denied_${eventType}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    await base44.functions.invoke('registrarAcessoNegado', {
+      event_type: eventType,
+      reason,
+      session_id: getSessionId(),
+    });
+  } catch {
+    // logging nunca deve quebrar o app
+  }
+}
+
+// Intercepta o logout para registrar a saída antes de encerrar a sessão
+if (typeof window !== 'undefined' && base44?.auth?.logout && !base44.auth.__logoutWrapped) {
+  const origLogout = base44.auth.logout.bind(base44.auth);
+  base44.auth.logout = async (...args) => {
+    try {
+      const user = await base44.auth.me();
+      if (user) {
+        await base44.entities.AccessLog.create({
+          user_email: user.email,
+          event_type: 'logout',
+          reason: 'Sessão encerrada pelo usuário',
+          module: 'Logout',
+          session_id: getSessionId(),
+          ip_address: cachedIp || '',
+          user_agent: navigator.userAgent,
+        });
+      }
+    } catch {
+      // logging nunca deve quebrar o logout
+    }
+    return origLogout(...args);
+  };
+  base44.auth.__logoutWrapped = true;
+}
+
 // Registra o acesso a cada módulo uma vez por sessão
 export async function logModuleAccess(module) {
   if (!module) return;

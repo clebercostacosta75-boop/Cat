@@ -45,6 +45,7 @@ import Analytics from './pages/Analytics.jsx';
 import AccessLog from './pages/AccessLog.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
 import { PermissionsProvider } from '@/lib/PermissionsContext';
+import { logAccessDenied } from '@/lib/accessLogger';
 import AuditoriaCompleta from './pages/AuditoriaCompleta.jsx';
 import BackupDownload from './pages/BackupDownload.jsx';
 import PortalInstrutor from './pages/PortalInstrutor.jsx';
@@ -95,6 +96,13 @@ const AuthenticatedApp = () => {
     if (isAuthenticated) checkConsent();
     else setConsentChecked(true);
   }, [isAuthenticated]);
+
+  // Log de Acesso: registra tentativas de login negadas
+  useEffect(() => {
+    if (authError?.type === 'user_not_registered') {
+      logAccessDenied('not_registered', 'Usuário autenticado mas não cadastrado no sistema');
+    }
+  }, [authError]);
 
   if (isLoadingPublicSettings || isLoadingAuth || !consentChecked) {
     return (
