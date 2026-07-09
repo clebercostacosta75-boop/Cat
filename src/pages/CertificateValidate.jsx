@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Award, CheckCircle, XCircle, Search, Shield, AlertTriangle, Download } from "lucide-react";
 import CertificateDownloader from "@/components/certificates/CertificateDownloader";
+import ComprovanteAssinaturaDigital from "@/components/certificates/ComprovanteAssinaturaDigital";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -191,17 +192,9 @@ export default function CertificateValidate() {
                     </div>
                   </div>
 
-                  {/* Signature info */}
+                  {/* Comprovante da assinatura digital */}
                   {result.status === "signed" && (
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm">
-                      <p className="font-semibold text-emerald-800 mb-2 flex items-center gap-1">
-                        <Shield className="w-4 h-4" /> Assinatura Digital Verificada
-                      </p>
-                      <p className="text-emerald-700 text-xs sm:text-sm">Assinado em: {result.signed_at ? format(new Date(result.signed_at), "dd/MM/yyyy 'às' HH:mm") : "-"}</p>
-                      {result.signature_url && (
-                        <img src={result.signature_url} alt="Assinatura" className="h-8 sm:h-10 mt-3 object-contain mx-auto" />
-                      )}
-                    </div>
+                    <ComprovanteAssinaturaDigital certificate={result} />
                   )}
 
                   {/* Botão de download para certificados assinados */}

@@ -60,6 +60,38 @@ Deno.serve(async (req) => {
       return Response.json({ success: true });
     }
 
+    // ── Comprovante público da assinatura digital ──
+    if (action === "comprovante") {
+      if (cert.status !== "signed" || !cert.signed_at) {
+        return Response.json({ error: "nao_assinado" }, { status: 404 });
+      }
+      // Hash determinístico da assinatura (SHA-256 dos dados imutáveis do ato)
+      const payload = `${cert.certificate_code}|${(cert.student_cpf || "").replace(/\D/g, "")}|${cert.signed_at}|${cert.signature_url || ""}`;
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
+      const hash = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+      // ID do registro de auditoria da assinatura
+      let auditId = null;
+      try {
+        const logs = await base44.asServiceRole.entities.AuditLog.filter(
+          { entity_id: cert.id, action: "sign" }, "-created_date", 50
+        );
+        const signLog = (logs || []).find(l => (l.details || "").includes("concluída com sucesso"));
+        auditId = signLog?.id || null;
+      } catch (e) {
+        console.error("Falha ao buscar auditoria:", e.message);
+      }
+
+      return Response.json({
+        signed_at: cert.signed_at,
+        signed_ip: cert.signed_ip || null,
+        signed_device: cert.signed_device || null,
+        internal_control_code: cert.internal_control_code || null,
+        signature_hash: hash,
+        audit_id: auditId,
+      });
+    }
+
     // ── Assinatura digital ──
     if (action === "sign") {
       if (cert.status === "revoked") {
