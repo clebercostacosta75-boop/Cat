@@ -149,6 +149,20 @@ export default function EnrollmentForm({ onSuccess, onCancel, initialData = null
       return;
     }
     setLoading(true);
+    // Evitar duplicidade: mesmo aluno + curso (+ turma, se informada)
+    const existing = await base44.entities.StudentCourseEnrollment.filter({
+      student_id: form.student_id,
+      course_id: form.course_id,
+    });
+    const duplicated = existing.filter(e =>
+      e.status !== "Revogado" && e.status !== "Vencido" &&
+      (!form.class_schedule_id || !e.class_schedule_id || e.class_schedule_id === form.class_schedule_id)
+    );
+    if (duplicated.length > 0) {
+      setLoading(false);
+      alert("Este aluno já possui matrícula ativa neste curso. Matrícula duplicada não é permitida.");
+      return;
+    }
     await base44.entities.StudentCourseEnrollment.create({
       ...form,
       status: "Aguardando Autorização"
@@ -237,6 +251,8 @@ export default function EnrollmentForm({ onSuccess, onCancel, initialData = null
                 class_schedule_id: id,
                 instructor_name: f.instructor_name || turma?.instructor_name || "",
                 instructor_id: f.instructor_id || turma?.instructor_id || "",
+                company_id: f.company_id || turma?.company_id || "",
+                company_name: f.company_name || turma?.company_name || "",
               }));
             }}
           >

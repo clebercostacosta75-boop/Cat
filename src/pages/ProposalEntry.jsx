@@ -201,15 +201,21 @@ export default function ProposalEntry() {
         }
       }
 
+      // Vincular cursos do catálogo pelo nome (training_id) para manter o fluxo íntegro
+      const catalogCourses = await base44.entities.Course.list('-created_date', 500);
+      const normName = (v) => (v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
       // Cria turmas no Cronograma com status "Aguardando" — sem datas/instrutor/local
       // O operador completa esses dados diretamente no Cronograma
       const classIds = [];
       for (let i = 0; i < (editData.courses || []).length; i++) {
         const course = editData.courses[i];
         const numTurmas = parseInt(course.num_turmas) || 1;
+        const matchedCourse = catalogCourses.find(c => normName(c.name) === normName(course.course_name));
         for (let t = 1; t <= numTurmas; t++) {
           const cls = await base44.entities.ClassSchedule.create({
             training_name: course.course_name,
+            training_id: matchedCourse?.id || null,
             company_name: editData.company_name,
             company_id: resolvedCompanyId || null,
             students_count: parseInt(course.students_count) || 0,
