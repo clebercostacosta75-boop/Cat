@@ -18,7 +18,7 @@ export default function CoursesPage() {
   const { data: courses = [], isLoading, error } = useQuery({
     queryKey: ['courses'],
     queryFn: async () => {
-      const result = await base44.entities.Course.list('-created_date', 200);
+      const result = await base44.entities.Course.list('name', 5000);
       return result || [];
     },
     staleTime: 0,
@@ -131,9 +131,13 @@ export default function CoursesPage() {
     });
   };
 
-  const filteredCourses = courses.filter((course) =>
-    course.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCourses = courses.filter((course) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      course.name?.toLowerCase().includes(term) ||
+      course.description?.toLowerCase().includes(term)
+    );
+  });
 
   if (isLoading) {
     return (
