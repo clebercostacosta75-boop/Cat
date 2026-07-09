@@ -544,6 +544,18 @@ export default function CertDesigner() {
                         <Input type="number" value={form.page_height || 210} onChange={e => set("page_height", +e.target.value)} />
                       </FieldGroup>
                     </div>
+                    <div className={`border rounded-lg p-3 flex items-center justify-between gap-2 ${(form.page_width || 297) === 297 && (form.page_height || 210) === 210 ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"}`}>
+                      <p className="text-xs">
+                        {(form.page_width || 297) === 297 && (form.page_height || 210) === 210
+                          ? <span className="text-emerald-700">✓ Formato padrão A4 paisagem (297 × 210 mm) — pronto para impressão.</span>
+                          : <span className="text-amber-700">⚠ Fora do padrão A4 (297 × 210 mm) — a impressão pode sair incorreta.</span>}
+                      </p>
+                      {((form.page_width || 297) !== 297 || (form.page_height || 210) !== 210) && (
+                        <Button size="sm" variant="outline" className="text-xs flex-shrink-0" onClick={() => setForm(f => ({ ...f, page_width: 297, page_height: 210 }))}>
+                          Restaurar A4
+                        </Button>
+                      )}
+                    </div>
 
                     <div className="border-t pt-4">
                       <Label className="text-xs text-gray-500 uppercase tracking-wider block mb-3">Texto Principal</Label>
