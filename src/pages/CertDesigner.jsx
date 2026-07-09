@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Save, Trash2, Eye, Award, ChevronLeft, Copy } from "lucide-react";
 import { toast } from "sonner";
 import CertificatePreview from "@/components/certificates/CertificatePreview";
+import CourseSearchSelect, { extractDuration } from "@/components/certificates/CourseSearchSelect";
 import BackgroundUploader from "@/components/certificates/BackgroundUploader";
 // Editor Visual (CanvasEditor) desativado na interface — código preservado em
 // src/components/certificates/CanvasEditor.jsx e dados editor_canvas_data mantidos.
@@ -277,23 +278,19 @@ export default function CertDesigner() {
                   {/* GERAL */}
                   <TabsContent value="geral" className="space-y-4">
                     <FieldGroup label="Nome do Modelo *">
-                      <Select value={form.name} onValueChange={v => set("name", v)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um curso cadastrado..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {courses.map(c => (
-                            <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                          ))}
-                          {courses.length === 0 && (
-                            <SelectItem value={null} disabled>Nenhum curso cadastrado</SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-gray-400">Cursos cadastrados em Cursos → aparecerão aqui automaticamente.</p>
+                      <CourseSearchSelect
+                        courses={courses}
+                        value={form.name}
+                        onSelect={(course) => {
+                          const duration = extractDuration(course.name);
+                          setForm(f => ({ ...f, name: course.name, ...(duration ? { duration } : {}) }));
+                        }}
+                      />
+                      <p className="text-xs text-gray-400">Busque digitando as iniciais ou o nome do curso cadastrado em Cursos.</p>
                     </FieldGroup>
                     <FieldGroup label="Carga Horária *">
                       <Input value={form.duration} onChange={e => set("duration", e.target.value)} placeholder="Ex: 8h" />
+                      <p className="text-xs text-gray-400">Preenchida automaticamente ao selecionar o curso — edite para uma carga horária específica.</p>
                     </FieldGroup>
                     <FieldGroup label="Modalidade">
                       <Select value={form.modality} onValueChange={v => set("modality", v)}>
