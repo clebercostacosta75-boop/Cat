@@ -14,13 +14,23 @@
         "not_registered",
         "blocked",
         "consent_required",
-        "token_expired"
+        "token_expired",
+        "module_access",
+        "logout"
       ],
       "description": "Tipo do evento"
     },
     "reason": {
       "type": "string",
-      "description": "Motivo detalhado do bloqueio/falha"
+      "description": "Motivo detalhado do bloqueio/falha ou descri\u00e7\u00e3o do acesso"
+    },
+    "module": {
+      "type": "string",
+      "description": "M\u00f3dulo/p\u00e1gina acessado"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Identificador da sess\u00e3o do navegador"
     },
     "ip_address": {
       "type": "string",

@@ -64,8 +64,8 @@ Deno.serve(async (req) => {
       details = `Registro deletado`;
     }
 
-    // Registrar em AuditLog
-    await base44.asServiceRole.entities.AuditLog.create({
+    // Registrar em AuditLog (com retry — eventos em massa causavam falha por limite de requisições)
+    const record = {
       user_email: userEmail,
       action: actionType,
       entity_type: event.entity_name,
@@ -73,7 +73,19 @@ Deno.serve(async (req) => {
       entity_name: entityData?.full_name || entityData?.name || entityData?.student_name || event.entity_id,
       details: details,
       ip_address: 'entity-automation'
-    });
+    };
+    let lastErr = null;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        await base44.asServiceRole.entities.AuditLog.create(record);
+        lastErr = null;
+        break;
+      } catch (e) {
+        lastErr = e;
+        await new Promise(r => setTimeout(r, 400 * (attempt + 1) + Math.random() * 300));
+      }
+    }
+    if (lastErr) throw lastErr;
 
     return Response.json({ ok: true, msg: 'Alteração registrada' });
   } catch (error) {

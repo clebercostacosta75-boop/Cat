@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { base44 } from '@/api/base44Client';
 import { pagesConfig } from '@/pages.config';
+import { logLoginSuccess, logModuleAccess } from '@/lib/accessLogger';
 
 export default function NavigationTracker() {
     const location = useLocation();
@@ -43,6 +44,15 @@ export default function NavigationTracker() {
             base44.appLogs.logUserInApp(pageName).catch(() => {
                 // Silently fail - logging shouldn't break the app
             });
+        }
+
+        // Log de Acesso interno (AccessLog): login + módulo acessado
+        if (isAuthenticated) {
+            logLoginSuccess();
+            const moduleName = pathname === '/' || pathname === ''
+                ? 'Dashboard'
+                : pathname.replace(/^\//, '').split('/')[0];
+            logModuleAccess(moduleName);
         }
     }, [location, isAuthenticated, Pages, mainPageKey]);
 

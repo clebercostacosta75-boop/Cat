@@ -16,7 +16,11 @@ const EVENT_CONFIG = {
   blocked:           { label: "Bloqueado",          color: "bg-red-200 text-red-900" },
   consent_required:  { label: "Sem Consentimento",  color: "bg-yellow-100 text-yellow-800" },
   token_expired:     { label: "Token Expirado",     color: "bg-purple-100 text-purple-800" },
+  module_access:     { label: "Acesso a Módulo",    color: "bg-blue-100 text-blue-800" },
+  logout:            { label: "Logout",             color: "bg-gray-100 text-gray-700" },
 };
+
+const NON_FAILURE_EVENTS = ["login_success", "module_access", "logout"];
 
 const REASON_LABELS = {
   auth_required:       "Autenticação necessária (sem token ou token inválido)",
@@ -64,7 +68,7 @@ export default function AccessLogPage() {
     return matchSearch && matchEvent;
   });
 
-  const unresolvedFails = logs.filter(l => !l.resolved && l.event_type !== "login_success").length;
+  const unresolvedFails = logs.filter(l => !l.resolved && !NON_FAILURE_EVENTS.includes(l.event_type)).length;
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -142,7 +146,7 @@ export default function AccessLogPage() {
           {filtered.map(log => {
             const cfg = EVENT_CONFIG[log.event_type] || { label: log.event_type, color: "bg-gray-100 text-gray-800" };
             const reasonText = REASON_LABELS[log.reason] || log.reason || "—";
-            const isFailure = log.event_type !== "login_success";
+            const isFailure = !NON_FAILURE_EVENTS.includes(log.event_type);
             return (
               <Card key={log.id} className={`border-l-4 ${log.resolved ? "border-l-green-400 opacity-60" : isFailure ? "border-l-red-400" : "border-l-green-400"}`}>
                 <CardContent className="p-4">
