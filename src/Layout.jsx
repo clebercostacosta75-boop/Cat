@@ -29,7 +29,8 @@ const ALL_ITEMS = [
   { title: "Empresas", url: createPageUrl("Companies"), icon: Building2, key: "Empresas" },
   { title: "Contratadas", url: createPageUrl("Contractors"), icon: Building2, key: "Contratadas" },
   { title: "Cursos", url: createPageUrl("Courses"), icon: BookOpen, key: "Cursos" },
-  { title: "Gestão Acadêmica", url: "/GestaoAlunosIndividuais", icon: Users, key: "Alunos Individuais (PF)" },
+  { title: "Gestão Acadêmica Individual", url: "/GestaoAlunosIndividuais", icon: Users, key: "Alunos Individuais (PF)", altKeys: ["Gestão Acadêmica Individual"] },
+  { title: "Gestão Acadêmica Empresas", url: "/GestaoAcademicaEmpresas", icon: Building2, key: "Gestão Acadêmica Empresas" },
   { title: "Gestão de Contratos", url: "/GestaoContratos", icon: FileText, key: "Gestão de Contratos" },
   { title: "Certificações", url: "/Certificacoes", icon: Award, key: "Certificações" },
   { title: "Alertas de Vencimento", url: createPageUrl("CertificateAlerts"), icon: Bell, key: "Alertas de Vencimento" },
@@ -77,7 +78,7 @@ export default function Layout({ children }) {
   // null = acesso total, array = filtro
   const navigationItems = allowedKeys === null
     ? ALL_ITEMS
-    : ALL_ITEMS.filter(i => allowedKeys.includes(i.key));
+    : ALL_ITEMS.filter(i => allowedKeys.includes(i.key) || (i.altKeys || []).some(k => allowedKeys.includes(k)));
 
   return (
     <SidebarProvider>

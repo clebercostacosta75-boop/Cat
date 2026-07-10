@@ -27,6 +27,8 @@ import NovaMatriculaModal from "@/components/alunos/NovaMatriculaModal";
 import BaseConhecimentoTab from "@/components/alunos/BaseConhecimentoTab";
 import ImportarAlunosPlanilha from "@/components/alunos/ImportarAlunosPlanilha";
 import ResultadoAcademicoModal from "@/components/alunos/ResultadoAcademicoModal";
+import FinanceiroOperacionalTab from "@/components/alunos/FinanceiroOperacionalTab";
+import { isMatriculaIndividual } from "@/lib/origemMatricula";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -724,7 +726,7 @@ function MatriculasCursos() {
     queryKey: ["enrollments-pf"],
     queryFn: async () => {
       const all = await base44.entities.StudentCourseEnrollment.list("-created_date", 500);
-      return (all || []).filter(e => !e.company_id || e.company_id === "individual" || e.company_name === "Individual (PF)");
+      return (all || []).filter(isMatriculaIndividual);
     },
     staleTime: 0,
     gcTime: 0,
@@ -1190,393 +1192,6 @@ function ModalConfirmarPagamento({ enrollment, onClose, onConfirmed }) {
   );
 }
 
-// ─── Aba: Financeiro (Dashboard Completo) ────────────────────────────────────
-function FinanceiroAlunos() {
-  const queryClient = useQueryClient();
-  const [selectedEnrollmentForRecibo, setSelectedEnrollmentForRecibo] = useState(null);
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [searchAluno, setSearchAluno] = useState("");
-  const [confirmandoPagamento, setConfirmandoPagamento] = useState(null);
-  const [userRole, setUserRole] = useState(null);
-
-  // Formas manuais (confirmação manual obrigatória)
-  const FORMAS_MANUAL = ["À Vista", "Pix", "Cartão de Crédito", "Cartão de Débito", "Transferência Bancária", "Dinheiro em Espécie", "Parcelado 2x", "Parcelado 3x", "Parcelado 4x", "Parcelado 5x", "Parcelado 6x"];
-  // Formas Asaas (confirmação automática — NÃO alterar)
-  const FORMAS_ASAAS = ["PIX Asaas", "Boleto Asaas", "Boleto"];
-
-  useEffect(() => {
-    base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
-  }, []);
-
-  const canConfirmManual = ["admin", "gestor_master", "Administrador Master", "Financeiro"].includes(userRole);
-
-  const atualizarStatusPagamentoMutation = useMutation({
-    mutationFn: ({ id, status_pagamento, notes }) => base44.entities.StudentCourseEnrollment.update(id, { status_pagamento, ...(notes ? { notes } : {}) }),
-    onSuccess: (_, { status_pagamento }) => {
-      queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] });
-      const msgs = { "Pendente": "Status alterado para Aguardando Pagamento.", "Inadimplente": "Matrícula marcada como Cancelada/Inadimplente." };
-      toast.success(msgs[status_pagamento] || "Status atualizado!");
-    },
-  });
-
-  const { data: enrollments = [], isLoading } = useQuery({
-    queryKey: ["enrollments-pf"],
-    queryFn: async () => {
-      const all = await base44.entities.StudentCourseEnrollment.list("-created_date", 500);
-      return (all || []).filter(e => !e.company_id || e.company_id === "individual" || e.company_name === "Individual (PF)");
-    },
-    staleTime: 0,
-    gcTime: 0,
-  });
-
-  const { data: receipts = [] } = useQuery({
-    queryKey: ["receipts-pf"],
-    queryFn: () => base44.entities.Receipt.list("-created_date", 500),
-    initialData: [],
-  });
-
-  // Mapear recibos por enrollment_id
-  const receiptsByEnrollment = {};
-  receipts.forEach(r => {
-    if (r.enrollment_id) {
-      if (!receiptsByEnrollment[r.enrollment_id]) receiptsByEnrollment[r.enrollment_id] = [];
-      receiptsByEnrollment[r.enrollment_id].push(r);
-    }
-  });
-
-  const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
-
-  // KPIs
-  const total = enrollments.length;
-  const totalReceita = enrollments.reduce((acc, e) => acc + (parseFloat(e.unit_value) || 0), 0);
-  const totalRecebido = receipts.filter(r => r.status === "Emitido").reduce((acc, r) => acc + (parseFloat(r.amount) || 0), 0);
-  const totalPendente = enrollments.filter(e => ["Pendente", "Parcialmente Pago"].includes(e.status_pagamento)).reduce((acc, e) => acc + (parseFloat(e.unit_value) || 0), 0);
-  const inadimplentes = enrollments.filter(e => e.status_pagamento === "Inadimplente").length;
-  const pagos = enrollments.filter(e => e.status_pagamento === "Pago").length;
-  const pendentes = enrollments.filter(e => e.status_pagamento === "Pendente").length;
-  // Recebido via Asaas vs Manual
-  const pagosAsaas = enrollments.filter(e => e.status_pagamento === "Pago" && FORMAS_ASAAS.includes(e.forma_pagamento));
-  const pagosManual = enrollments.filter(e => e.status_pagamento === "Pago" && !FORMAS_ASAAS.includes(e.forma_pagamento));
-  const totalAsaas = pagosAsaas.reduce((acc, e) => acc + (parseFloat(e.unit_value) || 0), 0);
-  const totalManual = pagosManual.reduce((acc, e) => acc + (parseFloat(e.unit_value) || 0), 0);
-
-  // Vencimentos próximos (próximos 7 dias)
-  const proximosVencimentos = enrollments.filter(e => {
-    if (!e.data_vencimento_pagamento) return false;
-    const venc = new Date(e.data_vencimento_pagamento + "T00:00:00");
-    const diff = (venc - today) / (1000 * 60 * 60 * 24);
-    return diff >= 0 && diff <= 7 && e.status_pagamento !== "Pago";
-  });
-
-  // Vencimentos em atraso
-  const vencidos = enrollments.filter(e => {
-    if (!e.data_vencimento_pagamento) return false;
-    return e.data_vencimento_pagamento < todayStr && e.status_pagamento !== "Pago";
-  });
-
-  const pagamentoColors = {
-    "Pago": "bg-green-100 text-green-800",
-    "Pendente": "bg-yellow-100 text-yellow-800",
-    "Parcialmente Pago": "bg-blue-100 text-blue-800",
-    "Inadimplente": "bg-red-100 text-red-800",
-  };
-
-  const norm = (v) => (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").trim();
-
-  const filteredEnrollments = enrollments.filter(e => {
-    const byStatus = filterStatus === "all" || e.status_pagamento === filterStatus;
-    const bySearch = !searchAluno || norm(e.student_name).includes(norm(searchAluno)) || norm(e.student_cpf || "").includes(norm(searchAluno));
-    return byStatus && bySearch;
-  });
-
-  const formatCurrency = (v) => `R$ ${(parseFloat(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
-  const formatDate = (d) => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
-
-  return (
-    <div className="space-y-6">
-
-      {/* KPIs principais */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="border border-gray-200"><CardContent className="p-4">
-          <BookOpen className="w-5 h-5 text-blue-600 mb-1" />
-          <p className="text-xl font-bold text-black">{total}</p>
-          <p className="text-xs text-gray-500">💰 Receita Total (prevista)</p>
-          <p className="text-xs font-semibold text-emerald-700 mt-0.5">{formatCurrency(totalReceita)}</p>
-        </CardContent></Card>
-        <Card className="border border-emerald-200 bg-emerald-50"><CardContent className="p-4">
-          <span className="text-lg">🏦</span>
-          <p className="text-xl font-bold text-emerald-800">{formatCurrency(totalAsaas)}</p>
-          <p className="text-xs text-emerald-700">✅ Recebido via Asaas</p>
-          <p className="text-xs text-emerald-600">{pagosAsaas.length} pagamento(s)</p>
-        </CardContent></Card>
-        <Card className="border border-green-200 bg-green-50"><CardContent className="p-4">
-          <span className="text-lg">👤</span>
-          <p className="text-xl font-bold text-green-800">{formatCurrency(totalManual)}</p>
-          <p className="text-xs text-green-700">✅ Recebido Manual</p>
-          <p className="text-xs text-green-600">{pagosManual.length} pagamento(s)</p>
-        </CardContent></Card>
-        <Card className="border border-yellow-200 bg-yellow-50"><CardContent className="p-4">
-          <Clock className="w-5 h-5 text-yellow-600 mb-1" />
-          <p className="text-xl font-bold text-yellow-700">{formatCurrency(totalPendente)}</p>
-          <p className="text-xs text-yellow-700">🟡 A Receber</p>
-          <p className="text-xs text-yellow-600">{pendentes} aguardando</p>
-        </CardContent></Card>
-        <Card className={`border ${vencidos.length > 0 ? "border-red-300 bg-red-50" : "border-gray-200"}`}><CardContent className="p-4">
-          <XCircle className={`w-5 h-5 mb-1 ${vencidos.length > 0 ? "text-red-600" : "text-gray-400"}`} />
-          <p className={`text-xl font-bold ${vencidos.length > 0 ? "text-red-700" : "text-black"}`}>{vencidos.length}</p>
-          <p className="text-xs text-gray-500">🔴 Vencidos/Atraso</p>
-        </CardContent></Card>
-        <Card className={`border ${proximosVencimentos.length > 0 ? "border-orange-300 bg-orange-50" : "border-gray-200"}`}><CardContent className="p-4">
-          <Calendar className={`w-5 h-5 mb-1 ${proximosVencimentos.length > 0 ? "text-orange-600" : "text-gray-400"}`} />
-          <p className={`text-xl font-bold ${proximosVencimentos.length > 0 ? "text-orange-700" : "text-black"}`}>{proximosVencimentos.length}</p>
-          <p className="text-xs text-gray-500">📅 Vencem em 7 dias</p>
-        </CardContent></Card>
-        <Card className="border border-gray-200"><CardContent className="p-4">
-          <span className="text-lg">🏦</span>
-          <p className="text-xl font-bold text-gray-800">{pagosAsaas.length + enrollments.filter(e => FORMAS_ASAAS.includes(e.forma_pagamento)).length > 0 ? enrollments.filter(e => FORMAS_ASAAS.includes(e.forma_pagamento)).length : 0}</p>
-          <p className="text-xs text-gray-500">📊 Total via Asaas</p>
-        </CardContent></Card>
-        <Card className="border border-gray-200"><CardContent className="p-4">
-          <span className="text-lg">👤</span>
-          <p className="text-xl font-bold text-gray-800">{enrollments.filter(e => FORMAS_MANUAL.includes(e.forma_pagamento)).length}</p>
-          <p className="text-xs text-gray-500">📊 Total Manual</p>
-        </CardContent></Card>
-      </div>
-
-      {/* Alertas de vencimentos */}
-      {vencidos.length > 0 && (
-        <Card className="border border-red-200 bg-red-50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold text-red-800 flex items-center gap-2">
-              <XCircle className="w-4 h-4" /> Pagamentos Vencidos ({vencidos.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-red-100">
-              {vencidos.map(e => (
-                <div key={e.id} className="flex items-center justify-between px-4 py-3">
-                  <div>
-                    <p className="text-sm font-semibold text-red-900">{e.student_name}</p>
-                    <p className="text-xs text-red-700">{e.course_name}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-red-800">{formatCurrency(e.unit_value)}</p>
-                    <p className="text-xs text-red-600">Venceu em {formatDate(e.data_vencimento_pagamento)}</p>
-                    <Badge className="bg-red-100 text-red-700 text-xs mt-0.5">{e.status_pagamento}</Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {proximosVencimentos.length > 0 && (
-        <Card className="border border-orange-200 bg-orange-50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold text-orange-800 flex items-center gap-2">
-              <Calendar className="w-4 h-4" /> Próximos Vencimentos — 7 dias ({proximosVencimentos.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-orange-100">
-              {proximosVencimentos.map(e => (
-                <div key={e.id} className="flex items-center justify-between px-4 py-3">
-                  <div>
-                    <p className="text-sm font-semibold text-orange-900">{e.student_name}</p>
-                    <p className="text-xs text-orange-700">{e.course_name}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-orange-800">{formatCurrency(e.unit_value)}</p>
-                    <p className="text-xs text-orange-600">Vence em {formatDate(e.data_vencimento_pagamento)}</p>
-                    <Badge className="bg-orange-100 text-orange-700 text-xs mt-0.5">{e.forma_pagamento || "—"}</Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input placeholder="Buscar aluno..." value={searchAluno} onChange={e => setSearchAluno(e.target.value)} className="pl-10" />
-        </div>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filtrar por status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Status</SelectItem>
-            <SelectItem value="Pago">Pago ({pagos})</SelectItem>
-            <SelectItem value="Pendente">Pendente ({pendentes})</SelectItem>
-            <SelectItem value="Inadimplente">Inadimplente ({inadimplentes})</SelectItem>
-            <SelectItem value="Parcialmente Pago">Parcialmente Pago</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Tabela detalhada */}
-      <Card className="border border-gray-200">
-        <CardHeader className="bg-gray-50 border-b border-gray-200">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-gray-600" />
-            Detalhamento Financeiro por Aluno
-            <span className="ml-auto text-sm font-normal text-gray-500">{filteredEnrollments.length} registro(s)</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="text-center py-12 text-gray-500">Carregando...</div>
-          ) : filteredEnrollments.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <DollarSign className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>Nenhum registro encontrado</p>
-            </div>
-          ) : (
-            <div className="divide-y">
-              {filteredEnrollments.map(e => {
-                const envReceipts = receiptsByEnrollment[e.id] || [];
-                const totalPago = envReceipts.filter(r => r.status === "Emitido").reduce((acc, r) => acc + (parseFloat(r.amount) || 0), 0);
-                const saldo = (parseFloat(e.unit_value) || 0) - totalPago;
-                const isOpen = selectedEnrollmentForRecibo?.id === e.id;
-                const isVencido = e.data_vencimento_pagamento && e.data_vencimento_pagamento < todayStr && e.status_pagamento !== "Pago";
-                const isProximo = e.data_vencimento_pagamento && !isVencido && (() => {
-                  const venc = new Date(e.data_vencimento_pagamento + "T00:00:00");
-                  const diff = (venc - today) / (1000 * 60 * 60 * 24);
-                  return diff >= 0 && diff <= 7;
-                })();
-
-                return (
-                  <div key={e.id} className={isVencido ? "bg-red-50" : isProximo ? "bg-orange-50" : ""}>
-                    <div className="flex items-start justify-between p-4 gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-gray-900">{e.student_name}</p>
-                          {isVencido && <Badge className="bg-red-100 text-red-700 text-xs">⚠ Vencido</Badge>}
-                          {isProximo && <Badge className="bg-orange-100 text-orange-700 text-xs">⏰ Vence em breve</Badge>}
-                        </div>
-                        <p className="text-sm text-gray-600">{e.course_name}</p>
-                        <div className="flex items-center gap-3 mt-1 flex-wrap">
-                          <span className="text-xs text-gray-400 flex items-center gap-1">
-                            <Calendar className="w-3 h-3" /> Curso: {formatDate(e.start_date)} → {formatDate(e.end_date)}
-                          </span>
-                          {e.forma_pagamento && (
-                            <span className="text-xs text-gray-500 flex items-center gap-1">
-                              <CreditCard className="w-3 h-3" /> {e.forma_pagamento}
-                            </span>
-                          )}
-                          {e.data_vencimento_pagamento && (
-                            <span className={`text-xs flex items-center gap-1 font-medium ${isVencido ? "text-red-600" : isProximo ? "text-orange-600" : "text-gray-500"}`}>
-                              <Clock className="w-3 h-3" /> Vence: {formatDate(e.data_vencimento_pagamento)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                        <div className="text-right">
-                          <p className="text-xs text-gray-400">Valor do Curso</p>
-                          <p className="font-bold text-gray-900">{e.unit_value ? formatCurrency(e.unit_value) : <span className="text-gray-400 font-normal text-xs">Não informado</span>}</p>
-                        </div>
-                        {totalPago > 0 && (
-                          <div className="text-right">
-                            <p className="text-xs text-gray-400">Total Recebido</p>
-                            <p className="font-semibold text-green-700">{formatCurrency(totalPago)}</p>
-                          </div>
-                        )}
-                        {saldo > 0 && totalPago > 0 && (
-                          <div className="text-right">
-                            <p className="text-xs text-gray-400">Saldo Restante</p>
-                            <p className="font-semibold text-orange-700">{formatCurrency(saldo)}</p>
-                          </div>
-                        )}
-                        {/* Badge diferenciado: Asaas vs Manual */}
-                        {e.status_pagamento === "Pago" ? (
-                          FORMAS_ASAAS.includes(e.forma_pagamento) ? (
-                            <Badge className="bg-emerald-700 text-white text-xs">🏦 Pago - Asaas</Badge>
-                          ) : (
-                            <Badge className="bg-green-100 text-green-800 text-xs">👤 Pago - Manual</Badge>
-                          )
-                        ) : e.status_pagamento === "Inadimplente" ? (
-                          <Badge className="bg-red-100 text-red-800 text-xs">❌ Cancelado/Inadimplente</Badge>
-                        ) : (
-                          <Badge className={pagamentoColors[e.status_pagamento] || "bg-gray-100 text-gray-800"}>
-                            🟡 {e.status_pagamento || "Aguardando Pagamento"}
-                          </Badge>
-                        )}
-
-                        {/* Controles manuais — apenas formas manuais + usuário autorizado */}
-                        {FORMAS_MANUAL.includes(e.forma_pagamento) && canConfirmManual && (
-                          <div className="flex flex-col gap-1 w-full">
-                            <p className="text-xs text-gray-400 font-medium text-right">Alterar pagamento:</p>
-                            <div className="flex gap-1 justify-end flex-wrap">
-                              {e.status_pagamento !== "Pago" && (
-                                <Button size="sm" className="text-xs h-7 bg-green-600 hover:bg-green-700 text-white gap-1"
-                                  onClick={() => setConfirmandoPagamento(e)}>
-                                  <CheckCircle className="w-3 h-3" /> Confirmar
-                                </Button>
-                              )}
-                              <Button size="sm" variant="outline"
-                                className="text-xs h-7 border-yellow-400 text-yellow-700 hover:bg-yellow-50 gap-1"
-                                disabled={e.status_pagamento === "Pendente" || atualizarStatusPagamentoMutation.isPending}
-                                onClick={() => { if (window.confirm(`Marcar como Aguardando?`)) atualizarStatusPagamentoMutation.mutate({ id: e.id, status_pagamento: "Pendente" }); }}>
-                                <Clock className="w-3 h-3" /> Aguardando
-                              </Button>
-                              <Button size="sm" variant="outline"
-                                className="text-xs h-7 border-red-300 text-red-600 hover:bg-red-50 gap-1"
-                                disabled={e.status_pagamento === "Inadimplente" || atualizarStatusPagamentoMutation.isPending}
-                                onClick={() => { if (window.confirm(`Cancelar/inadimplir pagamento de ${e.student_name}?`)) atualizarStatusPagamentoMutation.mutate({ id: e.id, status_pagamento: "Inadimplente" }); }}>
-                                <XCircle className="w-3 h-3" /> Cancelar
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                        {/* Asaas: não permite alteração manual */}
-                        {FORMAS_ASAAS.includes(e.forma_pagamento) && (
-                          <p className="text-xs text-emerald-700 text-right">🏦 Confirmação automática</p>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className={`text-xs h-7 ${isOpen ? "border-gray-400 text-gray-700" : "border-green-300 text-green-700 hover:bg-green-50"}`}
-                          onClick={() => setSelectedEnrollmentForRecibo(isOpen ? null : e)}
-                        >
-                          <FileText className="w-3 h-3 mr-1" />
-                          {isOpen ? "Fechar" : `Recibos ${envReceipts.length > 0 ? `(${envReceipts.length})` : ""}`}
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Recibos inline */}
-                    {isOpen && (
-                      <div className="px-4 pb-4 bg-white border-t border-green-100">
-                        <ReciboPagamento enrollment={e} />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Modal confirmação manual */}
-      {confirmandoPagamento && (
-        <ModalConfirmarPagamento
-          enrollment={confirmandoPagamento}
-          onClose={() => setConfirmandoPagamento(null)}
-          onConfirmed={() => queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] })}
-        />
-      )}
-    </div>
-  );
-}
-
 // ─── Aba: Acesso ao Portal ───────────────────────────────────────────────────
 function AcessoPortal() {
   const queryClient = useQueryClient();
@@ -1759,7 +1374,7 @@ function ContratosGeral() {
     queryKey: ["enrollments-pf"],
     queryFn: async () => {
       const all = await base44.entities.StudentCourseEnrollment.list("-created_date", 500);
-      return (all || []).filter(e => !e.company_id || e.company_id === "individual" || e.company_name === "Individual (PF)");
+      return (all || []).filter(isMatriculaIndividual);
     },
     staleTime: 0,
     gcTime: 0,
@@ -1866,42 +1481,22 @@ function SecaoBloqueada({ nome }) {
 // ─── Página Principal ────────────────────────────────────────────────────────
 export default function GestaoAlunosIndividuais() {
   const { hasPermission, allowedKeys } = usePermissions();
-  // Verifica acesso ao módulo principal
-  const moduleAccess = allowedKeys === null || hasPermission("Alunos Individuais (PF)");
-  
-  // Permissões individuais das abas (estruturadas como sub-permissões)
-  const canAccessTab = useCallback((tabName) => {
-    // Se não tem acesso ao módulo, nega tudo
-    if (!moduleAccess) return false;
-    
-    // Se tem acesso total (admin/master), libera tudo
-    if (allowedKeys === null) return true;
-    
-    // Mapa de abas e suas permissões específicas
-    const tabPermissions = {
-      "dashboard": "Alunos Individuais (PF)",
-      "cadastro": "Alunos Individuais (PF)",
-      "matriculas": "Alunos Individuais (PF)",
-      "financeiro": "Alunos Individuais (PF)",
-      "acesso": "Alunos Individuais (PF)",
-      "pagamentos": "Alunos Individuais (PF)",
-      "gargalos": "Alunos Individuais (PF)",
-      "pendencias": "Alunos Individuais (PF)",
-      "conhecimento": "Alunos Individuais (PF)",
-      "contratos": "Alunos Individuais (PF)",
-    };
-    
-    const requiredPerm = tabPermissions[tabName] || tabName;
-    return hasPermission(requiredPerm);
-  }, [allowedKeys, hasPermission, moduleAccess]);
+  // Verifica acesso ao módulo principal (chave nova ou legada)
+  const moduleAccess =
+    allowedKeys === null ||
+    hasPermission("Gestão Acadêmica Individual") ||
+    hasPermission("Alunos Individuais (PF)");
+
+  // Permissões das abas seguem o acesso ao módulo
+  const canAccessTab = useCallback(() => moduleAccess, [moduleAccess]);
 
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-black">Gestão Acadêmica</h1>
+          <h1 className="text-2xl font-bold text-black">Gestão Acadêmica Individual</h1>
           <p className="text-gray-600 text-sm mt-1">
-            Cadastro, Matrículas, Financeiro e Controle de Acesso — Pessoa Física
+            Cadastro, Matrículas, Situação Financeira Operacional e Acesso ao Portal — Alunos Individuais
           </p>
         </div>
 
@@ -1952,7 +1547,7 @@ export default function GestaoAlunosIndividuais() {
           <TabsContent value="dashboard">{canAccessTab("dashboard") ? <DashboardPF /> : <SecaoBloqueada nome="Dashboard" />}</TabsContent>
           <TabsContent value="cadastro">{canAccessTab("cadastro") ? <AlunosCadastro /> : <SecaoBloqueada nome="Cadastro" />}</TabsContent>
           <TabsContent value="matriculas">{canAccessTab("matriculas") ? <MatriculasCursos /> : <SecaoBloqueada nome="Matrículas" />}</TabsContent>
-          <TabsContent value="financeiro">{canAccessTab("financeiro") ? <FinanceiroAlunos /> : <SecaoBloqueada nome="Financeiro" />}</TabsContent>
+          <TabsContent value="financeiro">{canAccessTab("financeiro") ? <FinanceiroOperacionalTab /> : <SecaoBloqueada nome="Financeiro" />}</TabsContent>
           <TabsContent value="acesso">{canAccessTab("acesso") ? <AcessoPortal /> : <SecaoBloqueada nome="Controle de Acesso" />}</TabsContent>
           <TabsContent value="pagamentos">{canAccessTab("pagamentos") ? <PagamentosAsaas /> : <SecaoBloqueada nome="Pagamentos Asaas" />}</TabsContent>
           <TabsContent value="gargalos">{canAccessTab("gargalos") ? <GargalosDashboard /> : <SecaoBloqueada nome="Gargalos" />}</TabsContent>

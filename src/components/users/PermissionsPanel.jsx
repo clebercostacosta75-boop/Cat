@@ -9,11 +9,11 @@ import { toast } from "sonner";
 import { ALL_MODULES } from "@/lib/PermissionsContext";
 
 // Nomes de exibição (a chave interna de permissão permanece inalterada)
-const MODULE_DISPLAY = { "Alunos Individuais (PF)": "Gestão Acadêmica" };
+const MODULE_DISPLAY = { "Alunos Individuais (PF)": "Gestão Acadêmica Individual (chave legada)" };
 
 const MODULE_GROUPS = [
   { label: "Geral", color: "bg-gray-100 text-gray-700", items: ["Dashboard", "Cronograma", "Agenda de Treinamentos", "Chamada Presencial"] },
-  { label: "Operacional", color: "bg-blue-100 text-blue-700", items: ["Entrada de Propostas", "Gestão de BMM", "Instrutores", "Empresas", "Contratadas", "Cursos", "Alunos Individuais (PF)", "Gestão de Contratos", "Dashboard Operacional", "Dashboard Financeiro", "Financeiro", "ProntuarioDigital", "GestaoDocumentosAluno"] },
+  { label: "Operacional", color: "bg-blue-100 text-blue-700", items: ["Entrada de Propostas", "Gestão de BMM", "Instrutores", "Empresas", "Contratadas", "Cursos", "Alunos Individuais (PF)", "Gestão Acadêmica Individual", "Gestão Acadêmica Empresas", "Gestão de Contratos", "Dashboard Operacional", "Dashboard Financeiro", "Financeiro", "ProntuarioDigital", "GestaoDocumentosAluno"] },
   { label: "Certificações", color: "bg-yellow-100 text-yellow-700", items: ["Certificações", "Alertas de Vencimento", "Designer de Certificados", "Assinaturas Digitais", "Auditoria de Certificados"] },
   { label: "Comercial", color: "bg-purple-100 text-purple-700", items: ["Dashboard Comercial"] },
   { label: "Comunicação", color: "bg-pink-100 text-pink-700", items: ["Central de Comunicação"] },

@@ -16,6 +16,8 @@ export const ALL_MODULES = [
   "Contratadas",
   "Cursos",
   "Alunos Individuais (PF)",
+  "Gestão Acadêmica Individual",
+  "Gestão Acadêmica Empresas",
   "Gestão de Contratos",
   "Dashboard Operacional",
   "Dashboard Financeiro",

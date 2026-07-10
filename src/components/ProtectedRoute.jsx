@@ -7,13 +7,15 @@ export default function ProtectedRoute({ pageKey, children }) {
   const { allowedKeys, loading } = usePermissions();
   const location = useLocation();
 
-  const hasAccess = allowedKeys === null || (Array.isArray(allowedKeys) && allowedKeys.includes(pageKey));
+  // pageKey pode ser uma string ou um array de chaves alternativas (qualquer uma libera o acesso)
+  const keys = Array.isArray(pageKey) ? pageKey : [pageKey];
+  const hasAccess = allowedKeys === null || (Array.isArray(allowedKeys) && keys.some(k => allowedKeys.includes(k)));
 
   useEffect(() => {
     if (!loading && !hasAccess) {
-      toast.warning(`Você não tem acesso ao módulo "${pageKey}".`);
+      toast.warning(`Você não tem acesso ao módulo "${keys[0]}".`);
     }
-  }, [loading, hasAccess, pageKey]);
+  }, [loading, hasAccess]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (

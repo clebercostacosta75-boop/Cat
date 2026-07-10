@@ -91,9 +91,6 @@ export default function PainelPendenciasFinanceiras() {
   const pendentes = notifs.filter(n => ["Gerada", "Pendente de envio", "Pendente por falta de RESEND_API_KEY"].includes(n.status)).length;
   const erros = notifs.filter(n => n.status === "Erro no envio").length;
   const regularizados = notifs.filter(n => n.status === "Regularizada").length;
-  const valorTotal = notifs
-    .filter(n => !["Regularizada", "Cancelada"].includes(n.status) && n.tipo === "boleto_vencido")
-    .reduce((acc, n) => acc + (parseFloat(n.valor_vencido) || 0), 0);
 
   const handleCopiarMensagem = (n) => {
     navigator.clipboard.writeText(n.mensagem_whatsapp || "");
@@ -143,13 +140,6 @@ export default function PainelPendenciasFinanceiras() {
             <XCircle className="w-5 h-5 text-red-600 mb-1" />
             <p className="text-xl font-bold text-red-800">{atrasados15}</p>
             <p className="text-xs text-red-700">+15 dias em atraso</p>
-          </CardContent>
-        </Card>
-        <Card className="border border-gray-200">
-          <CardContent className="p-3">
-            <DollarSign className="w-5 h-5 text-gray-600 mb-1" />
-            <p className="text-base font-bold text-gray-900">{formatMoney(valorTotal)}</p>
-            <p className="text-xs text-gray-500">Valor total em atraso</p>
           </CardContent>
         </Card>
         <Card className="border border-yellow-200 bg-yellow-50">

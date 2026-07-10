@@ -92,22 +92,9 @@ export default function DashboardPF() {
   const receiptsInPeriod = receipts.filter(r => inRange("created_date", r) && r.status === "Emitido");
   const certsInPeriod = certificates.filter(c => inRange("created_date", c));
 
-  const totalRecebidoRecibos = receiptsInPeriod.reduce((a, r) => a + (parseFloat(r.amount) || 0), 0);
-  const totalRecebidoAsaas = enrollments
-    .filter(e => e.status_pagamento === "Pago" && ["PIX Asaas", "Boleto Asaas", "Boleto"].includes(e.forma_pagamento) && inRange("created_date", e))
-    .reduce((a, e) => a + (parseFloat(e.unit_value) || 0), 0);
-  const totalRecebido = totalRecebidoRecibos + totalRecebidoAsaas;
-
-  // ─── KPIs gerais ──────────────────────────────────────────────────────────
+  // ─── KPIs gerais (sem valores financeiros consolidados — ver módulo Financeiro) ──
   const ativos = students.filter(s => s.status === "Ativo").length;
   const inativos = students.filter(s => s.status === "Inativo").length;
-
-  const receitaTotalPrevista = enrollments.reduce((a, e) => a + (parseFloat(e.unit_value) || 0), 0);
-  const totalPagoGeral = receipts.filter(r => r.status === "Emitido").reduce((a, r) => a + (parseFloat(r.amount) || 0), 0);
-  const aguardandoPagamento = enrollments.filter(e => ["Pendente", "Parcialmente Pago"].includes(e.status_pagamento)).length;
-  const aguardandoValor = enrollments.filter(e => ["Pendente", "Parcialmente Pago"].includes(e.status_pagamento)).reduce((a, e) => a + (parseFloat(e.unit_value) || 0), 0);
-  const inadimplentes = enrollments.filter(e => e.status_pagamento === "Inadimplente").length;
-  const inadimplentesValor = enrollments.filter(e => e.status_pagamento === "Inadimplente").reduce((a, e) => a + (parseFloat(e.unit_value) || 0), 0);
 
   const contratosAssinados = contracts.filter(c => c.status === "Assinado_Todas_Partes").length;
   const contratosPendentes = contracts.filter(c =>
@@ -165,17 +152,6 @@ export default function DashboardPF() {
     { name: "Vencido", value: enrollments.filter(e => e.status === "Vencido").length, color: "#ef4444" },
     { name: "Revogado", value: enrollments.filter(e => e.status === "Revogado").length, color: "#6b7280" },
   ].filter(d => d.value > 0);
-
-  // Receita mensal (últimos 6 meses)
-  const last6Months = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(); d.setMonth(d.getMonth() - i);
-    const ym = d.toISOString().slice(0, 7);
-    const label = d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
-    const previsto = enrollments.filter(e => (e.created_date || "").slice(0, 7) === ym).reduce((a, e) => a + (parseFloat(e.unit_value) || 0), 0);
-    const recebido = receipts.filter(r => r.status === "Emitido" && (r.created_date || "").slice(0, 7) === ym).reduce((a, r) => a + (parseFloat(r.amount) || 0), 0);
-    last6Months.push({ mes: label, Previsto: previsto, Recebido: recebido });
-  }
 
   // Tabela: 10 mais recentes ou urgentes
   const tabelaAlunos = [...enrollments]
@@ -262,44 +238,6 @@ export default function DashboardPF() {
               <p className="text-2xl font-bold text-green-700">{matriculasAutorizadas}</p>
               <p className="text-xs text-gray-600">✅ Matrículas Concluídas</p>
               <p className="text-xs text-gray-400 mt-0.5">{matriculasAguardando} aguardando auth.</p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* ── LINHA 2: Financeiro ───────────────────────────────────────────── */}
-      <div>
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1"><DollarSign className="w-3 h-3" /> Financeiro</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card className="border border-gray-200 bg-gray-50">
-            <CardContent className="p-4">
-              <TrendingUp className="w-5 h-5 text-gray-600 mb-1" />
-              <p className="text-xl font-bold text-gray-800">{fmt(receitaTotalPrevista)}</p>
-              <p className="text-xs text-gray-600">💰 Receita Total Prevista</p>
-            </CardContent>
-          </Card>
-          <Card className="border border-emerald-200 bg-emerald-50">
-            <CardContent className="p-4">
-              <CheckCircle className="w-5 h-5 text-emerald-600 mb-1" />
-              <p className="text-xl font-bold text-emerald-700">{fmt(totalRecebido)}</p>
-              <p className="text-xs text-gray-600">✅ Total Recebido (período)</p>
-              <p className="text-xs text-gray-400 mt-0.5">{receiptsInPeriod.length} recibo(s)</p>
-            </CardContent>
-          </Card>
-          <Card className="border border-yellow-200 bg-yellow-50">
-            <CardContent className="p-4">
-              <Clock className="w-5 h-5 text-yellow-600 mb-1" />
-              <p className="text-xl font-bold text-yellow-700">{fmt(aguardandoValor)}</p>
-              <p className="text-xs text-gray-600">🟡 Aguardando Pagamento</p>
-              <p className="text-xs text-gray-400 mt-0.5">{aguardandoPagamento} matrículas</p>
-            </CardContent>
-          </Card>
-          <Card className="border border-red-200 bg-red-50">
-            <CardContent className="p-4">
-              <XCircle className="w-5 h-5 text-red-600 mb-1" />
-              <p className="text-xl font-bold text-red-700">{inadimplentes}</p>
-              <p className="text-xs text-gray-600">🔴 Inadimplentes</p>
-              <p className="text-xs text-red-500 mt-0.5">{fmt(inadimplentesValor)}</p>
             </CardContent>
           </Card>
         </div>
@@ -498,28 +436,6 @@ export default function DashboardPF() {
                 </PieChart>
               </ResponsiveContainer>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Receita Mensal */}
-        <Card className="border border-gray-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" /> Receita Mensal (últimos 6 meses)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={last6Months}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 9 }} tickFormatter={v => `R$${(v/1000).toFixed(0)}k`} />
-                <Tooltip formatter={(v) => fmt(v)} />
-                <Legend />
-                <Line type="monotone" dataKey="Previsto" stroke="#94a3b8" strokeWidth={2} strokeDasharray="4 4" dot={false} />
-                <Line type="monotone" dataKey="Recebido" stroke="#22c55e" strokeWidth={2} dot={true} />
-              </LineChart>
-            </ResponsiveContainer>
           </CardContent>
         </Card>
 

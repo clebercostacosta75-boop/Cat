@@ -37,6 +37,7 @@ import ProposalEntry from './pages/ProposalEntry';
 import DashboardComercial from './pages/DashboardComercial.jsx';
 import GestaoBMM from './pages/GestaoBMM.jsx';
 import GestaoAlunosIndividuais from './pages/GestaoAlunosIndividuais.jsx';
+import GestaoAcademicaEmpresas from './pages/GestaoAcademicaEmpresas.jsx';
 import AutoCadastroAluno from './pages/AutoCadastroAluno.jsx';
 import GestaoContratos from './pages/GestaoContratos.jsx';
 import ConsentForm from './pages/ConsentForm.jsx';
@@ -157,7 +158,8 @@ const AuthenticatedApp = () => {
       <Route path="/AuditoriaCompleta" element={<LayoutWrapper currentPageName="AuditoriaCompleta"><ProtectedRoute pageKey="Auditoria Completa"><AuditoriaCompleta /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/ProposalEntry" element={<LayoutWrapper currentPageName="ProposalEntry"><ProtectedRoute pageKey="Entrada de Propostas"><ProposalEntry /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/GestaoBMM" element={<LayoutWrapper currentPageName="GestaoBMM"><ProtectedRoute pageKey="Gestão de BMM"><GestaoBMM /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/GestaoAlunosIndividuais" element={<LayoutWrapper currentPageName="GestaoAlunosIndividuais"><ProtectedRoute pageKey="Alunos Individuais (PF)"><GestaoAlunosIndividuais /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/GestaoAlunosIndividuais" element={<LayoutWrapper currentPageName="GestaoAlunosIndividuais"><ProtectedRoute pageKey={["Alunos Individuais (PF)", "Gestão Acadêmica Individual"]}><GestaoAlunosIndividuais /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/GestaoAcademicaEmpresas" element={<LayoutWrapper currentPageName="GestaoAcademicaEmpresas"><ProtectedRoute pageKey="Gestão Acadêmica Empresas"><GestaoAcademicaEmpresas /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/BackupDownload" element={<LayoutWrapper currentPageName="BackupDownload"><ProtectedRoute pageKey="BackupDownload"><BackupDownload /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/ProntuarioDigital" element={<LayoutWrapper currentPageName="ProntuarioDigital"><ProtectedRoute pageKey="ProntuarioDigital"><ProntuarioDigital /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/GestaoDocumentosAluno" element={<LayoutWrapper currentPageName="GestaoDocumentosAluno"><ProtectedRoute pageKey="GestaoDocumentosAluno"><GestaoDocumentosAluno /></ProtectedRoute></LayoutWrapper>} />
