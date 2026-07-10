@@ -65,7 +65,7 @@ export default function StudentPortal() {
   }, []);
 
   const handleSearch = async (cpfOverride) => {
-    const cleaned = (cpfOverride || cpf).replace(/\D/g, "");
+    const cleaned = (typeof cpfOverride === "string" ? cpfOverride : cpf).replace(/\D/g, "");
     if (cleaned.length !== 11) { setError("Digite um CPF válido com 11 dígitos."); return; }
     setError("");
     setLoading(true);
