@@ -1563,7 +1563,7 @@ export default function GestaoAlunosIndividuais() {
             </TabsTrigger>
             <TabsTrigger value="indicadores" className="flex items-center gap-2 data-[state=active]:bg-amber-600 data-[state=active]:text-white py-3">
               <BarChartIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">Indicadores</span>
+              <span className="hidden sm:inline">Desempenho</span>
             </TabsTrigger>
             <TabsTrigger value="precadastros" className="flex items-center gap-2 data-[state=active]:bg-cyan-700 data-[state=active]:text-white py-3">
               <UserPlus className="w-4 h-4" />

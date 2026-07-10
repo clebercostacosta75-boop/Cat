@@ -1,0 +1,72 @@
+{
+  "name": "MetaAtendente",
+  "type": "object",
+  "properties": {
+    "escopo": {
+      "type": "string",
+      "enum": [
+        "Geral",
+        "Atendente"
+      ],
+      "default": "Geral",
+      "description": "Meta geral da equipe ou individual por atendente"
+    },
+    "atendente_nome": {
+      "type": "string",
+      "description": "Nome do atendente (quando escopo = Atendente)"
+    },
+    "periodo_tipo": {
+      "type": "string",
+      "enum": [
+        "Semanal",
+        "Mensal"
+      ],
+      "description": "Tipo do per\u00edodo da meta"
+    },
+    "periodo_referencia": {
+      "type": "string",
+      "description": "Per\u00edodo de refer\u00eancia: m\u00eas (AAAA-MM) para Mensal ou data de in\u00edcio da semana (AAAA-MM-DD) para Semanal"
+    },
+    "meta_inscricoes": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de quantidade de inscri\u00e7\u00f5es no per\u00edodo"
+    },
+    "meta_valor": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de valor vendido (R$) no per\u00edodo"
+    },
+    "ativa": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se a meta est\u00e1 ativa"
+    },
+    "elegivel_para_abono": {
+      "type": "boolean",
+      "default": false,
+      "description": "FASE 3: refer\u00eancia para futuro abono/b\u00f4nus \u2014 decis\u00e3o manual do gestor, sem pagamento autom\u00e1tico"
+    },
+    "observacao_abono": {
+      "type": "string",
+      "description": "Observa\u00e7\u00e3o do gestor sobre abono/b\u00f4nus (refer\u00eancia futura)"
+    },
+    "analisado_por": {
+      "type": "string",
+      "description": "E-mail/nome do gestor que analisou o abono"
+    },
+    "analisado_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da an\u00e1lise de abono"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es gerais da meta"
+    }
+  },
+  "required": [
+    "periodo_tipo",
+    "periodo_referencia"
+  ]
+}

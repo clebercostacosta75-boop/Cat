@@ -82,7 +82,7 @@ export default function ConverterPreCadastroModal({ preCadastro, onClose, onSucc
         },
         cpf: preCadastro.cpf,
         tipo, item, cursosMatricula, pgto,
-        origemInscricao: "QR Code",
+        origemInscricao: preCadastro.atendente_id ? "QR Code do Atendente" : "QR Code",
         auditPrefix: "FASE 2 QR Code",
         extraEnrollment: { pre_cadastro_id: preCadastro.id },
       });

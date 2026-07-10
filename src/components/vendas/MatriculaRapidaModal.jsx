@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { validarCPF, formatarCPF, limparCPF } from "@/lib/cpf";
 import { logVenda } from "@/lib/auditVendas";
 
-const ORIGENS = ["Presencial", "WhatsApp", "Telefone", "Indicação", "Outro"];
+const ORIGENS = ["Presencial", "WhatsApp", "Telefone", "Indicação", "QR Code", "QR Code do Atendente", "Instagram", "Facebook", "Site", "Outro"];
 const STATUS_PGTO = ["Pendente", "Pago", "Aguardando Confirmação", "Cancelado", "Cortesia"];
 const FORMA_LANC = { "Pix": "PIX", "Boleto": "Boleto", "Cartão de Crédito": "Cartão de Crédito", "Cartão de Débito": "Cartão de Débito", "Dinheiro": "Dinheiro", "Transferência Bancária": "Transferência", "Cortesia": "Outro" };
 
