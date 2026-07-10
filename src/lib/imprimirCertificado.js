@@ -15,6 +15,7 @@ import { buildComprovanteHTML } from "@/components/certificates/ComprovanteImpre
 export const TIPO_SEM_ASSINATURA = "sem_assinatura_digital";
 export const TIPO_COM_ASSINATURA = "com_assinatura_digital";
 export const TIPO_CERT_COM_COMPROVANTE = "certificado_com_comprovante";
+export const TIPO_COMPROVANTE = "comprovante_assinatura";
 
 const isAssinado = (cert) =>
   (cert?.status === "signed" || cert?.status === "active") && !!cert?.signed_at;
@@ -27,7 +28,7 @@ export function getPrintBlockReason(cert, tipo) {
   if (cert.is_blocked) return "Impressão bloqueada: certificado bloqueado.";
   if (cert.valid_until && new Date(cert.valid_until) < new Date())
     return "Impressão bloqueada: certificado vencido.";
-  if ((tipo === TIPO_COM_ASSINATURA || tipo === TIPO_CERT_COM_COMPROVANTE) && !isAssinado(cert))
+  if ((tipo === TIPO_COM_ASSINATURA || tipo === TIPO_CERT_COM_COMPROVANTE || tipo === TIPO_COMPROVANTE) && !isAssinado(cert))
     return "Este certificado ainda não possui assinatura digital do aluno.";
   return null;
 }
@@ -143,9 +144,42 @@ export async function imprimirCertificado(cert, tipo = null, model) {
     html = html.replace("</body>", buildComprovanteHTML(cert, dados) + "</body>");
   }
 
-  // SPR-2C-2 (reforço operacional) — Pré-visualização obrigatória antes de imprimir.
-  // A impressão só ocorre após "Confirmar impressão"; "Cancelar" fecha sem imprimir.
-  // Nenhum dado do certificado é alterado em nenhum dos casos.
+  return abrirPreview(html);
+}
+
+/**
+ * SPR-2C-2 — Impressão do comprovante de assinatura como documento próprio.
+ * Somente para certificado assinado; validada e auditada (tipo comprovante_assinatura).
+ */
+export async function imprimirComprovante(cert) {
+  const motivo = getPrintBlockReason(cert, TIPO_COMPROVANTE);
+  if (motivo) {
+    toast.error(motivo);
+    if (cert) auditarImpressao(cert, TIPO_COMPROVANTE, "bloqueado", motivo);
+    return false;
+  }
+  await auditarImpressao(cert, TIPO_COMPROVANTE, "permitido", null);
+
+  let dados = null;
+  try {
+    const res = await base44.functions.invoke("certificadoPublico", {
+      action: "comprovante",
+      code: cert.certificate_code,
+    });
+    dados = res.data;
+  } catch {
+    dados = null;
+  }
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Comprovante de Assinatura — ${cert.certificate_code || ""}</title></head><body style="margin:0;">${buildComprovanteHTML(cert, dados)}</body></html>`;
+  return abrirPreview(html);
+}
+
+/**
+ * SPR-2C-2 (reforço operacional) — Pré-visualização obrigatória antes de imprimir.
+ * A impressão só ocorre após "Confirmar impressão"; "Cancelar" fecha sem imprimir.
+ * Nenhum dado do certificado é alterado em nenhum dos casos.
+ */
+function abrirPreview(html) {
   const toolbar = `
 <div id="print-confirm-bar" style="position:fixed; top:0; left:0; right:0; z-index:9999; background:#111827; color:#fff; padding:10px 16px; display:flex; align-items:center; gap:12px; font-family:Arial,sans-serif; font-size:13px; box-shadow:0 2px 8px rgba(0,0,0,.3);">
   <span style="flex:1;">Pré-visualização da impressão — confira o certificado antes de imprimir. A impressão não altera nenhum dado do certificado.</span>

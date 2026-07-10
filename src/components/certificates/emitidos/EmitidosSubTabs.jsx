@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Search, Send, Ban, RotateCcw, Clock, Copy, QrCode, Printer, History, FileCheck } from "lucide-react";
 import { format, parseISO, isBefore } from "date-fns";
 import { toast } from "sonner";
-import { imprimirCertificado, TIPO_SEM_ASSINATURA, TIPO_COM_ASSINATURA, TIPO_CERT_COM_COMPROVANTE } from "@/lib/imprimirCertificado";
+import { imprimirCertificado, imprimirComprovante, TIPO_SEM_ASSINATURA, TIPO_COM_ASSINATURA, TIPO_CERT_COM_COMPROVANTE } from "@/lib/imprimirCertificado";
 import HistoricoImpressoesModal from "@/components/certificates/HistoricoImpressoesModal";
 import ComprovanteAssinaturaDigital from "@/components/certificates/ComprovanteAssinaturaDigital";
 
@@ -201,6 +201,12 @@ export default function EmitidosSubTabs({
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Comprovante de Assinatura Digital</DialogTitle></DialogHeader>
           {compCert && <ComprovanteAssinaturaDigital certificate={compCert} />}
+          {compCert && canGenerate && (
+            <Button size="sm" variant="outline" className="w-full text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+              onClick={() => imprimirComprovante(compCert)}>
+              <Printer className="w-3 h-3 mr-1" /> Imprimir comprovante
+            </Button>
+          )}
         </DialogContent>
       </Dialog>
     </div>

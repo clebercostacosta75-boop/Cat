@@ -14,6 +14,7 @@ const TIPO_LABEL = {
   sem_assinatura_digital: "Sem assinatura digital",
   com_assinatura_digital: "Com assinatura digital",
   certificado_com_comprovante: "Certificado + comprovante",
+  comprovante_assinatura: "Comprovante de assinatura",
 };
 
 export default function HistoricoImpressoesModal({ cert, open, onClose }) {
