@@ -1,43 +1,41 @@
 /**
- * CertificateExporter — usa o mesmo buildCertificateHTMLFromModel do CertificatePreview.
- * Garante que o PDF gerado seja IDÊNTICO à pré-visualização.
+ * CertificateExporter — SPR-2C-1: blindado.
+ * Não imprime mais diretamente: toda impressão passa pela função central
+ * imprimirCertificado (validação de status + AuditLog obrigatório).
+ * Certificado revogado/cancelado/bloqueado não exibe botão de impressão válida.
  */
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
-import { buildCertificateHTMLFromModel } from "./CertificatePreview";
+import { Printer } from "lucide-react";
+import {
+  imprimirCertificado,
+  getPrintBlockReason,
+  TIPO_SEM_ASSINATURA,
+  TIPO_COM_ASSINATURA,
+} from "@/lib/imprimirCertificado";
 
-export function exportCertificatePDF(cert, model) {
-  // Mescla: dados do modelo têm prioridade para layout, dados do cert têm prioridade para conteúdo do aluno
-  const mergedModel = {
-    ...(model || {}),
-    // Campos de layout/background que podem estar salvos diretamente no cert (emissões antigas)
-    front_background_url: cert.front_background_url || model?.front_background_url,
-    back_background_url: cert.back_background_url || model?.back_background_url,
-  };
-
-  const html = buildCertificateHTMLFromModel(mergedModel, cert);
-  const win = window.open("", "_blank");
-  if (!win) {
-    alert("Popup bloqueado. Por favor, permita popups para este site.");
-    return;
-  }
-  win.document.write(html);
-  win.document.close();
-  win.onload = () => setTimeout(() => win.print(), 500);
+/** Compatibilidade com chamadas antigas — agora validada e auditada. */
+export async function exportCertificatePDF(cert, model) {
+  return imprimirCertificado(cert, null, model);
 }
 
 export default function CertificateExporter({ certificate, cert, model, className }) {
   const certData = certificate || cert;
+  const assinado = (certData?.status === "signed" || certData?.status === "active") && !!certData?.signed_at;
+  const tipo = assinado ? TIPO_COM_ASSINATURA : TIPO_SEM_ASSINATURA;
+
+  // Revogado / cancelado / bloqueado / vencido: sem botão de impressão válida
+  if (getPrintBlockReason(certData, tipo)) return null;
+
   return (
     <Button
       size="sm"
       variant="outline"
-      onClick={() => exportCertificatePDF(certData, model)}
+      onClick={() => imprimirCertificado(certData, tipo, model)}
       className={className}
     >
-      <Download className="w-3 h-3 mr-1" />
-      PDF
+      <Printer className="w-3 h-3 mr-1" />
+      {assinado ? "Imprimir c/ assinatura" : "Imprimir s/ assinatura"}
     </Button>
   );
 }

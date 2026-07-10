@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Send, Ban, RotateCcw, Clock, Copy, QrCode, Printer } from "lucide-react";
 import { format, parseISO, isBefore } from "date-fns";
 import { toast } from "sonner";
+import { imprimirCertificado, TIPO_SEM_ASSINATURA, TIPO_COM_ASSINATURA } from "@/lib/imprimirCertificado";
 
 const TABS = [
   { key: "aguardando", label: "⏳ Aguardando Assinatura" },
@@ -59,7 +60,7 @@ export default function EmitidosSubTabs({
       {subTab === "impressao" && (
         <div className="bg-indigo-50 border-b border-indigo-200 px-4 py-2 text-xs text-indigo-700 flex items-center gap-2">
           <Printer className="w-3.5 h-3.5" />
-          Espaço reservado: impressão com/sem assinatura digital e auditoria de impressão serão implementadas em sprint próprio. Abaixo, os certificados assinados prontos para impressão.
+          Impressão blindada (SPR-2C-1): toda impressão é validada por status e registrada em auditoria. Certificados revogados, cancelados ou bloqueados não podem ser impressos como válidos.
         </div>
       )}
 
@@ -128,6 +129,10 @@ export default function EmitidosSubTabs({
                   <td className="px-3 py-2">
                     <div className="flex gap-1 flex-wrap">
                       {subTab === "aguardando" && canGenerate && (<>
+                        <Button size="sm" variant="outline" className="h-7 text-xs text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                          onClick={() => imprimirCertificado(c, TIPO_SEM_ASSINATURA)}>
+                          <Printer className="w-3 h-3 mr-1" /> Imprimir s/ assinatura
+                        </Button>
                         <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => onResend(c)}>
                           <Send className="w-3 h-3 mr-1" /> Reenviar
                         </Button>
@@ -135,6 +140,12 @@ export default function EmitidosSubTabs({
                           <Copy className="w-3 h-3" />
                         </Button>
                       </>)}
+                      {(subTab === "assinados" || subTab === "impressao") && canGenerate && (
+                        <Button size="sm" variant="outline" className="h-7 text-xs text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                          onClick={() => imprimirCertificado(c, TIPO_COM_ASSINATURA)}>
+                          <Printer className="w-3 h-3 mr-1" /> Imprimir c/ assinatura
+                        </Button>
+                      )}
                       {(subTab === "assinados" || subTab === "impressao") && (
                         <Button size="sm" variant="outline" className="h-7 text-xs text-emerald-700 border-emerald-200 hover:bg-emerald-50"
                           onClick={() => window.open(`/CertificateValidate?code=${c.certificate_code}`, "_blank")}>
