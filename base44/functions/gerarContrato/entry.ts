@@ -286,7 +286,7 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { student_id, enrollment_id, template_id, force_regen } = await req.json();
+    const { student_id, enrollment_id, template_id, force_regen, skip_financeiro } = await req.json();
     if (!student_id) return Response.json({ error: 'student_id é obrigatório' }, { status: 400 });
 
     // Buscar dados em paralelo
@@ -426,10 +426,11 @@ Deno.serve(async (req) => {
     const contract = await base44.asServiceRole.entities.Contract.create(contractData);
 
     // ─── Gerar lançamentos financeiros a receber (evita duplicidade) ───
-    const existingLancs = await base44.asServiceRole.entities.LancamentoFinanceiro.filter({
+    // FASE 4: skip_financeiro=true quando o financeiro já foi criado pela inscrição (evita duplicidade)
+    const existingLancs = skip_financeiro ? [] : await base44.asServiceRole.entities.LancamentoFinanceiro.filter({
       origem_modulo: 'Contrato', origem_id: contract.id
     });
-    if (existingLancs.length === 0) {
+    if (!skip_financeiro && existingLancs.length === 0) {
       const numParc = numParcelas || 1;
       const valorParc = numParc > 1 ? valorParcela : courseValue;
       const baseDate = enrollment?.data_vencimento_pagamento || new Date().toISOString().split('T')[0];

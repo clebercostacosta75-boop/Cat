@@ -225,7 +225,20 @@ export default function ReciboPagamento({ enrollment }) {
         <Button
           size="sm"
           className="bg-green-700 hover:bg-green-800"
-          onClick={() => setModalOpen(true)}
+          onClick={() => {
+            // FASE 4: recibo de quitação somente com pagamento confirmado
+            if (enrollment && enrollment.status_pagamento !== "Pago") {
+              toast.error("Recibo de quitação disponível somente após confirmação do pagamento.");
+              base44.auth.me().then(u => base44.entities.AuditLog.create({
+                user_email: u?.email || "sistema", user_name: u?.full_name || "",
+                action: "view", entity_type: "StudentCourseEnrollment", entity_id: enrollment.id,
+                entity_name: `${enrollment.student_name || ""} — ${enrollment.course_name || ""}`,
+                details: `FASE 4: emissão de recibo de quitação BLOQUEADA — pagamento não confirmado (status: ${enrollment.status_pagamento || "?"})`,
+              })).catch(() => {});
+              return;
+            }
+            setModalOpen(true);
+          }}
         >
           <Plus className="w-4 h-4 mr-1" /> Novo Recibo
         </Button>

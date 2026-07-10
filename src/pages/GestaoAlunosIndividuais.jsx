@@ -32,6 +32,7 @@ import { isMatriculaIndividual } from "@/lib/origemMatricula";
 import CursosPacotesTab from "@/components/vendas/CursosPacotesTab";
 import IndicadoresAtendenteTab from "@/components/vendas/IndicadoresAtendenteTab";
 import MatriculaRapidaModal from "@/components/vendas/MatriculaRapidaModal";
+import AcoesMatriculaModal from "@/components/alunos/AcoesMatriculaModal";
 import PreCadastrosTab from "@/components/vendas/PreCadastrosTab";
 
 const EMPTY_STUDENT = {
@@ -720,6 +721,7 @@ function MatriculasCursos() {
   const [confirmandoPix, setConfirmandoPix] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
   const [resultadoEnrollment, setResultadoEnrollment] = useState(null);
+  const [acoesEnrollment, setAcoesEnrollment] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
@@ -832,6 +834,15 @@ function MatriculasCursos() {
         />
       )}
 
+      {/* FASE 4: Ações controladas da inscrição (trocar/alterar/cancelar/transferir) */}
+      {acoesEnrollment && (
+        <AcoesMatriculaModal
+          enrollment={acoesEnrollment}
+          onClose={() => setAcoesEnrollment(null)}
+          onDone={() => queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] })}
+        />
+      )}
+
       {/* Modal Nova Matrícula com busca de aluno */}
       <NovaMatriculaModal
         open={modalOpen}
@@ -898,7 +909,7 @@ function MatriculasCursos() {
               <Upload className="w-4 h-4 mr-2" /> Importar Alunos por Planilha
             </Button>
             <Button onClick={() => setRapidaOpen(true)} className="bg-amber-500 hover:bg-amber-600 text-white">
-              <Zap className="w-4 h-4 mr-2" /> Matrícula Rápida
+              <Zap className="w-4 h-4 mr-2" /> Nova Inscrição Individual
             </Button>
             <Button onClick={() => setModalOpen(true)} className="bg-gray-900 hover:bg-gray-800">
               <Plus className="w-4 h-4 mr-2" /> Nova Matrícula
@@ -1081,6 +1092,16 @@ function MatriculasCursos() {
                         onClick={() => setResultadoEnrollment(e)}
                       >
                         🎓 Resultado
+                      </Button>
+
+                      {/* FASE 4: Ações controladas */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7 border-gray-300 text-gray-700 hover:bg-gray-100 w-full"
+                        onClick={() => setAcoesEnrollment(e)}
+                      >
+                        🔁 Ações
                       </Button>
 
                       {/* Autorizar — exige Resultado Acadêmico Aprovado */}
