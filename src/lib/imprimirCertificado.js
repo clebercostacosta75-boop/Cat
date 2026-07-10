@@ -1,16 +1,20 @@
 /**
- * SPR-2C-1 — Função central de impressão de certificados.
+ * SPR-2C-1 / SPR-2C-2 — Função central de impressão de certificados.
  * NENHUMA impressão pode acontecer sem passar por aqui:
  * valida status (revogado/cancelado/bloqueado/vencido), tipo de impressão
  * e registra AuditLog obrigatório (permitido ou bloqueado).
+ * SPR-2C-2: linha de assinatura física (sem assinatura), rodapé "Assinado
+ * digitalmente em..." (com assinatura) e página A4 de comprovante.
  */
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import { buildCertificateHTMLFromModel } from "@/components/certificates/CertificatePreview";
 import { logAction } from "@/components/audit/AuditLogger";
+import { buildComprovanteHTML } from "@/components/certificates/ComprovanteImpressao";
 
 export const TIPO_SEM_ASSINATURA = "sem_assinatura_digital";
 export const TIPO_COM_ASSINATURA = "com_assinatura_digital";
+export const TIPO_CERT_COM_COMPROVANTE = "certificado_com_comprovante";
 
 const isAssinado = (cert) =>
   (cert?.status === "signed" || cert?.status === "active") && !!cert?.signed_at;
@@ -23,7 +27,7 @@ export function getPrintBlockReason(cert, tipo) {
   if (cert.is_blocked) return "Impressão bloqueada: certificado bloqueado.";
   if (cert.valid_until && new Date(cert.valid_until) < new Date())
     return "Impressão bloqueada: certificado vencido.";
-  if (tipo === TIPO_COM_ASSINATURA && !isAssinado(cert))
+  if ((tipo === TIPO_COM_ASSINATURA || tipo === TIPO_CERT_COM_COMPROVANTE) && !isAssinado(cert))
     return "Este certificado ainda não possui assinatura digital do aluno.";
   return null;
 }
@@ -69,10 +73,13 @@ async function loadModel(cert) {
   }
 }
 
+const overlayFooter = (texto) =>
+  `<div style="position:fixed; bottom:1mm; left:0; right:0; text-align:center; font-family:Arial,sans-serif; font-size:7pt; color:#9ca3af; z-index:99;">${texto}</div>`;
+
 /**
  * Imprime um certificado com validação de status + AuditLog obrigatório.
  * @param {object} cert - Certificado (Certificate)
- * @param {string|null} tipo - TIPO_SEM_ASSINATURA | TIPO_COM_ASSINATURA (null = automático pelo status)
+ * @param {string|null} tipo - TIPO_SEM_ASSINATURA | TIPO_COM_ASSINATURA | TIPO_CERT_COM_COMPROVANTE (null = automático)
  * @param {object} [model] - Modelo (CertificateModel); carregado automaticamente se omitido
  * @returns {Promise<boolean>} true se a impressão foi aberta
  */
@@ -97,12 +104,43 @@ export async function imprimirCertificado(cert, tipo = null, model) {
 
   let html = buildCertificateHTMLFromModel(mergedModel, cert);
 
-  // Impressão sem assinatura digital: marcação obrigatória (nunca simular assinatura)
+  // SPR-2C-2 — Sem assinatura digital: linha para assinatura física + aviso (nunca simular assinatura)
   if (tipoFinal === TIPO_SEM_ASSINATURA && !isAssinado(cert)) {
     html = html.replace(
       "</body>",
-      `<div style="position:fixed; bottom:1mm; left:0; right:0; text-align:center; font-family:Arial,sans-serif; font-size:7pt; color:#9ca3af; z-index:99;">Impresso sem assinatura digital do aluno — autenticidade verificável pelo QR Code</div></body>`
+      `<div style="position:fixed; bottom:7mm; left:50%; transform:translateX(-50%); font-family:Arial,sans-serif; font-size:9pt; color:#374151; z-index:99; white-space:nowrap;">Assinatura do aluno: _________________________________________</div>` +
+        overlayFooter("Impresso sem assinatura digital do aluno — validade verificável pelo QR Code") +
+        "</body>"
     );
+  }
+
+  // SPR-2C-2 — Com assinatura digital: rodapé com data/hora + referência ao comprovante
+  // (funciona também para legado com signed_at e sem signature_url — bloco textual, sem imagem simulada)
+  if (tipoFinal !== TIPO_SEM_ASSINATURA && cert.signed_at) {
+    const dt = new Date(cert.signed_at).toLocaleString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+    });
+    const ref = cert.internal_control_code ? ` — Cód. interno ${cert.internal_control_code}` : "";
+    html = html.replace(
+      "</body>",
+      overlayFooter(`Assinado digitalmente em ${dt}${ref} — comprovante de assinatura digital disponível`) + "</body>"
+    );
+  }
+
+  // SPR-2C-2 — Certificado + comprovante: página A4 adicional
+  if (tipoFinal === TIPO_CERT_COM_COMPROVANTE) {
+    let dados = null;
+    try {
+      const res = await base44.functions.invoke("certificadoPublico", {
+        action: "comprovante",
+        code: cert.certificate_code,
+      });
+      dados = res.data;
+    } catch {
+      dados = null;
+    }
+    html = html.replace("</body>", buildComprovanteHTML(cert, dados) + "</body>");
   }
 
   const win = window.open("", "_blank");
