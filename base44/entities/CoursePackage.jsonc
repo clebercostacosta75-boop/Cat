@@ -1,0 +1,103 @@
+{
+  "name": "CoursePackage",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome do pacote (ex: Pacote Operador de M\u00e1quinas)"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do pacote"
+    },
+    "cursos": {
+      "type": "array",
+      "description": "Cursos inclu\u00eddos no pacote, cada um com seu pr\u00f3prio per\u00edodo",
+      "items": {
+        "type": "object",
+        "properties": {
+          "course_id": {
+            "type": "string"
+          },
+          "course_name": {
+            "type": "string"
+          },
+          "carga_horaria": {
+            "type": "string"
+          },
+          "data_inicio": {
+            "type": "string",
+            "format": "date"
+          },
+          "data_termino": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "course_id",
+          "course_name"
+        ]
+      }
+    },
+    "valor_total": {
+      "type": "number",
+      "description": "Valor total dos cursos"
+    },
+    "desconto": {
+      "type": "number",
+      "default": 0,
+      "description": "Desconto aplicado (R$)"
+    },
+    "valor_final": {
+      "type": "number",
+      "description": "Valor final de venda do pacote"
+    },
+    "formas_pagamento": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Formas de pagamento aceitas"
+    },
+    "vagas_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Total de vagas"
+    },
+    "vagas_preenchidas": {
+      "type": "number",
+      "default": 0,
+      "description": "Vagas j\u00e1 preenchidas"
+    },
+    "data_inicio_geral": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de in\u00edcio geral do pacote"
+    },
+    "data_termino_geral": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de t\u00e9rmino geral do pacote"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Aberta",
+        "Em divulga\u00e7\u00e3o",
+        "Esgotada",
+        "Encerrada",
+        "Cancelada"
+      ],
+      "default": "Aberta",
+      "description": "Status do pacote"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

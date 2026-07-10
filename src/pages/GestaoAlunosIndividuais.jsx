@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Users, UserPlus, BookOpen, DollarSign, Shield, Search, Edit, Trash2,
-  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, FileText, Copy, LayoutDashboard, Bell, PenLine, TrendingUp, Calendar, XCircle, ChevronRight, Lightbulb, Upload
+  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, FileText, Copy, LayoutDashboard, Bell, PenLine, TrendingUp, Calendar, XCircle, ChevronRight, Lightbulb, Upload, Zap, BarChart3 as BarChartIcon
 } from "lucide-react";
 import { toast } from "sonner";
 import PagamentosAsaas from "@/components/alunos/PagamentosAsaas";
@@ -29,6 +29,9 @@ import ImportarAlunosPlanilha from "@/components/alunos/ImportarAlunosPlanilha";
 import ResultadoAcademicoModal from "@/components/alunos/ResultadoAcademicoModal";
 import FinanceiroOperacionalTab from "@/components/alunos/FinanceiroOperacionalTab";
 import { isMatriculaIndividual } from "@/lib/origemMatricula";
+import CursosPacotesTab from "@/components/vendas/CursosPacotesTab";
+import IndicadoresAtendenteTab from "@/components/vendas/IndicadoresAtendenteTab";
+import MatriculaRapidaModal from "@/components/vendas/MatriculaRapidaModal";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -704,6 +707,7 @@ function AlunosCadastro() {
 function MatriculasCursos() {
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
+  const [rapidaOpen, setRapidaOpen] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [selectedEnrollmentForContract, setSelectedEnrollmentForContract] = useState(null);
   const [novoCursoEnrollment, setNovoCursoEnrollment] = useState(null);
@@ -834,6 +838,13 @@ function MatriculasCursos() {
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] })}
       />
 
+      {/* Matrícula Rápida (FASE 1 — Cursos à Venda) */}
+      <MatriculaRapidaModal
+        open={rapidaOpen}
+        onClose={() => setRapidaOpen(false)}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] })}
+      />
+
       {/* Painel de contrato da matrícula selecionada */}
       {selectedEnrollmentForContract && (
         <Card className="border-2 border-blue-300">
@@ -884,6 +895,9 @@ function MatriculasCursos() {
           <div className="flex gap-2 flex-shrink-0">
             <Button variant="outline" onClick={() => setImportOpen(true)} className="border-emerald-400 text-emerald-800 hover:bg-emerald-50">
               <Upload className="w-4 h-4 mr-2" /> Importar Alunos por Planilha
+            </Button>
+            <Button onClick={() => setRapidaOpen(true)} className="bg-amber-500 hover:bg-amber-600 text-white">
+              <Zap className="w-4 h-4 mr-2" /> Matrícula Rápida
             </Button>
             <Button onClick={() => setModalOpen(true)} className="bg-gray-900 hover:bg-gray-800">
               <Plus className="w-4 h-4 mr-2" /> Nova Matrícula
@@ -1501,7 +1515,7 @@ export default function GestaoAlunosIndividuais() {
         </div>
 
         <Tabs defaultValue="dashboard">
-          <TabsList className="grid w-full grid-cols-10 mb-6 bg-gray-100 p-1 h-auto">
+          <TabsList className="grid w-full grid-cols-12 mb-6 bg-gray-100 p-1 h-auto">
             <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-indigo-700 data-[state=active]:text-white py-3">
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -1542,6 +1556,14 @@ export default function GestaoAlunosIndividuais() {
               <PenLine className="w-4 h-4" />
               <span className="hidden sm:inline">Contratos</span>
             </TabsTrigger>
+            <TabsTrigger value="vendas" className="flex items-center gap-2 data-[state=active]:bg-emerald-700 data-[state=active]:text-white py-3">
+              <TrendingUp className="w-4 h-4" />
+              <span className="hidden sm:inline">Cursos à Venda</span>
+            </TabsTrigger>
+            <TabsTrigger value="indicadores" className="flex items-center gap-2 data-[state=active]:bg-amber-600 data-[state=active]:text-white py-3">
+              <BarChartIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">Indicadores</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">{canAccessTab("dashboard") ? <DashboardPF /> : <SecaoBloqueada nome="Dashboard" />}</TabsContent>
@@ -1554,6 +1576,8 @@ export default function GestaoAlunosIndividuais() {
           <TabsContent value="pendencias">{canAccessTab("pendencias") ? <PainelPendenciasFinanceiras /> : <SecaoBloqueada nome="Pendências" />}</TabsContent>
           <TabsContent value="conhecimento">{canAccessTab("conhecimento") ? <BaseConhecimentoTab /> : <SecaoBloqueada nome="Base de Conhecimento" />}</TabsContent>
           <TabsContent value="contratos">{canAccessTab("contratos") ? <ContratosGeral /> : <SecaoBloqueada nome="Contratos" />}</TabsContent>
+          <TabsContent value="vendas">{canAccessTab("vendas") ? <CursosPacotesTab /> : <SecaoBloqueada nome="Cursos à Venda" />}</TabsContent>
+          <TabsContent value="indicadores">{canAccessTab("indicadores") ? <IndicadoresAtendenteTab /> : <SecaoBloqueada nome="Indicadores" />}</TabsContent>
         </Tabs>
       </div>
     </div>

@@ -1,0 +1,91 @@
+{
+  "name": "CourseOffer",
+  "type": "object",
+  "properties": {
+    "course_id": {
+      "type": "string",
+      "description": "ID do curso base vinculado"
+    },
+    "course_name": {
+      "type": "string",
+      "description": "Nome do curso base"
+    },
+    "nome_comercial": {
+      "type": "string",
+      "description": "Nome comercial da oferta (ex: NR-35 \u2014 Turma Aberta Comunidade \u2014 Setembro 2026)"
+    },
+    "carga_horaria": {
+      "type": "string",
+      "description": "Carga hor\u00e1ria (ex: 8h)"
+    },
+    "valor": {
+      "type": "number",
+      "description": "Valor de venda da oferta"
+    },
+    "formas_pagamento": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Formas de pagamento aceitas"
+    },
+    "vagas_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Total de vagas"
+    },
+    "vagas_preenchidas": {
+      "type": "number",
+      "default": 0,
+      "description": "Vagas j\u00e1 preenchidas"
+    },
+    "data_inicio": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de in\u00edcio do curso"
+    },
+    "data_termino": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de t\u00e9rmino do curso"
+    },
+    "horario": {
+      "type": "string",
+      "description": "Hor\u00e1rio (ex: 08:00 \u00e0s 17:00)"
+    },
+    "local": {
+      "type": "string",
+      "description": "Local de realiza\u00e7\u00e3o"
+    },
+    "modalidade": {
+      "type": "string",
+      "enum": [
+        "Presencial",
+        "Online",
+        "H\u00edbrido"
+      ],
+      "description": "Modalidade da oferta"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Aberta",
+        "Em divulga\u00e7\u00e3o",
+        "Esgotada",
+        "Encerrada",
+        "Cancelada"
+      ],
+      "default": "Aberta",
+      "description": "Status da oferta"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "course_id",
+    "course_name",
+    "nome_comercial"
+  ]
+}

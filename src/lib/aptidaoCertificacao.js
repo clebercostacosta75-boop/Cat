@@ -132,6 +132,10 @@ export function verificarAptidao(enrollment, { certModels = [], certificates = [
   if (!enrollment.course_id && !enrollment.course_name) faltando.push("curso vinculado");
   if (faltando.length) pendencias.push(`Dados obrigatórios ausentes: ${faltando.join(", ")}`);
 
+  // FASE 1 Vendas: certificado exige período oficial de realização do curso
+  if (!enrollment.start_date || !enrollment.end_date)
+    pendencias.push("Certificado bloqueado: período de realização do curso não informado na matrícula");
+
   const modelo = encontrarModelo(enrollment, certModels);
   if (!modelo) pendencias.push("Curso sem modelo de certificado vinculado");
 
