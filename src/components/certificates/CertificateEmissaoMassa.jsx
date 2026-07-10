@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { Building2, FileText, Upload, Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { format, addMonths } from "date-fns";
 import { gerarCodigoInternoControle } from "@/lib/certControl";
+import { verificarAptidao } from "@/lib/aptidaoCertificacao";
+import { carregarContextoAptidao, registrarTentativaBloqueada } from "@/lib/validarEmissao";
 
 const MODELO_PADRAO = `Nome;CPF;Telefone;Data_Inicio;Data_Termino
 João Silva;123.456.789-00;(91) 99999-9999;2025-01-01;2025-01-10
@@ -80,6 +82,10 @@ export default function CertificateEmissaoMassa({ onSuccess }) {
     setResults([]);
     const newResults = [];
 
+    // SPR-2B-1 — Blindagem: contexto do motor central + matrículas (CSV não gera certificado direto)
+    const ctx = await carregarContextoAptidao();
+    const allEnrollments = await base44.entities.StudentCourseEnrollment.list("-created_date", 500);
+
     for (const row of rows) {
       const name = row["nome"] || row["name"] || "";
       const cpf = row["cpf"] || "";
@@ -95,6 +101,31 @@ export default function CertificateEmissaoMassa({ onSuccess }) {
         continue;
       }
 
+      // SPR-2B-1 — Blindagem: cada aluno do lote precisa de matrícula apta pelo motor central
+      const cpfDigits = cpf.replace(/\D/g, "");
+      const candidatos = allEnrollments.filter(e => (e.student_cpf || "").replace(/\D/g, "") === cpfDigits);
+      if (candidatos.length === 0) {
+        await registrarTentativaBloqueada(
+          { student_name: name, student_cpf: cpf, course_name: selectedModel?.name || "", company_id: clientId, company_name: selectedCompany?.nome_fantasia || "" },
+          "Aluno sem matrícula cadastrada — CSV não pode gerar certificado direto",
+          "Emissão em Massa"
+        );
+        newResults.push({ name, status: "blocked", message: "Sem matrícula cadastrada" });
+        continue;
+      }
+      let escolhida = candidatos[0];
+      let aval = verificarAptidao(escolhida, ctx);
+      for (const cand of candidatos) {
+        const a = verificarAptidao(cand, ctx);
+        if (a.grupo === "aguardando") { escolhida = cand; aval = a; break; }
+      }
+      if (aval.grupo !== "aguardando") {
+        const motivoBloqueio = (aval.bloqueios || []).join("; ") || "Matrícula não apta";
+        await registrarTentativaBloqueada(escolhida, motivoBloqueio, "Emissão em Massa");
+        newResults.push({ name, status: "blocked", message: motivoBloqueio });
+        continue;
+      }
+
       try {
         const code = gerarCodigo();
         const validMonths = selectedModel?.validity_period_months || 12;
@@ -105,6 +136,8 @@ export default function CertificateEmissaoMassa({ onSuccess }) {
         const certData = {
           certificate_code: code,
           internal_control_code: gerarCodigoInternoControle(),
+          enrollment_id: escolhida.id,
+          student_id: escolhida.student_id || "",
           student_name: name,
           student_cpf: cpf,
           student_phone: phone || null,
@@ -131,7 +164,9 @@ export default function CertificateEmissaoMassa({ onSuccess }) {
         if (categoriaCnh) certData.categoria_cnh = categoriaCnh;
         if (registroDetran) certData.detran_registro = registroDetran;
 
-        await base44.entities.Certificate.create(certData);
+        const created = await base44.entities.Certificate.create(certData);
+        // SPR-2B-1: vincula certificado à matrícula (mesmo ciclo da fila)
+        await base44.entities.StudentCourseEnrollment.update(escolhida.id, { status: "Certificado Gerado", certificate_id: created.id });
         newResults.push({ name, status: "success", code });
       } catch (err) {
         newResults.push({ name, status: "error", message: err?.message || "Erro ao criar" });
@@ -142,8 +177,9 @@ export default function CertificateEmissaoMassa({ onSuccess }) {
     queryClient.invalidateQueries({ queryKey: ["certificates"] });
 
     const ok = newResults.filter(r => r.status === "success").length;
+    const blocked = newResults.filter(r => r.status === "blocked").length;
     const fail = newResults.filter(r => r.status === "error").length;
-    toast.success(`${ok} certificados gerados.${fail > 0 ? ` ${fail} com erro.` : ""}`);
+    toast.success(`${ok} certificado(s) emitido(s). ${blocked > 0 ? `${blocked} bloqueado(s) pelo motor de aptidão.` : ""}${fail > 0 ? ` ${fail} com erro.` : ""}`);
 
     // Registrar auditoria da emissão em massa
     if (ok > 0) {
@@ -151,8 +187,11 @@ export default function CertificateEmissaoMassa({ onSuccess }) {
         descricao: `Emissão em massa: ${ok} certificados gerados${fail > 0 ? `, ${fail} com erro` : ""}`,
         modelo: selectedModel?.name || "",
         empresa: selectedCompany?.nome_fantasia || selectedCompany?.razao_social || "",
+        total_processados: newResults.length,
         total_gerados: ok,
+        total_bloqueados: blocked,
         total_erros: fail,
+        bloqueados: newResults.filter(r => r.status === "blocked").map(r => `${r.name}: ${r.message}`),
         alunos: newResults.filter(r => r.status === "success").map(r => r.name),
       });
     }
@@ -292,12 +331,14 @@ export default function CertificateEmissaoMassa({ onSuccess }) {
               <div key={i} className="flex items-center gap-2 text-sm">
                 {r.status === "success"
                   ? <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  : r.status === "blocked"
+                  ? <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
                   : <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
                 }
                 <span className="flex-1 truncate">{r.name}</span>
                 {r.status === "success"
                   ? <Badge className="bg-green-100 text-green-700 border-0 text-xs">{r.code}</Badge>
-                  : <span className="text-xs text-red-500">{r.message}</span>
+                  : <span className={`text-xs ${r.status === "blocked" ? "text-amber-600" : "text-red-500"}`}>{r.message}</span>
                 }
               </div>
             ))}

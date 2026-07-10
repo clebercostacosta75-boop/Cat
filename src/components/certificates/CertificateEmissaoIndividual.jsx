@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Award, Building2, FileText, User, Loader2, Search, AlertTriangle, CheckCircle2, X } from "lucide-react";
 import { format, addMonths } from "date-fns";
 import { gerarCodigoInternoControle } from "@/lib/certControl";
+import { carregarContextoAptidao, validarEmissaoBlindada } from "@/lib/validarEmissao";
 
 // CNPJ da empresa CAT que deve ser pré-selecionada
 const CAT_CNPJ = "07.238.084/0001-45";
@@ -83,8 +84,9 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
   const { data: allEnrollments = [] } = useQuery({
     queryKey: ["enrollments-pf-cert"],
     queryFn: async () => {
-      const all = await base44.entities.StudentCourseEnrollment.list("-created_date", 300);
-      return (all || []).filter(e => !e.company_id || e.company_id === "individual" || e.company_name === "Individual (PF)");
+      // SPR-2B-1: carrega TODAS as matrículas (PF e Empresa) — emissão exige matrícula válida
+      const all = await base44.entities.StudentCourseEnrollment.list("-created_date", 500);
+      return all || [];
     },
     enabled: studentsEnabled,
   });
@@ -187,8 +189,22 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
     if (!form.student_name) { toast.error("Informe o nome do aluno."); return; }
     if (!form.student_cpf) { toast.error("Informe o CPF do aluno."); return; }
 
+    // SPR-2B-1 — Blindagem: emissão exige matrícula válida vinculada
+    if (!selectedEnrollment) {
+      toast.error("Emissão bloqueada: aluno sem matrícula válida selecionada. Busque o aluno cadastrado e selecione a matrícula/curso.");
+      return;
+    }
+
     setSaving(true);
     try {
+      // SPR-2B-1 — Blindagem: valida pelo motor central (aptidão + gate financeiro + modelo + dados)
+      const ctx = await carregarContextoAptidao();
+      const validacao = await validarEmissaoBlindada(selectedEnrollment, ctx, "Emissão Individual");
+      if (!validacao.apto) {
+        toast.error("Emissão bloqueada: " + validacao.motivo);
+        return;
+      }
+
       const code = gerarCodigo();
       const validMonths = selectedModel?.validity_period_months || 12;
       const validUntil = form.end_date
@@ -198,6 +214,8 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
       const certData = {
         certificate_code: code,
         internal_control_code: gerarCodigoInternoControle(),
+        enrollment_id: selectedEnrollment.id,
+        student_id: selectedEnrollment.student_id || "",
         certification_type: selectedEnrollment?.certification_type || "Formação",
         student_name: form.student_name,
         student_cpf: form.student_cpf,
@@ -228,8 +246,15 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
 
       const created = await base44.entities.Certificate.create(certData);
 
+      // SPR-2B-1: vincula o certificado à matrícula (mesmo ciclo da fila)
+      await base44.entities.StudentCourseEnrollment.update(selectedEnrollment.id, {
+        status: "Certificado Gerado",
+        certificate_id: created.id,
+      });
+
       logAction("emissao_individual", "Certificate", created?.id, form.student_name, {
-        descricao: `Certificado emitido para ${form.student_name}`,
+        descricao: `Certificado emitido para ${form.student_name} — validado pelo motor central de aptidão (apto)`,
+        matricula_id: selectedEnrollment.id,
         codigo: code,
         curso: selectedModel?.name || "",
         empresa: selectedCompany?.nome_fantasia || selectedCompany?.razao_social || "",

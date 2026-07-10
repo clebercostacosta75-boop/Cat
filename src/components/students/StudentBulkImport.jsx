@@ -74,8 +74,22 @@ export default function StudentBulkImport({ companies = [], courses = [], onSucc
     setLoading(true);
     const resultados = [];
 
+    // SPR-2B-1: validação de CPF e duplicidade — importação NUNCA gera certificado
+    const existentes = await base44.entities.Student.list("-created_date", 1000);
+    const cpfsExistentes = new Set(existentes.map(s => (s.cpf || "").replace(/\D/g, "")).filter(Boolean));
+
     for (const row of preview) {
       try {
+        const cpfDigits = (row["CPF"] || "").replace(/\D/g, "");
+        if (!cpfDigits) {
+          resultados.push({ name: row["Nome Completo"], ok: false, error: "CPF ausente ou inválido" });
+          continue;
+        }
+        if (cpfsExistentes.has(cpfDigits)) {
+          resultados.push({ name: row["Nome Completo"], ok: false, error: "CPF já cadastrado (duplicidade bloqueada)" });
+          continue;
+        }
+        cpfsExistentes.add(cpfDigits);
         const courseName = row["Curso"] || "";
         const course = courses.find(c => c.name?.toLowerCase() === courseName.toLowerCase());
 
@@ -97,6 +111,20 @@ export default function StudentBulkImport({ companies = [], courses = [], onSucc
     }
 
     setResults(resultados);
+
+    // SPR-2B-1: auditoria da importação (nenhum certificado é gerado pela importação)
+    try {
+      const user = await base44.auth.me().catch(() => null);
+      await base44.entities.AuditLog.create({
+        user_email: user?.email || "desconhecido",
+        user_name: user?.full_name || user?.email || "desconhecido",
+        action: "create",
+        entity_type: "Student",
+        entity_name: `Importação em massa — ${selectedCompanyName}`,
+        details: `IMPORTAÇÃO EM MASSA (Certificação) em ${new Date().toLocaleString("pt-BR")}. Empresa: ${selectedCompanyName}. Total na planilha: ${preview.length}. Importados: ${resultados.filter(r => r.ok).length}. Rejeitados: ${resultados.filter(r => !r.ok).length}. Nenhum certificado gerado pela importação.`,
+      });
+    } catch { /* log não bloqueia */ }
+
     setLoading(false);
 
     const ok = resultados.filter(r => r.ok).length;
@@ -177,7 +205,7 @@ export default function StudentBulkImport({ companies = [], courses = [], onSucc
                 <span className="font-medium text-gray-800">{r.name}</span>
                 {r.ok
                   ? <span className="flex items-center gap-1 text-green-600 text-xs"><CheckCircle className="w-3.5 h-3.5" /> Importado</span>
-                  : <span className="flex items-center gap-1 text-red-500 text-xs"><XCircle className="w-3.5 h-3.5" /> Erro</span>
+                  : <span className="flex items-center gap-1 text-red-500 text-xs"><XCircle className="w-3.5 h-3.5" /> {r.error || "Erro"}</span>
                 }
               </div>
             ))}

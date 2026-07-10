@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { usePermissions } from "@/hooks/usePermissions";
 import StudentForm from "@/components/students/StudentForm";
 import StudentBulkImport from "@/components/students/StudentBulkImport";
-import GerarCertificadoWizard from "./GerarCertificadoWizard";
+import VerificarAptidaoDialog from "./VerificarAptidaoDialog";
 
 const AUTHORIZED_ROLES = ["admin", "gestor_master", "Administrador Master", "Certificacao", "Certificação"];
 
@@ -196,7 +196,7 @@ export default function StudentListCertificacoes() {
   const [importTab, setImportTab] = useState("individual");
   const [editNomeStudent, setEditNomeStudent] = useState(null);
   const [alterarDocStudent, setAlterarDocStudent] = useState(null);
-  const [wizardEnrollment, setWizardEnrollment] = useState(null);
+  const [aptidaoStudent, setAptidaoStudent] = useState(null);
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ["students"],
@@ -243,14 +243,9 @@ export default function StudentListCertificacoes() {
   const getAptaEnrollment = (studentId) =>
     enrollments.find(e => e.student_id === studentId && e.status === "Autorizado");
 
-  const handleGerarCertificado = (student) => {
-    const enrollment = getAptaEnrollment(student.id);
-    if (!enrollment) {
-      toast.warning("Este aluno não possui matrícula 'Autorizada' para certificar.");
-      return;
-    }
-    setWizardEnrollment(enrollment);
-  };
+  // SPR-2B-1 — Blindagem: este caminho NÃO emite mais certificado.
+  // Apenas verifica a aptidão pelo motor central; emissão só pela Fila de Certificação.
+  const handleVerificarAptidao = (student) => setAptidaoStudent(student);
 
   const uniqueCompanies = [...new Set(students.map(s => s.company_name).filter(Boolean))].sort();
 
@@ -342,13 +337,11 @@ export default function StudentListCertificacoes() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1 flex-wrap">
-                        {/* Gerar Certificado — apenas roles autorizadas */}
-                        {canGenerate && aptaEnrollment && (
-                          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 gap-1"
-                            onClick={() => handleGerarCertificado(s)}>
-                            <Award className="w-3 h-3" /> Gerar
-                          </Button>
-                        )}
+                        {/* SPR-2B-1: verificação de aptidão pelo motor central (não emite) */}
+                        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 gap-1"
+                          onClick={() => handleVerificarAptidao(s)}>
+                          <Award className="w-3 h-3" /> Verificar Aptidão
+                        </Button>
                         {/* Ações de edição */}
                         <Button size="sm" className="h-8 px-3 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-md font-medium"
                           onClick={() => setEditNomeStudent(s)}>
@@ -410,12 +403,12 @@ export default function StudentListCertificacoes() {
         <AlterarDocumentoModal student={alterarDocStudent} onClose={() => setAlterarDocStudent(null)} onSaved={invalidate} />
       )}
 
-      {/* Wizard de certificado */}
-      {wizardEnrollment && (
-        <GerarCertificadoWizard
-          enrollment={wizardEnrollment}
-          onConfirm={() => { setWizardEnrollment(null); invalidate(); }}
-          onCancel={() => setWizardEnrollment(null)}
+      {/* SPR-2B-1: diálogo de verificação de aptidão (motor central) — não emite certificado */}
+      {aptidaoStudent && (
+        <VerificarAptidaoDialog
+          student={aptidaoStudent}
+          enrollments={enrollments}
+          onClose={() => setAptidaoStudent(null)}
         />
       )}
     </div>
