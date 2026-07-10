@@ -32,6 +32,7 @@ import { isMatriculaIndividual } from "@/lib/origemMatricula";
 import CursosPacotesTab from "@/components/vendas/CursosPacotesTab";
 import IndicadoresAtendenteTab from "@/components/vendas/IndicadoresAtendenteTab";
 import MatriculaRapidaModal from "@/components/vendas/MatriculaRapidaModal";
+import PreCadastrosTab from "@/components/vendas/PreCadastrosTab";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -1515,7 +1516,7 @@ export default function GestaoAlunosIndividuais() {
         </div>
 
         <Tabs defaultValue="dashboard">
-          <TabsList className="grid w-full grid-cols-12 mb-6 bg-gray-100 p-1 h-auto">
+          <TabsList className="grid w-full grid-cols-[repeat(13,minmax(0,1fr))] mb-6 bg-gray-100 p-1 h-auto">
             <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-indigo-700 data-[state=active]:text-white py-3">
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -1564,6 +1565,10 @@ export default function GestaoAlunosIndividuais() {
               <BarChartIcon className="w-4 h-4" />
               <span className="hidden sm:inline">Indicadores</span>
             </TabsTrigger>
+            <TabsTrigger value="precadastros" className="flex items-center gap-2 data-[state=active]:bg-cyan-700 data-[state=active]:text-white py-3">
+              <UserPlus className="w-4 h-4" />
+              <span className="hidden sm:inline">Pré-Cadastros</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">{canAccessTab("dashboard") ? <DashboardPF /> : <SecaoBloqueada nome="Dashboard" />}</TabsContent>
@@ -1578,6 +1583,7 @@ export default function GestaoAlunosIndividuais() {
           <TabsContent value="contratos">{canAccessTab("contratos") ? <ContratosGeral /> : <SecaoBloqueada nome="Contratos" />}</TabsContent>
           <TabsContent value="vendas">{canAccessTab("vendas") ? <CursosPacotesTab /> : <SecaoBloqueada nome="Cursos à Venda" />}</TabsContent>
           <TabsContent value="indicadores">{canAccessTab("indicadores") ? <IndicadoresAtendenteTab /> : <SecaoBloqueada nome="Indicadores" />}</TabsContent>
+          <TabsContent value="precadastros">{canAccessTab("precadastros") ? <PreCadastrosTab /> : <SecaoBloqueada nome="Pré-Cadastros" />}</TabsContent>
         </Tabs>
       </div>
     </div>

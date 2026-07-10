@@ -39,6 +39,7 @@ import GestaoBMM from './pages/GestaoBMM.jsx';
 import GestaoAlunosIndividuais from './pages/GestaoAlunosIndividuais.jsx';
 import GestaoAcademicaEmpresas from './pages/GestaoAcademicaEmpresas.jsx';
 import AutoCadastroAluno from './pages/AutoCadastroAluno.jsx';
+import InscricaoAluno from './pages/InscricaoAluno.jsx';
 import GestaoContratos from './pages/GestaoContratos.jsx';
 import ConsentForm from './pages/ConsentForm.jsx';
 import TrocarSenha from './pages/TrocarSenha.jsx';
@@ -143,6 +144,7 @@ const AuthenticatedApp = () => {
       <Route path="/CompanyPortal" element={<CompanyPortal />} />
       <Route path="/AcessoNegado" element={<AcessoNegado />} />
       <Route path="/AutoCadastroAluno" element={<AutoCadastroAluno />} />
+      <Route path="/InscricaoAluno" element={<InscricaoAluno />} />
       <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
       <Route path="/PortalInstrutor" element={<PortalInstrutor />} />
 

@@ -1,0 +1,227 @@
+{
+  "name": "PreCadastro",
+  "type": "object",
+  "properties": {
+    "nome_completo": {
+      "type": "string",
+      "description": "Nome completo informado pelo aluno"
+    },
+    "cpf": {
+      "type": "string",
+      "description": "CPF informado (formatado)"
+    },
+    "cpf_valido": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o CPF passou na valida\u00e7\u00e3o de d\u00edgitos"
+    },
+    "cpf_duplicado": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o CPF j\u00e1 existe na base de alunos"
+    },
+    "student_id_existente": {
+      "type": "string",
+      "description": "ID do aluno existente detectado pelo CPF (n\u00e3o vinculado ainda)"
+    },
+    "telefone": {
+      "type": "string",
+      "description": "Telefone/WhatsApp"
+    },
+    "email": {
+      "type": "string",
+      "description": "E-mail"
+    },
+    "endereco": {
+      "type": "string",
+      "description": "Endere\u00e7o (logradouro)"
+    },
+    "cidade": {
+      "type": "string",
+      "description": "Cidade"
+    },
+    "estado": {
+      "type": "string",
+      "description": "Estado (UF)"
+    },
+    "cep": {
+      "type": "string",
+      "description": "CEP"
+    },
+    "data_nascimento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de nascimento (opcional)"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es do aluno (opcional)"
+    },
+    "indicacao": {
+      "type": "string",
+      "description": "Quem indicou (opcional)"
+    },
+    "tipo_interesse": {
+      "type": "string",
+      "enum": [
+        "Geral",
+        "Oferta",
+        "Pacote"
+      ],
+      "default": "Geral",
+      "description": "Tipo de interesse vindo do QR Code"
+    },
+    "oferta_id": {
+      "type": "string",
+      "description": "ID da oferta (CourseOffer) quando QR Code de curso espec\u00edfico"
+    },
+    "oferta_nome": {
+      "type": "string",
+      "description": "Nome comercial da oferta"
+    },
+    "pacote_id": {
+      "type": "string",
+      "description": "ID do pacote (CoursePackage) quando QR Code de pacote espec\u00edfico"
+    },
+    "pacote_nome": {
+      "type": "string",
+      "description": "Nome do pacote"
+    },
+    "atendente_id": {
+      "type": "string",
+      "description": "ID do atendente vinculado ao link/QR Code"
+    },
+    "atendente_nome": {
+      "type": "string",
+      "description": "Nome do atendente vinculado"
+    },
+    "origem": {
+      "type": "string",
+      "default": "QR Code",
+      "description": "Origem do pr\u00e9-cadastro (QR Code, Link)"
+    },
+    "lgpd_aceito": {
+      "type": "boolean",
+      "default": false,
+      "description": "Aceite do termo LGPD"
+    },
+    "lgpd_aceito_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do aceite LGPD"
+    },
+    "lgpd_ip": {
+      "type": "string",
+      "description": "IP do dispositivo no aceite"
+    },
+    "lgpd_dispositivo": {
+      "type": "string",
+      "description": "User-agent do dispositivo"
+    },
+    "lgpd_termo": {
+      "type": "string",
+      "description": "Texto do termo aceito"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Aguardando valida\u00e7\u00e3o",
+        "Validado",
+        "Rejeitado",
+        "Corrigir dados",
+        "Convertido em matr\u00edcula",
+        "Duplicidade identificada"
+      ],
+      "default": "Aguardando valida\u00e7\u00e3o",
+      "description": "Status do pr\u00e9-cadastro"
+    },
+    "motivo_status": {
+      "type": "string",
+      "description": "Motivo da rejei\u00e7\u00e3o/corre\u00e7\u00e3o"
+    },
+    "documentos": {
+      "type": "array",
+      "description": "Documentos enviados pelo aluno",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "RG",
+              "CPF",
+              "CNH",
+              "Outro"
+            ]
+          },
+          "lado": {
+            "type": "string",
+            "enum": [
+              "\u00danico",
+              "Frente",
+              "Verso"
+            ]
+          },
+          "file_uri": {
+            "type": "string"
+          },
+          "file_name": {
+            "type": "string"
+          },
+          "status_documento": {
+            "type": "string",
+            "enum": [
+              "Pendente de valida\u00e7\u00e3o",
+              "Validado",
+              "Rejeitado",
+              "Nova foto solicitada"
+            ],
+            "default": "Pendente de valida\u00e7\u00e3o"
+          },
+          "motivo": {
+            "type": "string"
+          },
+          "cnh_numero": {
+            "type": "string"
+          },
+          "cnh_categoria": {
+            "type": "string"
+          },
+          "cnh_validade": {
+            "type": "string"
+          },
+          "cnh_renach": {
+            "type": "string"
+          },
+          "cnh_emissao": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "student_id_vinculado": {
+      "type": "string",
+      "description": "ID do aluno vinculado/criado na valida\u00e7\u00e3o"
+    },
+    "enrollment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs das matr\u00edculas criadas na convers\u00e3o"
+    },
+    "validado_por": {
+      "type": "string",
+      "description": "E-mail/nome do operador que validou"
+    },
+    "validado_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da valida\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "nome_completo",
+    "cpf"
+  ]
+}

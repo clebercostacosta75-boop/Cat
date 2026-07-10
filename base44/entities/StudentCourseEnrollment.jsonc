@@ -239,9 +239,14 @@
         "WhatsApp",
         "Telefone",
         "Indica\u00e7\u00e3o",
+        "QR Code",
         "Outro"
       ],
-      "description": "FASE 1 Vendas: origem da inscri\u00e7\u00e3o"
+      "description": "FASE 1/2 Vendas: origem da inscri\u00e7\u00e3o"
+    },
+    "pre_cadastro_id": {
+      "type": "string",
+      "description": "FASE 2: ID do pr\u00e9-cadastro (PreCadastro) que originou a matr\u00edcula"
     },
     "unit_value": {
       "type": "number",
