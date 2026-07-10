@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, CheckCircle, AlertTriangle, Package, BookOpen, Zap, User, GraduationCap } from "lucide-react";
+import { UserPlus, CheckCircle, AlertTriangle, Package, BookOpen, GraduationCap, Zap, User } from "lucide-react";
 import { toast } from "sonner";
 import { validarCPF, formatarCPF, limparCPF } from "@/lib/cpf";
 import { logVenda } from "@/lib/auditVendas";
@@ -35,8 +35,8 @@ export default function MatriculaRapidaModal({ open, onClose, onSuccess }) {
   const [datasPacote, setDatasPacote] = useState([]);
   const [pgto, setPgto] = useState(EMPTY_PGTO);
   const [atendenteNome, setAtendenteNome] = useState("");
-  const [saving, setSaving] = useState(false);
   const [resultado, setResultado] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const isMaster = ["admin", "Administrador Master", "gestor_master"].includes(user?.role);
 
@@ -61,9 +61,9 @@ export default function MatriculaRapidaModal({ open, onClose, onSuccess }) {
   const vagasDisp = (item) => Math.max(0, (item?.vagas_total || 0) - (item?.vagas_preenchidas || 0));
   const vendavel = (item) => ["Aberta", "Em divulgação"].includes(item.status);
 
-  const valorOriginal = tipo === "oferta" ? (oferta?.valor || 0)
-    : tipo === "pacote" ? (pacote?.valor_final ?? pacote?.valor_total ?? 0)
-    : (parseFloat(cursoAvulso.valor) || 0);
+  const valorOriginal = tipo === "curso"
+    ? (parseFloat(cursoAvulso.valor) || 0)
+    : tipo === "oferta" ? (oferta?.valor || 0) : (pacote?.valor_final ?? pacote?.valor_total ?? 0);
   const valorFinal = Math.max(0, valorOriginal - (parseFloat(pgto.desconto) || 0));
   const formasAceitas = (tipo === "oferta" ? oferta?.formas_pagamento : tipo === "pacote" ? pacote?.formas_pagamento : null) || [];
 
@@ -84,7 +84,7 @@ export default function MatriculaRapidaModal({ open, onClose, onSuccess }) {
       setAluno(null);
       setNovoAluno(EMPTY_ALUNO);
       setStep("form");
-      await logVenda("view", { entity_type: "Student", entity_name: formatarCPF(cpf), details: "FASE 4 Inscrição: inscrição iniciada — CPF não cadastrado, cadastro básico será criado" });
+      await logVenda("view", { entity_type: "Student", entity_name: formatarCPF(cpf), details: "FASE 4 Inscrição: inscrição iniciada — CPF não cadastrado, novo aluno será criado com dados básicos" });
     }
   };
 
@@ -94,16 +94,14 @@ export default function MatriculaRapidaModal({ open, onClose, onSuccess }) {
     setDatasPacote((p?.cursos || []).map(c => ({ ...c })));
   };
 
-  // ── Confirmação da inscrição ────────────────────────────────────────────
+  // ── Confirmação da Inscrição ────────────────────────────────────────────
   const handleConfirmar = async () => {
     let item = null;
     let cursosMatricula = [];
 
     if (tipo === "curso") {
       if (!curso) { toast.error("Selecione o curso avulso."); return; }
-      if (!cursoAvulso.data_inicio || !cursoAvulso.data_termino) {
-        toast.error("Não é possível concluir a inscrição sem definir o período de realização do curso."); return;
-      }
+      if (!cursoAvulso.data_inicio || !cursoAvulso.data_termino) { toast.error("Não é possível concluir a inscrição sem definir o período de realização do curso."); return; }
       if (cursoAvulso.data_inicio > cursoAvulso.data_termino) { toast.error("A data de início não pode ser posterior à data de término."); return; }
       cursosMatricula = [{ course_id: curso.id, course_name: curso.name, carga_horaria: curso.carga_horaria || "", data_inicio: cursoAvulso.data_inicio, data_termino: cursoAvulso.data_termino }];
     } else if (tipo === "oferta") {
@@ -111,7 +109,7 @@ export default function MatriculaRapidaModal({ open, onClose, onSuccess }) {
       if (!item) { toast.error("Selecione a oferta de curso."); return; }
       if (vagasDisp(item) <= 0 && !isMaster) {
         toast.error("Curso sem vagas disponíveis.");
-        await logVenda("update", { entity_type: "CourseOffer", entity_id: item.id, entity_name: item.nome_comercial, details: "FASE 4 Inscrição: tentativa de inscrição BLOQUEADA — sem vagas disponíveis" });
+        await logVenda("update", { entity_type: "CourseOffer", entity_id: item.id, entity_name: item.nome_comercial, details: "FASE 4 Inscrição: tentativa BLOQUEADA — sem vagas disponíveis" });
         return;
       }
       if (!item.data_inicio || !item.data_termino) { toast.error("Não é possível concluir a inscrição sem definir o período de realização do curso."); return; }
@@ -122,7 +120,7 @@ export default function MatriculaRapidaModal({ open, onClose, onSuccess }) {
       if (!item) { toast.error("Selecione o pacote."); return; }
       if (vagasDisp(item) <= 0 && !isMaster) {
         toast.error("Pacote sem vagas disponíveis.");
-        await logVenda("update", { entity_type: "CoursePackage", entity_id: item.id, entity_name: item.nome, details: "FASE 4 Inscrição: tentativa de inscrição BLOQUEADA — sem vagas disponíveis" });
+        await logVenda("update", { entity_type: "CoursePackage", entity_id: item.id, entity_name: item.nome, details: "FASE 4 Inscrição: tentativa BLOQUEADA — sem vagas disponíveis" });
         return;
       }
       if (datasPacote.length === 0) { toast.error("O pacote selecionado não possui cursos."); return; }
@@ -152,6 +150,9 @@ export default function MatriculaRapidaModal({ open, onClose, onSuccess }) {
       setResultado(res);
       setStep("done");
       onSuccess?.();
+      toast.success(res.matriculas.length > 1
+        ? `Inscrição confirmada! ${res.matriculas.length} matrículas criadas (uma por curso do pacote).`
+        : "Inscrição confirmada e matrícula criada!");
     } catch (e) {
       toast.error("Erro ao concluir inscrição: " + e.message);
     } finally {
@@ -188,7 +189,7 @@ export default function MatriculaRapidaModal({ open, onClose, onSuccess }) {
           <div className="space-y-3">
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
               <p className="text-sm font-semibold text-blue-900 flex items-center gap-1.5">
-                <User className="w-4 h-4" /> Aluno já cadastrado. Deseja iniciar uma nova inscrição para este aluno?
+                <User className="w-4 h-4" /> Aluno já cadastrado. Deseja criar uma nova inscrição para este aluno?
               </p>
               <p className="text-sm text-blue-800 mt-1"><strong>{aluno.full_name}</strong> — CPF {aluno.cpf}</p>
             </div>
@@ -233,8 +234,9 @@ export default function MatriculaRapidaModal({ open, onClose, onSuccess }) {
               </div>
             )}
 
-            {/* Curso, Oferta ou Pacote */}
+            {/* Curso, Oferta ou Pacote — definido ANTES da matrícula */}
             <div className="border rounded-md p-3 space-y-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">1º passo: defina o curso, oferta ou pacote da inscrição</p>
               <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
                 <button onClick={() => setTipo("oferta")} className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1 ${tipo === "oferta" ? "bg-white shadow-sm text-gray-900" : "text-gray-500"}`}><BookOpen className="w-3.5 h-3.5" /> Oferta de Curso</button>
                 <button onClick={() => setTipo("pacote")} className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1 ${tipo === "pacote" ? "bg-white shadow-sm text-gray-900" : "text-gray-500"}`}><Package className="w-3.5 h-3.5" /> Pacote</button>
@@ -277,7 +279,7 @@ export default function MatriculaRapidaModal({ open, onClose, onSuccess }) {
                   </Select>
                   {pacote && (
                     <div className="space-y-1.5">
-                      <p className="text-xs text-gray-500">Uma matrícula será criada para cada curso, com o período abaixo (alimenta a Certificação):</p>
+                      <p className="text-xs text-gray-500">Uma matrícula será criada para cada curso, cada uma com seu próprio período (usado depois pela Certificação):</p>
                       {datasPacote.map((c, i) => (
                         <div key={c.course_id} className="flex items-center gap-2 bg-gray-50 rounded-md p-2">
                           <span className="text-xs font-medium text-gray-800 flex-1">{c.course_name}</span>
@@ -302,8 +304,8 @@ export default function MatriculaRapidaModal({ open, onClose, onSuccess }) {
                   </Select>
                   {curso && (
                     <div className="grid grid-cols-3 gap-2">
-                      <div><Label className="text-xs">Data Início *</Label><Input type="date" value={cursoAvulso.data_inicio} onChange={e => setCursoAvulso(v => ({ ...v, data_inicio: e.target.value }))} /></div>
-                      <div><Label className="text-xs">Data Término *</Label><Input type="date" value={cursoAvulso.data_termino} onChange={e => setCursoAvulso(v => ({ ...v, data_termino: e.target.value }))} /></div>
+                      <div><Label className="text-xs">Início do Curso *</Label><Input type="date" value={cursoAvulso.data_inicio} onChange={e => setCursoAvulso(v => ({ ...v, data_inicio: e.target.value }))} /></div>
+                      <div><Label className="text-xs">Término do Curso *</Label><Input type="date" value={cursoAvulso.data_termino} onChange={e => setCursoAvulso(v => ({ ...v, data_termino: e.target.value }))} /></div>
                       <div><Label className="text-xs">Valor (R$) *</Label><Input type="number" min="0" step="0.01" value={cursoAvulso.valor} onChange={e => setCursoAvulso(v => ({ ...v, valor: e.target.value }))} /></div>
                     </div>
                   )}
@@ -314,7 +316,7 @@ export default function MatriculaRapidaModal({ open, onClose, onSuccess }) {
 
             {/* Pagamento */}
             <div className="border rounded-md p-3 space-y-2">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Pagamento</p>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">2º passo: confirme valor e pagamento</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <div>
                   <Label className="text-xs">Valor Original</Label>
@@ -381,13 +383,13 @@ export default function MatriculaRapidaModal({ open, onClose, onSuccess }) {
             </div>
 
             <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-md text-xs text-emerald-800">
-              ⚙️ Ao confirmar, o sistema executa automaticamente: matrícula → financeiro → contrato → link de assinatura → WhatsApp preparado → prontuário → auditoria. Sem cliques extras.
+              ⚡ Ao confirmar, o sistema cria automaticamente: matrícula (uma por curso), baixa de vaga, financeiro vinculado, contrato com link seguro de assinatura eletrônica, mensagem de WhatsApp pronta e registro no prontuário — tudo com auditoria.
             </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t">
               <Button variant="outline" onClick={onClose}>Cancelar</Button>
               <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={handleConfirmar} disabled={saving}>
-                {saving ? "Processando inscrição..." : <><CheckCircle className="w-4 h-4 mr-1" /> Confirmar Inscrição e Gerar Matrícula</>}
+                {saving ? "Processando automação..." : <><CheckCircle className="w-4 h-4 mr-1" /> Confirmar Inscrição e Gerar Matrícula</>}
               </Button>
             </div>
           </div>
