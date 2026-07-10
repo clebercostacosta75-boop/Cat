@@ -33,6 +33,7 @@ import CursosPacotesTab from "@/components/vendas/CursosPacotesTab";
 import IndicadoresAtendenteTab from "@/components/vendas/IndicadoresAtendenteTab";
 import MatriculaRapidaModal from "@/components/vendas/MatriculaRapidaModal";
 import AcoesMatriculaModal from "@/components/alunos/AcoesMatriculaModal";
+import PagamentoMatriculaModal from "@/components/alunos/PagamentoMatriculaModal";
 import PreCadastrosTab from "@/components/vendas/PreCadastrosTab";
 
 const EMPTY_STUDENT = {
@@ -722,6 +723,7 @@ function MatriculasCursos() {
   const [importOpen, setImportOpen] = useState(false);
   const [resultadoEnrollment, setResultadoEnrollment] = useState(null);
   const [acoesEnrollment, setAcoesEnrollment] = useState(null);
+  const [pagamentoEnrollment, setPagamentoEnrollment] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
@@ -831,6 +833,14 @@ function MatriculasCursos() {
           enrollment={resultadoEnrollment}
           onClose={() => setResultadoEnrollment(null)}
           onSaved={() => queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] })}
+        />
+      )}
+
+      {/* FASE 5: Bloco financeiro / pagamento da matrícula */}
+      {pagamentoEnrollment && (
+        <PagamentoMatriculaModal
+          enrollment={pagamentoEnrollment}
+          onClose={() => setPagamentoEnrollment(null)}
         />
       )}
 
@@ -1092,6 +1102,16 @@ function MatriculasCursos() {
                         onClick={() => setResultadoEnrollment(e)}
                       >
                         🎓 Resultado
+                      </Button>
+
+                      {/* FASE 5: Pagamento */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7 border-emerald-300 text-emerald-700 hover:bg-emerald-50 w-full"
+                        onClick={() => setPagamentoEnrollment(e)}
+                      >
+                        💳 Pagamento
                       </Button>
 
                       {/* FASE 4: Ações controladas */}

@@ -129,6 +129,11 @@ export async function executarInscricaoIndividual({
   if (contrato) {
     await logVenda("create", { entity_type: "Contract", entity_id: contrato.contract_id, entity_name: `${contrato.contract_number} — ${aluno.full_name}`, details: `${AUDIT}: contrato gerado automaticamente após confirmação da inscrição (dados reaproveitados da matrícula; financeiro único, sem duplicidade)` });
 
+    // FASE 5: vincula o financeiro ao contrato gerado
+    if (venda.lancamento?.id) {
+      await base44.entities.LancamentoFinanceiro.update(venda.lancamento.id, { contrato_id: contrato.contract_id }).catch(() => {});
+    }
+
     signUrl = `${window.location.origin}/ContractSign?code=${contrato.auth_code}`;
     await logVenda("create", { entity_type: "Contract", entity_id: contrato.contract_id, entity_name: contrato.contract_number, details: `${AUDIT}: link seguro de assinatura criado — token único (${contrato.auth_code}) vinculado ao contrato, aluno e matrícula` });
 
