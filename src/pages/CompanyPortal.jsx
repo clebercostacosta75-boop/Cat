@@ -193,9 +193,9 @@ export default function CompanyPortal() {
     setSearched(false);
 
     try {
-      // Buscar empresa pelo CNPJ
-      const companies = await base44.entities.Company.filter({ cnpj: cnpjRaw });
-      const companyFull = companies.find(c => (c.cnpj || "").replace(/\D/g, "") === cnpjRaw);
+      // Buscar empresa pelo CNPJ (comparação normalizada — funciona com ou sem pontuação no cadastro)
+      const allCompanies = await base44.entities.Company.list(null, 500);
+      const companyFull = allCompanies.find(c => (c.cnpj || "").replace(/\D/g, "") === cnpjRaw);
 
       if (!companyFull) {
         setError("Empresa não encontrada. Verifique o CNPJ informado.");
