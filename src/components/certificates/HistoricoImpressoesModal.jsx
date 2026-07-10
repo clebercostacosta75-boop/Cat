@@ -35,7 +35,7 @@ export default function HistoricoImpressoesModal({ cert, open, onClose }) {
             try { d = JSON.parse(r.details); } catch { d = {}; }
             return { ...r, d };
           })
-          .filter((r) => r.d?.acao === "IMPRESSAO_CERTIFICADO");
+          .filter((r) => (r.d?.acao || "").startsWith("IMPRESSAO_"));
         setLogs(parsed);
       })
       .catch(() => setLogs([]));
@@ -56,7 +56,7 @@ export default function HistoricoImpressoesModal({ cert, open, onClose }) {
             <span className="font-semibold text-gray-900">{cert.student_name}</span>
             <span>{cert.course_name}</span>
             <span>{cert.client_name || "Individual (PF)"}</span>
-            <Badge variant="secondary">Impresso {permitidas}x</Badge>
+            <Badge variant="secondary">Impressões solicitadas: {permitidas}x</Badge>
           </div>
         )}
         {logs === null ? (
@@ -93,9 +93,9 @@ export default function HistoricoImpressoesModal({ cert, open, onClose }) {
                     <td className="px-2 py-1.5 text-gray-500">{l.d.status_no_momento || "—"}</td>
                     <td className="px-2 py-1.5">
                       {l.d.resultado === "permitido" ? (
-                        <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">✅ Permitido</Badge>
+                        <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">✅ Solicitada</Badge>
                       ) : (
-                        <Badge className="bg-red-100 text-red-700 hover:bg-red-100">🚫 Bloqueado</Badge>
+                        <Badge className="bg-red-100 text-red-700 hover:bg-red-100">🚫 Bloqueada</Badge>
                       )}
                     </td>
                     <td className="px-2 py-1.5 text-gray-500 max-w-[160px] truncate" title={l.d.motivo || ""}>

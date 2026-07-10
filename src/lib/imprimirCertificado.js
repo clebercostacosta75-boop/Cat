@@ -33,23 +33,43 @@ export function getPrintBlockReason(cert, tipo) {
   return null;
 }
 
-/** AuditLog obrigatório de impressão (permitida ou bloqueada). */
+/** LGPD — CPF mascarado em registros operacionais (auditoria/comprovante). */
+const maskCpfLGPD = (cpf) => {
+  const d = (cpf || "").replace(/\D/g, "");
+  if (d.length !== 11) return "***.***.***-**";
+  return `***.***.${d.slice(6, 9)}-**`;
+};
+
+/**
+ * AuditLog obrigatório — registrado como SOLICITAÇÃO de impressão
+ * (o sistema não consegue confirmar impressão física após abrir o navegador).
+ */
+const ACAO_SOLICITADA = {
+  [TIPO_SEM_ASSINATURA]: "IMPRESSAO_CERTIFICADO_SOLICITADA",
+  [TIPO_COM_ASSINATURA]: "IMPRESSAO_CERTIFICADO_SOLICITADA",
+  [TIPO_CERT_COM_COMPROVANTE]: "IMPRESSAO_CERTIFICADO_COM_COMPROVANTE_SOLICITADA",
+  [TIPO_COMPROVANTE]: "IMPRESSAO_COMPROVANTE_SOLICITADA",
+};
+
 async function auditarImpressao(cert, tipo, resultado, motivo) {
   const origem = cert.client_id || (cert.client_name && cert.client_name !== "Individual (PF)")
     ? "Empresa" : "Individual";
+  const acao = resultado === "bloqueado"
+    ? "IMPRESSAO_CERTIFICADO_BLOQUEADA"
+    : (ACAO_SOLICITADA[tipo] || "IMPRESSAO_CERTIFICADO_SOLICITADA");
   await logAction(
     "export",
     "Certificate",
     cert.id,
     `${cert.certificate_code || ""} — ${cert.student_name || ""} — ${cert.course_name || ""}`,
     {
-      acao: "IMPRESSAO_CERTIFICADO",
+      acao,
       resultado,
       tipo_impressao: tipo,
       motivo: motivo || null,
       status_no_momento: cert.status,
       aluno: cert.student_name,
-      cpf: cert.student_cpf,
+      cpf: maskCpfLGPD(cert.student_cpf),
       curso: cert.course_name,
       empresa: cert.client_name || null,
       origem,
@@ -170,7 +190,7 @@ export async function imprimirComprovante(cert) {
   } catch {
     dados = null;
   }
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Comprovante de Assinatura — ${cert.certificate_code || ""}</title></head><body style="margin:0;">${buildComprovanteHTML(cert, dados)}</body></html>`;
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Comprovante de Assinatura — ${cert.certificate_code || ""}</title><style>@page { size: A4 portrait; margin: 0; } body { margin: 0; }</style></head><body style="margin:0;">${buildComprovanteHTML(cert, dados)}</body></html>`;
   return abrirPreview(html);
 }
 
@@ -182,7 +202,7 @@ export async function imprimirComprovante(cert) {
 function abrirPreview(html) {
   const toolbar = `
 <div id="print-confirm-bar" style="position:fixed; top:0; left:0; right:0; z-index:9999; background:#111827; color:#fff; padding:10px 16px; display:flex; align-items:center; gap:12px; font-family:Arial,sans-serif; font-size:13px; box-shadow:0 2px 8px rgba(0,0,0,.3);">
-  <span style="flex:1;">Pré-visualização da impressão — confira o certificado antes de imprimir. A impressão não altera nenhum dado do certificado.</span>
+  <span style="flex:1;">Pré-visualização — confira o documento antes de imprimir. A solicitação de impressão foi registrada na auditoria; nenhum dado do certificado é alterado.</span>
   <button onclick="window.print()" style="background:#10b981; color:#fff; border:none; border-radius:6px; padding:8px 16px; font-weight:bold; cursor:pointer;">🖨️ Confirmar impressão</button>
   <button onclick="window.close()" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:8px 16px; font-weight:bold; cursor:pointer;">Cancelar</button>
 </div>
