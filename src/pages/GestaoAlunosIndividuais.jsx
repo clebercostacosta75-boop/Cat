@@ -37,6 +37,7 @@ import PagamentoMatriculaModal from "@/components/alunos/PagamentoMatriculaModal
 import ComunicacoesMatricula from "@/components/comunicacao/ComunicacoesMatricula";
 import ModelosMensagemModal from "@/components/comunicacao/ModelosMensagemModal";
 import PreCadastrosTab from "@/components/vendas/PreCadastrosTab";
+import RelatoriosGerenciaisTab from "@/components/relatorios/RelatoriosGerenciaisTab";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -1564,6 +1565,7 @@ function SecaoBloqueada({ nome }) {
 
 // ─── Página Principal ────────────────────────────────────────────────────────
 export default function GestaoAlunosIndividuais() {
+  const [activeTab, setActiveTab] = useState("dashboard");
   const { hasPermission, allowedKeys } = usePermissions();
   // Verifica acesso ao módulo principal (chave nova ou legada)
   const moduleAccess =
@@ -1584,8 +1586,8 @@ export default function GestaoAlunosIndividuais() {
           </p>
         </div>
 
-        <Tabs defaultValue="dashboard">
-          <TabsList className="grid w-full grid-cols-[repeat(13,minmax(0,1fr))] mb-6 bg-gray-100 p-1 h-auto">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-[repeat(14,minmax(0,1fr))] mb-6 bg-gray-100 p-1 h-auto">
             <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-indigo-700 data-[state=active]:text-white py-3">
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -1638,6 +1640,10 @@ export default function GestaoAlunosIndividuais() {
               <UserPlus className="w-4 h-4" />
               <span className="hidden sm:inline">Pré-Cadastros</span>
             </TabsTrigger>
+            <TabsTrigger value="relatorios" className="flex items-center gap-2 data-[state=active]:bg-teal-700 data-[state=active]:text-white py-3">
+              <BarChartIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">Relatórios</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">{canAccessTab("dashboard") ? <DashboardPF /> : <SecaoBloqueada nome="Dashboard" />}</TabsContent>
@@ -1653,6 +1659,7 @@ export default function GestaoAlunosIndividuais() {
           <TabsContent value="vendas">{canAccessTab("vendas") ? <CursosPacotesTab /> : <SecaoBloqueada nome="Cursos à Venda" />}</TabsContent>
           <TabsContent value="indicadores">{canAccessTab("indicadores") ? <IndicadoresAtendenteTab /> : <SecaoBloqueada nome="Indicadores" />}</TabsContent>
           <TabsContent value="precadastros">{canAccessTab("precadastros") ? <PreCadastrosTab /> : <SecaoBloqueada nome="Pré-Cadastros" />}</TabsContent>
+          <TabsContent value="relatorios">{canAccessTab("relatorios") ? <RelatoriosGerenciaisTab onNavigate={setActiveTab} /> : <SecaoBloqueada nome="Relatórios Gerenciais" />}</TabsContent>
         </Tabs>
       </div>
     </div>
