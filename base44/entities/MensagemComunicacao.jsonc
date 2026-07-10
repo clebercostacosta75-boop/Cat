@@ -1,0 +1,106 @@
+{
+  "name": "MensagemComunicacao",
+  "type": "object",
+  "properties": {
+    "enrollment_id": {
+      "type": "string",
+      "description": "ID da matr\u00edcula (StudentCourseEnrollment)"
+    },
+    "student_id": {
+      "type": "string",
+      "description": "ID do aluno"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "Nome do aluno"
+    },
+    "curso_nome": {
+      "type": "string",
+      "description": "Nome do curso"
+    },
+    "pacote_nome": {
+      "type": "string",
+      "description": "Nome do pacote (se houver)"
+    },
+    "evento": {
+      "type": "string",
+      "description": "Chave do evento disparador (ex: inscricao_confirmada, contrato_link)"
+    },
+    "evento_label": {
+      "type": "string",
+      "description": "Nome leg\u00edvel do evento"
+    },
+    "canal": {
+      "type": "string",
+      "enum": [
+        "WhatsApp",
+        "E-mail",
+        "SMS"
+      ],
+      "default": "WhatsApp",
+      "description": "Canal de comunica\u00e7\u00e3o"
+    },
+    "destinatario": {
+      "type": "string",
+      "description": "Telefone ou e-mail do destinat\u00e1rio"
+    },
+    "mensagem": {
+      "type": "string",
+      "description": "Texto final da mensagem (vari\u00e1veis j\u00e1 preenchidas)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Preparada",
+        "Enviada",
+        "Entregue",
+        "Visualizada",
+        "Falha no envio",
+        "Cancelada",
+        "Aguardando confirma\u00e7\u00e3o do operador",
+        "WhatsApp aberto para envio manual"
+      ],
+      "default": "Preparada",
+      "description": "Status da mensagem"
+    },
+    "origem": {
+      "type": "string",
+      "enum": [
+        "operador",
+        "autom\u00e1tica",
+        "lembrete",
+        "webhook"
+      ],
+      "default": "operador",
+      "description": "Origem da comunica\u00e7\u00e3o"
+    },
+    "operador": {
+      "type": "string",
+      "description": "E-mail/nome de quem preparou/enviou"
+    },
+    "atendente_nome": {
+      "type": "string",
+      "description": "Atendente respons\u00e1vel pela matr\u00edcula"
+    },
+    "modelo_id": {
+      "type": "string",
+      "description": "ID do ModeloMensagem utilizado (se houver)"
+    },
+    "erro": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do erro, se houver"
+    },
+    "resolvido": {
+      "type": "boolean",
+      "default": false,
+      "description": "Marcada como resolvida pelo operador"
+    }
+  },
+  "required": [
+    "enrollment_id",
+    "student_name",
+    "evento",
+    "canal",
+    "mensagem"
+  ]
+}

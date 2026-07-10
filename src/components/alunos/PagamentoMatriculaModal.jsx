@@ -89,8 +89,8 @@ export default function PagamentoMatriculaModal({ enrollment, onClose }) {
               </div>
             ) : (
               <>
-                <PagamentoCobrancaAcoes lancamento={lanc} onRefresh={refresh} />
-                {!isCortesia && <PagamentoConfirmacaoManual lancamento={lanc} onRefresh={refresh} />}
+                <PagamentoCobrancaAcoes lancamento={lanc} enrollment={enrollment} onRefresh={refresh} />
+                {!isCortesia && <PagamentoConfirmacaoManual lancamento={lanc} enrollment={enrollment} onRefresh={refresh} />}
                 <p className="text-[11px] text-gray-500 italic">Recibo de quitação disponível somente após confirmação do pagamento.</p>
               </>
             )}

@@ -8,6 +8,7 @@ import { base44 } from "@/api/base44Client";
 import { formatarCPF } from "@/lib/cpf";
 import { logVenda } from "@/lib/auditVendas";
 import { executarVenda } from "@/lib/executarVenda";
+import { prepararMensagem, montarVariaveis, preencherTemplate, templateEvento } from "@/lib/comunicacao";
 
 const AUDIT = "FASE 4 Inscrição";
 const FORMA_LANC = { "Pix": "PIX", "Boleto": "Boleto", "Cartão de Crédito": "Cartão de Crédito", "Cartão de Débito": "Cartão de Débito", "Dinheiro": "Dinheiro", "Transferência Bancária": "Transferência", "Cortesia": "Outro" };
@@ -103,6 +104,14 @@ export async function executarInscricaoIndividual({
 
   const { aluno, matriculas } = venda;
 
+  // FASE 6: comunicação automática — inscrição confirmada (mensagem preparada no histórico)
+  const enrollComm = { ...matriculas[0], student_phone: aluno.whatsapp || matriculas[0].student_phone || "", student_email: aluno.email || matriculas[0].student_email || "" };
+  await prepararMensagem({
+    enrollment: enrollComm, evento: "inscricao_confirmada", canal: "WhatsApp",
+    mensagem: preencherTemplate(templateEvento("inscricao_confirmada"), montarVariaveis({ enrollment: enrollComm, lancamento: venda.lancamento })),
+    origem: "automática", user,
+  }).catch(() => {});
+
   // 9. Contrato automático (financeiro já criado — não duplica)
   let contrato = null, contratoPendencia = null;
   const faltando = [];
@@ -143,6 +152,12 @@ export async function executarInscricaoIndividual({
     const phone = digits.length >= 12 ? digits : digits ? "55" + digits : "";
     whatsapp = { message, waLink: phone ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}` : null };
     await logVenda("send_whatsapp", { entity_type: "Contract", entity_id: contrato.contract_id, entity_name: contrato.contract_number, details: `${AUDIT}: mensagem de WhatsApp com link de assinatura PREPARADA (envio controlado pelo operador — sem disparo automático)` });
+
+    // FASE 6: registra a mensagem do link de contrato no histórico de comunicações da matrícula
+    await prepararMensagem({
+      enrollment: enrollComm, evento: "contrato_link", canal: "WhatsApp",
+      mensagem: message, origem: "automática", user,
+    }).catch(() => {});
 
     // 16. Prontuário do aluno
     await base44.entities.StudentTimeline.create({

@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { QRCodeSVG } from "qrcode.react";
 import { Copy, ExternalLink, QrCode, XCircle, Loader2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
+import { prepararMensagem, montarVariaveis, preencherTemplate, templateEvento } from "@/lib/comunicacao";
 
 // FASE 5 — Ações da cobrança Asaas (Pix / Boleto / Cartão) de um lançamento
-export default function PagamentoCobrancaAcoes({ lancamento, onRefresh }) {
+export default function PagamentoCobrancaAcoes({ lancamento, enrollment, onRefresh }) {
   const [loading, setLoading] = useState(false);
   const [showQR, setShowQR] = useState(false);
 
@@ -25,7 +26,18 @@ export default function PagamentoCobrancaAcoes({ lancamento, onRefresh }) {
     try {
       const res = await base44.functions.invoke("pagamentoInscricao", { action: "prepararCobranca", lancamento_id: lancamento.id });
       if (res.data?.error) toast.error(res.data.error);
-      else toast.success(res.data.ja_existia ? "Cobrança já existia — reutilizada (sem duplicidade)." : "Cobrança gerada com sucesso!");
+      else {
+        toast.success(res.data.ja_existia ? "Cobrança já existia — reutilizada (sem duplicidade)." : "Cobrança gerada com sucesso!");
+        // FASE 6: prepara automaticamente a mensagem com o link de pagamento
+        if (enrollment) {
+          const lancAtual = { ...lancamento, ...(res.data?.lancamento || {}), link_pagamento: res.data?.lancamento?.link_pagamento || res.data?.link_pagamento || lancamento.link_pagamento || "" };
+          await prepararMensagem({
+            enrollment, evento: "link_pagamento", canal: "WhatsApp",
+            mensagem: preencherTemplate(templateEvento("link_pagamento"), montarVariaveis({ enrollment, lancamento: lancAtual })),
+            origem: "automática",
+          }).catch(() => {});
+        }
+      }
       onRefresh();
     } catch (e) {
       toast.error(e.response?.data?.error || e.message);

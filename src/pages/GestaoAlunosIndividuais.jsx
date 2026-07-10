@@ -34,6 +34,8 @@ import IndicadoresAtendenteTab from "@/components/vendas/IndicadoresAtendenteTab
 import MatriculaRapidaModal from "@/components/vendas/MatriculaRapidaModal";
 import AcoesMatriculaModal from "@/components/alunos/AcoesMatriculaModal";
 import PagamentoMatriculaModal from "@/components/alunos/PagamentoMatriculaModal";
+import ComunicacoesMatricula from "@/components/comunicacao/ComunicacoesMatricula";
+import ModelosMensagemModal from "@/components/comunicacao/ModelosMensagemModal";
 import PreCadastrosTab from "@/components/vendas/PreCadastrosTab";
 
 const EMPTY_STUDENT = {
@@ -724,6 +726,8 @@ function MatriculasCursos() {
   const [resultadoEnrollment, setResultadoEnrollment] = useState(null);
   const [acoesEnrollment, setAcoesEnrollment] = useState(null);
   const [pagamentoEnrollment, setPagamentoEnrollment] = useState(null);
+  const [comunicacoesEnrollment, setComunicacoesEnrollment] = useState(null);
+  const [modelosOpen, setModelosOpen] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
@@ -844,6 +848,17 @@ function MatriculasCursos() {
         />
       )}
 
+      {/* FASE 6: Painel de Comunicações da matrícula */}
+      {comunicacoesEnrollment && (
+        <ComunicacoesMatricula
+          enrollment={comunicacoesEnrollment}
+          onClose={() => setComunicacoesEnrollment(null)}
+        />
+      )}
+
+      {/* FASE 6: Modelos de Mensagem */}
+      {modelosOpen && <ModelosMensagemModal onClose={() => setModelosOpen(false)} />}
+
       {/* FASE 4: Ações controladas da inscrição (trocar/alterar/cancelar/transferir) */}
       {acoesEnrollment && (
         <AcoesMatriculaModal
@@ -915,6 +930,9 @@ function MatriculasCursos() {
             />
           </div>
           <div className="flex gap-2 flex-shrink-0">
+            <Button variant="outline" onClick={() => setModelosOpen(true)} className="border-indigo-300 text-indigo-700 hover:bg-indigo-50">
+              📝 Modelos de Mensagem
+            </Button>
             <Button variant="outline" onClick={() => setImportOpen(true)} className="border-emerald-400 text-emerald-800 hover:bg-emerald-50">
               <Upload className="w-4 h-4 mr-2" /> Importar Alunos por Planilha
             </Button>
@@ -1102,6 +1120,16 @@ function MatriculasCursos() {
                         onClick={() => setResultadoEnrollment(e)}
                       >
                         🎓 Resultado
+                      </Button>
+
+                      {/* FASE 6: Comunicações */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7 border-indigo-300 text-indigo-700 hover:bg-indigo-50 w-full"
+                        onClick={() => setComunicacoesEnrollment(e)}
+                      >
+                        💬 Comunicações
                       </Button>
 
                       {/* FASE 5: Pagamento */}

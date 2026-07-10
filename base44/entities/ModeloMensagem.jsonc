@@ -1,0 +1,39 @@
+{
+  "name": "ModeloMensagem",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome do modelo"
+    },
+    "canal": {
+      "type": "string",
+      "enum": [
+        "WhatsApp",
+        "E-mail",
+        "SMS"
+      ],
+      "default": "WhatsApp",
+      "description": "Canal do modelo"
+    },
+    "evento": {
+      "type": "string",
+      "description": "Evento disparador (chave, ex: inscricao_confirmada)"
+    },
+    "texto": {
+      "type": "string",
+      "description": "Texto da mensagem com vari\u00e1veis entre colchetes (ex: [NOME_ALUNO], [CURSO_PACOTE])"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o modelo est\u00e1 ativo (sobrep\u00f5e o modelo padr\u00e3o do sistema)"
+    }
+  },
+  "required": [
+    "nome",
+    "canal",
+    "evento",
+    "texto"
+  ]
+}

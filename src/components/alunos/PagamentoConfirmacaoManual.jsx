@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Paperclip, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { prepararMensagem, montarVariaveis, preencherTemplate, templateEvento } from "@/lib/comunicacao";
 
 // FASE 5 — Comprovante manual + confirmação de pagamento por usuário autorizado
-export default function PagamentoConfirmacaoManual({ lancamento, onRefresh }) {
+export default function PagamentoConfirmacaoManual({ lancamento, enrollment, onRefresh }) {
   const [uploading, setUploading] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [form, setForm] = useState({
@@ -45,7 +46,17 @@ export default function PagamentoConfirmacaoManual({ lancamento, onRefresh }) {
         data_pagamento: form.data_pagamento, valor_pago: form.valor_pago, observacao: form.observacao,
       });
       if (res.data?.error) toast.error(res.data.error);
-      else toast.success("Pagamento confirmado! Recibo de quitação liberado.");
+      else {
+        toast.success("Pagamento confirmado! Recibo de quitação liberado.");
+        // FASE 6: prepara automaticamente a mensagem de pagamento confirmado
+        if (enrollment) {
+          await prepararMensagem({
+            enrollment, evento: "pagamento_confirmado", canal: "WhatsApp",
+            mensagem: preencherTemplate(templateEvento("pagamento_confirmado"), montarVariaveis({ enrollment, lancamento })),
+            origem: "automática",
+          }).catch(() => {});
+        }
+      }
       onRefresh();
     } catch (e) {
       toast.error(e.response?.data?.error || e.message);

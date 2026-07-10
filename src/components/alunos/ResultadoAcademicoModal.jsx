@@ -9,6 +9,7 @@ import { GraduationCap, AlertTriangle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { verificarAptidao } from "@/lib/aptidaoCertificacao";
 import { executarCorrecaoOperacional } from "@/lib/correcaoOperacional";
+import { prepararMensagem, montarVariaveis, preencherTemplate, templateResultado } from "@/lib/comunicacao";
 
 const OPCOES = [
   { value: "Aprovado", label: "🟢 Aprovado", cls: "border-green-400 bg-green-50 text-green-800" },
@@ -95,6 +96,16 @@ export default function ResultadoAcademicoModal({ enrollment, onClose, onSaved }
         } Turma: ${enrollment.class_schedule_id || "—"}. Aluno: ${enrollment.student_name}. Curso: ${enrollment.course_name}. Empresa: ${enrollment.company_name || "Individual (PF)"}.`,
         usuario: user,
       });
+
+      // FASE 6: comunicação automática do resultado acadêmico (mensagem preparada, sem disparo real)
+      if (resultado !== "Pendente") {
+        const enrollComm = { ...enrollment, resultado_academico: resultado };
+        await prepararMensagem({
+          enrollment: enrollComm, evento: "resultado_academico", canal: "WhatsApp",
+          mensagem: preencherTemplate(templateResultado(resultado), montarVariaveis({ enrollment: enrollComm, extras: { resultado } })),
+          origem: "automática", user,
+        }).catch(() => {});
+      }
 
       toast.success("Resultado acadêmico registrado!");
       onSaved?.();
