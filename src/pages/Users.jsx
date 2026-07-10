@@ -160,15 +160,23 @@ export default function UsersPage() {
           password_changed: false,
         });
 
-        // Convidar no sistema Base44
-        await base44.functions.invoke("convidarUsuario", {
-          email: formData.user_email,
-          user_name: formData.user_name,
-          role: formData.role,
-        });
+        // Convidar no sistema Base44 (não bloqueia a criação do perfil)
+        let inviteOk = true;
+        try {
+          await base44.functions.invoke("convidarUsuario", {
+            email: formData.user_email,
+            user_name: formData.user_name,
+            role: formData.role,
+          });
+        } catch (inviteErr) {
+          inviteOk = false;
+          const status = inviteErr?.response?.status;
+          const detail = inviteErr?.response?.data?.error || inviteErr?.message || "";
+          toast.warning(`Usuário criado, mas o envio do convite falhou${status ? ` (erro ${status})` : ""}. ${detail} Use o botão "Reenviar" na lista.`);
+        }
 
         // Enviar WhatsApp se tiver telefone
-        if (formData.phone) {
+        if (inviteOk && formData.phone) {
           try {
             await base44.functions.invoke("enviarNotificacaoWhatsApp", {
               recipient_type: "user",
@@ -183,7 +191,7 @@ export default function UsersPage() {
           } catch {
             toast.success(`Usuário ${formData.user_name} criado com sucesso!`);
           }
-        } else {
+        } else if (inviteOk) {
           toast.success(`Usuário ${formData.user_name} criado com sucesso!`);
         }
 
@@ -198,7 +206,9 @@ export default function UsersPage() {
       setEditingProfile(null);
       await loadProfiles();
     } catch (err) {
-      toast.error("Erro ao salvar usuário: " + (err?.message || ""));
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.error || err?.message || "";
+      toast.error(`Erro ao salvar usuário${status ? ` (erro ${status})` : ""}: ${detail}`);
     }
   };
 
