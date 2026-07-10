@@ -8,6 +8,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, ExternalLink } from "lucide-react";
 import PaymentInstallmentsForm from "./PaymentInstallmentsForm";
+import CorrecaoDadosDialog from "@/components/shared/CorrecaoDadosDialog";
+import { buscarCertificadosRelacionados, registrarCorrecoes } from "@/lib/correcaoOperacional";
+
+// SPR-2D-1: campos da turma usados na certificação — edição exige justificativa + AuditLog
+const CAMPOS_SENSIVEIS_TURMA = [
+  { campo: "training_name", rotulo: "Treinamento (curso)" },
+  { campo: "company_name", rotulo: "Empresa vinculada" },
+  { campo: "duration_hours", rotulo: "Carga horária" },
+  { campo: "realization_dates", rotulo: "Datas de realização" },
+];
 
 export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel }) {
 
@@ -36,6 +46,8 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     ...classSchedule
   });
 
+  const [correcaoPendente, setCorrecaoPendente] = useState(null); // SPR-2D-1
+  const [salvandoCorrecao, setSalvandoCorrecao] = useState(false);
   const [selectedCompanyDetails, setSelectedCompanyDetails] = useState(null);
   const [availableCourses, setAvailableCourses] = useState([]);
   const [selectedCourseDetails, setSelectedCourseDetails] = useState(null);
@@ -203,9 +215,7 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
     }
   }, [formData.instructor_id, selectedCourseDetails, instructors]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
+  const finalizarSubmit = () => {
     // Submeter o formulário
     onSubmit(formData);
     
@@ -221,6 +231,56 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
       }).catch(err => console.error('Erro ao notificar admins:', err));
     } catch (error) {
       console.error('Erro ao notificar admins:', error);
+    }
+  };
+
+  // SPR-2D-1: edição de turma com campo sensível alterado → justificativa + AuditLog antes/depois
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!classSchedule?.id) {
+      finalizarSubmit();
+      return;
+    }
+    const fmt = (campo, v) => campo === "realization_dates" ? (v || []).filter(Boolean).join(", ") : String(v ?? "");
+    const alteracoes = CAMPOS_SENSIVEIS_TURMA
+      .filter(({ campo }) => fmt(campo, classSchedule[campo]) !== fmt(campo, formData[campo]))
+      .map(({ campo, rotulo }) => ({
+        campo, rotulo,
+        valor_anterior: fmt(campo, classSchedule[campo]) || "—",
+        valor_novo: fmt(campo, formData[campo]) || "—",
+      }));
+    if (alteracoes.length === 0) {
+      finalizarSubmit();
+      return;
+    }
+    const certificados = await buscarCertificadosRelacionados({ turmaId: classSchedule.id }).catch(() => []);
+    setCorrecaoPendente({ alteracoes, certificados });
+  };
+
+  const handleConfirmarCorrecao = async (justificativa) => {
+    setSalvandoCorrecao(true);
+    try {
+      const certs = correcaoPendente.certificados || [];
+      const { sucesso, erros } = await registrarCorrecoes(correcaoPendente.alteracoes, {
+        origem: "Gestão Acadêmica",
+        entidade: "ClassSchedule",
+        entidade_id: classSchedule.id,
+        certificado_id: certs[0]?.id || "",
+        curso_id: formData.training_id || "",
+        empresa_id: formData.company_id || "",
+        justificativa,
+        impacto: certs.length
+          ? `Correção de turma com ${certs.length} certificado(s) emitido(s) vinculado(s) (${certs.map(c => c.certificate_code).join(", ")}) — certificado NÃO alterado; atualização exigirá reemissão futura.`
+          : "Correção de dados da turma usados na certificação.",
+      });
+      if (!sucesso) {
+        alert("Correção não registrada: " + erros.join("; "));
+        return;
+      }
+      setCorrecaoPendente(null);
+      finalizarSubmit();
+    } finally {
+      setSalvandoCorrecao(false);
     }
   };
 
@@ -568,6 +628,15 @@ export default function ClassScheduleForm({ classSchedule, onSubmit, onCancel })
           {classSchedule ? 'Atualizar' : 'Criar'} Turma
         </Button>
       </div>
+
+      <CorrecaoDadosDialog
+        open={!!correcaoPendente}
+        alteracoes={correcaoPendente?.alteracoes || []}
+        certificadosRelacionados={correcaoPendente?.certificados || []}
+        onConfirm={handleConfirmarCorrecao}
+        onCancel={() => setCorrecaoPendente(null)}
+        saving={salvandoCorrecao}
+      />
     </form>
   );
 }
