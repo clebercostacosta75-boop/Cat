@@ -24,6 +24,7 @@ const isAssinado = (cert) =>
 export function getPrintBlockReason(cert, tipo) {
   if (!cert) return "Impressão bloqueada: certificado não encontrado.";
   if (cert.status === "revoked") return "Impressão bloqueada: certificado revogado.";
+  if (cert.status === "substituido") return "Impressão bloqueada: certificado substituído por reemissão. Imprima a versão vigente.";
   if (cert.status === "expired") return "Impressão bloqueada: certificado cancelado/expirado.";
   if (cert.is_blocked) return "Impressão bloqueada: certificado bloqueado.";
   if (cert.valid_until && new Date(cert.valid_until) < new Date())

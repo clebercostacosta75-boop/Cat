@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search, Send, Ban, RotateCcw, Clock, Copy, QrCode, Printer, History, FileCheck } from "lucide-react";
+import { Search, Send, Ban, RotateCcw, RefreshCw, Clock, Copy, QrCode, Printer, History, FileCheck } from "lucide-react";
 import { format, parseISO, isBefore } from "date-fns";
 import { toast } from "sonner";
 import { imprimirCertificado, imprimirComprovante, TIPO_SEM_ASSINATURA, TIPO_COM_ASSINATURA, TIPO_CERT_COM_COMPROVANTE } from "@/lib/imprimirCertificado";
@@ -13,14 +13,14 @@ const TABS = [
   { key: "aguardando", label: "⏳ Aguardando Assinatura" },
   { key: "assinados", label: "✅ Assinados" },
   { key: "impressao", label: "🖨️ Para Impressão" },
-  { key: "revogados", label: "🚫 Revogados / Cancelados" },
+  { key: "revogados", label: "🚫 Revogados / Substituídos" },
 ];
 
 const fmt = (d, p = "dd/MM/yyyy") => (d ? format(parseISO(d), p) : "—");
 
 export default function EmitidosSubTabs({
   certificates, loading, canGenerate, search, setSearch,
-  subTab, setSubTab, onResend, onEditSignDate, onRevoke, onRevalidate,
+  subTab, setSubTab, onResend, onEditSignDate, onRevoke, onRevalidate, onReissue,
 }) {
   const [histCert, setHistCert] = useState(null);
   const [compCert, setCompCert] = useState(null);
@@ -33,7 +33,7 @@ export default function EmitidosSubTabs({
     aguardando: certificates.filter((c) => c.status === "pending_signature" && bySearch(c)),
     assinados: signed,
     impressao: signed,
-    revogados: certificates.filter((c) => c.status === "revoked" && bySearch(c)),
+    revogados: certificates.filter((c) => (c.status === "revoked" || c.status === "substituido") && bySearch(c)),
   };
 
   const copiarLink = (c) => {
@@ -127,8 +127,12 @@ export default function EmitidosSubTabs({
                     <td className="px-3 py-2"><span className={`text-xs ${vencido ? "text-red-600 font-semibold" : "text-gray-600"}`}>{fmt(c.valid_until)}</span></td>
                   </>)}
                   {subTab === "revogados" && (<>
-                    <td className="px-3 py-2 text-xs text-red-700 max-w-[140px] truncate">{c.revocation_reason || "—"}</td>
-                    <td className="px-3 py-2 text-xs text-gray-600">{fmt(c.revoked_at, "dd/MM/yyyy HH:mm")}</td>
+                    <td className="px-3 py-2 text-xs text-red-700 max-w-[140px] truncate">
+                      {c.status === "substituido"
+                        ? <span className="text-blue-700">Substituído por reemissão (v{(c.version || 1) + 1} vigente)</span>
+                        : (c.revocation_reason || "—")}
+                    </td>
+                    <td className="px-3 py-2 text-xs text-gray-600">{fmt(c.status === "substituido" ? c.updated_date : c.revoked_at, "dd/MM/yyyy HH:mm")}</td>
                     <td className="px-3 py-2 text-xs text-gray-600">{c.revoked_by || "—"}</td>
                   </>)}
                   <td className="px-3 py-2">
@@ -173,12 +177,15 @@ export default function EmitidosSubTabs({
                           <Clock className="w-3 h-3 mr-1" /> Data
                         </Button>
                       )}
-                      {(subTab === "aguardando" || subTab === "assinados") && canGenerate && (
+                      {(subTab === "aguardando" || subTab === "assinados") && canGenerate && (<>
+                        <Button size="sm" variant="outline" className="h-7 text-xs text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => onReissue(c)}>
+                          <RefreshCw className="w-3 h-3 mr-1" /> Reemitir
+                        </Button>
                         <Button size="sm" variant="outline" className="h-7 text-xs text-red-600 border-red-200 hover:bg-red-50" onClick={() => onRevoke(c)}>
                           <Ban className="w-3 h-3 mr-1" /> Revogar
                         </Button>
-                      )}
-                      {subTab === "revogados" && canGenerate && (
+                      </>)}
+                      {subTab === "revogados" && c.status === "revoked" && canGenerate && (
                         <Button size="sm" variant="outline" className="h-7 text-xs text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => onRevalidate(c)}>
                           <RotateCcw className="w-3 h-3 mr-1" /> Revalidar
                         </Button>

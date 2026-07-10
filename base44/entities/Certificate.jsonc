@@ -143,10 +143,11 @@
         "signed",
         "active",
         "revoked",
-        "expired"
+        "expired",
+        "substituido"
       ],
       "default": "pending_signature",
-      "description": "Status do certificado"
+      "description": "Status do certificado (substituido = preservado como hist\u00f3rico ap\u00f3s reemiss\u00e3o)"
     },
     "signature_url": {
       "type": "string",

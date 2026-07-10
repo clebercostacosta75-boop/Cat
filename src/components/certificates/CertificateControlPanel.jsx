@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { usePermissions } from "@/hooks/usePermissions";
 import RevocationDialog from "./RevocationDialog";
 import RevalidacaoDialog from "./RevalidacaoDialog";
+import ReemissaoDialog from "./ReemissaoDialog";
 import { executarCorrecaoOperacional } from "@/lib/correcaoOperacional";
 import GerarCertificadoWizard from "./GerarCertificadoWizard";
 import { gerarCodigoInternoControle } from "@/lib/certControl";
@@ -50,6 +51,8 @@ export default function CertificateControlPanel({ navTarget }) {
   const [massaRelatorio, setMassaRelatorio] = useState(null);
   const [revokeTarget, setRevokeTarget] = useState(null);
   const [revalidateTarget, setRevalidateTarget] = useState(null); // SPR-2D-2
+  const [reissueTarget, setReissueTarget] = useState(null); // SPR-2D (encerramento)
+  const [reissuing, setReissuing] = useState(false);
   const [signJustif, setSignJustif] = useState(""); // SPR-2D-2
   const [signJustifError, setSignJustifError] = useState("");
   const [wizardEnrollment, setWizardEnrollment] = useState(null);
@@ -354,6 +357,94 @@ export default function CertificateControlPanel({ navTarget }) {
     setRevalidateTarget(null);
   };
 
+  // SPR-2D (encerramento): reemissão — nunca altera o certificado original.
+  // Cria nova versão (version + 1, reissued_from_id, novos códigos, sem copiar assinatura)
+  // e preserva o original como "substituido" (histórico).
+  const handleReissue = async ({ cert, justificativa }) => {
+    setReissuing(true);
+    try {
+      const user = await base44.auth.me().catch(() => null);
+      const novaVersao = (cert.version || 1) + 1;
+      const newCode = generateCertCode();
+      const newInternal = gerarCodigoInternoControle();
+      const reg = await executarCorrecaoOperacional({
+        origem: "Certificação",
+        entidade: "Certificate",
+        entidade_id: cert.id,
+        aluno_id: cert.student_id || "",
+        matricula_id: cert.enrollment_id || "",
+        certificado_id: cert.id,
+        curso_id: cert.course_id || "",
+        empresa_id: cert.client_id || "",
+        campo: "reemissao",
+        valor_anterior: `${cert.certificate_code} (v${cert.version || 1}, status: ${cert.status})`,
+        valor_novo: `${newCode} (v${novaVersao}, status: pending_signature)`,
+        justificativa,
+        tipo: "reemissao_certificado",
+        impacto: `Reemissão de certificado. Original preservado como "substituido" (nenhum dado alterado). Nova versão v${novaVersao}, reissued_from_id=${cert.id}, novo código interno ${newInternal}, novo código público/QR ${newCode}. Assinatura anterior NÃO copiada — o novo certificado segue o fluxo normal de assinatura.`,
+        usuario: user,
+      });
+      if (!reg.sucesso) {
+        toast.error("Reemissão bloqueada: " + reg.erro);
+        return;
+      }
+      const now = new Date();
+      const novo = await createCertificate.mutateAsync({
+        certificate_code: newCode,
+        internal_control_code: newInternal,
+        certification_type: cert.certification_type || "Formação",
+        student_id: cert.student_id,
+        student_name: cert.student_name,
+        student_cpf: cert.student_cpf,
+        student_email: cert.student_email || "",
+        student_phone: cert.student_phone || "",
+        course_id: cert.course_id || "",
+        course_name: cert.course_name,
+        course_duration: cert.course_duration || "",
+        course_modality: cert.course_modality || "",
+        programmatic_content: cert.programmatic_content || [],
+        start_date: cert.start_date,
+        end_date: cert.end_date,
+        valid_until: cert.valid_until,
+        location_and_date: cert.location_and_date || "",
+        client_id: cert.client_id || "",
+        client_name: cert.client_name || "",
+        instructor_name: cert.instructor_name || "",
+        instructor_qualification: cert.instructor_qualification || "",
+        technical_responsibles: cert.technical_responsibles || [],
+        class_schedule_id: cert.class_schedule_id || "",
+        enrollment_id: cert.enrollment_id || "",
+        issue_date: now.toISOString(),
+        status: "pending_signature",
+        version: novaVersao,
+        reissued_from_id: cert.id,
+        signature_link_expires_at: addDays(now, 7).toISOString(),
+        front_background_url: cert.front_background_url || "",
+        back_background_url: cert.back_background_url || "",
+        show_programmatic_hours: cert.show_programmatic_hours ?? true,
+        certificate_model_id: cert.certificate_model_id || "",
+        certificate_model_name: cert.certificate_model_name || "",
+        ...(cert.recipient_type ? { recipient_type: cert.recipient_type } : {}),
+        detran_registro: cert.detran_registro || "",
+        renach: cert.renach || "",
+        categoria_cnh: cert.categoria_cnh || "",
+      });
+      await updateCertificate.mutateAsync({ id: cert.id, data: { status: "substituido" } });
+      if (cert.enrollment_id) {
+        await updateEnrollment.mutateAsync({
+          id: cert.enrollment_id,
+          data: { status: "Certificado Gerado", certificate_id: novo.id },
+        });
+      }
+      toast.success(`Certificado reemitido: ${newCode} (versão ${novaVersao}). Aguardando nova assinatura.`);
+      setReissueTarget(null);
+    } catch (e) {
+      toast.error("Erro na reemissão: " + e.message);
+    } finally {
+      setReissuing(false);
+    }
+  };
+
   const handleEditSignDate = (cert) => {
     setEditSignDateTarget(cert);
     setSignJustif("");
@@ -522,6 +613,7 @@ export default function CertificateControlPanel({ navTarget }) {
         onEditSignDate={handleEditSignDate}
         onRevoke={setRevokeTarget}
         onRevalidate={setRevalidateTarget}
+        onReissue={setReissueTarget}
       />
 
       {/* Wizard de geração manual */}
@@ -572,6 +664,7 @@ export default function CertificateControlPanel({ navTarget }) {
 
       <RevocationDialog cert={revokeTarget} onConfirm={handleRevoke} onCancel={() => setRevokeTarget(null)} />
       <RevalidacaoDialog cert={revalidateTarget} onConfirm={handleRevalidate} onCancel={() => setRevalidateTarget(null)} />
+      <ReemissaoDialog cert={reissueTarget} onConfirm={handleReissue} onCancel={() => setReissueTarget(null)} saving={reissuing} />
     </div>
   );
 }
