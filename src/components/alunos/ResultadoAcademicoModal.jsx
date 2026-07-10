@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { GraduationCap, AlertTriangle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { verificarAptidao } from "@/lib/aptidaoCertificacao";
+import { executarCorrecaoOperacional } from "@/lib/correcaoOperacional";
 
 const OPCOES = [
   { value: "Aprovado", label: "🟢 Aprovado", cls: "border-green-400 bg-green-50 text-green-800" },
@@ -37,6 +38,12 @@ export default function ResultadoAcademicoModal({ enrollment, onClose, onSaved }
   const apto = resultado === "Aprovado" && aval.grupo === "aguardando";
 
   const handleSave = async () => {
+    // SPR-2D-2: alteração de resultado acadêmico exige justificativa obrigatória
+    const anteriorResultado = enrollment.resultado_academico || "Pendente";
+    if (resultado !== anteriorResultado && !observacao.trim()) {
+      toast.error("Alteração de resultado acadêmico exige justificativa e poderá impactar a aptidão para certificação.");
+      return;
+    }
     setSaving(true);
     try {
       const user = await base44.auth.me().catch(() => null);
@@ -64,21 +71,30 @@ export default function ResultadoAcademicoModal({ enrollment, onClose, onSaved }
 
       await base44.entities.StudentCourseEnrollment.update(enrollment.id, updateData);
 
-      await base44.entities.AuditLog.create({
-        user_email: user?.email || "desconhecido",
-        user_name: responsavel,
-        action: "update",
-        entity_type: "StudentCourseEnrollment",
-        entity_id: enrollment.id,
-        entity_name: `${enrollment.student_name} — ${enrollment.course_name}`,
-        details: `Resultado acadêmico alterado: "${anterior}" → "${resultado}" em ${new Date().toLocaleString("pt-BR")}.${observacao ? ` Justificativa: ${observacao}.` : ""} ${
+      // SPR-2D-2: AuditLog estruturado (padrão central 2D-1) + reprocessamento pelo motor central
+      await executarCorrecaoOperacional({
+        origem: "Gestão Acadêmica",
+        entidade: "StudentCourseEnrollment",
+        entidade_id: enrollment.id,
+        aluno_id: enrollment.student_id || "",
+        matricula_id: enrollment.id,
+        certificado_id: certificates[0]?.id || "",
+        curso_id: enrollment.course_id || "",
+        empresa_id: enrollment.company_id || "",
+        campo: "resultado_academico",
+        valor_anterior: anterior,
+        valor_novo: resultado,
+        justificativa: observacao.trim() || `Definição inicial de resultado acadêmico: ${resultado}.`,
+        tipo: "alteracao_resultado_academico",
+        impacto: `Status da matrícula: "${enrollment.status_matricula || "—"}" → "${updateData.status_matricula}". Aptidão (motor central): "${enrollment.apto_certificacao ? "apto" : "não apto"}" → "${apto ? "apto" : "não apto"}". ${
           apto
-            ? "Aluno APTO para certificação."
+            ? "Aluno APTO para certificação (entra em Aptos se financeiro liberado)."
             : resultado === "Aprovado"
               ? `Aprovado com pendências bloqueantes: ${aval.bloqueios.join("; ")}.`
               : "Aluno BLOQUEADO para certificação."
-        }`,
-      }).catch(() => {});
+        } Turma: ${enrollment.class_schedule_id || "—"}. Aluno: ${enrollment.student_name}. Curso: ${enrollment.course_name}. Empresa: ${enrollment.company_name || "Individual (PF)"}.`,
+        usuario: user,
+      });
 
       toast.success("Resultado acadêmico registrado!");
       onSaved?.();
@@ -126,9 +142,12 @@ export default function ResultadoAcademicoModal({ enrollment, onClose, onSaved }
           </div>
 
           <div>
-            <Label>Observação / Justificativa</Label>
+            <Label>Justificativa <span className="text-red-500">*</span></Label>
             <Textarea rows={2} value={observacao} onChange={(e) => setObservacao(e.target.value)}
               placeholder="Ex: Aprovado na avaliação prática com 90% de presença" className="mt-1" />
+            <p className="text-xs text-gray-500 mt-1">
+              Alteração de resultado acadêmico exige justificativa e poderá impactar a aptidão para certificação.
+            </p>
           </div>
 
           {/* Prévia de aptidão */}

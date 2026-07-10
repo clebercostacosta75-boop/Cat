@@ -64,6 +64,7 @@ export async function executarCorrecaoOperacional({
   valor_novo,
   justificativa,
   impacto = "",
+  tipo = "",
   usuario = null,
 }) {
   if (!justificativa || !justificativa.trim()) {
@@ -87,6 +88,7 @@ export async function executarCorrecaoOperacional({
       entity_name: `Correção operacional — campo "${campo}"`,
       details: JSON.stringify({
         acao: "CORRECAO_OPERACIONAL",
+        tipo,
         origem,
         entidade,
         entidade_id,

@@ -17,6 +17,8 @@ import { addDays } from "date-fns";
 import { toast } from "sonner";
 import { usePermissions } from "@/hooks/usePermissions";
 import RevocationDialog from "./RevocationDialog";
+import RevalidacaoDialog from "./RevalidacaoDialog";
+import { executarCorrecaoOperacional } from "@/lib/correcaoOperacional";
 import GerarCertificadoWizard from "./GerarCertificadoWizard";
 import { gerarCodigoInternoControle } from "@/lib/certControl";
 import { classificarFila, verificarAptidao } from "@/lib/aptidaoCertificacao";
@@ -47,6 +49,9 @@ export default function CertificateControlPanel({ navTarget }) {
   const [emitindoMassa, setEmitindoMassa] = useState(false);
   const [massaRelatorio, setMassaRelatorio] = useState(null);
   const [revokeTarget, setRevokeTarget] = useState(null);
+  const [revalidateTarget, setRevalidateTarget] = useState(null); // SPR-2D-2
+  const [signJustif, setSignJustif] = useState(""); // SPR-2D-2
+  const [signJustifError, setSignJustifError] = useState("");
   const [wizardEnrollment, setWizardEnrollment] = useState(null);
   const [editSignDateTarget, setEditSignDateTarget] = useState(null);
   const [editSignDateValue, setEditSignDateValue] = useState("");
@@ -316,7 +321,28 @@ export default function CertificateControlPanel({ navTarget }) {
     setRevokeTarget(null);
   };
 
-  const handleRevalidate = async (cert) => {
+  // SPR-2D-2: revalidação exige justificativa obrigatória + AuditLog estruturado (padrão 2D-1)
+  const handleRevalidate = async ({ cert, justificativa }) => {
+    const reg = await executarCorrecaoOperacional({
+      origem: "Certificação",
+      entidade: "Certificate",
+      entidade_id: cert.id,
+      aluno_id: cert.student_id || "",
+      matricula_id: cert.enrollment_id || "",
+      certificado_id: cert.id,
+      curso_id: cert.course_id || "",
+      empresa_id: cert.client_id || "",
+      campo: "status",
+      valor_anterior: `revoked (motivo da revogação: ${cert.revocation_reason || "—"})`,
+      valor_novo: "pending_signature",
+      justificativa,
+      tipo: "revalidacao_certificado",
+      impacto: `Revalidação do certificado ${cert.certificate_code} — ${cert.student_name} — ${cert.course_name}. Validade: ${cert.valid_until || "—"} (inalterada). Certificado volta a aguardar assinatura.`,
+    });
+    if (!reg.sucesso) {
+      toast.error("Revalidação bloqueada: " + reg.erro);
+      return;
+    }
     await updateCertificate.mutateAsync({
       id: cert.id,
       data: { status: "pending_signature", revocation_reason: "", revoked_at: null },
@@ -324,25 +350,55 @@ export default function CertificateControlPanel({ navTarget }) {
     if (cert.enrollment_id) {
       await updateEnrollment.mutateAsync({ id: cert.enrollment_id, data: { status: "Certificado Gerado" } });
     }
-    await logCertAudit("update", cert,
-      `REVALIDAÇÃO DE CERTIFICADO. Motivo da revogação anterior: ${cert.revocation_reason || "—"}. Status anterior: revoked → novo: pending_signature. Aluno: ${cert.student_name}`);
     toast.success("Certificado revalidado.");
+    setRevalidateTarget(null);
   };
 
   const handleEditSignDate = (cert) => {
     setEditSignDateTarget(cert);
+    setSignJustif("");
+    setSignJustifError("");
     const current = cert.signed_at ? new Date(cert.signed_at) : new Date();
     const pad = n => String(n).padStart(2, "0");
     setEditSignDateValue(`${current.getFullYear()}-${pad(current.getMonth()+1)}-${pad(current.getDate())}T${pad(current.getHours())}:${pad(current.getMinutes())}`);
   };
 
+  // SPR-2D-2: dados de assinatura exigem justificativa + AuditLog estruturado; data inválida bloqueada
   const handleSaveSignDate = async () => {
-    if (!editSignDateTarget || !editSignDateValue) return;
-    const anterior = editSignDateTarget.signed_at || "—";
-    const nova = new Date(editSignDateValue).toISOString();
-    await updateCertificate.mutateAsync({ id: editSignDateTarget.id, data: { signed_at: nova } });
-    await logCertAudit("update", editSignDateTarget,
-      `EDIÇÃO DE DATA DE ASSINATURA. Antes: ${anterior} → Depois: ${nova}`);
+    if (!editSignDateTarget) return;
+    const cert = editSignDateTarget;
+    if (!signJustif.trim()) {
+      setSignJustifError("Alterar dados de assinatura exige justificativa obrigatória.");
+      return;
+    }
+    const novaData = new Date(editSignDateValue);
+    if (!editSignDateValue || isNaN(novaData.getTime())) {
+      setSignJustifError("Data de assinatura inválida. Informe uma data/hora válida.");
+      return;
+    }
+    const anterior = cert.signed_at || "—";
+    const nova = novaData.toISOString();
+    const reg = await executarCorrecaoOperacional({
+      origem: "Certificação",
+      entidade: "Certificate",
+      entidade_id: cert.id,
+      aluno_id: cert.student_id || "",
+      matricula_id: cert.enrollment_id || "",
+      certificado_id: cert.id,
+      curso_id: cert.course_id || "",
+      empresa_id: cert.client_id || "",
+      campo: "signed_at",
+      valor_anterior: anterior,
+      valor_novo: nova,
+      justificativa: signJustif,
+      tipo: "alteracao_dados_assinatura",
+      impacto: `Alteração de dados de assinatura do certificado ${cert.certificate_code} (status: ${cert.status}). Impacta comprovante de assinatura, impressão com assinatura e validação pública. Histórico de impressão preservado.${cert.status === "revoked" ? " ATENÇÃO: certificado REVOGADO." : ""}`,
+    });
+    if (!reg.sucesso) {
+      setSignJustifError(reg.erro);
+      return;
+    }
+    await updateCertificate.mutateAsync({ id: cert.id, data: { signed_at: nova } });
     toast.success("Data de assinatura atualizada!");
     setEditSignDateTarget(null);
   };
@@ -465,7 +521,7 @@ export default function CertificateControlPanel({ navTarget }) {
         onResend={handleResendLink}
         onEditSignDate={handleEditSignDate}
         onRevoke={setRevokeTarget}
-        onRevalidate={handleRevalidate}
+        onRevalidate={setRevalidateTarget}
       />
 
       {/* Wizard de geração manual */}
@@ -488,6 +544,23 @@ export default function CertificateControlPanel({ navTarget }) {
               <p className="text-sm text-gray-500">Curso: <span className="font-medium text-gray-800">{editSignDateTarget.course_name}</span></p>
               <input type="datetime-local" className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
                 value={editSignDateValue} onChange={e => setEditSignDateValue(e.target.value)} />
+              {editSignDateTarget.status === "revoked" && (
+                <p className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                  ⚠️ ATENÇÃO: este certificado está REVOGADO. Alterar dados de assinatura de certificado revogado é uma ação excepcional.
+                </p>
+              )}
+              <div>
+                <label className="text-sm font-medium">Justificativa <span className="text-red-500">*</span></label>
+                <textarea rows={3}
+                  className="mt-1 w-full border rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  placeholder="Descreva obrigatoriamente o motivo da alteração..."
+                  value={signJustif}
+                  onChange={e => { setSignJustif(e.target.value); setSignJustifError(""); }} />
+                {signJustifError && <p className="text-xs text-red-500 mt-1">{signJustifError}</p>}
+              </div>
+              <p className="text-xs text-gray-500 bg-gray-50 border rounded-md px-3 py-2">
+                Alterar dados de assinatura pode impactar o comprovante, impressão e validação pública. Informe a justificativa.
+              </p>
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={() => setEditSignDateTarget(null)}>Cancelar</Button>
                 <Button className="bg-purple-600 hover:bg-purple-700 text-white" onClick={handleSaveSignDate}>Salvar</Button>
@@ -498,6 +571,7 @@ export default function CertificateControlPanel({ navTarget }) {
       )}
 
       <RevocationDialog cert={revokeTarget} onConfirm={handleRevoke} onCancel={() => setRevokeTarget(null)} />
+      <RevalidacaoDialog cert={revalidateTarget} onConfirm={handleRevalidate} onCancel={() => setRevalidateTarget(null)} />
     </div>
   );
 }
