@@ -134,7 +134,7 @@ export default function EmitidosSubTabs({
                   <td className="px-3 py-2">
                     <div className="flex gap-1 flex-wrap">
                       {subTab === "aguardando" && canGenerate && (<>
-                        <Button size="sm" variant="outline" disabled={c.is_blocked} title={c.is_blocked ? "Certificado bloqueado" : undefined}
+                        <Button size="sm" variant="outline" disabled={c.is_blocked} title={c.is_blocked ? "Impressão bloqueada: certificado bloqueado." : undefined}
                           className="h-7 text-xs text-indigo-600 border-indigo-200 hover:bg-indigo-50"
                           onClick={() => imprimirCertificado(c, TIPO_SEM_ASSINATURA)}>
                           <Printer className="w-3 h-3 mr-1" /> Imprimir s/ assinatura
@@ -147,12 +147,12 @@ export default function EmitidosSubTabs({
                         </Button>
                       </>)}
                       {(subTab === "assinados" || subTab === "impressao") && canGenerate && (<>
-                        <Button size="sm" variant="outline" disabled={c.is_blocked} title={c.is_blocked ? "Certificado bloqueado" : undefined}
+                        <Button size="sm" variant="outline" disabled={c.is_blocked} title={c.is_blocked ? "Impressão bloqueada: certificado bloqueado." : undefined}
                           className="h-7 text-xs text-indigo-600 border-indigo-200 hover:bg-indigo-50"
                           onClick={() => imprimirCertificado(c, TIPO_COM_ASSINATURA)}>
                           <Printer className="w-3 h-3 mr-1" /> Imprimir c/ assinatura
                         </Button>
-                        <Button size="sm" variant="outline" disabled={c.is_blocked} title={c.is_blocked ? "Certificado bloqueado" : undefined}
+                        <Button size="sm" variant="outline" disabled={c.is_blocked} title={c.is_blocked ? "Impressão bloqueada: certificado bloqueado." : undefined}
                           className="h-7 text-xs text-teal-700 border-teal-200 hover:bg-teal-50"
                           onClick={() => imprimirCertificado(c, TIPO_CERT_COM_COMPROVANTE)}>
                           <Printer className="w-3 h-3 mr-1" /> + Comprovante

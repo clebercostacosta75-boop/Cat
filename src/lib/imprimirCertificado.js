@@ -143,6 +143,18 @@ export async function imprimirCertificado(cert, tipo = null, model) {
     html = html.replace("</body>", buildComprovanteHTML(cert, dados) + "</body>");
   }
 
+  // SPR-2C-2 (reforço operacional) — Pré-visualização obrigatória antes de imprimir.
+  // A impressão só ocorre após "Confirmar impressão"; "Cancelar" fecha sem imprimir.
+  // Nenhum dado do certificado é alterado em nenhum dos casos.
+  const toolbar = `
+<div id="print-confirm-bar" style="position:fixed; top:0; left:0; right:0; z-index:9999; background:#111827; color:#fff; padding:10px 16px; display:flex; align-items:center; gap:12px; font-family:Arial,sans-serif; font-size:13px; box-shadow:0 2px 8px rgba(0,0,0,.3);">
+  <span style="flex:1;">Pré-visualização da impressão — confira o certificado antes de imprimir. A impressão não altera nenhum dado do certificado.</span>
+  <button onclick="window.print()" style="background:#10b981; color:#fff; border:none; border-radius:6px; padding:8px 16px; font-weight:bold; cursor:pointer;">🖨️ Confirmar impressão</button>
+  <button onclick="window.close()" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:8px 16px; font-weight:bold; cursor:pointer;">Cancelar</button>
+</div>
+<style>@media print { #print-confirm-bar { display:none !important; } }</style>`;
+  html = html.replace("</body>", toolbar + "</body>");
+
   const win = window.open("", "_blank");
   if (!win) {
     toast.error("Popup bloqueado. Por favor, permita popups para este site.");
@@ -150,6 +162,5 @@ export async function imprimirCertificado(cert, tipo = null, model) {
   }
   win.document.write(html);
   win.document.close();
-  win.onload = () => setTimeout(() => win.print(), 500);
   return true;
 }
