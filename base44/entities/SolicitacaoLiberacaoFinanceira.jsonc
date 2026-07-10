@@ -1,0 +1,89 @@
+{
+  "name": "SolicitacaoLiberacaoFinanceira",
+  "type": "object",
+  "properties": {
+    "enrollment_id": {
+      "type": "string",
+      "description": "ID da matr\u00edcula (StudentCourseEnrollment)"
+    },
+    "student_id": {
+      "type": "string",
+      "description": "ID do aluno"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "Nome do aluno"
+    },
+    "course_id": {
+      "type": "string",
+      "description": "ID do curso"
+    },
+    "course_name": {
+      "type": "string",
+      "description": "Nome do curso"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID da empresa (quando matr\u00edcula empresarial)"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Nome da empresa (quando matr\u00edcula empresarial)"
+    },
+    "origem_matricula": {
+      "type": "string",
+      "enum": [
+        "Individual",
+        "Empresa"
+      ],
+      "description": "Origem da matr\u00edcula"
+    },
+    "status_solicitacao": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Aprovada",
+        "Negada",
+        "Cancelada"
+      ],
+      "default": "Pendente",
+      "description": "Status da solicita\u00e7\u00e3o de libera\u00e7\u00e3o"
+    },
+    "motivo_solicitacao": {
+      "type": "string",
+      "description": "Motivo/justificativa da solicita\u00e7\u00e3o"
+    },
+    "solicitado_por": {
+      "type": "string",
+      "description": "E-mail/nome de quem solicitou"
+    },
+    "solicitado_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da solicita\u00e7\u00e3o"
+    },
+    "analisado_por": {
+      "type": "string",
+      "description": "E-mail/nome de quem analisou (Financeiro)"
+    },
+    "analisado_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da an\u00e1lise"
+    },
+    "justificativa_analise": {
+      "type": "string",
+      "description": "Justificativa da aprova\u00e7\u00e3o ou nega\u00e7\u00e3o"
+    },
+    "status_financeiro_no_momento": {
+      "type": "string",
+      "description": "Situa\u00e7\u00e3o financeira da matr\u00edcula no momento da solicita\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "enrollment_id",
+    "student_name",
+    "course_name",
+    "origem_matricula"
+  ]
+}

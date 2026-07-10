@@ -66,6 +66,18 @@ export default function CertificateControlPanel() {
     queryFn: () => base44.entities.CertificateModel.list(),
   });
 
+  // SPR-2A — Gate Financeiro: empresas (bloqueio financeiro/contratos) e solicitações de liberação
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies-control"],
+    queryFn: () => base44.entities.Company.list("-created_date", 300),
+  });
+
+  const { data: solicitacoesLib = [] } = useQuery({
+    queryKey: ["solicitacoes-liberacao-control"],
+    queryFn: () => base44.entities.SolicitacaoLiberacaoFinanceira.list("-created_date", 300),
+    refetchInterval: 30000,
+  });
+
   const updateEnrollment = useMutation({
     mutationFn: ({ id, data }) => base44.entities.StudentCourseEnrollment.update(id, data),
     onSuccess: () => queryClient.invalidateQueries(["enrollments-control"]),
@@ -84,8 +96,8 @@ export default function CertificateControlPanel() {
     onSuccess: () => queryClient.invalidateQueries(["certificates-control"]),
   });
 
-  // Fila de Certificação (SPR-A): classificação automática por aptidão
-  const fila = classificarFila(enrollments, { certModels, certificates });
+  // Fila de Certificação (SPR-A + Gate Financeiro SPR-2A): classificação automática por aptidão
+  const fila = classificarFila(enrollments, { certModels, certificates, companies, solicitacoes: solicitacoesLib });
   const certQueue = fila.aguardando
     .sort((a, b) => {
       const da = a.end_date ? new Date(a.end_date) : new Date(a.created_date);
@@ -126,8 +138,8 @@ export default function CertificateControlPanel() {
     try {
       const user = await base44.auth.me();
 
-      // SPR-A: bloqueio de emissão para matrículas não aptas
-      const aval = verificarAptidao(enrollment, { certModels, certificates });
+      // SPR-A + Gate Financeiro SPR-2A: bloqueio de emissão para matrículas não aptas
+      const aval = verificarAptidao(enrollment, { certModels, certificates, companies, solicitacoes: solicitacoesLib });
       if (aval.grupo !== "aguardando") {
         const motivo = aval.bloqueios.join("; ") || "Matrícula não apta para certificação";
         try {

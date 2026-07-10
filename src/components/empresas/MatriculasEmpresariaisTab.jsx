@@ -59,6 +59,51 @@ export default function MatriculasEmpresariaisTab() {
     },
   });
 
+  // SPR-2A: solicitação de liberação financeira ao módulo Financeiro (origem Empresa)
+  const solicitarLiberacao = async (e) => {
+    try {
+      const user = await base44.auth.me().catch(() => null);
+      const pendentes = await base44.entities.SolicitacaoLiberacaoFinanceira.filter({
+        enrollment_id: e.id,
+        status_solicitacao: "Pendente",
+      });
+      if (pendentes.length > 0) {
+        toast.info("Já existe uma solicitação pendente para esta matrícula.");
+        return;
+      }
+      const agora = new Date().toISOString();
+      await base44.entities.SolicitacaoLiberacaoFinanceira.create({
+        enrollment_id: e.id,
+        student_id: e.student_id || "",
+        student_name: e.student_name,
+        course_id: e.course_id || "",
+        course_name: e.course_name,
+        company_id: e.company_id || "",
+        company_name: e.company_name || "",
+        origem_matricula: "Empresa",
+        status_solicitacao: "Pendente",
+        motivo_solicitacao: "Solicitação de liberação financeira para certificação (matrícula empresarial)",
+        solicitado_por: user?.email || "desconhecido",
+        solicitado_em: agora,
+        status_financeiro_no_momento: e.status_pagamento || "—",
+      });
+      await base44.entities.AuditLog.create({
+        user_email: user?.email || "desconhecido",
+        user_name: user?.full_name || user?.email || "desconhecido",
+        action: "create",
+        entity_type: "SolicitacaoLiberacaoFinanceira",
+        entity_id: e.id,
+        entity_name: `${e.student_name} — ${e.course_name}`,
+        company_id: e.company_id || "",
+        company_name: e.company_name || "",
+        details: `SOLICITAÇÃO DE LIBERAÇÃO FINANCEIRA criada em ${new Date().toLocaleString("pt-BR")}. Origem: Empresa (${e.company_name}). ANTES: certificação bloqueada por financeiro. DEPOIS: aguardando análise do Financeiro (sem liberação automática).`,
+      });
+      toast.success("Solicitação enviada ao Financeiro para análise.");
+    } catch (err) {
+      toast.error("Erro ao criar solicitação: " + err.message);
+    }
+  };
+
   const handleAutorizar = (e) => {
     if (e.resultado_academico !== "Aprovado") {
       toast.error("Defina o Resultado Acadêmico como Aprovado antes de autorizar a certificação.");
@@ -163,6 +208,11 @@ export default function MatriculasEmpresariaisTab() {
                         className="text-xs h-7 border-indigo-300 text-indigo-700 hover:bg-indigo-50 w-full"
                         onClick={() => setResultadoEnrollment(e)}>
                         🎓 Resultado
+                      </Button>
+                      <Button size="sm" variant="outline"
+                        className="text-xs h-7 border-emerald-300 text-emerald-700 hover:bg-emerald-50 w-full"
+                        onClick={() => solicitarLiberacao(e)}>
+                        💰 Solicitar liberação
                       </Button>
                       {e.status === "Aguardando Autorização" && (
                         <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white text-xs h-7 w-full"

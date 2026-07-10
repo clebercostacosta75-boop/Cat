@@ -23,6 +23,24 @@
       "default": "Ativo",
       "description": "Status da empresa"
     },
+    "bloqueio_financeiro": {
+      "type": "boolean",
+      "default": false,
+      "description": "SPR-2A: bloqueio financeiro da empresa \u2014 impede certifica\u00e7\u00e3o de matr\u00edculas vinculadas"
+    },
+    "motivo_bloqueio_financeiro": {
+      "type": "string",
+      "description": "SPR-2A: motivo do bloqueio financeiro da empresa"
+    },
+    "bloqueio_financeiro_por": {
+      "type": "string",
+      "description": "SPR-2A: e-mail do respons\u00e1vel que aplicou o bloqueio financeiro"
+    },
+    "bloqueio_financeiro_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "SPR-2A: data/hora do bloqueio financeiro"
+    },
     "logo_url": {
       "type": "string",
       "description": "URL do logo da empresa"

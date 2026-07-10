@@ -53,33 +53,55 @@ export default function FinanceiroOperacionalTab() {
 
   const todayStr = new Date().toISOString().split("T")[0];
 
-  const registrarAcao = useMutation({
-    mutationFn: async ({ enrollment, acao }) => {
+  // SPR-2A: cria solicitação real na fila do Financeiro (não libera automaticamente)
+  const criarSolicitacao = useMutation({
+    mutationFn: async ({ enrollment, motivo }) => {
+      const pendentes = await base44.entities.SolicitacaoLiberacaoFinanceira.filter({
+        enrollment_id: enrollment.id,
+        status_solicitacao: "Pendente",
+      });
+      if (pendentes.length > 0) throw new Error("Já existe uma solicitação pendente para esta matrícula.");
+      const agora = new Date().toISOString();
+      const quem = currentUser?.email || "desconhecido";
+      const sit = situacaoFinanceira(enrollment, todayStr).label;
+      await base44.entities.SolicitacaoLiberacaoFinanceira.create({
+        enrollment_id: enrollment.id,
+        student_id: enrollment.student_id || "",
+        student_name: enrollment.student_name,
+        course_id: enrollment.course_id || "",
+        course_name: enrollment.course_name,
+        company_id: "",
+        company_name: "",
+        origem_matricula: "Individual",
+        status_solicitacao: "Pendente",
+        motivo_solicitacao: motivo,
+        solicitado_por: quem,
+        solicitado_em: agora,
+        status_financeiro_no_momento: sit,
+      });
       await base44.entities.AuditLog.create({
-        user_email: currentUser?.email || "desconhecido",
-        user_name: currentUser?.full_name || currentUser?.email || "desconhecido",
-        action: "update",
-        entity_type: "StudentCourseEnrollment",
+        user_email: quem,
+        user_name: currentUser?.full_name || quem,
+        action: "create",
+        entity_type: "SolicitacaoLiberacaoFinanceira",
         entity_id: enrollment.id,
         entity_name: `${enrollment.student_name} — ${enrollment.course_name}`,
-        details: `${acao} em ${new Date().toLocaleString("pt-BR")}. Situação atual: ${enrollment.status_pagamento || "Pendente"}.`,
+        details: `SOLICITAÇÃO DE LIBERAÇÃO FINANCEIRA criada em ${new Date().toLocaleString("pt-BR")}. Origem: Individual. Situação financeira: ${sit}. Motivo: ${motivo}. ANTES: certificação bloqueada por financeiro. DEPOIS: aguardando análise do Financeiro (sem liberação automática).`,
       });
     },
+    onSuccess: () => toast.success("Solicitação enviada ao Financeiro para análise."),
+    onError: (e) => toast.error(e.message),
   });
 
   const handleSolicitarLiberacao = (e) => {
-    registrarAcao.mutate(
-      { enrollment: e, acao: "SOLICITAÇÃO DE LIBERAÇÃO FINANCEIRA registrada" },
-      { onSuccess: () => toast.success("Solicitação de liberação financeira registrada e auditada.") }
-    );
+    criarSolicitacao.mutate({ enrollment: e, motivo: "Solicitação de liberação financeira para certificação" });
   };
 
   const handleEncaminharFinanceiro = (e) => {
-    registrarAcao.mutate(
-      { enrollment: e, acao: "MATRÍCULA ENCAMINHADA PARA O FINANCEIRO" },
-      { onSuccess: () => toast.success("Matrícula encaminhada para o módulo Financeiro.") }
-    );
+    criarSolicitacao.mutate({ enrollment: e, motivo: "Matrícula encaminhada para análise do Financeiro" });
   };
+
+  const registrarAcao = criarSolicitacao;
 
   const norm = (v) => (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 

@@ -23,11 +23,64 @@ export function encontrarModelo(enrollment, certModels = []) {
 }
 
 /**
+ * SPR-2A — Gate Financeiro central.
+ * Retorna { liberado, status, motivo, origem }.
+ * status: "Liberado" | "Pendente" | "Vencido" | "Bloqueado" | "Liberado Manualmente" | "Em análise"
+ */
+export function gateFinanceiro(enrollment, company = null) {
+  const individual =
+    !enrollment.company_id ||
+    enrollment.company_id === "individual" ||
+    enrollment.company_name === "Individual (PF)";
+  const origem = individual ? "Individual" : "Empresa";
+
+  if (individual) {
+    if (enrollment.liberacao_financeira_manual)
+      return {
+        liberado: true,
+        status: "Liberado Manualmente",
+        motivo: `Liberação financeira manual aprovada${enrollment.liberacao_financeira_por ? ` por ${enrollment.liberacao_financeira_por}` : ""}`,
+        origem,
+      };
+    const sp = enrollment.status_pagamento;
+    if (sp === "Pago") return { liberado: true, status: "Liberado", motivo: "Pagamento confirmado", origem };
+    if (sp === "Inadimplente")
+      return { liberado: false, status: "Bloqueado", motivo: "Aluno inadimplente — bloqueio financeiro ativo", origem };
+    const hoje = new Date().toISOString().split("T")[0];
+    if (enrollment.data_vencimento_pagamento && enrollment.data_vencimento_pagamento < hoje)
+      return { liberado: false, status: "Vencido", motivo: "Pagamento vencido", origem };
+    if (sp === "Parcialmente Pago")
+      return { liberado: false, status: "Em análise", motivo: "Pagamento parcial — aguardando quitação", origem };
+    // Transição: matrícula legada sem controle financeiro registrado não é bloqueada
+    if (!sp) return { liberado: true, status: "Liberado", motivo: "Matrícula legada sem cobrança registrada", origem };
+    return { liberado: false, status: "Pendente", motivo: "Pagamento pendente", origem };
+  }
+
+  // Empresarial
+  if (company?.bloqueio_financeiro)
+    return {
+      liberado: false,
+      status: "Bloqueado",
+      motivo: company.motivo_bloqueio_financeiro || "Empresa bloqueada financeiramente",
+      origem,
+    };
+  const contratos = company?.company_contracts || [];
+  if (contratos.length > 0 && !contratos.some((c) => c.status === "Ativo"))
+    return { liberado: false, status: "Bloqueado", motivo: "Contrato cancelado ou inválido — sem contrato ativo", origem };
+  return {
+    liberado: true,
+    status: "Liberado",
+    motivo: contratos.length > 0 ? "Contrato ativo e empresa liberada" : "Condição comercial válida — empresa liberada",
+    origem,
+  };
+}
+
+/**
  * Verifica a aptidão de uma matrícula para certificação.
- * Retorna { grupo, apto, bloqueios, alertas, modelo }.
+ * Retorna { grupo, apto, bloqueios, alertas, modelo, financeiro }.
  * grupo: "aguardando" | "pendencia" | "bloqueado" | "emitido"
  */
-export function verificarAptidao(enrollment, { certModels = [], certificates = [] } = {}) {
+export function verificarAptidao(enrollment, { certModels = [], certificates = [], companies = [], solicitacoes = [] } = {}) {
   const alertas = [];
   const r = enrollment.resultado_academico;
   // Legado: matrículas antigas sem resultado que já estavam "Autorizado" continuam válidas (com alerta)
@@ -43,6 +96,7 @@ export function verificarAptidao(enrollment, { certModels = [], certificates = [
       bloqueios: ["Certificado já emitido para esta matrícula"],
       alertas,
       modelo: null,
+      financeiro: null,
     };
   }
 
@@ -55,6 +109,19 @@ export function verificarAptidao(enrollment, { certModels = [], certificates = [
   if (enrollment.status_matricula === "Cancelado") bloqueios.push("Matrícula cancelada");
   if (enrollment.bloqueio_certificacao)
     bloqueios.push(enrollment.motivo_bloqueio_certificacao || "Bloqueio manual de certificação ativo");
+
+  // SPR-2A — Gate Financeiro: aprovado só é apto se financeiro liberado
+  const company = companies.find((c) => c.id === enrollment.company_id) || null;
+  const fin = gateFinanceiro(enrollment, company);
+  if (!fin.liberado) {
+    let motivoFin = `Bloqueado por financeiro: ${fin.motivo}`;
+    const sol = solicitacoes
+      .filter((s) => s.enrollment_id === enrollment.id)
+      .sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""))[0];
+    if (sol?.status_solicitacao === "Pendente") motivoFin += " — Aguardando liberação financeira";
+    else if (sol?.status_solicitacao === "Negada") motivoFin += " — Liberação negada pelo Financeiro";
+    bloqueios.push(motivoFin);
+  }
 
   // Pendências bloqueantes (aprovado, mas não pode emitir ainda)
   const pendencias = [];
@@ -97,6 +164,7 @@ export function verificarAptidao(enrollment, { certModels = [], certificates = [
     bloqueios: [...bloqueios, ...pendencias],
     alertas,
     modelo,
+    financeiro: fin,
   };
 }
 
