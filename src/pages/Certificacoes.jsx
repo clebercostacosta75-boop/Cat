@@ -12,6 +12,12 @@ import StudentListCertificacoes from "@/components/certificates/StudentListCerti
 
 export default function Certificacoes() {
   const [activeTab, setActiveTab] = useState("certificados");
+  // SPR-2B-2: navegação profunda do Dashboard para as sub-abas da Fila
+  const [navTarget, setNavTarget] = useState(null);
+  const handleNavigate = (tab, target) => {
+    if (target) setNavTarget({ ...target, ts: Date.now() });
+    setActiveTab(tab);
+  };
 
   return (
     <div className="p-6 space-y-4">
@@ -37,7 +43,7 @@ export default function Certificacoes() {
             <Users className="w-3.5 h-3.5" /> Cadastro de Alunos
           </TabsTrigger>
           <TabsTrigger value="controle" className="flex items-center gap-1.5 text-xs">
-            <ClipboardList className="w-3.5 h-3.5" /> Controle de Certificados
+            <ClipboardList className="w-3.5 h-3.5" /> Fila de Certificação
           </TabsTrigger>
           <TabsTrigger value="assinaturas" className="flex items-center gap-1.5 text-xs">
             <PenLine className="w-3.5 h-3.5" /> Assinaturas Digitais
@@ -50,10 +56,10 @@ export default function Certificacoes() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dashboard" className="mt-4"><CertificacoesDashboard onNavigate={setActiveTab} /></TabsContent>
+        <TabsContent value="dashboard" className="mt-4"><CertificacoesDashboard onNavigate={handleNavigate} /></TabsContent>
         <TabsContent value="certificados" className="mt-4"><Certificates /></TabsContent>
         <TabsContent value="alunos" className="mt-4"><StudentListCertificacoes /></TabsContent>
-        <TabsContent value="controle" className="mt-4"><CertificateControlPanel /></TabsContent>
+        <TabsContent value="controle" className="mt-4"><CertificateControlPanel navTarget={navTarget} /></TabsContent>
         <TabsContent value="assinaturas" className="mt-4"><DigitalSignatures /></TabsContent>
         <TabsContent value="auditoria" className="mt-4"><CertificateAuditPanel /></TabsContent>
         <TabsContent value="designer" className="mt-4"><CertDesigner /></TabsContent>

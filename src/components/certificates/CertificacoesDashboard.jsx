@@ -18,6 +18,8 @@ import { format, parseISO, isBefore, differenceInDays, startOfMonth, endOfMonth 
 import { ptBR } from "date-fns/locale";
 import GerarCertificadoWizard from "./GerarCertificadoWizard";
 import { usePermissions } from "@/hooks/usePermissions";
+import { classificarFila } from "@/lib/aptidaoCertificacao";
+import { categorizarFilaVisual } from "@/lib/filaVisual";
 
 const AUTHORIZED_ROLES = ["admin", "gestor_master", "Administrador Master", "Certificacao", "Certificação"];
 const COLORS = ["#059669", "#f59e0b", "#3b82f6", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"];
@@ -83,6 +85,23 @@ export default function CertificacoesDashboard({ onNavigate }) {
     staleTime: 60_000,
   });
 
+  // SPR-2B-2: contexto do motor central para classificar a fila
+  const { data: certModels = [] } = useQuery({
+    queryKey: ["cert-models-dashboard"],
+    queryFn: () => base44.entities.CertificateModel.list(),
+    staleTime: 60_000,
+  });
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies-cert-dashboard"],
+    queryFn: () => base44.entities.Company.list("-created_date", 300),
+    staleTime: 60_000,
+  });
+  const { data: solicitacoes = [] } = useQuery({
+    queryKey: ["solicitacoes-cert-dashboard"],
+    queryFn: () => base44.entities.SolicitacaoLiberacaoFinanceira.list("-created_date", 300),
+    staleTime: 60_000,
+  });
+
   const now = new Date();
   const todayStr = format(now, "yyyy-MM-dd");
 
@@ -92,7 +111,11 @@ export default function CertificacoesDashboard({ onNavigate }) {
   const totalEmpresas = new Set(enrollments.map(e => e.company_id).filter(e => e && e !== "individual")).size;
   const totalMatriculas = enrollments.filter(e => ["Certificado Gerado", "Assinado"].includes(e.status)).length;
 
-  const aptos = enrollments.filter(e => e.status === "Autorizado");
+  // SPR-2B-2: aptos e pendências classificados pelo motor central (sem regra nova na tela)
+  const fila = classificarFila(enrollments, { certModels, certificates: certs, companies, solicitacoes });
+  const filaVis = categorizarFilaVisual(fila);
+  const aptos = filaVis.aptos;
+  const assinadosCount = certs.filter(c => c.status === "signed" || c.status === "active").length;
   const emitidos = certs.length;
   const aguardAssinatura = certs.filter(c => c.status === "pending_signature").length;
   const revogados = certs.filter(c => c.status === "revoked").length;
@@ -245,22 +268,49 @@ export default function CertificacoesDashboard({ onNavigate }) {
             </div>
           </div>
 
-          {/* KPIs Linha 2 — Status Certificados */}
+          {/* SPR-2B-2 — Linha 1: Fila de Matrículas (motor central) — cards clicáveis */}
           <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Status dos Certificados</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              <StatCard icon={Clock} label="Aptos para Certificar" value={aptos.length}
-                color="bg-amber-50 border-amber-200" textColor="text-amber-700" iconColor="text-amber-500"
-                badge={aptos.length > 0 ? { label: "Pendente", cls: "bg-amber-100 text-amber-700" } : undefined} />
-              <StatCard icon={Award} label="Certificados Emitidos" value={emitidos} color="bg-emerald-50 border-emerald-200" textColor="text-emerald-700" iconColor="text-emerald-500" />
-              <StatCard icon={Clock} label="Aguardando Assinatura" value={aguardAssinatura} color="bg-yellow-50 border-yellow-200" textColor="text-yellow-700" iconColor="text-yellow-500" />
-              <StatCard icon={XCircle} label="Revogados" color="bg-red-50 border-red-200" textColor="text-red-700" iconColor="text-red-500" value={revogados} />
-              <StatCard icon={AlertTriangle} label="Urgente (>30 dias)" value={aptosUrgentes.length}
-                color={aptosUrgentes.length > 0 ? "bg-red-50 border-red-300" : "bg-gray-50 border-gray-200"}
-                textColor={aptosUrgentes.length > 0 ? "text-red-700" : "text-gray-700"} iconColor="text-red-500" />
-              <StatCard icon={XCircle} label="Sem Contato" value={semContacto.length}
-                color={semContacto.length > 0 ? "bg-orange-50 border-orange-200" : "bg-gray-50 border-gray-200"}
-                textColor={semContacto.length > 0 ? "text-orange-700" : "text-gray-700"} iconColor="text-orange-400" />
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Fila de Matrículas</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <button className="text-left" onClick={() => onNavigate?.("controle", { area: "fila", tab: "aptos" })}>
+                <StatCard icon={CheckCircle2} label="🟢 Aptos para Emissão" value={filaVis.aptos.length}
+                  color="bg-emerald-50 border-emerald-200 hover:border-emerald-400 transition-colors" textColor="text-emerald-700" iconColor="text-emerald-500" />
+              </button>
+              <button className="text-left" onClick={() => onNavigate?.("controle", { area: "fila", tab: "academicas" })}>
+                <StatCard icon={AlertTriangle} label="🟠 Pendências Acadêmicas" value={filaVis.academicas.length}
+                  color="bg-amber-50 border-amber-200 hover:border-amber-400 transition-colors" textColor="text-amber-700" iconColor="text-amber-500" />
+              </button>
+              <button className="text-left" onClick={() => onNavigate?.("controle", { area: "fila", tab: "financeiras" })}>
+                <StatCard icon={TrendingUp} label="💰 Pendências Financeiras" value={filaVis.financeiras.length}
+                  color="bg-yellow-50 border-yellow-300 hover:border-yellow-500 transition-colors" textColor="text-yellow-700" iconColor="text-yellow-600" />
+              </button>
+              <button className="text-left" onClick={() => onNavigate?.("controle", { area: "fila", tab: "bloqueados" })}>
+                <StatCard icon={XCircle} label="🔴 Bloqueados / Não Aptos" value={filaVis.bloqueados.length}
+                  color="bg-red-50 border-red-200 hover:border-red-400 transition-colors" textColor="text-red-700" iconColor="text-red-500" />
+              </button>
+            </div>
+          </div>
+
+          {/* SPR-2B-2 — Linha 2: Certificados — cards clicáveis */}
+          <div>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Certificados</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <button className="text-left" onClick={() => onNavigate?.("controle", { area: "emitidos", tab: "aguardando" })}>
+                <StatCard icon={Clock} label="⏳ Aguardando Assinatura" value={aguardAssinatura}
+                  color="bg-yellow-50 border-yellow-200 hover:border-yellow-400 transition-colors" textColor="text-yellow-700" iconColor="text-yellow-500" />
+              </button>
+              <button className="text-left" onClick={() => onNavigate?.("controle", { area: "emitidos", tab: "assinados" })}>
+                <StatCard icon={CheckCircle2} label="✅ Assinados" value={assinadosCount}
+                  color="bg-green-50 border-green-200 hover:border-green-400 transition-colors" textColor="text-green-700" iconColor="text-green-500" />
+              </button>
+              <button className="text-left" onClick={() => onNavigate?.("controle", { area: "emitidos", tab: "revogados" })}>
+                <StatCard icon={XCircle} label="🚫 Revogados" value={revogados}
+                  color="bg-red-50 border-red-200 hover:border-red-400 transition-colors" textColor="text-red-700" iconColor="text-red-500" />
+              </button>
+              <button className="text-left" onClick={() => onNavigate?.("controle", { area: "emitidos", tab: "assinados" })}>
+                <StatCard icon={TrendingUp} label="📈 Emitidos no Mês" value={mesAtual}
+                  color="bg-blue-50 border-blue-200 hover:border-blue-400 transition-colors" textColor="text-blue-700" iconColor="text-blue-500" />
+              </button>
             </div>
           </div>
 

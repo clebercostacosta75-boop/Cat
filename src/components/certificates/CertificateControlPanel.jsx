@@ -1,31 +1,33 @@
 /**
- * CertificateControlPanel
+ * CertificateControlPanel — SPR-2B-2
+ * Fila de Certificação organizada em sub-abas (Aptos / Pend. Acadêmicas / Pend. Financeiras / Bloqueados)
+ * e Certificados Emitidos em sub-abas (Aguardando / Assinados / Impressão / Revogados).
  *
- * Fluxo correto:
- * - Certificado NUNCA é gerado automaticamente.
- * - Somente usuários com role "Certificacao", "Certificação", "admin" ou "gestor_master"
- *   veem o botão "Gerar Certificado".
- * - Gerar exige wizard de 3 passos + confirmação manual.
- * - Cada geração registra quem gerou, quando, e qual modelo foi usado (AuditLog).
+ * Regras de negócio: exclusivamente o motor central (aptidaoCertificacao.js) — nenhuma regra nova.
+ * Emissão (individual e em massa) sempre validada por verificarAptidao + gateFinanceiro.
+ * Revogação, revalidação e edição de data de assinatura geram AuditLog (SPR-2B-2).
  */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import {
-  Search, Send, Ban, RotateCcw, Clock, Award, CheckCircle2, Eye, Shield
-} from "lucide-react";
-import { format, parseISO, isBefore, differenceInDays, addDays } from "date-fns";
+import { CheckCircle2, Eye, Shield } from "lucide-react";
+import { addDays } from "date-fns";
 import { toast } from "sonner";
 import { usePermissions } from "@/hooks/usePermissions";
 import RevocationDialog from "./RevocationDialog";
-import CertificateStatusBadge from "./CertificateStatusBadge";
 import GerarCertificadoWizard from "./GerarCertificadoWizard";
 import { gerarCodigoInternoControle } from "@/lib/certControl";
 import { classificarFila, verificarAptidao } from "@/lib/aptidaoCertificacao";
-import FilaPendenciasBloqueados from "./FilaPendenciasBloqueados";
+import { categorizarFilaVisual, aplicarFiltrosFila } from "@/lib/filaVisual";
+import { registrarTentativaBloqueada } from "@/lib/validarEmissao";
+import FilaFiltros, { FILTROS_INICIAIS } from "./fila/FilaFiltros";
+import FilaAptosTab from "./fila/FilaAptosTab";
+import FilaPendAcademicasTab from "./fila/FilaPendAcademicasTab";
+import FilaPendFinanceirasTab from "./fila/FilaPendFinanceirasTab";
+import FilaBloqueadosTab from "./fila/FilaBloqueadosTab";
+import EmitidosSubTabs from "./emitidos/EmitidosSubTabs";
 
 const AUTHORIZED_ROLES = ["admin", "gestor_master", "Administrador Master", "Certificacao", "Certificação"];
 
@@ -36,9 +38,14 @@ function generateCertCode() {
   return `CAT-${new Date().getFullYear()}-${code}`;
 }
 
-export default function CertificateControlPanel() {
+export default function CertificateControlPanel({ navTarget }) {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [filaSub, setFilaSub] = useState("aptos");
+  const [emitSub, setEmitSub] = useState("aguardando");
+  const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [emitindoMassa, setEmitindoMassa] = useState(false);
+  const [massaRelatorio, setMassaRelatorio] = useState(null);
   const [revokeTarget, setRevokeTarget] = useState(null);
   const [wizardEnrollment, setWizardEnrollment] = useState(null);
   const [editSignDateTarget, setEditSignDateTarget] = useState(null);
@@ -48,6 +55,12 @@ export default function CertificateControlPanel() {
   const queryClient = useQueryClient();
   const { role } = usePermissions();
   const canGenerate = AUTHORIZED_ROLES.includes(role);
+
+  // SPR-2B-2: navegação profunda vinda do Dashboard
+  useEffect(() => {
+    if (navTarget?.area === "fila" && navTarget.tab) setFilaSub(navTarget.tab);
+    if (navTarget?.area === "emitidos" && navTarget.tab) setEmitSub(navTarget.tab);
+  }, [navTarget]);
 
   const { data: enrollments = [], isLoading: loadingEnr } = useQuery({
     queryKey: ["enrollments-control"],
@@ -96,20 +109,39 @@ export default function CertificateControlPanel() {
     onSuccess: () => queryClient.invalidateQueries(["certificates-control"]),
   });
 
-  // Fila de Certificação (SPR-A + Gate Financeiro SPR-2A): classificação automática por aptidão
-  const fila = classificarFila(enrollments, { certModels, certificates, companies, solicitacoes: solicitacoesLib });
-  const certQueue = fila.aguardando
-    .sort((a, b) => {
-      const da = a.end_date ? new Date(a.end_date) : new Date(a.created_date);
-      const db = b.end_date ? new Date(b.end_date) : new Date(b.created_date);
-      return da - db;
-    });
+  const ctxMotor = { certModels, certificates, companies, solicitacoes: solicitacoesLib };
 
-  // Matrículas aguardando autorização
+  // Classificação pelo motor central + categorização visual (SPR-2B-2, sem regra nova)
+  const fila = classificarFila(enrollments, ctxMotor);
+  const filaVis = categorizarFilaVisual(fila);
+  const aptosF = aplicarFiltrosFila(filaVis.aptos, filtros).sort((a, b) => {
+    const da = a.end_date ? new Date(a.end_date) : new Date(a.created_date);
+    const db = b.end_date ? new Date(b.end_date) : new Date(b.created_date);
+    return da - db;
+  });
+  const acadF = aplicarFiltrosFila(filaVis.academicas, filtros);
+  const finF = aplicarFiltrosFila(filaVis.financeiras, filtros);
+  const bloqF = aplicarFiltrosFila(filaVis.bloqueados, filtros);
+
   const awaitingAuth = enrollments.filter(e => e.status === "Aguardando Autorização");
 
+  // ── Auditoria (SPR-2B-2) ────────────────────────────────────────────────────
+  const logCertAudit = async (action, cert, details) => {
+    try {
+      const user = await base44.auth.me().catch(() => null);
+      await base44.entities.AuditLog.create({
+        user_email: user?.email || "desconhecido",
+        user_name: user?.full_name || user?.email || "desconhecido",
+        action,
+        entity_type: "Certificate",
+        entity_id: cert.id,
+        entity_name: `Certificado ${cert.certificate_code} — ${cert.student_name} — ${cert.course_name}`,
+        details: `${details} em ${new Date().toLocaleString("pt-BR")}.`,
+      });
+    } catch { /* log não bloqueia */ }
+  };
+
   const handleAuthorize = async (enrollment) => {
-    // SPR-A: autorização exige resultado acadêmico Aprovado
     if (enrollment.resultado_academico && enrollment.resultado_academico !== "Aprovado") {
       toast.error(`Bloqueado: resultado acadêmico "${enrollment.resultado_academico}". Defina como Aprovado na Gestão Acadêmica.`);
       try {
@@ -133,89 +165,76 @@ export default function CertificateControlPanel() {
     toast.success(`Matrícula de ${enrollment.student_name} marcada como Apta para Certificar.`);
   };
 
+  // ── Emissão (individual e em massa) — sempre pelo motor central ────────────
+  const emitirCertificado = async (enrollment, model, modelId, user, detalhes) => {
+    const code = generateCertCode();
+    const now = new Date();
+    const expiresAt = addDays(now, 7);
+    const certData = {
+      certificate_code: code,
+      internal_control_code: gerarCodigoInternoControle(),
+      certification_type: enrollment.certification_type || "Formação",
+      student_id: enrollment.student_id,
+      student_name: enrollment.student_name,
+      student_cpf: enrollment.student_cpf,
+      student_email: enrollment.student_email || "",
+      student_phone: enrollment.student_phone || "",
+      course_id: enrollment.course_id,
+      course_name: enrollment.course_name,
+      course_duration: enrollment.course_duration || "",
+      client_id: enrollment.company_id,
+      client_name: enrollment.company_name,
+      instructor_name: enrollment.instructor_name || "",
+      start_date: enrollment.start_date,
+      end_date: enrollment.end_date,
+      valid_until: enrollment.valid_until,
+      issue_date: now.toISOString(),
+      status: "pending_signature",
+      enrollment_id: enrollment.id,
+      class_schedule_id: enrollment.class_schedule_id || "",
+      version: 1,
+      signature_link_expires_at: expiresAt.toISOString(),
+      front_background_url: model?.front_background_url || "",
+      back_background_url: model?.back_background_url || "",
+      programmatic_content: model?.programmatic_content || [],
+      technical_responsibles: model?.technical_responsibles || [],
+      show_programmatic_hours: model?.show_programmatic_hours ?? true,
+      certificate_model_id: modelId || "",
+      certificate_model_name: model?.name || "",
+    };
+    const cert = await createCertificate.mutateAsync(certData);
+    await updateEnrollment.mutateAsync({
+      id: enrollment.id,
+      data: { status: "Certificado Gerado", certificate_id: cert.id },
+    });
+    try {
+      await base44.entities.AuditLog.create({
+        user_email: user?.email || "desconhecido",
+        user_name: user?.full_name || user?.email || "desconhecido",
+        action: "create",
+        entity_type: "Certificate",
+        entity_id: cert.id,
+        entity_name: `Certificado ${code} — ${enrollment.student_name} — ${enrollment.course_name}`,
+        details: `${detalhes} em ${now.toLocaleString("pt-BR")}. Modelo: "${model?.name || "—"}".`,
+      });
+    } catch { /* log não bloqueia */ }
+    return code;
+  };
+
   const handleWizardConfirm = async ({ enrollment, modelId, model, resultado, observacoes }) => {
     setGeneratingId(enrollment.id);
     try {
       const user = await base44.auth.me();
-
-      // SPR-A + Gate Financeiro SPR-2A: bloqueio de emissão para matrículas não aptas
-      const aval = verificarAptidao(enrollment, { certModels, certificates, companies, solicitacoes: solicitacoesLib });
+      const aval = verificarAptidao(enrollment, ctxMotor);
       if (aval.grupo !== "aguardando") {
         const motivo = aval.bloqueios.join("; ") || "Matrícula não apta para certificação";
-        try {
-          await base44.entities.AuditLog.create({
-            user_email: user?.email || "desconhecido",
-            user_name: user?.full_name || user?.email || "desconhecido",
-            action: "update",
-            entity_type: "StudentCourseEnrollment",
-            entity_id: enrollment.id,
-            entity_name: `${enrollment.student_name} — ${enrollment.course_name}`,
-            details: `TENTATIVA DE EMISSÃO DE CERTIFICADO BLOQUEADA em ${new Date().toLocaleString("pt-BR")}. Motivo: ${motivo}`,
-          });
-        } catch { /* log não bloqueia */ }
+        await registrarTentativaBloqueada(enrollment, motivo, "Fila de Certificação");
         toast.error("Emissão bloqueada: " + motivo);
         setWizardEnrollment(null);
         return;
       }
-
-      const code = generateCertCode();
-      const now = new Date();
-      const expiresAt = addDays(now, 7);
-
-      const certData = {
-        certificate_code: code,
-        internal_control_code: gerarCodigoInternoControle(),
-        certification_type: enrollment.certification_type || "Formação",
-        student_id: enrollment.student_id,
-        student_name: enrollment.student_name,
-        student_cpf: enrollment.student_cpf,
-        student_email: enrollment.student_email || "",
-        student_phone: enrollment.student_phone || "",
-        course_id: enrollment.course_id,
-        course_name: enrollment.course_name,
-        course_duration: enrollment.course_duration || "",
-        client_id: enrollment.company_id,
-        client_name: enrollment.company_name,
-        instructor_name: enrollment.instructor_name || "",
-        start_date: enrollment.start_date,
-        end_date: enrollment.end_date,
-        valid_until: enrollment.valid_until,
-        issue_date: now.toISOString(),
-        status: "pending_signature",
-        enrollment_id: enrollment.id,
-        class_schedule_id: enrollment.class_schedule_id || "",
-        version: 1,
-        signature_link_expires_at: expiresAt.toISOString(),
-        front_background_url: model?.front_background_url || "",
-        back_background_url: model?.back_background_url || "",
-        programmatic_content: model?.programmatic_content || [],
-        technical_responsibles: model?.technical_responsibles || [],
-        show_programmatic_hours: model?.show_programmatic_hours ?? true,
-        certificate_model_id: modelId || "",
-        certificate_model_name: model?.name || "",
-      };
-
-      const cert = await createCertificate.mutateAsync(certData);
-
-      await updateEnrollment.mutateAsync({
-        id: enrollment.id,
-        data: { status: "Certificado Gerado", certificate_id: cert.id },
-      });
-
-      try {
-        await base44.entities.AuditLog.create({
-          user_email: user?.email || "desconhecido",
-          user_name: user?.full_name || user?.email || "desconhecido",
-          action: "create",
-          entity_type: "Certificate",
-          entity_id: cert.id,
-          entity_name: `Certificado ${code} — ${enrollment.student_name} — ${enrollment.course_name}`,
-          details: `Certificado gerado manualmente em ${now.toLocaleString("pt-BR")}. Modelo: "${model?.name || "—"}". Resultado: ${resultado}.${observacoes ? ` Obs: ${observacoes}` : ""}`,
-        });
-      } catch {
-        // log não bloqueia a geração
-      }
-
+      const code = await emitirCertificado(enrollment, model, modelId, user,
+        `Certificado gerado manualmente pela fila. Resultado: ${resultado}.${observacoes ? ` Obs: ${observacoes}` : ""}`);
       setWizardEnrollment(null);
       toast.success(`Certificado ${code} gerado com sucesso!`);
     } catch (e) {
@@ -225,6 +244,38 @@ export default function CertificateControlPanel() {
     }
   };
 
+  const handleEmitirMassa = async () => {
+    const selecionados = aptosF.filter(e => selectedIds.includes(e.id));
+    if (!selecionados.length) return;
+    setEmitindoMassa(true);
+    try {
+      const user = await base44.auth.me();
+      let ok = 0;
+      const bloqueadosRel = [];
+      for (const e of selecionados) {
+        // Revalida cada aluno pelo motor central antes de emitir (SPR-2B-1)
+        const aval = verificarAptidao(e, ctxMotor);
+        if (aval.grupo !== "aguardando" || !aval.modelo) {
+          const motivo = aval.bloqueios.join("; ") || "Modelo de certificado indisponível";
+          bloqueadosRel.push(`${e.student_name}: ${motivo}`);
+          await registrarTentativaBloqueada(e, motivo, "Emissão em Massa — Fila");
+          continue;
+        }
+        await emitirCertificado(e, aval.modelo, aval.modelo.id, user,
+          "Emissão em massa pela Fila de Certificação (validada pelo motor central)");
+        ok++;
+      }
+      setMassaRelatorio({ processados: selecionados.length, emitidos: ok, bloqueados: bloqueadosRel });
+      setSelectedIds([]);
+      toast.success(`${ok} certificado(s) emitido(s).${bloqueadosRel.length ? ` ${bloqueadosRel.length} bloqueado(s) pelo motor.` : ""}`);
+    } catch (e) {
+      toast.error("Erro na emissão em massa: " + e.message);
+    } finally {
+      setEmitindoMassa(false);
+    }
+  };
+
+  // ── Ciclo do certificado (com AuditLog — SPR-2B-2) ──────────────────────────
   const handleResendLink = async (cert) => {
     try {
       const signUrl = `${window.location.origin}/CertificateSign?code=${cert.certificate_code}`;
@@ -246,13 +297,21 @@ export default function CertificateControlPanel() {
   };
 
   const handleRevoke = async ({ cert, reason }) => {
+    const user = await base44.auth.me().catch(() => null);
     await updateCertificate.mutateAsync({
       id: cert.id,
-      data: { status: "revoked", revocation_reason: reason, revoked_at: new Date().toISOString() },
+      data: {
+        status: "revoked",
+        revocation_reason: reason,
+        revoked_at: new Date().toISOString(),
+        revoked_by: user?.email || "desconhecido",
+      },
     });
     if (cert.enrollment_id) {
       await updateEnrollment.mutateAsync({ id: cert.enrollment_id, data: { status: "Revogado" } });
     }
+    await logCertAudit("update", cert,
+      `REVOGAÇÃO DE CERTIFICADO. Motivo: ${reason}. Status anterior: ${cert.status} → novo: revoked. Aluno: ${cert.student_name}`);
     toast.success("Certificado revogado.");
     setRevokeTarget(null);
   };
@@ -265,6 +324,8 @@ export default function CertificateControlPanel() {
     if (cert.enrollment_id) {
       await updateEnrollment.mutateAsync({ id: cert.enrollment_id, data: { status: "Certificado Gerado" } });
     }
+    await logCertAudit("update", cert,
+      `REVALIDAÇÃO DE CERTIFICADO. Motivo da revogação anterior: ${cert.revocation_reason || "—"}. Status anterior: revoked → novo: pending_signature. Aluno: ${cert.student_name}`);
     toast.success("Certificado revalidado.");
   };
 
@@ -277,27 +338,23 @@ export default function CertificateControlPanel() {
 
   const handleSaveSignDate = async () => {
     if (!editSignDateTarget || !editSignDateValue) return;
-    await updateCertificate.mutateAsync({
-      id: editSignDateTarget.id,
-      data: { signed_at: new Date(editSignDateValue).toISOString() },
-    });
+    const anterior = editSignDateTarget.signed_at || "—";
+    const nova = new Date(editSignDateValue).toISOString();
+    await updateCertificate.mutateAsync({ id: editSignDateTarget.id, data: { signed_at: nova } });
+    await logCertAudit("update", editSignDateTarget,
+      `EDIÇÃO DE DATA DE ASSINATURA. Antes: ${anterior} → Depois: ${nova}`);
     toast.success("Data de assinatura atualizada!");
     setEditSignDateTarget(null);
   };
 
-  const issuedCerts = certificates.filter(c => {
-    if (statusFilter !== "all" && c.status !== statusFilter) return false;
-    return [c.student_name, c.certificate_code, c.client_name, c.course_name]
-      .some(v => v && v.toLowerCase().includes(search.toLowerCase()));
-  });
+  const invalidateSolicitacoes = () => queryClient.invalidateQueries(["solicitacoes-liberacao-control"]);
 
-  const certStats = {
-    total: certificates.length,
-    pending: certificates.filter(c => c.status === "pending_signature").length,
-    signed: certificates.filter(c => c.status === "signed").length,
-    revoked: certificates.filter(c => c.status === "revoked").length,
-    expired: certificates.filter(c => c.valid_until && isBefore(parseISO(c.valid_until), new Date()) && c.status !== "revoked").length,
-  };
+  const FILA_TABS = [
+    { key: "aptos", label: `🟢 Aptos (${aptosF.length})` },
+    { key: "academicas", label: `🟠 Pend. Acadêmicas (${acadF.length})` },
+    { key: "financeiras", label: `💰 Pend. Financeiras (${finF.length})` },
+    { key: "bloqueados", label: `🔴 Bloqueados / Não Aptos (${bloqF.length})` },
+  ];
 
   return (
     <div className="space-y-6">
@@ -308,22 +365,6 @@ export default function CertificateControlPanel() {
           <span>Você tem acesso de visualização. Somente <strong>Certificadores</strong> e <strong>Administradores</strong> podem gerar certificados.</span>
         </div>
       )}
-
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        {[
-          { label: "Total", value: certStats.total, color: "bg-blue-50 text-blue-700" },
-          { label: "Aguardando Assinatura", value: certStats.pending, color: "bg-yellow-50 text-yellow-700" },
-          { label: "Assinados", value: certStats.signed, color: "bg-green-50 text-green-700" },
-          { label: "Vencidos", value: certStats.expired, color: "bg-red-50 text-red-700" },
-          { label: "Revogados", value: certStats.revoked, color: "bg-gray-100 text-gray-700" },
-        ].map(c => (
-          <div key={c.label} className={`rounded-lg p-3 ${c.color}`}>
-            <div className="text-2xl font-bold">{c.value}</div>
-            <div className="text-xs">{c.label}</div>
-          </div>
-        ))}
-      </div>
 
       {/* Aguardando autorização */}
       {awaitingAuth.length > 0 && canGenerate && (
@@ -365,171 +406,67 @@ export default function CertificateControlPanel() {
         </div>
       )}
 
-      {/* FILA DE CERTIFICAÇÃO */}
-      <div className="border-2 rounded-lg overflow-hidden border-emerald-200">
-        <div className="bg-emerald-50 border-b px-4 py-3 flex items-center justify-between">
-          <h2 className="font-semibold text-emerald-800 flex items-center gap-2">
-            <Award className="w-4 h-4" />
-            Fila de Certificação — Aptos para Certificar ({certQueue.length})
-          </h2>
+      {/* FILA DE CERTIFICAÇÃO — sub-abas (SPR-2B-2) */}
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-1 items-center">
+          {FILA_TABS.map(t => (
+            <button key={t.key} onClick={() => setFilaSub(t.key)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                filaSub === t.key ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+              }`}>
+              {t.label}
+            </button>
+          ))}
           {!canGenerate && (
-            <span className="text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full flex items-center gap-1">
-              <Eye className="w-3 h-3" /> Somente visualização
-            </span>
+            <span className="text-xs text-gray-500 flex items-center gap-1 ml-2"><Eye className="w-3 h-3" /> Somente visualização</span>
           )}
         </div>
 
-        {certQueue.length === 0 ? (
-          <div className="text-center py-10 text-gray-400">
-            <Award className="w-8 h-8 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">Nenhum aluno aguardando certificado no momento.</p>
+        <FilaFiltros filtros={filtros} setFiltros={setFiltros} />
+
+        {massaRelatorio && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 text-sm">
+            <p className="font-semibold text-emerald-800">
+              Último processamento em massa: {massaRelatorio.processados} processado(s) · {massaRelatorio.emitidos} emitido(s) · {massaRelatorio.bloqueados.length} bloqueado(s)
+            </p>
+            {massaRelatorio.bloqueados.length > 0 && (
+              <ul className="mt-1 space-y-0.5">
+                {massaRelatorio.bloqueados.map((b, i) => <li key={i} className="text-xs text-red-700">🔒 {b}</li>)}
+              </ul>
+            )}
           </div>
+        )}
+
+        {loadingEnr ? (
+          <div className="text-center py-10 text-gray-400 text-sm">Carregando fila...</div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="text-left px-4 py-2 font-medium text-gray-600">Aluno</th>
-                <th className="text-left px-4 py-2 font-medium text-gray-600">Curso</th>
-                <th className="text-left px-4 py-2 font-medium text-gray-600">Empresa</th>
-                <th className="text-left px-4 py-2 font-medium text-gray-600">Conclusão</th>
-                <th className="text-left px-4 py-2 font-medium text-gray-600">Aguardando</th>
-                {canGenerate && <th className="px-4 py-2 font-medium text-gray-600">Ação</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {certQueue.map(e => {
-                const dias = e.end_date ? differenceInDays(new Date(), parseISO(e.end_date)) : 0;
-                const urgente = dias > 30;
-                return (
-                  <tr key={e.id} className={`border-b ${urgente ? "bg-red-50" : "hover:bg-gray-50"}`}>
-                    <td className="px-4 py-2">
-                      <div className="font-medium text-gray-900">{e.student_name}</div>
-                      <div className="text-xs text-gray-400">{e.student_cpf}</div>
-                    </td>
-                    <td className="px-4 py-2 text-gray-600 max-w-[160px] truncate">{e.course_name}</td>
-                    <td className="px-4 py-2 text-gray-500">{e.company_name || "—"}</td>
-                    <td className="px-4 py-2 text-gray-600 text-xs">
-                      {e.end_date ? format(parseISO(e.end_date), "dd/MM/yyyy") : "—"}
-                    </td>
-                    <td className="px-4 py-2">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${urgente ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>
-                        {dias > 0 ? `${dias}d` : "Hoje"}{urgente && " ⚠️"}
-                      </span>
-                    </td>
-                    {canGenerate && (
-                      <td className="px-4 py-2">
-                        <Button
-                          size="sm"
-                          className="text-xs h-7 bg-emerald-600 hover:bg-emerald-700"
-                          onClick={() => setWizardEnrollment(e)}
-                          disabled={generatingId === e.id}
-                        >
-                          <Award className="w-3 h-3 mr-1" /> Gerar Certificado
-                        </Button>
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <>
+            {filaSub === "aptos" && (
+              <FilaAptosTab items={aptosF} canGenerate={canGenerate}
+                selectedIds={selectedIds} setSelectedIds={setSelectedIds}
+                onEmitir={setWizardEnrollment} onEmitirMassa={handleEmitirMassa} emitindoMassa={emitindoMassa} />
+            )}
+            {filaSub === "academicas" && <FilaPendAcademicasTab items={acadF} />}
+            {filaSub === "financeiras" && (
+              <FilaPendFinanceirasTab items={finF} solicitacoes={solicitacoesLib} onAtualizar={invalidateSolicitacoes} />
+            )}
+            {filaSub === "bloqueados" && <FilaBloqueadosTab items={bloqF} />}
+          </>
         )}
       </div>
 
-      {/* PENDÊNCIAS E BLOQUEADOS (SPR-A) */}
-      <FilaPendenciasBloqueados pendencias={fila.pendencias} bloqueados={fila.bloqueados} />
-
-      {/* CERTIFICADOS EMITIDOS */}
-      <div className="border rounded-lg overflow-hidden">
-        <div className="bg-white border-b px-4 py-3 flex flex-wrap gap-2 items-center justify-between">
-          <h2 className="font-semibold text-gray-800 flex items-center gap-2">
-            <Award className="w-4 h-4 text-emerald-600" /> Certificados Emitidos
-          </h2>
-          <div className="flex gap-2 flex-wrap">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input placeholder="Buscar..." className="pl-9 h-8 text-sm w-48" value={search} onChange={e => setSearch(e.target.value)} />
-            </div>
-            <select className="border rounded-md px-2 py-1 text-sm text-gray-600" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-              <option value="all">Todos os status</option>
-              <option value="pending_signature">⏳ Aguardando Assinatura</option>
-              <option value="signed">✅ Assinado</option>
-              <option value="revoked">🚫 Revogado</option>
-            </select>
-          </div>
-        </div>
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="text-left px-4 py-2 font-medium text-gray-600">Código</th>
-              <th className="text-left px-4 py-2 font-medium text-gray-600">Aluno</th>
-              <th className="text-left px-4 py-2 font-medium text-gray-600">Curso</th>
-              <th className="text-left px-4 py-2 font-medium text-gray-600">Empresa</th>
-              <th className="text-left px-4 py-2 font-medium text-gray-600">Vencimento</th>
-              <th className="text-left px-4 py-2 font-medium text-gray-600">Status</th>
-              <th className="px-4 py-2">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(loadingCerts || loadingEnr) && (
-              <tr><td colSpan={7} className="text-center py-8 text-gray-400">Carregando...</td></tr>
-            )}
-            {!loadingCerts && issuedCerts.length === 0 && (
-              <tr><td colSpan={7} className="text-center py-8 text-gray-400">Nenhum certificado encontrado.</td></tr>
-            )}
-            {issuedCerts.map(cert => {
-              const isExpired = cert.valid_until && isBefore(parseISO(cert.valid_until), new Date()) && cert.status !== "revoked";
-              const displayStatus = isExpired ? "expired" : cert.status;
-              return (
-                <tr key={cert.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-2 font-mono text-xs text-gray-700">{cert.certificate_code}</td>
-                  <td className="px-4 py-2">
-                    <div className="font-medium text-gray-900">{cert.student_name}</div>
-                    <div className="text-xs text-gray-400">{cert.student_cpf}</div>
-                  </td>
-                  <td className="px-4 py-2 text-gray-600 max-w-[160px] truncate">{cert.course_name}</td>
-                  <td className="px-4 py-2 text-gray-600">{cert.client_name}</td>
-                  <td className="px-4 py-2">
-                    <span className={isExpired ? "text-red-600 font-semibold text-xs" : "text-gray-600 text-xs"}>
-                      {cert.valid_until ? format(parseISO(cert.valid_until), "dd/MM/yyyy") : "—"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2">
-                    <CertificateStatusBadge status={displayStatus} signedAt={cert.signed_at} revokedReason={cert.revocation_reason} />
-                  </td>
-                  <td className="px-4 py-2">
-                    <div className="flex gap-1 flex-wrap">
-                      {cert.status === "pending_signature" && canGenerate && (
-                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleResendLink(cert)}>
-                          <Send className="w-3 h-3 mr-1" /> Reenviar
-                        </Button>
-                      )}
-                      {cert.status === "signed" && canGenerate && (
-                        <Button size="sm" variant="outline" className="h-7 text-xs text-purple-600 border-purple-200 hover:bg-purple-50"
-                          onClick={() => handleEditSignDate(cert)}>
-                          <Clock className="w-3 h-3 mr-1" /> Data Assinatura
-                        </Button>
-                      )}
-                      {cert.status !== "revoked" && canGenerate && (
-                        <Button size="sm" variant="outline" className="h-7 text-xs text-red-600 border-red-200 hover:bg-red-50"
-                          onClick={() => setRevokeTarget(cert)}>
-                          <Ban className="w-3 h-3 mr-1" /> Revogar
-                        </Button>
-                      )}
-                      {cert.status === "revoked" && canGenerate && (
-                        <Button size="sm" variant="outline" className="h-7 text-xs text-blue-600 border-blue-200 hover:bg-blue-50"
-                          onClick={() => handleRevalidate(cert)}>
-                          <RotateCcw className="w-3 h-3 mr-1" /> Revalidar
-                        </Button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      {/* CERTIFICADOS EMITIDOS — sub-abas (SPR-2B-2) */}
+      <EmitidosSubTabs
+        certificates={certificates}
+        loading={loadingCerts}
+        canGenerate={canGenerate}
+        search={search} setSearch={setSearch}
+        subTab={emitSub} setSubTab={setEmitSub}
+        onResend={handleResendLink}
+        onEditSignDate={handleEditSignDate}
+        onRevoke={setRevokeTarget}
+        onRevalidate={handleRevalidate}
+      />
 
       {/* Wizard de geração manual */}
       {wizardEnrollment && (
