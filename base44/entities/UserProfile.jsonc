@@ -19,7 +19,8 @@
       "enum": [
         "gestor_master",
         "editor",
-        "cliente"
+        "cliente",
+        "personalizado"
       ],
       "default": "cliente",
       "description": "Perfil de acesso"
@@ -29,7 +30,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Permiss\u00f5es individuais de acesso \u00e0s p\u00e1ginas do sistema"
+      "description": "Permiss\u00f5es individuais de acesso \u00e0s p\u00e1ginas do sistema (fonte can\u00f4nica)"
     },
     "status": {
       "type": "string",
@@ -124,50 +125,29 @@
   ],
   "rls": {
     "create": {
-      "$or": [
-        {
-          "user_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "read": {
       "$or": [
         {
-          "user_id": "{{user.id}}"
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "data.user_id": "{{user.id}}"
         },
         {
           "user_condition": {
             "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "gestor_master"
           }
         }
       ]
     },
     "update": {
-      "$or": [
-        {
-          "user_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "gestor_master"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
       "user_condition": {
