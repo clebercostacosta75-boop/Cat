@@ -9,6 +9,7 @@ import { UserPlus, Mail, Phone, User, Eye, Search, Edit2, Trash2, Award, DollarS
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import PortalAccessButton from "@/components/invites/PortalAccessButton";
 
 export default function InstructorsPage() {
   const [showForm, setShowForm] = useState(false);
@@ -363,6 +364,7 @@ export default function InstructorsPage() {
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
+                  <PortalAccessButton portalType="Instrutor" entityId={instructor.id} name={instructor.name} email={instructor.email} phone={instructor.phone} />
                 </div>
               </CardContent>
             </Card>

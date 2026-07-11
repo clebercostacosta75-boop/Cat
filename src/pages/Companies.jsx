@@ -7,6 +7,7 @@ import { Plus, Building2, MapPin, Users, Mail, Phone, Search, Edit2, Trash2, Tre
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import CompanyForm from "@/components/company/CompanyForm";
+import PortalAccessButton from "@/components/invites/PortalAccessButton";
 
 export default function CompaniesPage() {
   const [showForm, setShowForm] = useState(false);
@@ -270,6 +271,7 @@ export default function CompaniesPage() {
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
+                  <PortalAccessButton portalType="Empresa" entityId={company.id} name={company.nome_fantasia} email={company.email_faturamento} phone={company.contacts?.[0]?.phone} />
                 </div>
               </CardContent>
             </Card>

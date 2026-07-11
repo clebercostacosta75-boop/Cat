@@ -11,6 +11,7 @@ import { Search, Plus, Pencil, Trash2, Users, Upload } from "lucide-react";
 import { toast } from "sonner";
 import StudentForm from "./StudentForm";
 import StudentBulkImport from "./StudentBulkImport";
+import PortalAccessButton from "@/components/invites/PortalAccessButton";
 
 export default function StudentList() {
   const queryClient = useQueryClient();
@@ -186,6 +187,7 @@ export default function StudentList() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
+                      <PortalAccessButton portalType="Aluno" entityId={s.id} name={s.full_name} email={s.email} phone={s.whatsapp} size="sm" variant="ghost" />
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleEdit(s)}>
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>

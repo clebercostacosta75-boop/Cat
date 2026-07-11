@@ -47,7 +47,6 @@ import PrivacyPolicy from './pages/PrivacyPolicy.jsx';
 import Analytics from './pages/Analytics.jsx';
 import AccessLog from './pages/AccessLog.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
-import PostLoginGate from './components/auth/PostLoginGate';
 import { PermissionsProvider } from '@/lib/PermissionsContext';
 import { logAccessDenied } from '@/lib/accessLogger';
 import AuditoriaCompleta from './pages/AuditoriaCompleta.jsx';
@@ -59,6 +58,7 @@ import Homologacoes from './pages/Homologacoes.jsx';
 import MatrizTreinamentos from './pages/MatrizTreinamentos.jsx';
 import DossieHomologacao from './pages/DossieHomologacao.jsx';
 import FinanceiroHub from './pages/FinanceiroHub.jsx';
+import AtivarAcesso from './pages/AtivarAcesso.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -148,9 +148,11 @@ const AuthenticatedApp = () => {
       <Route path="/InscricaoAluno" element={<InscricaoAluno />} />
       <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
       <Route path="/PortalInstrutor" element={<PortalInstrutor />} />
+      <Route path="/ativar-acesso" element={<AtivarAcesso />} />
+      <Route path="/AtivarAcesso" element={<AtivarAcesso />} />
 
       {/* Rotas autenticadas com layout */}
-      <Route path="/" element={<PostLoginGate />} />
+      <Route path="/" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/Dashboard" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardCentral" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/GestaoContratos" element={<LayoutWrapper currentPageName="GestaoContratos"><ProtectedRoute pageKey="Gestão de Contratos"><GestaoContratos /></ProtectedRoute></LayoutWrapper>} />
