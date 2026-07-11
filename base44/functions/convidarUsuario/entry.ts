@@ -30,7 +30,16 @@ Deno.serve(async (req) => {
     const baseRole = (role === 'gestor_master') ? 'admin' : 'user';
 
     // Enviar convite nativo do Base44 — o próprio usuário define sua senha pelo link recebido
-    await base44.users.inviteUser(email, baseRole);
+    // Falha no convite NÃO bloqueia o fluxo: retorna 200 com invite_failed para o frontend avisar
+    try {
+      await base44.users.inviteUser(email, baseRole);
+    } catch (inviteError) {
+      return Response.json({
+        success: false,
+        invite_failed: true,
+        details: inviteError.message || 'Falha ao enviar o convite.',
+      }, { status: 200 });
+    }
 
     // Atualizar perfil com registro de envio do convite
     const profiles = await base44.asServiceRole.entities.UserProfile.filter({ user_email: email });

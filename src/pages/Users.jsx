@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import PermissionsPanel from "@/components/users/PermissionsPanel";
+import { ALL_MODULES } from "@/lib/PermissionsContext";
 import CredentialsModal from "@/components/users/CredentialsModal";
 
 const ROLE_OPTIONS = [
@@ -153,6 +154,7 @@ export default function UsersPage() {
           user_email: formData.user_email,
           phone: formData.phone,
           role: formData.role,
+          permissions: formData.role === "personalizado" ? [...ALL_MODULES] : [],
           status: "pending_password_change",
           initial_password: formData.initial_password || formData.user_email,
           credentials_sent_at: new Date().toISOString(),
@@ -163,11 +165,15 @@ export default function UsersPage() {
         // Convidar no sistema Base44 (não bloqueia a criação do perfil)
         let inviteOk = true;
         try {
-          await base44.functions.invoke("convidarUsuario", {
+          const inviteRes = await base44.functions.invoke("convidarUsuario", {
             email: formData.user_email,
             user_name: formData.user_name,
             role: formData.role,
           });
+          if (inviteRes.data?.invite_failed) {
+            inviteOk = false;
+            toast.warning(`Usuário criado, mas o envio do convite falhou: ${inviteRes.data?.details || ""} Use o botão "Reenviar" na lista.`);
+          }
         } catch (inviteErr) {
           inviteOk = false;
           const status = inviteErr?.response?.status;
