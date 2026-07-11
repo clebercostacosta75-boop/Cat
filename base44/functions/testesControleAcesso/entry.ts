@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Testes automatizados do resolvedor central de autorização (lógica pura, sem tocar em dados).
+// v2 — redeploy
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
