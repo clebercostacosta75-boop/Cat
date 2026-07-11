@@ -60,6 +60,23 @@ export async function logAccessDenied(eventType, reason) {
   }
 }
 
+// Registra negação de acesso a rota/módulo — uma vez por módulo/sessão
+export async function logRouteDenied(module, reason) {
+  try {
+    const key = `cat_route_denied_${module}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    await base44.functions.invoke('registrarAcessoNegado', {
+      event_type: 'access_denied',
+      reason,
+      module,
+      session_id: getSessionId(),
+    });
+  } catch {
+    // logging nunca deve quebrar o app
+  }
+}
+
 // Intercepta o logout para registrar a saída antes de encerrar a sessão
 if (typeof window !== 'undefined' && base44?.auth?.logout && !base44.auth.__logoutWrapped) {
   const origLogout = base44.auth.logout.bind(base44.auth);

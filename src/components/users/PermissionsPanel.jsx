@@ -44,9 +44,15 @@ function CustomPermissionEditor({ profile, onSaved }) {
   };
 
   const handleSave = async () => {
+    // Bloqueia salvamento quando o perfil não tem vínculo válido (evita chamada inválida/404)
+    if (!profile.user_id) {
+      toast.error("Perfil não vinculado — execute a reconciliação");
+      return;
+    }
     setSaving(true);
     try {
       const res = await base44.functions.invoke("atualizarPermissoesUsuario", {
+        profile_id: profile.id,
         user_email: profile.user_email,
         permissions: Array.from(selected),
       });

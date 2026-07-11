@@ -16,6 +16,7 @@
         "consent_required",
         "token_expired",
         "module_access",
+        "access_denied",
         "logout"
       ],
       "description": "Tipo do evento"

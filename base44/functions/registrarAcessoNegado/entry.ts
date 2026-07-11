@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
 
-    const allowed = ['login_failed', 'not_registered', 'blocked', 'consent_required', 'token_expired'];
+    const allowed = ['login_failed', 'not_registered', 'blocked', 'consent_required', 'token_expired', 'access_denied'];
     const eventType = allowed.includes(body.event_type) ? body.event_type : 'login_failed';
 
     const user = await base44.auth.me().catch(() => null);
@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
       user_email: user?.email || String(body.user_email || '').slice(0, 200),
       event_type: eventType,
       reason: String(body.reason || '').slice(0, 300),
-      module: 'Login',
+      module: String(body.module || 'Login').slice(0, 120),
       session_id: String(body.session_id || '').slice(0, 64),
       ip_address: ip,
       user_agent: (req.headers.get('user-agent') || '').slice(0, 300),

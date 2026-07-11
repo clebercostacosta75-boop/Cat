@@ -1,0 +1,140 @@
+{
+  "name": "PortalInvite",
+  "type": "object",
+  "properties": {
+    "portal_type": {
+      "type": "string",
+      "enum": [
+        "Aluno",
+        "Instrutor",
+        "Empresa"
+      ],
+      "description": "Portal de destino do convite"
+    },
+    "recipient_name": {
+      "type": "string",
+      "description": "Nome do destinat\u00e1rio"
+    },
+    "recipient_email": {
+      "type": "string",
+      "description": "E-mail do destinat\u00e1rio (min\u00fasculo)"
+    },
+    "recipient_phone": {
+      "type": "string",
+      "description": "Telefone/WhatsApp do destinat\u00e1rio"
+    },
+    "linked_entity_id": {
+      "type": "string",
+      "description": "ID do registro vinculado (Student, Instructor ou Company)"
+    },
+    "linked_company_id": {
+      "type": "string",
+      "description": "ID da empresa autorizada (portal Empresa ou v\u00ednculo opcional)"
+    },
+    "intended_role": {
+      "type": "string",
+      "description": "Role de UserProfile a aplicar na ativa\u00e7\u00e3o"
+    },
+    "permissions_snapshot": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Permiss\u00f5es exatas aplicadas na ativa\u00e7\u00e3o (nunca ampliadas)"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "Email",
+        "WhatsApp",
+        "SMS",
+        "Manual"
+      ],
+      "default": "Manual",
+      "description": "Canal de envio do convite"
+    },
+    "token_hash": {
+      "type": "string",
+      "description": "SHA-256 do token de ativa\u00e7\u00e3o (token puro nunca \u00e9 armazenado)"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Expira\u00e7\u00e3o do convite"
+    },
+    "used_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do uso (uso \u00fanico)"
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da revoga\u00e7\u00e3o"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Pending",
+        "Sent",
+        "Used",
+        "Expired",
+        "Revoked",
+        "Failed"
+      ],
+      "default": "Pending",
+      "description": "Status do convite"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "E-mail do gestor que criou"
+    },
+    "sent_by": {
+      "type": "string",
+      "description": "E-mail do operador que enviou"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do envio"
+    },
+    "last_error": {
+      "type": "string",
+      "description": "\u00daltimo erro registrado"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadados de auditoria (tentativas, validade, usado por)"
+    }
+  },
+  "required": [
+    "portal_type",
+    "recipient_email",
+    "linked_entity_id",
+    "token_hash",
+    "expires_at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

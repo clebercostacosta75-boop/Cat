@@ -1,19 +1,19 @@
 import React, { useEffect } from "react";
-import { Navigate, useLocation } from "react-router-dom";
 import { usePermissions } from "@/lib/PermissionsContext";
-import { toast } from "sonner";
+import { hasModuleAccess } from "@/lib/authz";
+import { logRouteDenied } from "@/lib/accessLogger";
+import AccessDeniedScreen from "@/components/auth/AccessDeniedScreen";
 
 export default function ProtectedRoute({ pageKey, children }) {
-  const { allowedKeys, loading } = usePermissions();
-  const location = useLocation();
+  const { access, loading } = usePermissions();
 
-  // pageKey pode ser uma string ou um array de chaves alternativas (qualquer uma libera o acesso)
+  // pageKey pode ser string ou array de chaves alternativas
   const keys = Array.isArray(pageKey) ? pageKey : [pageKey];
-  const hasAccess = allowedKeys === null || (Array.isArray(allowedKeys) && keys.some(k => allowedKeys.includes(k)));
+  const hasAccess = keys.some(k => hasModuleAccess(access, k));
 
   useEffect(() => {
     if (!loading && !hasAccess) {
-      toast.warning(`Você não tem acesso ao módulo "${keys[0]}".`);
+      logRouteDenied(keys[0], access?.reasonMessage || access?.reason || "Módulo não autorizado");
     }
   }, [loading, hasAccess]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -26,7 +26,7 @@ export default function ProtectedRoute({ pageKey, children }) {
   }
 
   if (!hasAccess) {
-    return <Navigate to="/Dashboard" replace />;
+    return <AccessDeniedScreen module={keys[0]} reason={access?.reasonMessage} />;
   }
 
   return children;

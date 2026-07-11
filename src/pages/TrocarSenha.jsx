@@ -27,17 +27,8 @@ export default function TrocarSenha({ onPasswordChanged }) {
 
     setLoading(true);
     try {
-      const user = await base44.auth.me();
-
-      // Atualiza o UserProfile marcando como ativo (senha trocada)
-      const profiles = await base44.entities.UserProfile.filter({ user_email: user.email });
-      if (profiles.length > 0) {
-        await base44.entities.UserProfile.update(profiles[0].id, {
-          status: "active",
-          password_changed: true,
-          initial_password: null,
-        });
-      }
+      // Atualiza o próprio perfil via função segura (whitelist de campos, sem autoelevação)
+      await base44.functions.invoke("atualizarMeuPerfil", { action: "password_changed" });
 
       toast.success("Senha registrada! Você já pode usar o sistema normalmente.");
       if (onPasswordChanged) onPasswordChanged();

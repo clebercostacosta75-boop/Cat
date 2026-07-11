@@ -26,26 +26,12 @@ export default function ConsentForm({ onConsented }) {
         ipAddress = ipData.ip;
       } catch {}
 
-      // Verifica se já existe um UserProfile para este usuário
-      const profiles = await base44.entities.UserProfile.filter({ user_email: user.email });
-
-      const consentData = {
-        consent_accepted_at: new Date().toISOString(),
+      // Registra o consentimento via função segura (whitelist de campos, sem autoelevação)
+      await base44.functions.invoke("atualizarMeuPerfil", {
+        action: "consent",
         consent_ip_address: ipAddress,
         consent_term_version: CONSENT_VERSION,
-      };
-
-      if (profiles.length > 0) {
-        await base44.entities.UserProfile.update(profiles[0].id, consentData);
-      } else {
-        await base44.entities.UserProfile.create({
-          user_id: user.id,
-          user_email: user.email,
-          user_name: user.full_name || user.email,
-          role: "cliente",
-          ...consentData,
-        });
-      }
+      });
 
       // Registra no AuditLog
       await base44.entities.AuditLog.create({

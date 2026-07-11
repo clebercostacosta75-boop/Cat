@@ -47,6 +47,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy.jsx';
 import Analytics from './pages/Analytics.jsx';
 import AccessLog from './pages/AccessLog.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
+import PostLoginGate from './components/auth/PostLoginGate';
 import { PermissionsProvider } from '@/lib/PermissionsContext';
 import { logAccessDenied } from '@/lib/accessLogger';
 import AuditoriaCompleta from './pages/AuditoriaCompleta.jsx';
@@ -149,7 +150,7 @@ const AuthenticatedApp = () => {
       <Route path="/PortalInstrutor" element={<PortalInstrutor />} />
 
       {/* Rotas autenticadas com layout */}
-      <Route path="/" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/" element={<PostLoginGate />} />
       <Route path="/Dashboard" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardCentral" element={<LayoutWrapper currentPageName="Dashboard"><ProtectedRoute pageKey="Dashboard"><DashboardCentral /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/GestaoContratos" element={<LayoutWrapper currentPageName="GestaoContratos"><ProtectedRoute pageKey="Gestão de Contratos"><GestaoContratos /></ProtectedRoute></LayoutWrapper>} />
