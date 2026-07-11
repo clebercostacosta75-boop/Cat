@@ -119,9 +119,9 @@ function CustomPermissionEditor({ profile, onSaved }) {
 }
 
 const ROLE_DESCRIPTION = {
-  gestor_master: { label: "Gestor Master", desc: "Acesso total irrestrito a todos os módulos.", badge: "bg-purple-100 text-purple-800" },
-  editor: { label: "Editor", desc: "Acesso a todos os módulos, exceto área de Administração.", badge: "bg-blue-100 text-blue-800" },
-  cliente: { label: "Cliente", desc: "Acesso restrito: Dashboard, Certificações e Alertas de Vencimento.", badge: "bg-green-100 text-green-800" },
+  gestor_master: { label: "Gestor Master", desc: "Acesso total (requer conta admin ativa e vinculada).", badge: "bg-purple-100 text-purple-800" },
+  editor: { label: "Editor", desc: "Acesso somente aos módulos explicitamente liberados abaixo.", badge: "bg-blue-100 text-blue-800" },
+  cliente: { label: "Cliente", desc: "Acesso somente aos módulos explicitamente liberados abaixo.", badge: "bg-green-100 text-green-800" },
   personalizado: { label: "Personalizado", desc: "Acesso configurado individualmente abaixo.", badge: "bg-orange-100 text-orange-800" },
 };
 
@@ -138,7 +138,7 @@ export default function PermissionsPanel({ profiles, onRefresh }) {
     <div className="space-y-4">
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
         <Shield className="w-4 h-4 inline mr-1" />
-        <strong>Gestor Master</strong> = acesso total. <strong>Editor</strong> = tudo exceto Administração. <strong>Cliente</strong> = apenas Dashboard, Certificações e Alertas. <strong>Personalizado</strong> = configure abaixo.
+        Modelo <strong>negar por padrão</strong>: apenas <strong>Gestor Master</strong> (com conta admin ativa) tem acesso total. Todos os demais perfis acessam <strong>somente os módulos marcados abaixo</strong> — sem permissões marcadas, o usuário não acessa nenhum módulo.
       </div>
 
       <div className="relative">
@@ -176,12 +176,11 @@ export default function PermissionsPanel({ profiles, onRefresh }) {
 
               {expandedId === profile.id && (
                 <CardContent className="p-4 pt-0 border-t">
-                  {profile.role === "personalizado" ? (
+                  {profile.role !== "gestor_master" ? (
                     <CustomPermissionEditor key={profile.id} profile={profile} onSaved={() => { onRefresh(); }} />
                   ) : (
                     <div className="py-3 text-sm text-gray-500 text-center">
-                      As permissões são definidas automaticamente pelo perfil <strong>{roleInfo.label}</strong>.<br />
-                      Para controle individual, altere o perfil para <strong>Personalizado</strong> na aba Usuários.
+                      <strong>Gestor Master</strong> possui acesso total quando a conta é admin, está ativa e vinculada — não requer permissões individuais.
                     </div>
                   )}
                 </CardContent>
