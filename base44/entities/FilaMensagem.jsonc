@@ -1,0 +1,145 @@
+{
+  "name": "FilaMensagem",
+  "type": "object",
+  "properties": {
+    "canal": {
+      "type": "string",
+      "enum": [
+        "E-mail",
+        "WhatsApp"
+      ],
+      "description": "Canal de envio"
+    },
+    "destinatario": {
+      "type": "string",
+      "description": "E-mail ou telefone do destinat\u00e1rio"
+    },
+    "assunto": {
+      "type": "string",
+      "description": "Assunto (apenas e-mail)"
+    },
+    "mensagem": {
+      "type": "string",
+      "description": "Corpo da mensagem"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Processando",
+        "Enviada",
+        "Falha no envio",
+        "Cancelada"
+      ],
+      "default": "Pendente",
+      "description": "Status da mensagem na fila"
+    },
+    "tentativas": {
+      "type": "number",
+      "default": 0,
+      "description": "N\u00famero de tentativas j\u00e1 realizadas"
+    },
+    "max_tentativas": {
+      "type": "number",
+      "default": 3,
+      "description": "Limite de tentativas autom\u00e1ticas"
+    },
+    "proximo_envio_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Pr\u00f3xima tentativa agendada (backoff exponencial)"
+    },
+    "erro": {
+      "type": "string",
+      "description": "\u00daltimo erro registrado"
+    },
+    "enviada_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do envio bem-sucedido"
+    },
+    "provider_message_id": {
+      "type": "string",
+      "description": "ID retornado pelo provedor (Meta/SMTP)"
+    },
+    "evento": {
+      "type": "string",
+      "description": "Evento que originou a mensagem (ex: inscricao_confirmada)"
+    },
+    "enrollment_id": {
+      "type": "string",
+      "description": "ID da matr\u00edcula vinculada (opcional)"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "Nome do destinat\u00e1rio/aluno"
+    },
+    "origem": {
+      "type": "string",
+      "enum": [
+        "operador",
+        "autom\u00e1tica",
+        "sistema"
+      ],
+      "default": "sistema",
+      "description": "Origem do enfileiramento"
+    }
+  },
+  "required": [
+    "canal",
+    "destinatario",
+    "mensagem"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

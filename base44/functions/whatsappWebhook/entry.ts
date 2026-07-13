@@ -1,8 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const VERIFY_TOKEN = Deno.env.get("WHATSAPP_VERIFY_TOKEN");
-const WEBHOOK_TOKEN = Deno.env.get("WHATSAPP_WEBHOOK_TOKEN");
-const WHATSAPP_BUSINESS_NUMBER = "5591988648079"; // +55 91 98864-8079
+const APP_SECRET = Deno.env.get("WHATSAPP_WEBHOOK_TOKEN"); // App Secret do Meta para validação X-Hub-Signature-256
+const WHATSAPP_BUSINESS_NUMBER = Deno.env.get("WHATSAPP_PHONE_NUMBER") || "";
+
+async function assinaturaValida(rawBody, signatureHeader) {
+  if (!signatureHeader || !signatureHeader.startsWith("sha256=")) return false;
+  const esperado = signatureHeader.slice(7);
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(APP_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(rawBody));
+  const hex = Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return hex === esperado;
+}
 
 Deno.serve(async (req) => {
   // ── GET: verificação do webhook pelo Meta ──────────────────────────────────
@@ -23,7 +33,28 @@ Deno.serve(async (req) => {
   if (req.method === "POST") {
     try {
       const base44 = createClientFromRequest(req);
-      const body = await req.json();
+      const rawBody = await req.text();
+
+      // Validação de autenticidade: assinatura X-Hub-Signature-256 (HMAC com App Secret do Meta)
+      if (APP_SECRET) {
+        const signature = req.headers.get("x-hub-signature-256");
+        const valida = await assinaturaValida(rawBody, signature);
+        if (!valida) {
+          await base44.asServiceRole.entities.AuditLog.create({
+            user_email: "sistema",
+            user_name: "Webhook WhatsApp",
+            action: "view",
+            entity_type: "WhatsAppWebhook",
+            entity_name: "Tentativa de webhook rejeitada",
+            details: `Webhook WhatsApp REJEITADO: assinatura X-Hub-Signature-256 ${signature ? "inválida" : "ausente"} em ${new Date().toISOString()}`,
+          }).catch(() => {});
+          return Response.json({ error: "Assinatura inválida" }, { status: 403 });
+        }
+      } else {
+        console.warn("WHATSAPP_WEBHOOK_TOKEN não configurado — validação de assinatura desativada.");
+      }
+
+      const body = JSON.parse(rawBody);
 
       const entry = body?.entry?.[0];
       const changes = entry?.changes?.[0];
@@ -36,7 +67,7 @@ Deno.serve(async (req) => {
 
       // Busca a conta social do WhatsApp para vincular à conversa
       let socialAccountId = null;
-      let socialAccountName = "CAT Cursos WhatsApp (+55 91 98864-8079)";
+      let socialAccountName = WHATSAPP_BUSINESS_NUMBER ? `CAT Cursos WhatsApp (+${WHATSAPP_BUSINESS_NUMBER})` : "CAT Cursos WhatsApp";
       try {
         const waAccounts = await base44.asServiceRole.entities.SocialAccount.filter({ platform: "WhatsApp Business" });
         if (waAccounts?.length > 0) {

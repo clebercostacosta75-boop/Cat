@@ -38,6 +38,7 @@ const ALL_ITEMS = [
   { title: "Assinaturas Digitais", url: createPageUrl("DigitalSignatures"), icon: PenLine, key: "Assinaturas Digitais" },
   { title: "Auditoria de Certificados", url: "/CertificateAuditPanel", icon: FileText, key: "Auditoria de Certificados" },
   { title: "Central de Comunicação", url: createPageUrl("CommunicationCenter"), icon: Mail, key: "Central de Comunicação" },
+  { title: "Comunicação (Admin)", url: "/ComunicacaoAdmin", icon: Mail, key: "Comunicação" },
   { title: "Usuários", url: createPageUrl("Users"), icon: UserCog, key: "Usuários" },
   { title: "Log de Auditoria", url: createPageUrl("AuditLog"), icon: FileText, key: "Log de Auditoria" },
   { title: "Auditoria Completa", url: "/AuditoriaCompleta", icon: FileText, key: "Auditoria Completa" },
