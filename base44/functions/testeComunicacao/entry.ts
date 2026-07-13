@@ -19,7 +19,6 @@ Deno.serve(async (req) => {
         webhook_token_configurado: !!Deno.env.get('WHATSAPP_WEBHOOK_TOKEN'),
         verify_token_configurado: !!Deno.env.get('WHATSAPP_VERIFY_TOKEN'),
         resend_configurada: !!Deno.env.get('RESEND_API_KEY'),
-        numero_comercial_configurado: !!Deno.env.get('WHATSAPP_PHONE_NUMBER'),
       });
     }
 

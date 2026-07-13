@@ -41,7 +41,6 @@ export default function AbaWhatsAppMeta({ status }) {
           <LinhaStatus ok={status?.whatsapp_configurado} label="Token de acesso e Phone Number ID" />
           <LinhaStatus ok={status?.verify_token_configurado} label="Verify Token (verificação do webhook)" />
           <LinhaStatus ok={status?.webhook_token_configurado} label="App Secret (validação de assinatura X-Hub-Signature-256)" />
-          <LinhaStatus ok={status?.numero_comercial_configurado} label="Número comercial (WHATSAPP_PHONE_NUMBER — opcional, sem hardcode)" />
           <div className="flex flex-wrap items-center gap-2 mt-4">
             <Input
               placeholder="Número para teste (ex: 91 99999-9999)"
