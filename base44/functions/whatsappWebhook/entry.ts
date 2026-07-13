@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const VERIFY_TOKEN = Deno.env.get("WHATSAPP_VERIFY_TOKEN");
 const APP_SECRET = Deno.env.get("WHATSAPP_WEBHOOK_TOKEN"); // App Secret do Meta para validação X-Hub-Signature-256
-const WHATSAPP_BUSINESS_NUMBER = ""; // número comercial removido do código (sem hardcode)
+const WHATSAPP_BUSINESS_NUMBER = "5591992929203"; // +55 91 99292-9203 (número comercial definido pelo gestor)
 
 async function assinaturaValida(rawBody, signatureHeader) {
   if (!signatureHeader || !signatureHeader.startsWith("sha256=")) return false;
