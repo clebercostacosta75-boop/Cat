@@ -55,6 +55,12 @@ Deno.serve(async (req) => {
     if (targetUser) await base44.asServiceRole.entities.User.update(targetUser.id, {
       permissions: next,
       company_permissions: target.company_permissions || [],
+      student_id: target.student_id || null,
+      cpf: target.cpf || null,
+      instructor_id: target.instructor_id || null,
+      colaborador_sst_ids: target.colaborador_sst_ids || [],
+      pgr_leitura_ids: target.pgr_leitura_ids || [],
+      ltcat_detalhe_ids: target.ltcat_detalhe_ids || [],
     });
     const confirmed = await base44.asServiceRole.entities.UserProfile.get(target.id);
     const persisted = Array.isArray(confirmed.permissions) ? confirmed.permissions : [];

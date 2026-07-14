@@ -12,23 +12,34 @@ Deno.serve(async (req) => {
     const action = body.action;
 
     const profiles = await base44.asServiceRole.entities.UserProfile.filter({ user_email: user.email });
-    // Aceita perfil vinculado ao user_id ou ainda não vinculado (mesmo e-mail)
-    const profile = profiles.find(p => p.user_id === user.id) || profiles.find(p => !p.user_id) || null;
-    if (!profile) {
-      return Response.json({ success: false, error: 'Perfil não encontrado — contate o administrador.' }, { status: 200 });
+    const linked = profiles.filter(p => p.user_id === user.id);
+    if (linked.length > 1 || (linked.length === 0 && profiles.length > 1)) {
+      return Response.json({ success: false, code: 'duplicate_profile', error: 'Existem perfis duplicados para esta conta.' }, { status: 409 });
     }
+    let profile = linked[0] || profiles.find(p => !p.user_id) || null;
+    if (!profile && user.role === 'admin' && action === 'reconcile') {
+      profile = await base44.asServiceRole.entities.UserProfile.create({ user_id: user.id, user_email: user.email.toLowerCase(), user_name: user.full_name || user.email, role: 'admin', permissions: [], company_permissions: [], status: 'active', password_changed: true });
+    }
+    if (!profile) return Response.json({ success: false, code: 'profile_not_found', error: 'Perfil não encontrado — contate o administrador.' }, { status: 404 });
+    if (profile.user_id && profile.user_id !== user.id) return Response.json({ success: false, code: 'profile_mismatch', error: 'Perfil vinculado a outra conta.' }, { status: 403 });
 
     const updateData = {};
-    // Reconciliação de vínculo: liga user_id e espelha as permissões administrativas no primeiro acesso.
-    if (!profile.user_id) {
-      updateData.user_id = user.id;
-      await base44.asServiceRole.entities.User.update(user.id, {
-        permissions: profile.permissions || [],
-        company_permissions: profile.company_permissions || [],
-      });
-    }
+    if (!profile.user_id) updateData.user_id = user.id;
+    const userScope = {
+      permissions: profile.permissions || [],
+      company_permissions: profile.company_permissions || [],
+      student_id: profile.student_id || null,
+      cpf: profile.cpf || null,
+      instructor_id: profile.instructor_id || null,
+      colaborador_sst_ids: profile.colaborador_sst_ids || [],
+      pgr_leitura_ids: profile.pgr_leitura_ids || [],
+      ltcat_detalhe_ids: profile.ltcat_detalhe_ids || [],
+    };
+    await base44.asServiceRole.entities.User.update(user.id, userScope);
 
-    if (action === 'consent') {
+    if (action === 'reconcile') {
+      // Somente vínculo e espelhamento dos escopos canônicos; nenhuma elevação é aceita do cliente.
+    } else if (action === 'consent') {
       updateData.consent_accepted_at = new Date().toISOString();
       updateData.consent_ip_address = String(body.consent_ip_address || '').slice(0, 60);
       updateData.consent_term_version = String(body.consent_term_version || '').slice(0, 20);
@@ -40,8 +51,8 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'Ação inválida.' }, { status: 200 });
     }
 
-    await base44.asServiceRole.entities.UserProfile.update(profile.id, updateData);
-    return Response.json({ success: true });
+    if (Object.keys(updateData).length) await base44.asServiceRole.entities.UserProfile.update(profile.id, updateData);
+    return Response.json({ success: true, profile_id: profile.id, linked: true });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

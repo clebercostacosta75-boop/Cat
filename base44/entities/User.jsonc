@@ -13,14 +13,33 @@
         "Atendimento",
         "PortalEmpresa"
       ],
-      "description": "N\u00edvel de acesso personalizado legado"
+      "description": "Papel legado mantido apenas para compatibilidade; UserProfile.role \u00e9 a fonte can\u00f4nica"
     },
     "permissions": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "Espelho das permiss\u00f5es can\u00f4nicas do UserProfile"
+      "description": "Espelho t\u00e9cnico de UserProfile.permissions para compatibilidade e RLS"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "is_whatsapp": {
+      "type": "boolean",
+      "default": false
+    },
+    "student_id": {
+      "type": "string",
+      "description": "V\u00ednculo RLS com Student"
+    },
+    "cpf": {
+      "type": "string",
+      "description": "CPF normalizado para regras RLS do pr\u00f3prio titular"
+    },
+    "instructor_id": {
+      "type": "string",
+      "description": "V\u00ednculo RLS com Instructor"
     },
     "company_permissions": {
       "type": "array",
@@ -41,49 +60,25 @@
           }
         }
       },
-      "description": "Escopos empresariais usados pelas pol\u00edticas RLS"
-    },
-    "student_id": {
-      "type": "string",
-      "description": "V\u00ednculo com Student"
-    },
-    "cpf": {
-      "type": "string",
-      "description": "CPF usado por pol\u00edticas de acesso do pr\u00f3prio titular"
-    },
-    "instructor_id": {
-      "type": "string",
-      "description": "V\u00ednculo com Instructor"
+      "description": "Espelho t\u00e9cnico de UserProfile.company_permissions para RLS"
     },
     "colaborador_sst_ids": {
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "description": "V\u00ednculos com colaboradores SST"
+      }
     },
     "pgr_leitura_ids": {
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "description": "Escopos de leitura PGR"
+      }
     },
     "ltcat_detalhe_ids": {
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "description": "Escopos de leitura LTCAT"
-    },
-    "phone": {
-      "type": "string",
-      "description": "Telefone/WhatsApp do usu\u00e1rio"
-    },
-    "is_whatsapp": {
-      "type": "boolean",
-      "default": false,
-      "description": "Indica se o telefone \u00e9 WhatsApp"
+      }
     }
   }
 }

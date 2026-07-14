@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     }
 
     // Mapear perfil personalizado para perfil base aceito pelo SDK
-    const baseRole = (role === 'gestor_master') ? 'admin' : 'user';
+    const baseRole = ['gestor_master', 'admin'].includes(role) ? 'admin' : 'user';
 
     // Enviar convite nativo do Base44 — o próprio usuário define sua senha pelo link recebido
     // Falha no convite NÃO bloqueia o fluxo: retorna 200 com invite_failed para o frontend avisar

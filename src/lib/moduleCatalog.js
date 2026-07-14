@@ -43,6 +43,32 @@ export const MODULE_CATALOG = [
 
 export const MODULE_IDS = MODULE_CATALOG.filter(m => m.status === "active").map(m => m.module_id);
 export const MODULE_BY_ID = Object.fromEntries(MODULE_CATALOG.map(m => [m.module_id, m]));
+
+export const ROLE_ALIASES = {
+  "Administrador Master": "gestor_master", admin: "admin", user: "cliente",
+  "Coordenador de Operações": "coordenacao", Financeiro: "financeiro",
+  Instrutor: "instrutor", Certificacao: "auditor", "Certificação": "auditor",
+  Atendimento: "comercial", PortalEmpresa: "empresa",
+};
+
+export const normalizeRole = role => ROLE_ALIASES[role] || role || "cliente";
+
+export const ROLE_DEFAULT_MODULES = {
+  gestor_master: MODULE_IDS,
+  admin: MODULE_IDS,
+  comercial: ["dashboard", "dashboard_comercial", "gestao_academica_individual", "entrada_propostas", "cursos"],
+  financeiro: ["dashboard", "dashboard_financeiro", "financeiro", "gestao_bmm", "relatorios"],
+  coordenacao: ["dashboard", "cronograma", "agenda_treinamentos", "chamada_presencial", "instrutores", "empresas", "cursos", "gestao_academica_individual", "gestao_academica_empresas", "gestao_contratos", "dashboard_operacional", "certificacoes"],
+  instrutor: ["dashboard_instrutor", "agenda_treinamentos", "chamada_presencial"],
+  auditor: ["dashboard", "auditoria_certificados", "log_auditoria", "auditoria_completa", "log_acesso", "relatorios"],
+  editor: ["dashboard"],
+  cliente: ["dashboard"],
+  personalizado: [],
+  aluno: [],
+  empresa: [],
+};
+
+export const defaultPermissionsForRole = role => [...(ROLE_DEFAULT_MODULES[normalizeRole(role)] || [])];
 const MODULE_LOOKUP = new Map();
 MODULE_CATALOG.forEach(m => [m.module_id, m.name, m.route, ...m.aliases].forEach(k => MODULE_LOOKUP.set(k, m.module_id)));
 export const canonicalizeModule = key => typeof key === "string" ? (MODULE_LOOKUP.get(key.trim()) || null) : null;

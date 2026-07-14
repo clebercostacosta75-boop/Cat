@@ -1,54 +1,39 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
 
+const safeClass = (item, full) => {
+  const fields = ['id','training_name','company_name','location','students_count','status','realization_dates','specific_days','training_schedule','modality','category','duration_hours','start_date','instructor_id'];
+  if (full) fields.push('notes');
+  return Object.fromEntries(fields.filter((field) => item?.[field] !== undefined).map((field) => [field, item[field]]));
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const body = await req.json();
-    const digits = String(body.cpf || '').replace(/\D/g, '');
-    if (digits.length !== 11) return Response.json({ error: 'CPF inválido' }, { status: 400 });
-
-    const formatted = digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    const svc = base44.asServiceRole.entities;
-    const byDigits = await svc.Instructor.filter({ cpf: digits });
-    const byFormatted = byDigits.length ? [] : await svc.Instructor.filter({ cpf: formatted });
-    const instructor = byDigits[0] || byFormatted[0];
-    if (!instructor) return Response.json({ error: 'not_found' }, { status: 404 });
-
+    const user = await base44.auth.me().catch(() => null);
+    const body = await req.json().catch(() => ({}));
+    let instructor = null;
+    if (user?.instructor_id) instructor = await base44.asServiceRole.entities.Instructor.get(user.instructor_id).catch(() => null);
+    if (!instructor) {
+      const digits = String(body.cpf || '').replace(/\D/g, '');
+      if (digits.length !== 11) return Response.json({ error: 'Identificação inválida' }, { status: 400 });
+      const formatted = digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
+      const candidates = [...await base44.asServiceRole.entities.Instructor.filter({ cpf: digits }), ...await base44.asServiceRole.entities.Instructor.filter({ cpf: formatted })];
+      instructor = candidates[0] || null;
+    }
+    if (!instructor) return Response.json({ error: 'Instrutor não encontrado' }, { status: 404 });
+    const authenticated = user?.role === 'admin' || user?.instructor_id === instructor.id;
     if (body.action === 'save_report') {
-      if (!body.class_id) return Response.json({ error: 'Turma não informada' }, { status: 400 });
-      const classItem = await svc.ClassSchedule.get(body.class_id).catch(() => null);
-      if (!classItem || classItem.instructor_id !== instructor.id) {
-        return Response.json({ error: 'Turma não autorizada' }, { status: 403 });
-      }
-      await svc.ClassSchedule.update(classItem.id, { notes: String(body.notes || '').slice(0, 10000) });
+      if (!authenticated) return Response.json({ error: 'Faça login pelo convite do instrutor para alterar a turma' }, { status: 403 });
+      const classItem = await base44.asServiceRole.entities.ClassSchedule.get(body.class_id);
+      if (!classItem || classItem.instructor_id !== instructor.id) return Response.json({ error: 'Turma não autorizada' }, { status: 403 });
+      await base44.asServiceRole.entities.ClassSchedule.update(classItem.id, { notes: String(body.notes || '').slice(0, 5000) });
       return Response.json({ success: true });
     }
-
-    const classes = await svc.ClassSchedule.filter({ instructor_id: instructor.id });
+    const classes = await base44.asServiceRole.entities.ClassSchedule.filter({ instructor_id: instructor.id });
     return Response.json({
-      instructor: {
-        id: instructor.id,
-        name: instructor.name,
-        specialty: instructor.specialty,
-        email: instructor.email,
-      },
-      classes: classes.map(c => ({
-        id: c.id,
-        training_name: c.training_name,
-        company_name: c.company_name,
-        location: c.location,
-        students_count: c.students_count,
-        status: c.status,
-        realization_dates: c.realization_dates || [],
-        start_date: c.start_date,
-        specific_days: c.specific_days,
-        training_schedule: c.training_schedule,
-        modality: c.modality,
-        category: c.category,
-        duration_hours: c.duration_hours,
-        notes: c.notes,
-        instructor_id: c.instructor_id,
-      })),
+      instructor: { id: instructor.id, name: instructor.name, specialty: instructor.specialty, email: authenticated ? instructor.email : '' },
+      classes: classes.map((item) => safeClass(item, authenticated)),
+      legacy_limited: !authenticated,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

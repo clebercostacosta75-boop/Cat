@@ -83,7 +83,7 @@ export default function PermissionsPanel({ profiles, onRefresh }) {
           <div className="flex items-center gap-2"><Badge>{ROLE_LABELS[profile.role] || profile.role}</Badge><Badge variant="secondary">{normalizePermissionIds(profile.permissions).length} módulos</Badge>{expandedId === profile.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
         </div>
       </CardHeader>
-      {expandedId === profile.id && <CardContent className="p-4 pt-0 border-t">{profile.role === "gestor_master" ? <p className="py-3 text-sm text-center text-gray-500">Acesso total somente quando o perfil Gestor Master estiver ativo e corretamente vinculado.</p> : <PermissionEditor profile={profile} onConfirmed={onRefresh} />}</CardContent>}
+      {expandedId === profile.id && <CardContent className="p-4 pt-0 border-t">{["gestor_master", "admin"].includes(profile.role) ? <p className="py-3 text-sm text-center text-gray-500">Este perfil possui acesso administrativo total quando estiver ativo e corretamente vinculado.</p> : <PermissionEditor profile={profile} onConfirmed={onRefresh} />}</CardContent>}
     </Card>)}</div>
   </div>;
 }

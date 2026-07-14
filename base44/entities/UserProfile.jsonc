@@ -4,33 +4,40 @@
   "properties": {
     "user_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio (refer\u00eancia ao User)"
+      "description": "ID imut\u00e1vel da conta User vinculada"
     },
     "user_email": {
       "type": "string",
-      "description": "Email do usu\u00e1rio"
+      "description": "E-mail normalizado usado apenas para reconcilia\u00e7\u00e3o"
     },
     "user_name": {
-      "type": "string",
-      "description": "Nome do usu\u00e1rio"
+      "type": "string"
     },
     "role": {
       "type": "string",
       "enum": [
         "gestor_master",
+        "admin",
+        "comercial",
+        "financeiro",
+        "coordenacao",
+        "instrutor",
+        "aluno",
+        "empresa",
+        "auditor",
         "editor",
         "cliente",
         "personalizado"
       ],
       "default": "cliente",
-      "description": "Perfil de acesso"
+      "description": "Papel can\u00f4nico de acesso"
     },
     "permissions": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "Permiss\u00f5es individuais de acesso \u00e0s p\u00e1ginas do sistema (fonte can\u00f4nica)"
+      "description": "IDs can\u00f4nicos dos m\u00f3dulos permitidos"
     },
     "status": {
       "type": "string",
@@ -39,8 +46,7 @@
         "blocked",
         "pending_password_change"
       ],
-      "default": "pending_password_change",
-      "description": "Status do usu\u00e1rio"
+      "default": "pending_password_change"
     },
     "company_permissions": {
       "type": "array",
@@ -65,27 +71,52 @@
             }
           }
         }
-      },
-      "description": "Permiss\u00f5es por empresa"
+      }
+    },
+    "student_id": {
+      "type": "string",
+      "description": "V\u00ednculo do Portal do Aluno"
+    },
+    "cpf": {
+      "type": "string",
+      "description": "CPF normalizado do titular"
+    },
+    "instructor_id": {
+      "type": "string",
+      "description": "V\u00ednculo do Portal do Instrutor"
+    },
+    "colaborador_sst_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pgr_leitura_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ltcat_detalhe_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "initial_password": {
-      "type": "string",
-      "description": "Senha inicial gerada (apenas para envio)"
+      "type": "string"
     },
     "password_changed": {
       "type": "boolean",
-      "default": false,
-      "description": "Se o usu\u00e1rio j\u00e1 trocou a senha"
+      "default": false
     },
     "last_login": {
       "type": "string",
-      "format": "date-time",
-      "description": "\u00daltimo acesso"
+      "format": "date-time"
     },
     "credentials_sent_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Data de envio das credenciais"
+      "format": "date-time"
     },
     "credentials_sent_via": {
       "type": "string",
@@ -93,29 +124,23 @@
         "whatsapp",
         "email",
         "manual"
-      ],
-      "description": "Canal de envio das credenciais"
+      ]
     },
     "credentials_sent_by": {
-      "type": "string",
-      "description": "Quem enviou as credenciais"
+      "type": "string"
     },
     "phone": {
-      "type": "string",
-      "description": "Telefone para contato/WhatsApp"
+      "type": "string"
     },
     "consent_accepted_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Data e hora do aceite do termo de consentimento LGPD"
+      "format": "date-time"
     },
     "consent_ip_address": {
-      "type": "string",
-      "description": "Endere\u00e7o IP de onde o consentimento foi dado"
+      "type": "string"
     },
     "consent_term_version": {
-      "type": "string",
-      "description": "Vers\u00e3o do termo de consentimento aceito (ex: v1.0)"
+      "type": "string"
     }
   },
   "required": [

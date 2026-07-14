@@ -10,32 +10,43 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { UserCog, Plus, Search, Shield, Edit, Mail, Phone, X, Check, Send, Trash2, Clock, CheckCircle } from "lucide-react";
+import { UserCog, Plus, Search, Shield, Edit, Mail, Phone, X, Check, Send, Trash2, Clock, CheckCircle, Ban, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import PermissionsPanel from "@/components/users/PermissionsPanel";
 import CredentialsModal from "@/components/users/CredentialsModal";
+import { defaultPermissionsForRole } from "@/lib/moduleCatalog";
 
 const ROLE_OPTIONS = [
   { value: "gestor_master", label: "Gestor Master" },
+  { value: "admin", label: "Administrador" },
+  { value: "comercial", label: "Comercial" },
+  { value: "financeiro", label: "Financeiro" },
+  { value: "coordenacao", label: "Coordenação" },
+  { value: "instrutor", label: "Instrutor" },
+  { value: "aluno", label: "Aluno" },
+  { value: "empresa", label: "Empresa" },
+  { value: "auditor", label: "Auditor" },
   { value: "editor", label: "Editor" },
   { value: "cliente", label: "Cliente" },
   { value: "personalizado", label: "Personalizado" },
 ];
 
 const ROLE_COLORS = {
-  gestor_master: "bg-purple-100 text-purple-800",
-  editor: "bg-blue-100 text-blue-800",
-  cliente: "bg-green-100 text-green-800",
-  personalizado: "bg-orange-100 text-orange-800",
+  gestor_master: "bg-purple-100 text-purple-800", admin: "bg-red-100 text-red-800",
+  comercial: "bg-cyan-100 text-cyan-800", financeiro: "bg-emerald-100 text-emerald-800",
+  coordenacao: "bg-indigo-100 text-indigo-800", instrutor: "bg-amber-100 text-amber-800",
+  aluno: "bg-blue-100 text-blue-800", empresa: "bg-slate-100 text-slate-800",
+  auditor: "bg-violet-100 text-violet-800", editor: "bg-blue-100 text-blue-800",
+  cliente: "bg-green-100 text-green-800", personalizado: "bg-orange-100 text-orange-800",
 };
 
 const ROLE_LABELS = {
-  gestor_master: "Gestor Master",
-  editor: "Editor",
-  cliente: "Cliente",
-  personalizado: "Personalizado",
+  gestor_master: "Gestor Master", admin: "Administrador", comercial: "Comercial",
+  financeiro: "Financeiro", coordenacao: "Coordenação", instrutor: "Instrutor",
+  aluno: "Aluno", empresa: "Empresa", auditor: "Auditor", editor: "Editor",
+  cliente: "Cliente", personalizado: "Personalizado",
 };
 
 function UserForm({ profile, onSave, onCancel }) {
@@ -129,8 +140,8 @@ export default function UsersPage() {
   const handleSave = async (formData) => {
     try {
       if (editingProfile) {
-        // Atualizar perfil existente
-        await base44.entities.UserProfile.update(editingProfile.id, {
+        await base44.functions.invoke("atualizarPerfilUsuario", {
+          profile_id: editingProfile.id,
           user_name: formData.user_name,
           phone: formData.phone,
           role: formData.role,
@@ -153,7 +164,7 @@ export default function UsersPage() {
           user_email: formData.user_email,
           phone: formData.phone,
           role: formData.role,
-          permissions: [],
+          permissions: defaultPermissionsForRole(formData.role),
           status: "pending_password_change",
           initial_password: formData.initial_password || formData.user_email,
           credentials_sent_at: new Date().toISOString(),
@@ -250,6 +261,18 @@ export default function UsersPage() {
       }
     } catch {
       toast.error("Erro ao reenviar convite");
+    }
+  };
+
+  const handleStatus = async (profile) => {
+    const nextStatus = profile.status === "blocked" ? "active" : "blocked";
+    try {
+      await base44.functions.invoke("atualizarStatusUsuario", { profile_id: profile.id, status: nextStatus });
+      window.dispatchEvent(new Event("permissions-updated"));
+      await loadProfiles();
+      toast.success(nextStatus === "blocked" ? "Usuário bloqueado" : "Usuário reativado");
+    } catch (error) {
+      toast.error(error?.response?.data?.error || "Não foi possível alterar o status");
     }
   };
 
@@ -368,14 +391,17 @@ export default function UsersPage() {
                         <Badge className={ROLE_COLORS[profile.role] || "bg-gray-100 text-gray-800"}>
                           {ROLE_LABELS[profile.role] || profile.role || "—"}
                         </Badge>
-                        <Badge className={profile.status === "active" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
-                          {profile.status === "active" ? "Ativo" : profile.status === "pending_password_change" ? "Aguardando 1º acesso" : profile.status || "—"}
+                        <Badge className={profile.status === "active" ? "bg-green-100 text-green-800" : profile.status === "blocked" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}>
+                          {profile.status === "active" ? "Ativo" : profile.status === "blocked" ? "Bloqueado" : profile.status === "pending_password_change" ? "Aguardando 1º acesso" : profile.status || "—"}
                         </Badge>
                         <Button size="sm" variant="outline" onClick={() => handleResendInvite(profile)} className="text-xs gap-1 text-blue-600 border-blue-200 hover:bg-blue-50">
                           <Send className="w-3 h-3" /> Reenviar
                         </Button>
                         <Button size="icon" variant="ghost" onClick={() => { setEditingProfile(profile); setShowForm(true); }} title="Editar">
                           <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => handleStatus(profile)} title={profile.status === "blocked" ? "Reativar" : "Bloquear"}>
+                          {profile.status === "blocked" ? <UserCheck className="w-4 h-4 text-green-600" /> : <Ban className="w-4 h-4 text-amber-600" />}
                         </Button>
                         {canDelete && (
                           <Button size="icon" variant="ghost" onClick={() => setDeletingProfile(profile)} title="Excluir">

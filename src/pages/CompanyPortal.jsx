@@ -172,8 +172,31 @@ export default function CompanyPortal() {
   const [complianceData, setComplianceData] = useState(null);
   const [complianceLoading, setComplianceLoading] = useState(false);
 
+  const applyPortalResult = (result) => {
+    const companyFull = result.company;
+    setCompany(companyFull);
+    setComplianceData(null);
+    const mods = companyFull.modulos_contratados?.filter(m => m.active) || [];
+    if (mods.length === 0) mods.push({ module_key: "certificados", module_name: "Certificados", active: true });
+    setActiveModules(mods);
+    setCertificates(result.certificates || []);
+    setStudents(result.students || []);
+    setCertModels(result.certificate_models || result.certificateModels || []);
+    if (result.legacy_limited) setError("Consulta por CNPJ em modo limitado. Entre pelo convite da empresa para visualizar colaboradores e certificados.");
+    setSearched(true);
+  };
+
   useEffect(() => {
-    if (cnpjParam) handleSearch(cnpjParam);
+    if (cnpjParam) {
+      handleSearch(cnpjParam);
+      return;
+    }
+    base44.auth.me().then((user) => {
+      const companyId = user?.company_permissions?.[0]?.company_id;
+      if (!companyId) return;
+      setLoading(true);
+      base44.functions.invoke("portalEmpresa", { company_id: companyId }).then((response) => applyPortalResult(response.data)).finally(() => setLoading(false));
+    }).catch(() => {});
   }, []);
 
   const handleSearch = async (cnpjOverride) => {
@@ -185,20 +208,7 @@ export default function CompanyPortal() {
 
     try {
       const response = await base44.functions.invoke("portalEmpresa", { cnpj: cnpjRaw });
-      const result = response.data;
-      const companyFull = result.company;
-      setCompany(companyFull);
-      setComplianceData(null);
-
-      const mods = companyFull.modulos_contratados?.filter(m => m.active) || [];
-      if (mods.length === 0) {
-        mods.push({ module_key: "certificados", module_name: "Certificados", active: true });
-      }
-      setActiveModules(mods);
-      setCertificates(result.certificates || []);
-      setStudents(result.students || []);
-      setCertModels(result.certificateModels || []);
-      setSearched(true);
+      applyPortalResult(response.data);
     } catch (e) {
       setError("Erro ao buscar dados. Tente novamente.");
     } finally {

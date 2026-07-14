@@ -4,7 +4,7 @@
  * matrículas, certificados e documentos, e deriva o perfil:
  * Aluno Corporativo | Aluno Comunidade | Aluno com Matrículas Mistas.
  */
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Search, XCircle, GraduationCap } from "lucide-react";
@@ -40,6 +40,12 @@ export default function PortalAluno() {
   const [error, setError] = useState("");
   const [section, setSection] = useState("dashboard");
 
+  useEffect(() => {
+    base44.functions.invoke("portalAluno", {}).then((res) => {
+      if (!res.data?.legacy_limited) setData(res.data);
+    }).catch(() => {});
+  }, []);
+
   const formatCpf = (v) => {
     const d = v.replace(/\D/g, "").slice(0, 11);
     if (d.length <= 3) return d;
@@ -56,7 +62,8 @@ export default function PortalAluno() {
     try {
       const res = await base44.functions.invoke("portalAluno", { cpf: digits });
       setData(res.data);
-      setSection("dashboard");
+      if (res.data?.legacy_limited) setError("Consulta por CPF em modo limitado. Entre pelo convite do aluno para acessar matrículas, financeiro e documentos.");
+      setSection("certificados");
     } catch (e) {
       if (e?.response?.status === 404) setError("Nenhum cadastro encontrado para este CPF.");
       else setError("Erro ao carregar seus dados. Tente novamente.");

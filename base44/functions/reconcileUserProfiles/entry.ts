@@ -52,16 +52,11 @@ Deno.serve(async (req) => {
       if (Object.keys(changes).length && !dryRun) await base44.asServiceRole.entities.UserProfile.update(profile.id, changes);
       if (changes.user_id) report.linked.push({ user_id: user.id, profile_id: profile.id, email });
       if (changes.permissions) report.normalized_permissions.push({ profile_id: profile.id, before: profile.permissions || [], after: normalized });
-      const currentCompanyPermissions = user.company_permissions || [];
-      const nextCompanyPermissions = profile.company_permissions || [];
-      const permissionsChanged = JSON.stringify(normalizePermissions(user.permissions)) !== JSON.stringify(normalized);
-      const companyScopeChanged = JSON.stringify(currentCompanyPermissions) !== JSON.stringify(nextCompanyPermissions);
-      if (permissionsChanged || companyScopeChanged) {
-        if (!dryRun) await base44.asServiceRole.entities.User.update(user.id, {
-          permissions: normalized,
-          company_permissions: nextCompanyPermissions,
-        });
-        report.mirrored_permissions.push({ user_id: user.id, profile_id: profile.id, permissions: normalized, company_permissions: nextCompanyPermissions });
+      const nextScope = { permissions: normalized, company_permissions: profile.company_permissions || [], student_id: profile.student_id || null, cpf: profile.cpf || null, instructor_id: profile.instructor_id || null, colaborador_sst_ids: profile.colaborador_sst_ids || [], pgr_leitura_ids: profile.pgr_leitura_ids || [], ltcat_detalhe_ids: profile.ltcat_detalhe_ids || [] };
+      const scopeChanged = JSON.stringify(normalizePermissions(user.permissions)) !== JSON.stringify(normalized) || JSON.stringify(user.company_permissions || []) !== JSON.stringify(nextScope.company_permissions) || user.student_id !== nextScope.student_id || user.instructor_id !== nextScope.instructor_id || user.cpf !== nextScope.cpf;
+      if (scopeChanged) {
+        if (!dryRun) await base44.asServiceRole.entities.User.update(user.id, nextScope);
+        report.mirrored_permissions.push({ user_id: user.id, profile_id: profile.id, permissions: normalized, scopes_synced: true });
       }
     }
     for (const profile of profiles) {

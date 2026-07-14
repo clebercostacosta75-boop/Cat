@@ -26,7 +26,7 @@ export default function ProtectedRoute({ pageKey, children }) {
   }
 
   if (!hasAccess) {
-    return <AccessDeniedScreen module={keys[0]} reason={access?.reasonMessage} />;
+    return <AccessDeniedScreen module={keys[0]} reason={access?.reasonMessage} reasonCode={access?.reason} />;
   }
 
   return children;

@@ -105,7 +105,11 @@ Deno.serve(async (req) => {
       password_changed: true,
       ...consent,
     };
-    if (invite.portal_type === 'Empresa') {
+    if (invite.portal_type === 'Aluno') {
+      profileData.student_id = invite.linked_entity_id;
+    } else if (invite.portal_type === 'Instrutor') {
+      profileData.instructor_id = invite.linked_entity_id;
+    } else if (invite.portal_type === 'Empresa') {
       profileData.company_permissions = [{
         company_id: invite.linked_company_id || invite.linked_entity_id,
         company_name: invite.recipient_name || '',
@@ -120,13 +124,11 @@ Deno.serve(async (req) => {
     }
 
     // Vínculo mínimo no usuário autenticado (escopo por portal — RLS usa esses campos)
-    if (invite.portal_type === 'Aluno') {
-      await base44.auth.updateMe({ student_id: invite.linked_entity_id });
-    } else if (invite.portal_type === 'Instrutor') {
-      await base44.auth.updateMe({ instructor_id: invite.linked_entity_id });
-    } else if (invite.portal_type === 'Empresa') {
-      await base44.auth.updateMe({ company_permissions: [{ company_id: invite.linked_company_id || invite.linked_entity_id }] });
-    }
+    const userScope = { permissions: profileData.permissions || [] };
+    if (invite.portal_type === 'Aluno') userScope.student_id = invite.linked_entity_id;
+    else if (invite.portal_type === 'Instrutor') userScope.instructor_id = invite.linked_entity_id;
+    else if (invite.portal_type === 'Empresa') userScope.company_permissions = profileData.company_permissions;
+    await base44.asServiceRole.entities.User.update(user.id, userScope);
 
     // Uso único
     await svc.PortalInvite.update(invite.id, {

@@ -3,7 +3,7 @@
  * O instrutor busca seus treinamentos pelo CPF.
  * Permite: ver agenda, turmas, registrar frequência, anexar evidências.
  */
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +29,7 @@ const STATUS_BADGE = {
   "Pendente": "bg-gray-100 text-gray-600 border-gray-200",
 };
 
-function ClassDetail({ classItem, cpf, onBack, onAttendance }) {
+function ClassDetail({ classItem, cpf, readOnly, onBack, onAttendance }) {
   const [activeTab, setActiveTab] = useState("info");
   const [evidences, setEvidences] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -112,9 +112,11 @@ function ClassDetail({ classItem, cpf, onBack, onAttendance }) {
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
         {[
           { key: "info", label: "Informações", icon: BookOpen },
-          { key: "attendance", label: "Frequência", icon: ClipboardList },
-          { key: "evidences", label: "Evidências", icon: Camera },
-          { key: "report", label: "Relatório", icon: FileText },
+          ...(!readOnly ? [
+            { key: "attendance", label: "Frequência", icon: ClipboardList },
+            { key: "evidences", label: "Evidências", icon: Camera },
+            { key: "report", label: "Relatório", icon: FileText },
+          ] : []),
         ].map(tab => (
           <button
             key={tab.key}
@@ -257,6 +259,16 @@ export default function PortalInstrutor() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedClass, setSelectedClass] = useState(null);
+  const [legacyLimited, setLegacyLimited] = useState(false);
+
+  useEffect(() => {
+    base44.functions.invoke("portalInstrutor", { action: "lookup" }).then((response) => {
+      if (!response.data?.legacy_limited) {
+        setInstructor(response.data.instructor);
+        setClasses(response.data.classes || []);
+      }
+    }).catch(() => {});
+  }, []);
 
   const handleSearch = async () => {
     const cleaned = cpf.replace(/\D/g, "");
@@ -270,6 +282,8 @@ export default function PortalInstrutor() {
       const response = await base44.functions.invoke("portalInstrutor", { action: "lookup", cpf: cleaned });
       const inst = response.data.instructor;
       setInstructor(inst);
+      setLegacyLimited(Boolean(response.data.legacy_limited));
+      if (response.data.legacy_limited) setError("Consulta por CPF em modo somente leitura. Entre pelo convite do instrutor para registrar frequência, evidências e relatórios.");
 
       const allClasses = response.data.classes || [];
       allClasses.sort((a, b) => {
@@ -308,7 +322,7 @@ export default function PortalInstrutor() {
           </div>
         </div>
         <div className="max-w-3xl mx-auto px-4 py-6">
-          <ClassDetail classItem={selectedClass} cpf={cpf} onBack={() => setSelectedClass(null)} onAttendance={(c) => window.open(`/AttendanceCall?classId=${c.id}`, "_blank")} />
+          <ClassDetail classItem={selectedClass} cpf={cpf} readOnly={legacyLimited} onBack={() => setSelectedClass(null)} onAttendance={(c) => window.open(`/AttendanceCall?classId=${c.id}`, "_blank")} />
         </div>
       </div>
     );

@@ -36,9 +36,23 @@ export function PermissionsProvider({ children }) {
       let foundProfile = null;
       if (user) {
         try {
-          const profiles = await base44.entities.UserProfile.filter({ user_email: user.email }, "-updated_date", 10);
-          // Prioriza o perfil corretamente vinculado ao user_id
-          foundProfile = profiles.find(p => p.user_id === user.id) || profiles[0] || null;
+          let profiles = await base44.entities.UserProfile.filter({ user_email: user.email }, "-updated_date", 10);
+          const linked = profiles.filter(p => p.user_id === user.id);
+          if (profiles.length > 1) {
+            foundProfile = { _access_error: "duplicate_profile" };
+          } else if (linked.length === 1) {
+            foundProfile = linked[0];
+          } else if (profiles.length === 1 && !profiles[0].user_id) {
+            const response = await base44.functions.invoke("atualizarMeuPerfil", { action: "reconcile" });
+            if (response.data?.success) profiles = await base44.entities.UserProfile.filter({ user_email: user.email }, "-updated_date", 10);
+            foundProfile = profiles.find(p => p.user_id === user.id) || profiles[0] || null;
+          } else if (profiles.length === 0 && user.role === "admin") {
+            const response = await base44.functions.invoke("atualizarMeuPerfil", { action: "reconcile" });
+            if (response.data?.success) profiles = await base44.entities.UserProfile.filter({ user_email: user.email }, "-updated_date", 10);
+            foundProfile = profiles.find(p => p.user_id === user.id) || null;
+          } else {
+            foundProfile = profiles[0] || null;
+          }
         } catch {
           foundProfile = null;
         }
@@ -62,10 +76,12 @@ export function PermissionsProvider({ children }) {
     window.addEventListener("permissions-updated", handler);
     const forceReloadHandler = () => load(true);
     window.addEventListener("permissions-force-reload", forceReloadHandler);
+    const unsubscribe = base44.entities.UserProfile.subscribe(() => load(false));
     const interval = setInterval(() => load(false), 30000);
     return () => {
       window.removeEventListener("permissions-updated", handler);
       window.removeEventListener("permissions-force-reload", forceReloadHandler);
+      unsubscribe();
       clearInterval(interval);
     };
   }, [load]);

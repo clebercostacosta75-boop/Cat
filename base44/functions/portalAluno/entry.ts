@@ -8,20 +8,25 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const svc = base44.asServiceRole;
-
-    const { cpf } = await req.json();
-    const digits = (cpf || "").toString().replace(/\D/g, "");
-    if (digits.length !== 11) {
-      return Response.json({ error: "CPF inválido" }, { status: 400 });
+    const user = await base44.auth.me().catch(() => null);
+    const { cpf } = await req.json().catch(() => ({}));
+    let student = null;
+    let digits = '';
+    let formatted = '';
+    if (user?.student_id) student = await svc.entities.Student.get(user.student_id).catch(() => null);
+    const authenticated = Boolean(student && user?.student_id === student.id);
+    if (!student) {
+      digits = String(cpf || '').replace(/\D/g, '');
+      if (digits.length !== 11) return Response.json({ error: 'CPF inválido' }, { status: 400 });
+      formatted = digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+      let students = await svc.entities.Student.filter({ cpf: formatted });
+      if (students.length === 0) students = await svc.entities.Student.filter({ cpf: digits });
+      student = students[0] || null;
     }
-    const formatted = digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-
-    // Aluno
-    let students = await svc.entities.Student.filter({ cpf: formatted });
-    if (students.length === 0) {
-      students = await svc.entities.Student.filter({ cpf: digits });
+    if (student) {
+      digits = String(student.cpf || digits).replace(/\D/g, '');
+      formatted = digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
     }
-    const student = students[0] || null;
 
     // Matrículas (por student_id e por CPF, deduplicadas)
     const enrollMap = {};
@@ -33,7 +38,7 @@ Deno.serve(async (req) => {
       const list = await svc.entities.StudentCourseEnrollment.filter({ student_cpf: c });
       list.forEach((e) => { enrollMap[e.id] = e; });
     }
-    const enrollments = Object.values(enrollMap);
+    const enrollments = authenticated ? Object.values(enrollMap) : [];
 
     // Certificados (por CPF, deduplicados)
     const certMap = {};
@@ -45,7 +50,7 @@ Deno.serve(async (req) => {
 
     // Documentos do aluno
     let documents = [];
-    if (student) {
+    if (student && authenticated) {
       const docs = await svc.entities.StudentDocument.filter({ student_id: student.id });
       documents = docs.map((d) => ({
         id: d.id,
@@ -64,9 +69,9 @@ Deno.serve(async (req) => {
       id: student.id,
       full_name: student.full_name,
       social_name: student.social_name,
-      cpf: student.cpf,
-      email: student.email,
-      whatsapp: student.whatsapp,
+      cpf: authenticated ? student.cpf : `***.***.***-${digits.slice(-2)}`,
+      email: authenticated ? student.email : '',
+      whatsapp: authenticated ? student.whatsapp : '',
       data_nascimento: student.data_nascimento,
       cidade: student.cidade,
       estado: student.estado,
@@ -110,7 +115,7 @@ Deno.serve(async (req) => {
       technical_responsibles: c.technical_responsibles || [],
     }));
 
-    return Response.json({ student: studentSafe, enrollments: enrollmentSafe, certificates: certificateSafe, documents });
+    return Response.json({ student: studentSafe, enrollments: enrollmentSafe, certificates: certificateSafe, documents, legacy_limited: !authenticated });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
