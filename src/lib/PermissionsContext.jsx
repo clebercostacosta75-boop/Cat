@@ -77,14 +77,12 @@ export function PermissionsProvider({ children }) {
     const forceReloadHandler = () => load(true);
     window.addEventListener("permissions-force-reload", forceReloadHandler);
     const unsubscribe = base44.entities.UserProfile.subscribe(() => load(false));
-    const interval = setInterval(() => load(false), 30000);
     return () => {
       window.removeEventListener("permissions-updated", handler);
       window.removeEventListener("permissions-force-reload", forceReloadHandler);
       unsubscribe();
-      clearInterval(interval);
     };
-  }, [load]);
+  }, [load, profile?.id]);
 
   // Compatibilidade: null = acesso total; array = módulos permitidos (canônicos)
   const allowedKeys = access?.fullAccess ? null : (access?.allowedModules || []);

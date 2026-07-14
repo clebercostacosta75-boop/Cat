@@ -39,6 +39,7 @@ export const MODULE_CATALOG = [
   { module_id: "log_acesso", name: "Log de Acesso", route: "/AccessLog", group: "Administração", status: "active", aliases: ["AccessLog"] },
   { module_id: "backup_download", name: "Download de Backups", route: "/BackupDownload", group: "Administração", status: "active", aliases: ["BackupDownload"] },
   { module_id: "alertas_config", name: "Configuração de Alertas", route: "/AlertasConfig", group: "Administração", status: "active", aliases: ["AlertasConfig"] },
+  { module_id: "diagnostico_acesso", name: "Diagnóstico de Acesso", route: "/DiagnosticoAcesso", group: "Administração", status: "active", aliases: ["AccessDiagnostics"] },
 ];
 
 export const MODULE_IDS = MODULE_CATALOG.filter(m => m.status === "active").map(m => m.module_id);
@@ -47,8 +48,8 @@ export const MODULE_BY_ID = Object.fromEntries(MODULE_CATALOG.map(m => [m.module
 export const ROLE_ALIASES = {
   "Administrador Master": "gestor_master", admin: "admin", user: "cliente",
   "Coordenador de Operações": "coordenacao", Financeiro: "financeiro",
-  Instrutor: "instrutor", Certificacao: "auditor", "Certificação": "auditor",
-  Atendimento: "comercial", PortalEmpresa: "empresa",
+  Instrutor: "instrutor", Certificacao: "certificacao", "Certificação": "certificacao",
+  Atendimento: "atendimento", PortalEmpresa: "empresa",
 };
 
 export const normalizeRole = role => ROLE_ALIASES[role] || role || "cliente";
@@ -59,6 +60,8 @@ export const ROLE_DEFAULT_MODULES = {
   comercial: ["dashboard", "dashboard_comercial", "gestao_academica_individual", "entrada_propostas", "cursos"],
   financeiro: ["dashboard", "dashboard_financeiro", "financeiro", "gestao_bmm", "relatorios"],
   coordenacao: ["dashboard", "cronograma", "agenda_treinamentos", "chamada_presencial", "instrutores", "empresas", "cursos", "gestao_academica_individual", "gestao_academica_empresas", "gestao_contratos", "dashboard_operacional", "certificacoes"],
+  certificacao: ["dashboard_certificacao", "certificacoes", "assinaturas_digitais", "alertas_vencimento", "auditoria_certificados", "designer_certificados", "documentos_alunos", "matriz_treinamentos"],
+  atendimento: ["gestao_academica_individual", "alertas_vencimento", "documentos_alunos", "assistente_cadastros"],
   instrutor: ["dashboard_instrutor", "agenda_treinamentos", "chamada_presencial"],
   auditor: ["dashboard", "auditoria_certificados", "log_auditoria", "auditoria_completa", "log_acesso", "relatorios"],
   editor: ["dashboard"],

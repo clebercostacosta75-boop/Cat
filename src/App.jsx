@@ -61,6 +61,7 @@ import DossieHomologacao from './pages/DossieHomologacao.jsx';
 import FinanceiroHub from './pages/FinanceiroHub.jsx';
 import AtivarAcesso from './pages/AtivarAcesso.jsx';
 import ComunicacaoAdmin from './pages/ComunicacaoAdmin.jsx';
+import AccessDiagnostics from './pages/AccessDiagnostics.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -181,6 +182,7 @@ const AuthenticatedApp = () => {
       <Route path="/Financeiro" element={<LayoutWrapper currentPageName="Financeiro"><ProtectedRoute pageKey="Financeiro"><FinanceiroHub /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DossieHomologacao" element={<LayoutWrapper currentPageName="DossieHomologacao"><ProtectedRoute pageKey="DossieHomologacao"><DossieHomologacao /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/ComunicacaoAdmin" element={<LayoutWrapper currentPageName="ComunicacaoAdmin"><ProtectedRoute pageKey="Comunicação"><ComunicacaoAdmin /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/DiagnosticoAcesso" element={<LayoutWrapper currentPageName="DiagnosticoAcesso"><ProtectedRoute pageKey="Diagnóstico de Acesso"><AccessDiagnostics /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/CertificateEmissao" element={<LayoutWrapper currentPageName="CertificateEmissao"><ProtectedRoute pageKey="Certificações"><CertificateEmissao /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DigitalSignatures" element={<LayoutWrapper currentPageName="DigitalSignatures"><ProtectedRoute pageKey="Assinaturas Digitais"><DigitalSignatures /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AlertasConfig" element={<LayoutWrapper currentPageName="AlertasConfig"><ProtectedRoute pageKey="AlertasConfig"><AlertasConfig /></ProtectedRoute></LayoutWrapper>} />

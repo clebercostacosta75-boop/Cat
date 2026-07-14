@@ -52,11 +52,19 @@ const ALL_ITEMS = [
   { title: "Documentos de Alunos", url: "/GestaoDocumentosAluno", icon: Upload, key: "GestaoDocumentosAluno" },
   { title: "Homologações", url: "/Homologacoes", icon: FileText, key: "Homologações" },
   { title: "Dossiê de Homologação", url: "/DossieHomologacao", icon: FileText, key: "DossieHomologacao" },
+  { title: "Diagnóstico de Acesso", url: "/DiagnosticoAcesso", icon: Shield, key: "Diagnóstico de Acesso" },
 ];
 
 const ROLE_LABEL = {
   admin: "Administrador",
   gestor_master: "Gestor Master",
+  comercial: "Comercial",
+  financeiro: "Financeiro",
+  coordenacao: "Coordenação",
+  certificacao: "Certificação",
+  atendimento: "Atendimento",
+  instrutor: "Instrutor",
+  auditor: "Auditor",
   editor: "Editor",
   cliente: "Cliente",
   personalizado: "Personalizado",

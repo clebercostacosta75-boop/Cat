@@ -13,7 +13,8 @@ Deno.serve(async (req) => {
     }
 
     const { email, role, user_name } = await req.json();
-    if (!email || !user_name) return Response.json({ error: 'E-mail e nome obrigatórios' }, { status: 400 });
+    const allowedProfileRoles = ['gestor_master','admin','comercial','financeiro','coordenacao','certificacao','atendimento','instrutor','aluno','empresa','auditor','editor','cliente','personalizado'];
+    if (!email || !user_name || !allowedProfileRoles.includes(role)) return Response.json({ error: 'E-mail, nome ou perfil inválido' }, { status: 400 });
 
     // Verificar se usuário já existe
     const existingUsers = await base44.asServiceRole.entities.User.filter({});

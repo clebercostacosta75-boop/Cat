@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
 
-const roles = ['gestor_master','admin','comercial','financeiro','coordenacao','instrutor','aluno','empresa','auditor','editor','cliente','personalizado'];
-const customRoleByProfile = { gestor_master: 'Administrador Master', admin: 'Administrador Master', comercial: 'Atendimento', financeiro: 'Financeiro', coordenacao: 'Coordenador de Operações', instrutor: 'Instrutor', empresa: 'PortalEmpresa', auditor: 'Certificação' };
+const roles = ['gestor_master','admin','comercial','financeiro','coordenacao','certificacao','atendimento','instrutor','aluno','empresa','auditor','editor','cliente','personalizado'];
+const customRoleByProfile = { gestor_master: 'Administrador Master', admin: 'Administrador Master', comercial: 'Atendimento', atendimento: 'Atendimento', financeiro: 'Financeiro', coordenacao: 'Coordenador de Operações', certificacao: 'Certificação', instrutor: 'Instrutor', empresa: 'PortalEmpresa', auditor: 'Certificação' };
 
 Deno.serve(async (req) => {
   try {

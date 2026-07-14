@@ -24,6 +24,8 @@ const ROLE_OPTIONS = [
   { value: "comercial", label: "Comercial" },
   { value: "financeiro", label: "Financeiro" },
   { value: "coordenacao", label: "Coordenação" },
+  { value: "certificacao", label: "Certificação" },
+  { value: "atendimento", label: "Atendimento" },
   { value: "instrutor", label: "Instrutor" },
   { value: "aluno", label: "Aluno" },
   { value: "empresa", label: "Empresa" },
@@ -36,7 +38,8 @@ const ROLE_OPTIONS = [
 const ROLE_COLORS = {
   gestor_master: "bg-purple-100 text-purple-800", admin: "bg-red-100 text-red-800",
   comercial: "bg-cyan-100 text-cyan-800", financeiro: "bg-emerald-100 text-emerald-800",
-  coordenacao: "bg-indigo-100 text-indigo-800", instrutor: "bg-amber-100 text-amber-800",
+  coordenacao: "bg-indigo-100 text-indigo-800", certificacao: "bg-teal-100 text-teal-800",
+  atendimento: "bg-sky-100 text-sky-800", instrutor: "bg-amber-100 text-amber-800",
   aluno: "bg-blue-100 text-blue-800", empresa: "bg-slate-100 text-slate-800",
   auditor: "bg-violet-100 text-violet-800", editor: "bg-blue-100 text-blue-800",
   cliente: "bg-green-100 text-green-800", personalizado: "bg-orange-100 text-orange-800",
@@ -44,7 +47,8 @@ const ROLE_COLORS = {
 
 const ROLE_LABELS = {
   gestor_master: "Gestor Master", admin: "Administrador", comercial: "Comercial",
-  financeiro: "Financeiro", coordenacao: "Coordenação", instrutor: "Instrutor",
+  financeiro: "Financeiro", coordenacao: "Coordenação", certificacao: "Certificação",
+  atendimento: "Atendimento", instrutor: "Instrutor",
   aluno: "Aluno", empresa: "Empresa", auditor: "Auditor", editor: "Editor",
   cliente: "Cliente", personalizado: "Personalizado",
 };
