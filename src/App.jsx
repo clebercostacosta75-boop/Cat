@@ -127,11 +127,17 @@ const AuthenticatedApp = () => {
   }
 
   if (needsConsent) {
-    return <ConsentForm onConsented={() => setNeedsConsent(false)} />;
+    return <ConsentForm onConsented={() => {
+      setNeedsConsent(false);
+      setNeedsPasswordChange(true);
+    }} />;
   }
 
   if (needsPasswordChange) {
-    return <TrocarSenha onPasswordChanged={() => setNeedsPasswordChange(false)} />;
+    return <TrocarSenha onPasswordChanged={() => {
+      window.dispatchEvent(new Event("permissions-force-reload"));
+      setNeedsPasswordChange(false);
+    }} />;
   }
 
   return (
