@@ -35,7 +35,12 @@ Deno.serve(async (req) => {
       const sameUser = await base44.asServiceRole.entities.UserProfile.filter({ user_id: target.user_id });
       if (sameUser.length !== 1) return await auditRejected('duplicate_profile', 'Perfil duplicado; execute a reconciliação antes de salvar', { profile_id, user_id_matches: sameUser.length });
       targetUser = await base44.asServiceRole.entities.User.get(target.user_id).catch(() => null);
-      if (!targetUser) return await auditRejected('user_not_found', 'Conta User correspondente não encontrada', { profile_id, target_user_id: target.user_id });
+      if (!targetUser) {
+        const usersByEmail = await base44.asServiceRole.entities.User.filter({ email: target.user_email });
+        if (usersByEmail.length > 1) return await auditRejected('duplicate_user', 'Mais de uma conta encontrada para este e-mail', { profile_id, user_matches: usersByEmail.length });
+        targetUser = usersByEmail[0] || null;
+        await base44.asServiceRole.entities.UserProfile.update(target.id, { user_id: targetUser?.id || null });
+      }
     } else {
       const usersByEmail = await base44.asServiceRole.entities.User.filter({ email: target.user_email });
       if (usersByEmail.length > 1) return await auditRejected('duplicate_user', 'Mais de uma conta encontrada para este e-mail', { profile_id, user_matches: usersByEmail.length });

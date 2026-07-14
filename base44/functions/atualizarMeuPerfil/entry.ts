@@ -19,8 +19,11 @@ Deno.serve(async (req) => {
     }
 
     const updateData = {};
-    // Reconciliação de vínculo: liga user_id quando ausente (mesmo e-mail autenticado)
-    if (!profile.user_id) updateData.user_id = user.id;
+    // Reconciliação de vínculo: liga user_id e espelha as permissões administrativas no primeiro acesso.
+    if (!profile.user_id) {
+      updateData.user_id = user.id;
+      await base44.asServiceRole.entities.User.update(user.id, { permissions: profile.permissions || [] });
+    }
 
     if (action === 'consent') {
       updateData.consent_accepted_at = new Date().toISOString();
