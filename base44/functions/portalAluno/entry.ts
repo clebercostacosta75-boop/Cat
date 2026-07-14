@@ -73,7 +73,44 @@ Deno.serve(async (req) => {
       status: student.status,
     } : null;
 
-    return Response.json({ student: studentSafe, enrollments, certificates, documents });
+    const enrollmentSafe = enrollments.map((e) => ({
+      id: e.id,
+      course_name: e.course_name,
+      course_duration: e.course_duration,
+      company_id: e.company_id,
+      company_name: e.company_name,
+      start_date: e.start_date,
+      end_date: e.end_date,
+      status: e.status,
+      status_matricula: e.status_matricula,
+      resultado_academico: e.resultado_academico,
+      forma_pagamento: e.forma_pagamento,
+      status_pagamento: e.status_pagamento,
+      data_vencimento_pagamento: e.data_vencimento_pagamento,
+      unit_value: e.unit_value,
+    }));
+    const certificateSafe = certificates.map((c) => ({
+      id: c.id,
+      certificate_code: c.certificate_code,
+      course_name: c.course_name,
+      course_duration: c.course_duration,
+      client_name: c.client_name,
+      instructor_name: c.instructor_name,
+      programmatic_content: c.programmatic_content || [],
+      start_date: c.start_date,
+      end_date: c.end_date,
+      valid_until: c.valid_until,
+      issue_date: c.issue_date,
+      status: c.status,
+      certificate_model_id: c.certificate_model_id,
+      front_background_url: c.front_background_url,
+      back_background_url: c.back_background_url,
+      show_programmatic_hours: c.show_programmatic_hours,
+      location_and_date: c.location_and_date,
+      technical_responsibles: c.technical_responsibles || [],
+    }));
+
+    return Response.json({ student: studentSafe, enrollments: enrollmentSafe, certificates: certificateSafe, documents });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

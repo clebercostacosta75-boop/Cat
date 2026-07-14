@@ -71,14 +71,8 @@ export default function StudentPortal() {
     setLoading(true);
     setCerts(null);
     try {
-      const cpfFormatted = cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-      const results = await base44.entities.Certificate.filter({ student_cpf: cpfFormatted });
-      // Tentar também sem formatação
-      let all = results;
-      if (results.length === 0) {
-        const r2 = await base44.entities.Certificate.filter({ student_cpf: cleaned });
-        all = r2;
-      }
+      const response = await base44.functions.invoke("portalAluno", { cpf: cleaned });
+      const all = response.data?.certificates || [];
       // Ordenar: válidos primeiro, depois vencidos
       all.sort((a, b) => {
         const da = getDaysLeft(a.valid_until) ?? 9999;

@@ -13,14 +13,68 @@
         "Atendimento",
         "PortalEmpresa"
       ],
-      "description": "N\u00edvel de acesso personalizado do usu\u00e1rio"
+      "description": "N\u00edvel de acesso personalizado legado"
     },
     "permissions": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "Permiss\u00f5es espec\u00edficas para funcionalidades do dashboard"
+      "description": "Espelho das permiss\u00f5es can\u00f4nicas do UserProfile"
+    },
+    "company_permissions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "company_id": {
+            "type": "string"
+          },
+          "company_name": {
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "description": "Escopos empresariais usados pelas pol\u00edticas RLS"
+    },
+    "student_id": {
+      "type": "string",
+      "description": "V\u00ednculo com Student"
+    },
+    "cpf": {
+      "type": "string",
+      "description": "CPF usado por pol\u00edticas de acesso do pr\u00f3prio titular"
+    },
+    "instructor_id": {
+      "type": "string",
+      "description": "V\u00ednculo com Instructor"
+    },
+    "colaborador_sst_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "V\u00ednculos com colaboradores SST"
+    },
+    "pgr_leitura_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Escopos de leitura PGR"
+    },
+    "ltcat_detalhe_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Escopos de leitura LTCAT"
     },
     "phone": {
       "type": "string",
@@ -31,10 +85,5 @@
       "default": false,
       "description": "Indica se o telefone \u00e9 WhatsApp"
     }
-  },
-  "required": [
-    "custom_role",
-    "permissions",
-    "phone"
-  ]
+  }
 }

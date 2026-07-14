@@ -29,7 +29,7 @@ const STATUS_BADGE = {
   "Pendente": "bg-gray-100 text-gray-600 border-gray-200",
 };
 
-function ClassDetail({ classItem, onBack, onAttendance }) {
+function ClassDetail({ classItem, cpf, onBack, onAttendance }) {
   const [activeTab, setActiveTab] = useState("info");
   const [evidences, setEvidences] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -51,7 +51,12 @@ function ClassDetail({ classItem, onBack, onAttendance }) {
 
   const handleSaveReport = async () => {
     try {
-      await base44.entities.ClassSchedule.update(classItem.id, { notes: report });
+      await base44.functions.invoke("portalInstrutor", {
+        action: "save_report",
+        cpf: cpf.replace(/\D/g, ""),
+        class_id: classItem.id,
+        notes: report,
+      });
       alert("Relatório salvo com sucesso!");
     } catch { alert("Erro ao salvar relatório."); }
   };
@@ -262,21 +267,11 @@ export default function PortalInstrutor() {
     setInstructor(null);
     setSelectedClass(null);
     try {
-      const instructors = await base44.entities.Instructor.filter({ cpf: cleaned });
-      if (instructors.length === 0) {
-        // Tentar CPF formatado
-        const r2 = await base44.entities.Instructor.filter({ cpf: cpf });
-        if (r2.length === 0) {
-          setError("Instrutor não encontrado. Verifique o CPF informado.");
-          setLoading(false);
-          return;
-        }
-        instructors.push(...r2);
-      }
-      const inst = instructors[0];
+      const response = await base44.functions.invoke("portalInstrutor", { action: "lookup", cpf: cleaned });
+      const inst = response.data.instructor;
       setInstructor(inst);
 
-      const allClasses = await base44.entities.ClassSchedule.filter({ instructor_id: inst.id });
+      const allClasses = response.data.classes || [];
       allClasses.sort((a, b) => {
         const order = { "Em Andamento": 0, "Agendado": 1, "Concluído": 2, "Cancelado": 3, "Pendente": 4 };
         return (order[a.status] || 5) - (order[b.status] || 5);
@@ -313,7 +308,7 @@ export default function PortalInstrutor() {
           </div>
         </div>
         <div className="max-w-3xl mx-auto px-4 py-6">
-          <ClassDetail classItem={selectedClass} onBack={() => setSelectedClass(null)} onAttendance={(c) => window.open(`/AttendanceCall?classId=${c.id}`, "_blank")} />
+          <ClassDetail classItem={selectedClass} cpf={cpf} onBack={() => setSelectedClass(null)} onAttendance={(c) => window.open(`/AttendanceCall?classId=${c.id}`, "_blank")} />
         </div>
       </div>
     );

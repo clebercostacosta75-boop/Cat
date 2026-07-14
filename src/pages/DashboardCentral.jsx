@@ -6,8 +6,15 @@ import DashboardFinanceiro from "./DashboardFinanceiro";
 import DashboardCertificacao from "./DashboardCertificacao";
 import DashboardComercial from "./DashboardComercial";
 import AdminDashboard from "./AdminDashboard";
+import { usePermissions } from "@/lib/PermissionsContext";
 
 export default function DashboardCentral() {
+  const { hasPermission } = usePermissions();
+  const canFinanceiro = hasPermission("dashboard_financeiro") || hasPermission("financeiro");
+  const canCertificacao = hasPermission("dashboard_certificacao") || hasPermission("certificacoes");
+  const canComercial = hasPermission("dashboard_comercial");
+  const canAdmin = hasPermission("dashboard_admin");
+
   return (
     <div className="p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
@@ -25,51 +32,51 @@ export default function DashboardCentral() {
               <LayoutDashboard className="w-4 h-4" />
               <span>Geral</span>
             </TabsTrigger>
-            <TabsTrigger
+            {canFinanceiro && <TabsTrigger
               value="financeiro"
               className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-2 px-4 text-sm"
             >
               <DollarSign className="w-4 h-4" />
               <span>Financeiro</span>
-            </TabsTrigger>
-            <TabsTrigger
+            </TabsTrigger>}
+            {canCertificacao && <TabsTrigger
               value="certificacao"
               className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-2 px-4 text-sm"
             >
               <Award className="w-4 h-4" />
               <span>Certificação</span>
-            </TabsTrigger>
-            <TabsTrigger
+            </TabsTrigger>}
+            {canComercial && <TabsTrigger
               value="comercial"
               className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-2 px-4 text-sm"
             >
               <Target className="w-4 h-4" />
               <span>Comercial</span>
-            </TabsTrigger>
-            <TabsTrigger
+            </TabsTrigger>}
+            {canAdmin && <TabsTrigger
               value="administrativo"
               className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-2 px-4 text-sm"
             >
               <Settings className="w-4 h-4" />
               <span>Administrativo</span>
-            </TabsTrigger>
+            </TabsTrigger>}
           </TabsList>
 
           <TabsContent value="geral" className="mt-0">
             <DashboardMaster />
           </TabsContent>
-          <TabsContent value="financeiro" className="mt-0 -mx-4 md:-mx-6">
+          {canFinanceiro && <TabsContent value="financeiro" className="mt-0 -mx-4 md:-mx-6">
             <DashboardFinanceiro />
-          </TabsContent>
-          <TabsContent value="certificacao" className="mt-0">
+          </TabsContent>}
+          {canCertificacao && <TabsContent value="certificacao" className="mt-0">
             <DashboardCertificacao />
-          </TabsContent>
-          <TabsContent value="comercial" className="mt-0">
+          </TabsContent>}
+          {canComercial && <TabsContent value="comercial" className="mt-0">
             <DashboardComercial />
-          </TabsContent>
-          <TabsContent value="administrativo" className="mt-0">
+          </TabsContent>}
+          {canAdmin && <TabsContent value="administrativo" className="mt-0">
             <AdminDashboard />
-          </TabsContent>
+          </TabsContent>}
         </Tabs>
       </div>
     </div>

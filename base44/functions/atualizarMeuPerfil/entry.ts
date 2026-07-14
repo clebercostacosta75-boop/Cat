@@ -22,7 +22,10 @@ Deno.serve(async (req) => {
     // Reconciliação de vínculo: liga user_id e espelha as permissões administrativas no primeiro acesso.
     if (!profile.user_id) {
       updateData.user_id = user.id;
-      await base44.asServiceRole.entities.User.update(user.id, { permissions: profile.permissions || [] });
+      await base44.asServiceRole.entities.User.update(user.id, {
+        permissions: profile.permissions || [],
+        company_permissions: profile.company_permissions || [],
+      });
     }
 
     if (action === 'consent') {

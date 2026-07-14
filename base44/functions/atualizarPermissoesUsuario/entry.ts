@@ -52,7 +52,10 @@ Deno.serve(async (req) => {
     const legacyPermissions = previous.filter(permission => !validIds.includes(permission));
     const next = [...new Set([...permissions, ...legacyPermissions])];
     await base44.asServiceRole.entities.UserProfile.update(target.id, { permissions: next });
-    if (targetUser) await base44.asServiceRole.entities.User.update(targetUser.id, { permissions: next });
+    if (targetUser) await base44.asServiceRole.entities.User.update(targetUser.id, {
+      permissions: next,
+      company_permissions: target.company_permissions || [],
+    });
     const confirmed = await base44.asServiceRole.entities.UserProfile.get(target.id);
     const persisted = Array.isArray(confirmed.permissions) ? confirmed.permissions : [];
     const success = JSON.stringify([...persisted].sort()) === JSON.stringify([...next].sort());

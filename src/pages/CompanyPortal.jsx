@@ -172,16 +172,7 @@ export default function CompanyPortal() {
   const [complianceData, setComplianceData] = useState(null);
   const [complianceLoading, setComplianceLoading] = useState(false);
 
-  const fetchStudents = async (companyId) => {
-    if (!companyId) return;
-    try {
-      const all = await base44.entities.Student.filter({ company_id: companyId });
-      setStudents(all);
-    } catch {}
-  };
-
   useEffect(() => {
-    base44.entities.CertificateModel.list().then(setCertModels).catch(() => {});
     if (cnpjParam) handleSearch(cnpjParam);
   }, []);
 
@@ -193,33 +184,20 @@ export default function CompanyPortal() {
     setSearched(false);
 
     try {
-      // Buscar empresa pelo CNPJ (comparação normalizada — funciona com ou sem pontuação no cadastro)
-      const allCompanies = await base44.entities.Company.list(null, 500);
-      const companyFull = allCompanies.find(c => (c.cnpj || "").replace(/\D/g, "") === cnpjRaw);
-
-      if (!companyFull) {
-        setError("Empresa não encontrada. Verifique o CNPJ informado.");
-        setCompany(null);
-        setCertificates([]);
-        setLoading(false);
-        return;
-      }
-
+      const response = await base44.functions.invoke("portalEmpresa", { cnpj: cnpjRaw });
+      const result = response.data;
+      const companyFull = result.company;
       setCompany(companyFull);
       setComplianceData(null);
 
-      // Determinar módulos ativos
       const mods = companyFull.modulos_contratados?.filter(m => m.active) || [];
-      // Se não tem módulos configurados, libera certificados por padrão
       if (mods.length === 0) {
         mods.push({ module_key: "certificados", module_name: "Certificados", active: true });
       }
       setActiveModules(mods);
-
-      // Buscar certificados da empresa
-      const certs = await base44.entities.Certificate.filter({ client_id: companyFull.id });
-      setCertificates(certs);
-      await fetchStudents(companyFull.id);
+      setCertificates(result.certificates || []);
+      setStudents(result.students || []);
+      setCertModels(result.certificateModels || []);
       setSearched(true);
     } catch (e) {
       setError("Erro ao buscar dados. Tente novamente.");
