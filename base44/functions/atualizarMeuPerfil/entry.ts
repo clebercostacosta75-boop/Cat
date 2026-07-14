@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
     const updateData = {};
     if (!profile.user_id) updateData.user_id = user.id;
     const userScope = {
+      role: ['gestor_master', 'admin'].includes(profile.role) ? 'admin' : 'user',
       permissions: profile.permissions || [],
       company_permissions: profile.company_permissions || [],
       student_id: profile.student_id || null,

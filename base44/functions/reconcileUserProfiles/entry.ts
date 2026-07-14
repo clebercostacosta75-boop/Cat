@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     if (!operator) return Response.json({ success: false, code: 'unauthorized', error: 'Não autenticado' }, { status: 401 });
     const callerProfiles = await base44.asServiceRole.entities.UserProfile.filter({ user_email: operator.email });
     const linkedCallers = callerProfiles.filter(p => p.user_id === operator.id);
-    const canRun = operator.role === 'admin' || (linkedCallers.length === 1 && linkedCallers[0].role === 'gestor_master' && linkedCallers[0].status === 'active');
+    const canRun = operator.role === 'admin' || (linkedCallers.length === 1 && ['gestor_master', 'admin'].includes(linkedCallers[0].role) && linkedCallers[0].status === 'active');
     if (!canRun) return Response.json({ success: false, code: 'forbidden', error: 'Apenas administrador nativo ou Gestor Master ativo e vinculado' }, { status: 403 });
 
     const body = await req.json().catch(() => ({}));
@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
       if (Object.keys(changes).length && !dryRun) await base44.asServiceRole.entities.UserProfile.update(profile.id, changes);
       if (changes.user_id) report.linked.push({ user_id: user.id, profile_id: profile.id, email });
       if (changes.permissions) report.normalized_permissions.push({ profile_id: profile.id, before: profile.permissions || [], after: normalized });
-      const nextScope = { permissions: normalized, company_permissions: profile.company_permissions || [], student_id: profile.student_id || null, cpf: profile.cpf || null, instructor_id: profile.instructor_id || null, colaborador_sst_ids: profile.colaborador_sst_ids || [], pgr_leitura_ids: profile.pgr_leitura_ids || [], ltcat_detalhe_ids: profile.ltcat_detalhe_ids || [] };
+      const nextScope = { role: ['gestor_master','admin'].includes(canonicalRole) ? 'admin' : 'user', permissions: normalized, company_permissions: profile.company_permissions || [], student_id: profile.student_id || null, cpf: profile.cpf || null, instructor_id: profile.instructor_id || null, colaborador_sst_ids: profile.colaborador_sst_ids || [], pgr_leitura_ids: profile.pgr_leitura_ids || [], ltcat_detalhe_ids: profile.ltcat_detalhe_ids || [] };
       const scopeChanged = JSON.stringify(normalizePermissions(user.permissions)) !== JSON.stringify(normalized) || JSON.stringify(user.company_permissions || []) !== JSON.stringify(nextScope.company_permissions) || user.student_id !== nextScope.student_id || user.instructor_id !== nextScope.instructor_id || user.cpf !== nextScope.cpf;
       if (scopeChanged) {
         if (!dryRun) await base44.asServiceRole.entities.User.update(user.id, nextScope);

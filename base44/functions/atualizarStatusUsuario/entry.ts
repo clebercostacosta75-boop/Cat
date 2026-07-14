@@ -6,7 +6,7 @@ Deno.serve(async (req) => {
     const operator = await base44.auth.me();
     if (!operator) return Response.json({ error: 'Não autenticado' }, { status: 401 });
     const callers = await base44.asServiceRole.entities.UserProfile.filter({ user_email: operator.email });
-    const master = callers.find((p) => p.user_id === operator.id && p.role === 'gestor_master' && p.status === 'active');
+    const master = callers.find((p) => p.user_id === operator.id && ['gestor_master', 'admin'].includes(p.role) && p.status === 'active');
     if (operator.role !== 'admin' && !master) return Response.json({ error: 'Sem autorização' }, { status: 403 });
     const body = await req.json().catch(() => ({}));
     if (!body.profile_id || !['active', 'blocked'].includes(body.status)) return Response.json({ error: 'Status inválido' }, { status: 400 });

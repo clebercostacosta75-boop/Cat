@@ -61,7 +61,7 @@ import DossieHomologacao from './pages/DossieHomologacao.jsx';
 import FinanceiroHub from './pages/FinanceiroHub.jsx';
 import AtivarAcesso from './pages/AtivarAcesso.jsx';
 import ComunicacaoAdmin from './pages/ComunicacaoAdmin.jsx';
-import AccessDiagnostics from './pages/AccessDiagnostics.jsx';
+import DiagnosticoAcesso from './pages/DiagnosticoAcesso.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -181,8 +181,8 @@ const AuthenticatedApp = () => {
       <Route path="/MatrizTreinamentos" element={<LayoutWrapper currentPageName="MatrizTreinamentos"><ProtectedRoute pageKey="Matriz de Treinamentos"><MatrizTreinamentos /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/Financeiro" element={<LayoutWrapper currentPageName="Financeiro"><ProtectedRoute pageKey="Financeiro"><FinanceiroHub /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DossieHomologacao" element={<LayoutWrapper currentPageName="DossieHomologacao"><ProtectedRoute pageKey="DossieHomologacao"><DossieHomologacao /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/ComunicacaoAdmin" element={<LayoutWrapper currentPageName="ComunicacaoAdmin"><ProtectedRoute pageKey="Comunicação"><ComunicacaoAdmin /></ProtectedRoute></LayoutWrapper>} />
-      <Route path="/DiagnosticoAcesso" element={<LayoutWrapper currentPageName="DiagnosticoAcesso"><ProtectedRoute pageKey="Diagnóstico de Acesso"><AccessDiagnostics /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/ComunicacaoAdmin" element={<LayoutWrapper currentPageName="ComunicacaoAdmin"><ProtectedRoute pageKey="comunicacao_admin"><ComunicacaoAdmin /></ProtectedRoute></LayoutWrapper>} />
+      <Route path="/DiagnosticoAcesso" element={<LayoutWrapper currentPageName="DiagnosticoAcesso"><ProtectedRoute pageKey="diagnostico_acesso"><DiagnosticoAcesso /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/CertificateEmissao" element={<LayoutWrapper currentPageName="CertificateEmissao"><ProtectedRoute pageKey="Certificações"><CertificateEmissao /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DigitalSignatures" element={<LayoutWrapper currentPageName="DigitalSignatures"><ProtectedRoute pageKey="Assinaturas Digitais"><DigitalSignatures /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/AlertasConfig" element={<LayoutWrapper currentPageName="AlertasConfig"><ProtectedRoute pageKey="AlertasConfig"><AlertasConfig /></ProtectedRoute></LayoutWrapper>} />
@@ -197,27 +197,13 @@ const AuthenticatedApp = () => {
       <Route path="/DashboardCertificacao" element={<LayoutWrapper currentPageName="DashboardCertificacao"><ProtectedRoute pageKey="DashboardCertificacao"><DashboardCertificacao /></ProtectedRoute></LayoutWrapper>} />
       <Route path="/DashboardInstrutor" element={<LayoutWrapper currentPageName="DashboardInstrutor"><ProtectedRoute pageKey="DashboardInstrutor"><DashboardInstrutor /></ProtectedRoute></LayoutWrapper>} />
       {Object.entries(Pages).map(([path, Page]) => {
-        const PAGE_PERMISSION_KEYS = {
-          AuditLog: "Log de Auditoria",
-          Schedule: "Cronograma",
-          AttendanceCall: "Chamada Presencial",
-          CertDesigner: "Designer de Certificados",
-          CertificateAlerts: "Alertas de Vencimento",
-          CommunicationCenter: "Central de Comunicação",
-          Companies: "Empresas",
-          Contractors: "Contratadas",
-          Courses: "Cursos",
-          Instructors: "Instrutores",
-          Users: "Usuários",
-        };
-        const pageKey = PAGE_PERMISSION_KEYS[path];
         return (
           <Route
             key={path}
             path={`/${path}`}
             element={
               <LayoutWrapper currentPageName={path}>
-                <ProtectedRoute pageKey={pageKey || path}>
+                <ProtectedRoute pageKey={path}>
                   <Page />
                 </ProtectedRoute>
               </LayoutWrapper>

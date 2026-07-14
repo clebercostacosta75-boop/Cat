@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     if (!operator) return Response.json({ success: false, code: 'unauthorized', error: 'Não autenticado' }, { status: 401 });
     const callerProfiles = await base44.asServiceRole.entities.UserProfile.filter({ user_email: operator.email });
     const linkedCallers = callerProfiles.filter(p => p.user_id === operator.id);
-    const authorized = operator.role === 'admin' || (linkedCallers.length === 1 && linkedCallers[0].role === 'gestor_master' && linkedCallers[0].status === 'active');
+    const authorized = operator.role === 'admin' || (linkedCallers.length === 1 && ['gestor_master', 'admin'].includes(linkedCallers[0].role) && linkedCallers[0].status === 'active');
     if (!authorized) return Response.json({ success: false, code: 'forbidden', error: 'Sem autorização para administrar permissões' }, { status: 403 });
 
     const auditRejected = async (code, error, details = {}) => {

@@ -5,19 +5,7 @@ import { resolveAccess, hasModuleAccess, ALL_MODULES as AUTHZ_ALL_MODULES } from
 // Reexporta para compatibilidade com importadores existentes
 export const ALL_MODULES = AUTHZ_ALL_MODULES;
 
-export const ROUTE_TO_MODULE = {
-  "Schedule": "Cronograma",
-  "AttendanceCall": "Chamada Presencial",
-  "CertDesigner": "Designer de Certificados",
-  "CertificateAlerts": "Alertas de Vencimento",
-  "CommunicationCenter": "Central de Comunicação",
-  "Companies": "Empresas",
-  "Contractors": "Contratadas",
-  "Courses": "Cursos",
-  "Instructors": "Instrutores",
-  "Users": "Usuários",
-  "AuditLog": "Log de Auditoria",
-};
+export const ROUTE_TO_MODULE = Object.fromEntries(AUTHZ_ALL_MODULES.map((moduleId) => [moduleId, moduleId]));
 
 const PermissionsContext = createContext(null);
 
