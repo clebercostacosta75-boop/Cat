@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,189 +6,85 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Check, ChevronDown, ChevronUp, Search, Shield } from "lucide-react";
 import { toast } from "sonner";
-import { ALL_MODULES } from "@/lib/PermissionsContext";
+import { MODULE_GROUPS, MODULE_IDS, normalizePermissionIds } from "@/lib/moduleCatalog";
 
-// Nomes de exibição (a chave interna de permissão permanece inalterada)
-const MODULE_DISPLAY = { "Alunos Individuais (PF)": "Gestão Acadêmica Individual (chave legada)" };
-
-const MODULE_GROUPS = [
-  { label: "Geral", color: "bg-gray-100 text-gray-700", items: ["Dashboard", "Cronograma", "Agenda de Treinamentos", "Chamada Presencial"] },
-  { label: "Operacional", color: "bg-blue-100 text-blue-700", items: ["Entrada de Propostas", "Gestão de BMM", "Instrutores", "Empresas", "Contratadas", "Cursos", "Alunos Individuais (PF)", "Gestão Acadêmica Individual", "Gestão Acadêmica Empresas", "Gestão de Contratos", "Dashboard Operacional", "Dashboard Financeiro", "Financeiro", "ProntuarioDigital", "GestaoDocumentosAluno"] },
-  { label: "Certificações", color: "bg-yellow-100 text-yellow-700", items: ["Certificações", "Alertas de Vencimento", "Designer de Certificados", "Assinaturas Digitais", "Auditoria de Certificados"] },
-  { label: "Comercial", color: "bg-purple-100 text-purple-700", items: ["Dashboard Comercial"] },
-  { label: "Comunicação", color: "bg-pink-100 text-pink-700", items: ["Central de Comunicação"] },
-  { label: "Relatórios", color: "bg-indigo-100 text-indigo-700", items: ["Dashboard de Relatórios", "Dashboard Admin", "DashboardMaster", "DashboardCertificacao", "DashboardInstrutor"] },
-  { label: "Homologação", color: "bg-teal-100 text-teal-700", items: ["Homologações", "DossieHomologacao", "Matriz de Treinamentos"] },
-  { label: "Administração", color: "bg-red-100 text-red-700", items: ["Usuários", "Log de Auditoria", "Auditoria Completa", "Log de Acesso", "BackupDownload", "AlertasConfig"] },
-];
-
-function CustomPermissionEditor({ profile, onSaved }) {
-  const [selected, setSelected] = useState(new Set(profile.permissions || []));
+function PermissionEditor({ profile, onConfirmed }) {
+  const [selected, setSelected] = useState(() => new Set(normalizePermissionIds(profile.permissions)));
   const [saving, setSaving] = useState(false);
+  useEffect(() => setSelected(new Set(normalizePermissionIds(profile.permissions))), [profile.id, profile.permissions]);
 
-  const toggle = (perm) => {
-    setSelected(prev => {
-      const next = new Set(prev);
-      next.has(perm) ? next.delete(perm) : next.add(perm);
-      return next;
-    });
-  };
+  const toggle = id => setSelected(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+  const toggleGroup = modules => setSelected(prev => {
+    const next = new Set(prev);
+    const allOn = modules.every(m => next.has(m.module_id));
+    modules.forEach(m => allOn ? next.delete(m.module_id) : next.add(m.module_id));
+    return next;
+  });
 
-  const toggleGroup = (items) => {
-    const allOn = items.every(i => selected.has(i));
-    setSelected(prev => {
-      const next = new Set(prev);
-      items.forEach(i => allOn ? next.delete(i) : next.add(i));
-      return next;
-    });
-  };
-
-  const handleSave = async () => {
-    // Bloqueia salvamento quando o perfil não tem vínculo válido (evita chamada inválida/404)
-    if (!profile.user_id) {
-      toast.error("Perfil não vinculado — execute a reconciliação");
-      return;
-    }
+  const save = async () => {
+    if (saving) return;
+    if (!profile.user_id) return toast.error("Perfil não vinculado — execute a reconciliação");
     setSaving(true);
     try {
-      const res = await base44.functions.invoke("atualizarPermissoesUsuario", {
-        profile_id: profile.id,
-        user_email: profile.user_email,
-        permissions: Array.from(selected),
-      });
-      if (res.data?.success) {
-        toast.success("Permissões salvas com sucesso!");
-        window.dispatchEvent(new Event("permissions-updated"));
-        onSaved();
-      } else {
-        toast.error(res.data?.error || "Erro ao salvar permissões");
-      }
-    } catch (err) {
-      toast.error("Erro ao salvar permissões: " + (err?.message || ""));
+      const response = await base44.functions.invoke("atualizarPermissoesUsuario", { profile_id: profile.id, permissions: [...selected] });
+      if (!response.data?.success) throw new Error(response.data?.error || "O banco não confirmou o salvamento");
+      const persisted = new Set(response.data.confirmed_permissions || []);
+      setSelected(persisted);
+      await onConfirmed();
+      window.dispatchEvent(new Event("permissions-updated"));
+      toast.success("Permissões salvas e confirmadas");
+    } catch (error) {
+      toast.error(error?.response?.data?.error || error.message || "Erro ao salvar permissões");
     } finally {
       setSaving(false);
     }
   };
 
-  return (
-    <div className="space-y-3 pt-3">
-      <div className="flex items-center gap-2 flex-wrap">
-        <Button size="sm" variant="outline" onClick={() => setSelected(new Set(ALL_MODULES))}>Selecionar Tudo</Button>
-        <Button size="sm" variant="outline" onClick={() => setSelected(new Set())}>Limpar Tudo</Button>
-        <span className="ml-auto text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded px-2 py-0.5">
-          {selected.size} / {ALL_MODULES.length} módulos
-        </span>
-      </div>
-
-      {MODULE_GROUPS.map(group => {
-        const count = group.items.filter(i => selected.has(i)).length;
-        const allOn = count === group.items.length;
-        return (
-          <div key={group.label} className="border rounded-lg overflow-hidden">
-            <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b">
-              <div className="flex items-center gap-2">
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded ${group.color}`}>{group.label}</span>
-                <span className="text-xs text-gray-400">{count}/{group.items.length}</span>
-              </div>
-              <Button size="sm" variant="ghost" className="text-xs h-6 px-2" onClick={() => toggleGroup(group.items)}>
-                {allOn ? "Desmarcar grupo" : "Marcar grupo"}
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3">
-              {group.items.map(perm => (
-                <label key={perm} className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer text-sm transition-colors ${
-                  selected.has(perm) ? "bg-blue-50 border-blue-400 text-blue-800" : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                }`}>
-                  <input type="checkbox" checked={selected.has(perm)} onChange={() => toggle(perm)} className="w-4 h-4 accent-blue-600" />
-                  {MODULE_DISPLAY[perm] || perm}
-                </label>
-              ))}
-            </div>
-          </div>
-        );
-      })}
-
-      <div className="flex justify-end pt-1">
-        <Button onClick={handleSave} disabled={saving} className="min-w-[160px]">
-          <Check className="w-4 h-4 mr-1" />
-          {saving ? "Salvando..." : "Salvar Permissões"}
-        </Button>
-      </div>
+  return <div className="space-y-3 pt-3">
+    <div className="flex items-center gap-2 flex-wrap">
+      <Button size="sm" variant="outline" disabled={saving} onClick={() => setSelected(new Set(MODULE_IDS))}>Selecionar Tudo</Button>
+      <Button size="sm" variant="outline" disabled={saving} onClick={() => setSelected(new Set())}>Limpar Tudo</Button>
+      <span className="ml-auto text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded px-2 py-0.5">{selected.size} / {MODULE_IDS.length} módulos</span>
     </div>
-  );
+    {MODULE_GROUPS.map(({ group, modules }) => {
+      const count = modules.filter(m => selected.has(m.module_id)).length;
+      return <div key={group} className="border rounded-lg overflow-hidden">
+        <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b">
+          <div className="flex items-center gap-2"><Badge variant="secondary">{group}</Badge><span className="text-xs text-gray-400">{count}/{modules.length}</span></div>
+          <Button size="sm" variant="ghost" disabled={saving} className="text-xs h-6 px-2" onClick={() => toggleGroup(modules)}>{count === modules.length ? "Desmarcar grupo" : "Marcar grupo"}</Button>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3">
+          {modules.map(module => <label key={module.module_id} className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer text-sm ${selected.has(module.module_id) ? "bg-blue-50 border-blue-400 text-blue-800" : "bg-white border-gray-200 text-gray-700"}`}>
+            <input type="checkbox" disabled={saving} checked={selected.has(module.module_id)} onChange={() => toggle(module.module_id)} className="w-4 h-4 accent-blue-600" />{module.name}
+          </label>)}
+        </div>
+      </div>;
+    })}
+    <div className="flex justify-end"><Button onClick={save} disabled={saving} className="min-w-[190px]"><Check className="w-4 h-4 mr-1" />{saving ? "Salvando e confirmando..." : "Salvar Permissões"}</Button></div>
+  </div>;
 }
 
-const ROLE_DESCRIPTION = {
-  gestor_master: { label: "Gestor Master", desc: "Acesso total (requer conta admin ativa e vinculada).", badge: "bg-purple-100 text-purple-800" },
-  editor: { label: "Editor", desc: "Acesso somente aos módulos explicitamente liberados abaixo.", badge: "bg-blue-100 text-blue-800" },
-  cliente: { label: "Cliente", desc: "Acesso somente aos módulos explicitamente liberados abaixo.", badge: "bg-green-100 text-green-800" },
-  personalizado: { label: "Personalizado", desc: "Acesso configurado individualmente abaixo.", badge: "bg-orange-100 text-orange-800" },
-};
+const ROLE_LABELS = { gestor_master: "Gestor Master", editor: "Editor", cliente: "Cliente", personalizado: "Personalizado" };
 
 export default function PermissionsPanel({ profiles, onRefresh }) {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState(null);
+  const filtered = profiles.filter(p => !search || `${p.user_name || ""} ${p.user_email || ""}`.toLowerCase().includes(search.toLowerCase()));
 
-  const filtered = profiles.filter(p => {
-    const q = search.toLowerCase();
-    return !q || (p.user_name || "").toLowerCase().includes(q) || (p.user_email || "").toLowerCase().includes(q);
-  });
-
-  return (
-    <div className="space-y-4">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-        <Shield className="w-4 h-4 inline mr-1" />
-        Modelo <strong>negar por padrão</strong>: apenas <strong>Gestor Master</strong> (com conta admin ativa) tem acesso total. Todos os demais perfis acessam <strong>somente os módulos marcados abaixo</strong> — sem permissões marcadas, o usuário não acessa nenhum módulo.
-      </div>
-
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <Input className="pl-9" placeholder="Buscar usuário..." value={search} onChange={e => setSearch(e.target.value)} />
-      </div>
-
-      <div className="space-y-2">
-        {filtered.map(profile => {
-          const roleInfo = ROLE_DESCRIPTION[profile.role] || { label: profile.role, desc: "", badge: "bg-gray-100 text-gray-800" };
-          return (
-            <Card key={profile.id} className="overflow-hidden">
-              <CardHeader
-                className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => setExpandedId(expandedId === profile.id ? null : profile.id)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Shield className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="font-medium text-gray-900 text-sm">{profile.user_name || "—"}</p>
-                      <p className="text-xs text-gray-500">{profile.user_email}</p>
-                      {roleInfo.desc && <p className="text-xs text-gray-400 mt-0.5">{roleInfo.desc}</p>}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className={roleInfo.badge}>{roleInfo.label}</Badge>
-                    {profile.role === "personalizado" && (
-                      <Badge className="bg-gray-100 text-gray-600">{(profile.permissions || []).length} módulos</Badge>
-                    )}
-                    {expandedId === profile.id ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                  </div>
-                </div>
-              </CardHeader>
-
-              {expandedId === profile.id && (
-                <CardContent className="p-4 pt-0 border-t">
-                  {profile.role !== "gestor_master" ? (
-                    <CustomPermissionEditor key={profile.id} profile={profile} onSaved={() => { onRefresh(); }} />
-                  ) : (
-                    <div className="py-3 text-sm text-gray-500 text-center">
-                      <strong>Gestor Master</strong> possui acesso total quando a conta é admin, está ativa e vinculada — não requer permissões individuais.
-                    </div>
-                  )}
-                </CardContent>
-              )}
-            </Card>
-          );
-        })}
-      </div>
-    </div>
-  );
+  return <div className="space-y-4">
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800"><Shield className="w-4 h-4 inline mr-1" />UserProfile é a fonte oficial. Perfis ausentes, não vinculados ou sem módulos permanecem sem acesso.</div>
+    <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" /><Input className="pl-9" placeholder="Buscar usuário..." value={search} onChange={e => setSearch(e.target.value)} /></div>
+    <div className="space-y-2">{filtered.map(profile => <Card key={profile.id} className="overflow-hidden">
+      <CardHeader className="p-4 cursor-pointer hover:bg-gray-50" onClick={() => setExpandedId(expandedId === profile.id ? null : profile.id)}>
+        <div className="flex items-center justify-between"><div className="flex items-center gap-3"><Shield className="w-5 h-5 text-gray-400" /><div><p className="font-medium text-sm">{profile.user_name || "—"}</p><p className="text-xs text-gray-500">{profile.user_email}</p>{!profile.user_id && <p className="text-xs text-amber-600">Aguardando vínculo com uma conta</p>}</div></div>
+          <div className="flex items-center gap-2"><Badge>{ROLE_LABELS[profile.role] || profile.role}</Badge><Badge variant="secondary">{normalizePermissionIds(profile.permissions).length} módulos</Badge>{expandedId === profile.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
+        </div>
+      </CardHeader>
+      {expandedId === profile.id && <CardContent className="p-4 pt-0 border-t">{profile.role === "gestor_master" ? <p className="py-3 text-sm text-center text-gray-500">Acesso total somente quando o perfil Gestor Master estiver ativo e corretamente vinculado.</p> : <PermissionEditor profile={profile} onConfirmed={onRefresh} />}</CardContent>}
+    </Card>)}</div>
+  </div>;
 }

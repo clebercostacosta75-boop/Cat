@@ -74,12 +74,12 @@ const ROLE_LABEL = {
 
 export default function Layout({ children }) {
   const location = useLocation();
-  const { role, allowedKeys, loading } = usePermissions();
+  const { role, allowedKeys, loading, hasPermission } = usePermissions();
 
-  // null = acesso total, array = filtro
+  // Menu e rotas consultam a mesma fonte canônica (UserProfile.permissions)
   const navigationItems = allowedKeys === null
     ? ALL_ITEMS
-    : ALL_ITEMS.filter(i => allowedKeys.includes(i.key) || (i.altKeys || []).some(k => allowedKeys.includes(k)));
+    : ALL_ITEMS.filter(i => hasPermission(i.key) || (i.altKeys || []).some(k => hasPermission(k)));
 
   return (
     <SidebarProvider>

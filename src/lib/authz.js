@@ -1,26 +1,8 @@
-// ─── RESOLVEDOR CENTRAL DE AUTORIZAÇÃO ──────────────────────────────────────
-// Fonte canônica: UserProfile.permissions. Negar por padrão.
-// Acesso total SOMENTE: User.role=admin E UserProfile.role=gestor_master E status=active.
+import { MODULE_IDS, MODULE_BY_ID, canonicalizeModule as catalogCanonicalize } from "@/lib/moduleCatalog";
 
-export const ALL_MODULES = [
-  "Dashboard", "Cronograma", "Agenda de Treinamentos", "Chamada Presencial",
-  "Entrada de Propostas", "Gestão de BMM", "Instrutores", "Empresas", "Contratadas", "Cursos",
-  "Alunos Individuais (PF)", "Gestão Acadêmica Individual", "Gestão Acadêmica Empresas",
-  "Gestão de Contratos", "Dashboard Operacional", "Dashboard Financeiro",
-  "Certificações", "Alertas de Vencimento", "Designer de Certificados", "Assinaturas Digitais",
-  "Auditoria de Certificados", "Dashboard Comercial", "Central de Comunicação",
-  "Dashboard de Relatórios", "Dashboard Admin", "Usuários", "Log de Auditoria",
-  "Auditoria Completa", "Log de Acesso", "Homologações", "Matriz de Treinamentos",
-  "Financeiro", "BackupDownload", "ProntuarioDigital", "GestaoDocumentosAluno",
-  "DossieHomologacao", "DashboardMaster", "DashboardCertificacao", "DashboardInstrutor",
-  "AlertasConfig",
-  "Assistente de Cadastros", "Base de Conhecimento", "Compliance 360°", "Contas Sociais",
-  "Log de Notificações", "Saúde Ocupacional", "Auditoria do Sistema", "Dashboard SST",
-  "Empresas Mestre (SST)", "Colaboradores SST", "PGR — Leitura Inteligente",
-  "PCMSO — Leitura Inteligente", "Conferência PGR × PCMSO", "LTCAT", "Gestão de Exames",
-  "Matriz de Exames por Função", "PCMSO — Detalhe Completo", "Gestão de EPI",
-  "Orçamento de Conformidade", "Agendamento de Treinamentos SST",
-];
+// Fonte canônica: UserProfile.permissions (module_id estável). Negar por padrão.
+// Acesso total SOMENTE: UserProfile gestor_master, ativo e vinculado ao usuário autenticado.
+export const ALL_MODULES = MODULE_IDS;
 
 // Mapa central de aliases (nomes de rota/legados/sem acento → chave canônica)
 export const MODULE_ALIASES = {
@@ -105,10 +87,7 @@ export const MODULE_ROUTES = {
 
 // Normaliza uma chave de módulo para a forma canônica; null = rota desconhecida
 export function canonicalizeModule(key) {
-  if (!key || typeof key !== "string") return null;
-  if (ALL_MODULES.includes(key)) return key;
-  const mapped = MODULE_ALIASES[key];
-  return mapped && ALL_MODULES.includes(mapped) ? mapped : null;
+  return catalogCanonicalize(key);
 }
 
 function deny(code, message) {
@@ -123,9 +102,9 @@ export function resolveAccess(user, profile) {
   if (profile.user_id !== user.id) return deny("profile_mismatch", "Vínculo user_id divergente do usuário autenticado");
   if (profile.status !== "active") return deny(`status_${profile.status || "indefinido"}`, `Perfil com status "${profile.status || "indefinido"}" — acesso pendente ou bloqueado`);
 
-  // Acesso total: exige as três condições simultaneamente
-  if (user.role === "admin" && profile.role === "gestor_master") {
-    return { granted: true, fullAccess: true, allowedModules: [...ALL_MODULES], reason: "full_access", reasonMessage: "Acesso total (admin + gestor_master ativo)" };
+  // Acesso total: Gestor Master ativo e corretamente vinculado
+  if (profile.role === "gestor_master") {
+    return { granted: true, fullAccess: true, allowedModules: [...ALL_MODULES], reason: "full_access", reasonMessage: "Acesso total (Gestor Master ativo e vinculado)" };
   }
 
   // Demais perfis: SOMENTE permissões explícitas do UserProfile (sem fallback por role)
@@ -147,8 +126,8 @@ export function hasModuleAccess(access, moduleKey) {
 export function firstAllowedRoute(access) {
   if (!access || !access.granted) return null;
   if (access.fullAccess) return "/Dashboard";
-  for (const mod of ALL_MODULES) {
-    if (access.allowedModules.includes(mod) && MODULE_ROUTES[mod]) return MODULE_ROUTES[mod];
+  for (const moduleId of ALL_MODULES) {
+    if (access.allowedModules.includes(moduleId) && MODULE_BY_ID[moduleId]?.route) return MODULE_BY_ID[moduleId].route;
   }
   return null;
 }

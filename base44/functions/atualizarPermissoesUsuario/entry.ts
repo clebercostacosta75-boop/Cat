@@ -1,67 +1,51 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
 
-// Edição de permissões: SOMENTE gestor_master ativo e corretamente vinculado.
-// Nunca retorna 404 para o frontend — respostas 200 com success:false e mensagem clara.
 Deno.serve(async (req) => {
+  let base44;
+  let operator;
+  let target;
+  const at = new Date().toISOString();
+  const validIds = ['dashboard','cronograma','agenda_treinamentos','chamada_presencial','entrada_propostas','gestao_bmm','instrutores','empresas','contratadas','cursos','gestao_academica_individual','gestao_academica_empresas','gestao_contratos','dashboard_operacional','dashboard_financeiro','financeiro','prontuario_digital','documentos_alunos','certificacoes','alertas_vencimento','designer_certificados','assinaturas_digitais','auditoria_certificados','dashboard_comercial','central_comunicacao','relatorios','dashboard_admin','dashboard_master','dashboard_certificacao','dashboard_instrutor','homologacoes','dossie_homologacao','matriz_treinamentos','usuarios','log_auditoria','auditoria_completa','log_acesso','backup_download','alertas_config'];
   try {
-    const base44 = createClientFromRequest(req);
+    base44 = createClientFromRequest(req);
+    operator = await base44.auth.me();
+    if (!operator) return Response.json({ success: false, code: 'unauthorized', error: 'Não autenticado' }, { status: 401 });
+    const callerProfiles = await base44.asServiceRole.entities.UserProfile.filter({ user_email: operator.email });
+    const linkedCallers = callerProfiles.filter(p => p.user_id === operator.id);
+    const authorized = operator.role === 'admin' || (linkedCallers.length === 1 && linkedCallers[0].role === 'gestor_master' && linkedCallers[0].status === 'active');
+    if (!authorized) return Response.json({ success: false, code: 'forbidden', error: 'Sem autorização para administrar permissões' }, { status: 403 });
 
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Não autorizado' }, { status: 401 });
+    const auditRejected = async (code, error, details = {}) => {
+      await base44.asServiceRole.entities.AuditLog.create({ user_email: operator.email, user_name: operator.full_name || operator.email, action: 'update', entity_type: 'UserProfile', entity_id: details.profile_id, entity_name: 'Permissões rejeitadas', details: JSON.stringify({ operator_id: operator.id, at, result: 'rejected', code, error, ...details }) });
+      return Response.json({ success: false, code, error }, { status: code === 'forbidden' ? 403 : 400 });
+    };
+    const { profile_id, permissions } = await req.json();
+    if (!profile_id) return await auditRejected('profile_required', 'Perfil não informado');
+    if (!Array.isArray(permissions)) return await auditRejected('invalid_permissions', 'Lista de permissões inválida', { profile_id });
+    const invalid = permissions.filter(p => !validIds.includes(p));
+    if (invalid.length) return await auditRejected('invalid_module', `Módulo inválido: ${invalid.join(', ')}`, { profile_id, invalid_modules: invalid });
 
-    // Autorização do chamador: perfil gestor_master, ativo, vinculado ao user_id
-    const callerProfiles = await base44.asServiceRole.entities.UserProfile.filter({ user_email: user.email });
-    const callerProfile = callerProfiles.find(p => p.user_id === user.id) || null;
-    const isGestorMasterAtivo = !!callerProfile
-      && callerProfile.role === 'gestor_master'
-      && callerProfile.status === 'active';
+    target = await base44.asServiceRole.entities.UserProfile.get(profile_id);
+    if (!target) return await auditRejected('profile_not_found', 'Perfil não encontrado', { profile_id });
+    const sameEmail = await base44.asServiceRole.entities.UserProfile.filter({ user_email: target.user_email });
+    const sameUser = target.user_id ? await base44.asServiceRole.entities.UserProfile.filter({ user_id: target.user_id }) : [];
+    if (sameEmail.length !== 1 || sameUser.length !== 1) return await auditRejected('duplicate_profile', 'Perfil duplicado; execute a reconciliação antes de salvar', { profile_id, email_matches: sameEmail.length, user_id_matches: sameUser.length });
+    if (!target.user_id) return await auditRejected('profile_unlinked', 'Perfil não vinculado — execute a reconciliação', { profile_id });
+    const targetUser = await base44.asServiceRole.entities.User.get(target.user_id).catch(() => null);
+    if (!targetUser) return await auditRejected('user_not_found', 'Conta User correspondente não encontrada', { profile_id, target_user_id: target.user_id });
 
-    if (!isGestorMasterAtivo) {
-      return Response.json({ error: 'Sem permissão. Apenas Gestor Master ativo pode alterar permissões.' }, { status: 403 });
-    }
-
-    const { profile_id, user_email, permissions, role } = await req.json();
-
-    // Resolver o UserProfile real pelo ID (preferencial) ou e-mail
-    let target = null;
-    if (profile_id) {
-      try { target = await base44.asServiceRole.entities.UserProfile.get(profile_id); } catch { target = null; }
-    }
-    if (!target && user_email) {
-      const found = await base44.asServiceRole.entities.UserProfile.filter({ user_email });
-      target = found.find(p => p.user_id) || found[0] || null;
-    }
-
-    if (!target) {
-      return Response.json({ success: false, error: 'Perfil não encontrado — nenhuma alteração realizada.' }, { status: 200 });
-    }
-
-    if (!target.user_id) {
-      return Response.json({ success: false, unlinked: true, error: 'Perfil não vinculado — execute a reconciliação' }, { status: 200 });
-    }
-
-    const updateData = {};
-    if (role !== undefined) updateData.role = role;
-    if (permissions !== undefined) updateData.permissions = permissions;
-
-    if (Object.keys(updateData).length === 0) {
-      return Response.json({ success: false, error: 'Nada para atualizar.' }, { status: 200 });
-    }
-
-    await base44.asServiceRole.entities.UserProfile.update(target.id, updateData);
-
-    await base44.asServiceRole.entities.AuditLog.create({
-      user_email: user.email,
-      user_name: user.full_name || user.email,
-      action: 'update',
-      entity_type: 'UserProfile',
-      entity_id: target.id,
-      entity_name: target.user_email,
-      details: `Permissões/perfil atualizados por gestor_master. Campos: ${Object.keys(updateData).join(', ')} em ${new Date().toISOString()}`,
-    });
-
-    return Response.json({ success: true, message: 'Perfil atualizado com sucesso.' });
+    const next = [...new Set(permissions)];
+    const previous = Array.isArray(target.permissions) ? target.permissions : [];
+    await base44.asServiceRole.entities.UserProfile.update(target.id, { permissions: next });
+    await base44.asServiceRole.entities.User.update(targetUser.id, { permissions: next });
+    const confirmed = await base44.asServiceRole.entities.UserProfile.get(target.id);
+    const persisted = Array.isArray(confirmed.permissions) ? confirmed.permissions : [];
+    const success = JSON.stringify([...persisted].sort()) === JSON.stringify([...next].sort());
+    await base44.asServiceRole.entities.AuditLog.create({ user_email: operator.email, user_name: operator.full_name || operator.email, action: 'update', entity_type: 'UserProfile', entity_id: target.id, entity_name: target.user_email, details: JSON.stringify({ operator_id: operator.id, target_user_id: targetUser.id, profile_id: target.id, at, result: success ? 'confirmed' : 'confirmation_failed', previous_permissions: previous, next_permissions: next, confirmed_permissions: persisted }) });
+    if (!success) return Response.json({ success: false, code: 'confirmation_failed', error: 'O banco não confirmou todas as permissões; nenhuma confirmação visual foi emitida', confirmed_permissions: persisted }, { status: 409 });
+    return Response.json({ success: true, message: 'Permissões salvas e confirmadas', confirmed_permissions: persisted, profile_id: target.id, user_id: targetUser.id });
   } catch (error) {
-    return Response.json({ error: 'Erro ao atualizar perfil', details: error.message }, { status: 500 });
+    if (base44 && operator) await base44.asServiceRole.entities.AuditLog.create({ user_email: operator.email, user_name: operator.full_name || operator.email, action: 'update', entity_type: 'UserProfile', entity_id: target?.id, entity_name: target?.user_email || 'Permissões', details: JSON.stringify({ operator_id: operator.id, at, result: 'error', error: error.message }) }).catch(() => null);
+    return Response.json({ success: false, code: 'save_error', error: 'Erro ao salvar permissões', details: error.message }, { status: 500 });
   }
 });
