@@ -27,16 +27,15 @@ function PermissionEditor({ profile, onConfirmed }) {
 
   const save = async () => {
     if (saving) return;
-    if (!profile.user_id) return toast.error("Perfil não vinculado — execute a reconciliação");
     setSaving(true);
     try {
       const response = await base44.functions.invoke("atualizarPermissoesUsuario", { profile_id: profile.id, permissions: [...selected] });
       if (!response.data?.success) throw new Error(response.data?.error || "O banco não confirmou o salvamento");
-      const persisted = new Set(response.data.confirmed_permissions || []);
+      const persisted = new Set(normalizePermissionIds(response.data.confirmed_permissions || []));
       setSelected(persisted);
       await onConfirmed();
       window.dispatchEvent(new Event("permissions-updated"));
-      toast.success("Permissões salvas e confirmadas");
+      toast.success(response.data.message || "Permissões salvas e confirmadas");
     } catch (error) {
       toast.error(error?.response?.data?.error || error.message || "Erro ao salvar permissões");
     } finally {

@@ -28,23 +28,32 @@ Deno.serve(async (req) => {
     target = await base44.asServiceRole.entities.UserProfile.get(profile_id);
     if (!target) return await auditRejected('profile_not_found', 'Perfil não encontrado', { profile_id });
     const sameEmail = await base44.asServiceRole.entities.UserProfile.filter({ user_email: target.user_email });
-    const sameUser = target.user_id ? await base44.asServiceRole.entities.UserProfile.filter({ user_id: target.user_id }) : [];
-    if (sameEmail.length !== 1 || sameUser.length !== 1) return await auditRejected('duplicate_profile', 'Perfil duplicado; execute a reconciliação antes de salvar', { profile_id, email_matches: sameEmail.length, user_id_matches: sameUser.length });
-    if (!target.user_id) return await auditRejected('profile_unlinked', 'Perfil não vinculado — execute a reconciliação', { profile_id });
-    const targetUser = await base44.asServiceRole.entities.User.get(target.user_id).catch(() => null);
-    if (!targetUser) return await auditRejected('user_not_found', 'Conta User correspondente não encontrada', { profile_id, target_user_id: target.user_id });
+    if (sameEmail.length !== 1) return await auditRejected('duplicate_profile', 'Perfil duplicado; execute a reconciliação antes de salvar', { profile_id, email_matches: sameEmail.length });
+
+    let targetUser = null;
+    if (target.user_id) {
+      const sameUser = await base44.asServiceRole.entities.UserProfile.filter({ user_id: target.user_id });
+      if (sameUser.length !== 1) return await auditRejected('duplicate_profile', 'Perfil duplicado; execute a reconciliação antes de salvar', { profile_id, user_id_matches: sameUser.length });
+      targetUser = await base44.asServiceRole.entities.User.get(target.user_id).catch(() => null);
+      if (!targetUser) return await auditRejected('user_not_found', 'Conta User correspondente não encontrada', { profile_id, target_user_id: target.user_id });
+    } else {
+      const usersByEmail = await base44.asServiceRole.entities.User.filter({ email: target.user_email });
+      if (usersByEmail.length > 1) return await auditRejected('duplicate_user', 'Mais de uma conta encontrada para este e-mail', { profile_id, user_matches: usersByEmail.length });
+      targetUser = usersByEmail[0] || null;
+      if (targetUser) await base44.asServiceRole.entities.UserProfile.update(target.id, { user_id: targetUser.id });
+    }
 
     const previous = Array.isArray(target.permissions) ? target.permissions : [];
     const legacyPermissions = previous.filter(permission => !validIds.includes(permission));
     const next = [...new Set([...permissions, ...legacyPermissions])];
     await base44.asServiceRole.entities.UserProfile.update(target.id, { permissions: next });
-    await base44.asServiceRole.entities.User.update(targetUser.id, { permissions: next });
+    if (targetUser) await base44.asServiceRole.entities.User.update(targetUser.id, { permissions: next });
     const confirmed = await base44.asServiceRole.entities.UserProfile.get(target.id);
     const persisted = Array.isArray(confirmed.permissions) ? confirmed.permissions : [];
     const success = JSON.stringify([...persisted].sort()) === JSON.stringify([...next].sort());
-    await base44.asServiceRole.entities.AuditLog.create({ user_email: operator.email, user_name: operator.full_name || operator.email, action: 'update', entity_type: 'UserProfile', entity_id: target.id, entity_name: target.user_email, details: JSON.stringify({ operator_id: operator.id, target_user_id: targetUser.id, profile_id: target.id, at, result: success ? 'confirmed' : 'confirmation_failed', previous_permissions: previous, next_permissions: next, confirmed_permissions: persisted }) });
+    await base44.asServiceRole.entities.AuditLog.create({ user_email: operator.email, user_name: operator.full_name || operator.email, action: 'update', entity_type: 'UserProfile', entity_id: target.id, entity_name: target.user_email, details: JSON.stringify({ operator_id: operator.id, target_user_id: targetUser?.id || null, profile_id: target.id, at, result: success ? 'confirmed' : 'confirmation_failed', linkage: targetUser ? 'linked' : 'pending_account', previous_permissions: previous, next_permissions: next, confirmed_permissions: persisted }) });
     if (!success) return Response.json({ success: false, code: 'confirmation_failed', error: 'O banco não confirmou todas as permissões; nenhuma confirmação visual foi emitida', confirmed_permissions: persisted }, { status: 409 });
-    return Response.json({ success: true, message: 'Permissões salvas e confirmadas', confirmed_permissions: persisted, profile_id: target.id, user_id: targetUser.id });
+    return Response.json({ success: true, message: targetUser ? 'Permissões salvas e confirmadas' : 'Permissões salvas; serão ativadas quando a conta acessar o sistema', confirmed_permissions: persisted, profile_id: target.id, user_id: targetUser?.id || null, pending_link: !targetUser });
   } catch (error) {
     if (base44 && operator) await base44.asServiceRole.entities.AuditLog.create({ user_email: operator.email, user_name: operator.full_name || operator.email, action: 'update', entity_type: 'UserProfile', entity_id: target?.id, entity_name: target?.user_email || 'Permissões', details: JSON.stringify({ operator_id: operator.id, at, result: 'error', error: error.message }) }).catch(() => null);
     return Response.json({ success: false, code: 'save_error', error: 'Erro ao salvar permissões', details: error.message }, { status: 500 });
