@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
     const appUrl = String(body.app_url || req.headers.get('origin') || (host ? 'https://' + host : ''));
-    if (body.action === 'resolve_url') return Response.json({ app_url: appUrl });
+    if (body.action === 'resolve_url') return Response.json({ app_url: appUrl, app_id: Deno.env.get('BASE44_APP_ID') || '' });
     if (!appUrl.startsWith('http')) return Response.json({ error: 'URL do aplicativo inválida' }, { status: 400 });
 
     let account = body.account_id ? await base44.asServiceRole.entities.AccessAccount.get(body.account_id) : null;
