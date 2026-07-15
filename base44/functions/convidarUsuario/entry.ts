@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
     const event = account.last_invite_sent_at ? 'activation_link_resent' : 'activation_link_sent';
     await base44.asServiceRole.entities.AccessAccount.update(account.id, {
       token_hash: await hashToken(token), token_expires_at: expiresAt, token_used_at: null,
-      status: 'aguardando_ativacao', last_invite_sent_at: now,
+      status: account.status === 'ativo' ? 'ativo' : 'aguardando_ativacao', last_invite_sent_at: now,
     });
 
     const smtpEmail = Deno.env.get('UOL_SMTP_EMAIL');
