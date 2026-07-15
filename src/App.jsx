@@ -48,7 +48,7 @@ import Analytics from './pages/Analytics.jsx';
 import AccessLog from './pages/AccessLog.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
 import PostLoginGate from './components/auth/PostLoginGate';
-import { PermissionsProvider } from '@/lib/PermissionsContext';
+import { PermissionsProvider, usePermissions } from '@/lib/PermissionsContext';
 import { logAccessDenied } from '@/lib/accessLogger';
 import AuditoriaCompleta from './pages/AuditoriaCompleta.jsx';
 import BackupDownload from './pages/BackupDownload.jsx';
@@ -75,34 +75,31 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
+  const { profile, loading: permissionsLoading, reload: reloadPermissions } = usePermissions();
   const [consentChecked, setConsentChecked] = useState(false);
   const [needsConsent, setNeedsConsent] = useState(false);
   const [needsPasswordChange, setNeedsPasswordChange] = useState(false);
 
   useEffect(() => {
-    const checkConsent = async () => {
-      try {
-        const user = await base44.auth.me();
-        if (!user) { setConsentChecked(true); return; }
-
-        if (['admin', 'gestor_master', 'Administrador Master'].includes(user.role)) {
-          setConsentChecked(true);
-          return;
-        }
-
-        const profiles = await base44.entities.UserProfile.filter({ user_email: user.email });
-        const profile = profiles[0];
-        if (profile && !profile.consent_accepted_at && !profile.password_changed) {
-          setNeedsConsent(true);
-        } else if (profile && profile.status === "pending_password_change" && !profile.password_changed) {
-          setNeedsPasswordChange(true);
-        }
-      } catch {}
+    setNeedsConsent(false);
+    setNeedsPasswordChange(false);
+    if (!isAuthenticated) {
       setConsentChecked(true);
-    };
-    if (isAuthenticated) checkConsent();
-    else setConsentChecked(true);
-  }, [isAuthenticated]);
+      return;
+    }
+    if (permissionsLoading) {
+      setConsentChecked(false);
+      return;
+    }
+    if (profile && !profile._access_error) {
+      if (profile.status === "pending_password_change" && !profile.password_changed) {
+        setNeedsPasswordChange(true);
+      } else if (!["admin", "gestor_master"].includes(profile.role) && !profile.consent_accepted_at) {
+        setNeedsConsent(true);
+      }
+    }
+    setConsentChecked(true);
+  }, [isAuthenticated, permissionsLoading, profile]);
 
   // Log de Acesso: registra tentativas de login negadas
   useEffect(() => {
@@ -111,7 +108,7 @@ const AuthenticatedApp = () => {
     }
   }, [authError]);
 
-  if (isLoadingPublicSettings || isLoadingAuth || !consentChecked) {
+  if (isLoadingPublicSettings || isLoadingAuth || permissionsLoading || !consentChecked) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
@@ -136,9 +133,10 @@ const AuthenticatedApp = () => {
   }
 
   if (needsPasswordChange) {
-    return <TrocarSenha onPasswordChanged={() => {
-      window.dispatchEvent(new Event("permissions-force-reload"));
+    return <TrocarSenha onPasswordChanged={async () => {
       setNeedsPasswordChange(false);
+      await reloadPermissions(true);
+      window.location.assign("/");
     }} />;
   }
 

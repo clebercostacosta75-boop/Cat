@@ -11,8 +11,8 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = body.action;
 
-    const profiles = await base44.asServiceRole.entities.UserProfile.filter({ user_email: user.email });
-    const linked = profiles.filter(p => p.user_id === user.id);
+    const linked = await base44.asServiceRole.entities.UserProfile.filter({ user_id: user.id });
+    const profiles = linked.length ? linked : await base44.asServiceRole.entities.UserProfile.filter({ user_email: user.email.toLowerCase() });
     if (linked.length > 1 || (linked.length === 0 && profiles.length > 1)) {
       return Response.json({ success: false, code: 'duplicate_profile', error: 'Existem perfis duplicados para esta conta.' }, { status: 409 });
     }
@@ -53,7 +53,16 @@ Deno.serve(async (req) => {
     }
 
     if (Object.keys(updateData).length) await base44.asServiceRole.entities.UserProfile.update(profile.id, updateData);
-    return Response.json({ success: true, profile_id: profile.id, linked: true });
+    await base44.asServiceRole.entities.AuditLog.create({
+      user_email: user.email,
+      user_name: user.full_name || user.email,
+      action: action === 'password_changed' ? 'change_password' : 'update',
+      entity_type: 'UserProfile',
+      entity_id: profile.id,
+      entity_name: profile.user_name || user.email,
+      details: JSON.stringify({ event: action, user_id: user.id, linked: true, status: updateData.status || profile.status, permissions_synced: (profile.permissions || []).length, at: new Date().toISOString() }),
+    });
+    return Response.json({ success: true, profile_id: profile.id, linked: true, status: updateData.status || profile.status });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

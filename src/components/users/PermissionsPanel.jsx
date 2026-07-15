@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Check, ChevronDown, ChevronUp, Search, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { MODULE_GROUPS, MODULE_IDS, normalizePermissionIds } from "@/lib/moduleCatalog";
+import AccountLinkAction from "@/components/users/AccountLinkAction";
 
 function PermissionEditor({ profile, onConfirmed }) {
   const [selected, setSelected] = useState(() => new Set(normalizePermissionIds(profile.permissions)));
@@ -83,7 +84,10 @@ export default function PermissionsPanel({ profiles, onRefresh }) {
           <div className="flex items-center gap-2"><Badge>{ROLE_LABELS[profile.role] || profile.role}</Badge><Badge variant="secondary">{normalizePermissionIds(profile.permissions).length} módulos</Badge>{expandedId === profile.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
         </div>
       </CardHeader>
-      {expandedId === profile.id && <CardContent className="p-4 pt-0 border-t">{["gestor_master", "admin"].includes(profile.role) ? <p className="py-3 text-sm text-center text-gray-500">Este perfil possui acesso administrativo total quando estiver ativo e corretamente vinculado.</p> : <PermissionEditor profile={profile} onConfirmed={onRefresh} />}</CardContent>}
+      {expandedId === profile.id && <CardContent className="p-4 pt-3 border-t space-y-3">
+        <AccountLinkAction profile={profile} onLinked={onRefresh} />
+        {["gestor_master", "admin"].includes(profile.role) ? <p className="py-3 text-sm text-center text-gray-500">Este perfil possui acesso administrativo total quando estiver ativo e corretamente vinculado.</p> : <PermissionEditor profile={profile} onConfirmed={onRefresh} />}
+      </CardContent>}
     </Card>)}</div>
   </div>;
 }

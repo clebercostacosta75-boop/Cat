@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { resolveAccess, hasModuleAccess, ALL_MODULES as AUTHZ_ALL_MODULES } from "@/lib/authz";
+import { clearLocalAccessState, logAccessDenied } from "@/lib/accessLogger";
+import { useAuth } from "@/lib/AuthContext";
 
 // Reexporta para compatibilidade com importadores existentes
 export const ALL_MODULES = AUTHZ_ALL_MODULES;
@@ -10,44 +12,56 @@ export const ROUTE_TO_MODULE = Object.fromEntries(AUTHZ_ALL_MODULES.map((moduleI
 const PermissionsContext = createContext(null);
 
 export function PermissionsProvider({ children }) {
+  const { user: authenticatedUser, isAuthenticated, isLoadingAuth } = useAuth();
   const [role, setRole] = useState(null);
   const [access, setAccess] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async (showLoading = true) => {
-    if (showLoading) setLoading(true);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setAccess(null);
+    setProfile(null);
+    setRole(null);
     try {
       let user = null;
       try { user = await base44.auth.me(); } catch { user = null; }
+      if (!user) {
+        setAccess(resolveAccess(null, null));
+        return;
+      }
+
+      const previousUserId = sessionStorage.getItem("cat_auth_user_id");
+      if (previousUserId && previousUserId !== user.id) clearLocalAccessState();
+      sessionStorage.setItem("cat_auth_user_id", user.id);
 
       let foundProfile = null;
-      if (user) {
-        try {
-          let profiles = await base44.entities.UserProfile.filter({ user_email: user.email }, "-updated_date", 10);
-          const linked = profiles.filter(p => p.user_id === user.id);
-          if (profiles.length > 1) {
-            foundProfile = { _access_error: "duplicate_profile" };
-          } else if (linked.length === 1) {
-            foundProfile = linked[0];
-          } else if (profiles.length === 1 && !profiles[0].user_id) {
-            const response = await base44.functions.invoke("atualizarMeuPerfil", { action: "reconcile" });
-            if (response.data?.success) profiles = await base44.entities.UserProfile.filter({ user_email: user.email }, "-updated_date", 10);
-            foundProfile = profiles.find(p => p.user_id === user.id) || profiles[0] || null;
-          } else if (profiles.length === 0 && user.role === "admin") {
-            const response = await base44.functions.invoke("atualizarMeuPerfil", { action: "reconcile" });
-            if (response.data?.success) profiles = await base44.entities.UserProfile.filter({ user_email: user.email }, "-updated_date", 10);
-            foundProfile = profiles.find(p => p.user_id === user.id) || null;
-          } else {
-            foundProfile = profiles[0] || null;
-          }
-        } catch {
-          foundProfile = null;
+      const byId = await base44.entities.UserProfile.filter({ user_id: user.id }, "-updated_date", 10);
+      if (byId.length > 1) {
+        foundProfile = { _access_error: "duplicate_profile" };
+      } else if (byId.length === 1) {
+        foundProfile = byId[0].user_email?.trim().toLowerCase() === user.email?.trim().toLowerCase()
+          ? byId[0]
+          : { _access_error: "profile_mismatch" };
+      } else {
+        let byEmail = await base44.entities.UserProfile.filter({ user_email: user.email.trim().toLowerCase() }, "-updated_date", 10);
+        if (byEmail.length > 1) {
+          foundProfile = { _access_error: "duplicate_profile" };
+        } else if (byEmail.length === 1 && byEmail[0].user_id && byEmail[0].user_id !== user.id) {
+          foundProfile = { _access_error: "profile_mismatch" };
+        } else if (byEmail.length === 1 && !byEmail[0].user_id) {
+          const response = await base44.functions.invoke("atualizarMeuPerfil", { action: "reconcile" });
+          if (response.data?.success) byEmail = await base44.entities.UserProfile.filter({ user_id: user.id }, "-updated_date", 10);
+          foundProfile = byEmail.length === 1 ? byEmail[0] : null;
+        } else if (byEmail.length === 0 && user.role === "admin") {
+          await base44.functions.invoke("atualizarMeuPerfil", { action: "reconcile" });
+          const created = await base44.entities.UserProfile.filter({ user_id: user.id }, "-updated_date", 10);
+          foundProfile = created.length === 1 ? created[0] : null;
         }
       }
 
-      // Resolvedor central — negar por padrão
       const resolved = resolveAccess(user, foundProfile);
+      if (["duplicate_profile", "profile_mismatch"].includes(resolved.reason)) logAccessDenied("access_denied", resolved.reasonMessage);
       setAccess(resolved);
       setProfile(foundProfile);
       setRole(foundProfile?.role || null);
@@ -59,6 +73,7 @@ export function PermissionsProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    if (isLoadingAuth) return;
     load();
     const handler = () => load();
     window.addEventListener("permissions-updated", handler);
@@ -70,7 +85,7 @@ export function PermissionsProvider({ children }) {
       window.removeEventListener("permissions-force-reload", forceReloadHandler);
       unsubscribe();
     };
-  }, [load, profile?.id]);
+  }, [load, isLoadingAuth, isAuthenticated, authenticatedUser?.id]);
 
   // Compatibilidade: null = acesso total; array = módulos permitidos (canônicos)
   const allowedKeys = access?.fullAccess ? null : (access?.allowedModules || []);

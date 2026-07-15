@@ -28,16 +28,26 @@ Deno.serve(async (req) => {
       await base44.users.inviteUser(user_email, existingUser.role === 'admin' ? 'admin' : 'user');
     }
 
-    // Atualiza perfil com registro do reenvio — busca pelo email para garantir o ID correto
-    const profiles = await base44.asServiceRole.entities.UserProfile.filter({ user_email: user_email });
-    if (profiles.length > 0) {
-      await base44.asServiceRole.entities.UserProfile.update(profiles[0].id, {
-        status: 'pending_password_change',
-        credentials_sent_at: new Date().toISOString(),
-        credentials_sent_via: 'email',
-        credentials_sent_by: user.email,
-      });
+    // Atualiza somente o perfil solicitado; nunca escolhe arbitrariamente em caso de duplicidade.
+    const profile = await base44.asServiceRole.entities.UserProfile.get(profile_id);
+    if (!profile || profile.user_email?.trim().toLowerCase() !== user_email.trim().toLowerCase()) {
+      return Response.json({ error: 'Perfil e e-mail não correspondem' }, { status: 409 });
     }
+    await base44.asServiceRole.entities.UserProfile.update(profile.id, {
+      status: 'pending_password_change',
+      credentials_sent_at: new Date().toISOString(),
+      credentials_sent_via: 'email',
+      credentials_sent_by: user.email,
+    });
+    await base44.asServiceRole.entities.AuditLog.create({
+      user_email: user.email,
+      user_name: user.full_name || user.email,
+      action: 'send_credentials',
+      entity_type: 'UserProfile',
+      entity_id: profile.id,
+      entity_name: profile.user_name || user_email,
+      details: JSON.stringify({ event: 'invite_resent', recipient: user_email, permissions_preserved: (profile.permissions || []).length, at: new Date().toISOString() }),
+    });
 
     return Response.json({
       success: true,

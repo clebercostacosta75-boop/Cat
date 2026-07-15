@@ -6,6 +6,7 @@ import DashboardFinanceiro from "./DashboardFinanceiro";
 import DashboardCertificacao from "./DashboardCertificacao";
 import DashboardComercial from "./DashboardComercial";
 import AdminDashboard from "./AdminDashboard";
+import AuthorizedDashboard from "@/components/dashboard/AuthorizedDashboard";
 import { usePermissions } from "@/lib/PermissionsContext";
 
 export default function DashboardCentral() {
@@ -14,6 +15,7 @@ export default function DashboardCentral() {
   const canCertificacao = hasPermission("dashboard_certificacao") || hasPermission("certificacoes");
   const canComercial = hasPermission("dashboard_comercial");
   const canAdmin = hasPermission("dashboard_admin");
+  const canMaster = hasPermission("dashboard_master");
 
   return (
     <div className="p-4 md:p-6">
@@ -63,7 +65,7 @@ export default function DashboardCentral() {
           </TabsList>
 
           <TabsContent value="geral" className="mt-0">
-            <DashboardMaster />
+            {canMaster ? <DashboardMaster /> : <AuthorizedDashboard />}
           </TabsContent>
           {canFinanceiro && <TabsContent value="financeiro" className="mt-0 -mx-4 md:-mx-6">
             <DashboardFinanceiro />

@@ -10,6 +10,11 @@ const getSessionId = () => {
   return sid;
 };
 
+export function clearLocalAccessState() {
+  Object.keys(sessionStorage).filter(key => key.startsWith('cat_')).forEach(key => sessionStorage.removeItem(key));
+  Object.keys(localStorage).filter(key => key.startsWith('cat_permissions') || key.startsWith('cat_access')).forEach(key => localStorage.removeItem(key));
+}
+
 let cachedIp = null;
 async function getIp() {
   if (cachedIp !== null) return cachedIp;
@@ -97,6 +102,7 @@ if (typeof window !== 'undefined' && base44?.auth?.logout && !base44.auth.__logo
     } catch {
       // logging nunca deve quebrar o logout
     }
+    clearLocalAccessState();
     return origLogout(...args);
   };
   base44.auth.__logoutWrapped = true;
