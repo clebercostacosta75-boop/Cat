@@ -23,8 +23,7 @@ Deno.serve(async (req) => {
     }
     const duplicates = await base44.asServiceRole.entities.AccessAccount.filter({ email: normalize(account.email) });
     if (duplicates.length !== 1) return Response.json({ error: 'Existem contas duplicadas para este e-mail.' }, { status: 409 });
-    const users = await base44.asServiceRole.entities.User.list('-created_date', 500);
-    const accountExists = users.some((user) => normalize(user.email) === normalize(account.email));
+    const accountExists = Boolean(account.user_id);
 
     if (body.action === 'inspect') {
       await base44.asServiceRole.entities.AuditLog.create({ user_email: account.email, user_name: account.person_name, action: 'view', entity_type: 'AccessAccount', entity_id: account.id, entity_name: account.person_name, details: JSON.stringify({ event: 'activation_link_accessed', at: now.toISOString() }) });

@@ -1,8 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
 import nodemailer from 'npm:nodemailer@6.9.10';
 
+const OFFICIAL_APP_URL = 'https://catcursos.com';
 const normalize = (value) => String(value || '').trim().toLowerCase();
 const labels = { usuario_cat: 'Usuário interno CAT', aluno: 'Aluno', empresa: 'Empresa', instrutor: 'Instrutor', contratada: 'Contratada' };
+const roleLabels = { coordenacao: 'Coordenação', admin: 'Administrador', gestor_master: 'Gestor Master' };
 async function hashToken(value) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
   return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
@@ -18,10 +20,8 @@ Deno.serve(async (req) => {
     if (!operator) return Response.json({ error: 'Não autorizado' }, { status: 401 });
     if (operator.role !== 'admin') return Response.json({ error: 'Sem permissão' }, { status: 403 });
     const body = await req.json().catch(() => ({}));
-    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
-    const appUrl = String(body.app_url || req.headers.get('origin') || (host ? 'https://' + host : ''));
+    const appUrl = OFFICIAL_APP_URL;
     if (body.action === 'resolve_url') return Response.json({ app_url: appUrl, app_id: Deno.env.get('BASE44_APP_ID') || '' });
-    if (!appUrl.startsWith('http')) return Response.json({ error: 'URL do aplicativo inválida' }, { status: 400 });
 
     let account = body.account_id ? await base44.asServiceRole.entities.AccessAccount.get(body.account_id) : null;
     if (!account && body.profile_id) {
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     const smtpPassword = Deno.env.get('UOL_SMTP_PASSWORD');
     if (!smtpEmail || !smtpPassword) return Response.json({ error: 'Serviço de e-mail não configurado' }, { status: 500 });
     const transporter = nodemailer.createTransport({ host: 'smtp.uol.com.br', port: 587, secure: false, auth: { user: smtpEmail, pass: smtpPassword } });
-    const html = '<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#1f2937"><h2>Olá, ' + escapeHtml(account.person_name) + '.</h2><p>Seu acesso ao Portal CAT Cursos foi criado.</p><p><strong>Tipo de acesso:</strong> ' + escapeHtml(labels[account.access_type] || account.access_type) + '</p><p>Para ativar sua conta, clique abaixo e crie sua senha:</p><p style="margin:28px 0"><a href="' + activationUrl + '" style="background:#111827;color:#fff;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Ativar meu acesso</a></p><p style="font-size:12px;color:#6b7280">Link pessoal, válido por 72 horas e de uso único.</p><p>CAT Cursos</p></div>';
+    const html = '<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#1f2937"><h2>Olá, ' + escapeHtml(account.person_name) + '.</h2><p>Seu acesso ao Portal CAT Cursos foi criado com o perfil <strong>' + escapeHtml(roleLabels[account.profile] || account.profile) + '</strong>.</p><p><strong>Tipo de acesso:</strong> ' + escapeHtml(labels[account.access_type] || account.access_type) + '</p><p>Para ativar sua conta, clique no botão abaixo e crie sua senha de acesso:</p><p style="margin:28px 0"><a href="' + activationUrl + '" style="background:#111827;color:#fff;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Ativar minha conta</a></p><p style="font-size:12px;color:#6b7280">Este link é pessoal, válido por 72 horas e de uso único.</p><p>Após ativar sua conta, você terá acesso aos módulos liberados para seu perfil.</p><p>CAT Cursos</p></div>';
     await transporter.sendMail({ from: 'CAT Cursos <' + smtpEmail + '>', to: normalize(account.email), subject: 'Ative seu acesso ao Portal CAT Cursos', html });
     await base44.asServiceRole.entities.AuditLog.create({
       user_email: operator.email, user_name: operator.full_name || operator.email, action: 'send_credentials',

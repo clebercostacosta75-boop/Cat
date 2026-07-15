@@ -16,9 +16,9 @@ export default function useAccountActivation(token) {
   }, [token]);
 
   const finish = async (termsAccepted) => {
-    const { data } = await base44.functions.invoke("activateUserInvite", { action: "complete", token, terms_accepted: termsAccepted });
+    await base44.functions.invoke("activateUserInvite", { action: "complete", token, terms_accepted: termsAccepted });
     window.dispatchEvent(new Event("permissions-force-reload"));
-    window.location.assign(data.redirect_to || "/");
+    await base44.auth.logout(window.location.origin + "/");
   };
 
   const createAccount = async ({ email, newPassword, termsAccepted }) => {

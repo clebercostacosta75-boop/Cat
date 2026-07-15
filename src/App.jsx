@@ -121,6 +121,11 @@ const AuthenticatedApp = () => {
 
   if (isAccountActivationRoute) return <AtivarConta />;
 
+  if (!isAuthenticated && !authError) {
+    navigateToLogin();
+    return null;
+  }
+
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
