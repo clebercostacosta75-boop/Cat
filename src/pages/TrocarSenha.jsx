@@ -27,7 +27,8 @@ export default function TrocarSenha({ onPasswordChanged }) {
 
     setLoading(true);
     try {
-      // Atualiza o próprio perfil via função segura (whitelist de campos, sem autoelevação)
+      const user = await base44.auth.me();
+      await base44.auth.changePassword({ userId: user.id, currentPassword, newPassword });
       await base44.functions.invoke("atualizarMeuPerfil", { action: "password_changed" });
 
       toast.success("Senha registrada! Você já pode usar o sistema normalmente.");

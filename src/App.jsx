@@ -62,6 +62,7 @@ import FinanceiroHub from './pages/FinanceiroHub.jsx';
 import AtivarAcesso from './pages/AtivarAcesso.jsx';
 import ComunicacaoAdmin from './pages/ComunicacaoAdmin.jsx';
 import DiagnosticoAcesso from './pages/DiagnosticoAcesso.jsx';
+import AtivarConta from './pages/AtivarConta.jsx';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -76,6 +77,7 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
   const { profile, loading: permissionsLoading, reload: reloadPermissions } = usePermissions();
+  const isAccountActivationRoute = ["/AtivarConta", "/ativar-conta"].includes(window.location.pathname);
   const [consentChecked, setConsentChecked] = useState(false);
   const [needsConsent, setNeedsConsent] = useState(false);
   const [needsPasswordChange, setNeedsPasswordChange] = useState(false);
@@ -108,13 +110,15 @@ const AuthenticatedApp = () => {
     }
   }, [authError]);
 
-  if (isLoadingPublicSettings || isLoadingAuth || permissionsLoading || !consentChecked) {
+  if (isLoadingPublicSettings || isLoadingAuth || (!isAccountActivationRoute && (permissionsLoading || !consentChecked))) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
       </div>
     );
   }
+
+  if (isAccountActivationRoute) return <AtivarConta />;
 
   if (authError) {
     if (authError.type === 'user_not_registered') {
@@ -157,6 +161,8 @@ const AuthenticatedApp = () => {
       <Route path="/PortalInstrutor" element={<PortalInstrutor />} />
       <Route path="/ativar-acesso" element={<AtivarAcesso />} />
       <Route path="/AtivarAcesso" element={<AtivarAcesso />} />
+      <Route path="/ativar-conta" element={<AtivarConta />} />
+      <Route path="/AtivarConta" element={<AtivarConta />} />
 
       {/* Rotas autenticadas com layout */}
       <Route path="/" element={<PostLoginGate />} />

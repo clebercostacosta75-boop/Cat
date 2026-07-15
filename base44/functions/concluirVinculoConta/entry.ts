@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     const isAdmin = operator.role === 'admin' || operatorProfiles.some((p) => ['admin', 'gestor_master'].includes(p.role) && p.status === 'active');
     if (!isAdmin) return Response.json({ error: 'Apenas administradores podem concluir vínculos' }, { status: 403 });
 
-    const { profile_id } = await req.json();
+    const { profile_id, app_url } = await req.json();
     if (!profile_id) return Response.json({ error: 'Perfil obrigatório' }, { status: 400 });
     const profile = await base44.asServiceRole.entities.UserProfile.get(profile_id);
     if (!profile) return Response.json({ error: 'Perfil não encontrado' }, { status: 404 });
@@ -21,7 +21,13 @@ Deno.serve(async (req) => {
 
     const users = await base44.asServiceRole.entities.User.list('-created_date', 500);
     const matches = users.filter((u) => String(u.email || '').trim().toLowerCase() === email);
-    if (matches.length === 0) return Response.json({ success: false, code: 'account_missing', error: 'Conta real ainda não criada. Reenvie o convite e peça para o usuário concluir o primeiro acesso.' });
+    if (matches.length === 0) {
+      if (!app_url) return Response.json({ success: false, code: 'account_missing', error: 'Conta real ainda não criada e URL de ativação ausente.' }, { status: 400 });
+      const inviteResponse = await base44.functions.invoke('convidarUsuario', { email, user_name: profile.user_name, role: profile.role, profile_id: profile.id, app_url });
+      const invite = inviteResponse?.data || inviteResponse;
+      if (!invite?.success) return Response.json(invite, { status: 400 });
+      return Response.json({ success: true, code: 'activation_invite_resent', invitation_sent: true, activation_url: invite.activation_url, message: 'Conta real ainda não criada. Convite de ativação reenviado. Após o usuário criar a senha, o perfil será vinculado automaticamente.' });
+    }
     if (matches.length > 1) return Response.json({ success: false, code: 'duplicate_user', error: 'Há contas duplicadas para este e-mail; nenhum dado foi alterado.' }, { status: 409 });
 
     const user = matches[0];

@@ -1,65 +1,25 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Não autorizado' }, { status: 401 });
-
-    const allowedRoles = ['admin', 'Administrador Master', 'gestor_master'];
-    if (!allowedRoles.includes(user.role || '')) {
-      return Response.json({ error: 'Sem permissão' }, { status: 403 });
-    }
-
-    const { user_email, user_name, profile_id } = await req.json();
-    if (!user_email || !profile_id) {
-      return Response.json({ error: 'user_email e profile_id obrigatórios' }, { status: 400 });
-    }
-
-    // Verificar se o usuário existe na plataforma
-    const existingUsers = await base44.asServiceRole.entities.User.filter({});
-    const existingUser = existingUsers.find(u => u.email?.toLowerCase() === user_email.toLowerCase());
-
-    if (!existingUser) {
-      // Usuário não existe ainda — envia convite de criação
-      await base44.users.inviteUser(user_email, 'user');
-    } else {
-      // Usuário já existe — reenvia o convite para redefinir o acesso
-      await base44.users.inviteUser(user_email, existingUser.role === 'admin' ? 'admin' : 'user');
-    }
-
-    // Atualiza somente o perfil solicitado; nunca escolhe arbitrariamente em caso de duplicidade.
+    const { user_email, user_name, profile_id, app_url } = await req.json();
+    if (!user_email || !profile_id || !app_url) return Response.json({ error: 'E-mail, perfil e URL são obrigatórios' }, { status: 400 });
     const profile = await base44.asServiceRole.entities.UserProfile.get(profile_id);
-    if (!profile || profile.user_email?.trim().toLowerCase() !== user_email.trim().toLowerCase()) {
+    if (!profile || String(profile.user_email).trim().toLowerCase() !== String(user_email).trim().toLowerCase()) {
       return Response.json({ error: 'Perfil e e-mail não correspondem' }, { status: 409 });
     }
-    await base44.asServiceRole.entities.UserProfile.update(profile.id, {
-      status: 'pending_password_change',
-      credentials_sent_at: new Date().toISOString(),
-      credentials_sent_via: 'email',
-      credentials_sent_by: user.email,
-    });
-    await base44.asServiceRole.entities.AuditLog.create({
-      user_email: user.email,
-      user_name: user.full_name || user.email,
-      action: 'send_credentials',
-      entity_type: 'UserProfile',
-      entity_id: profile.id,
-      entity_name: profile.user_name || user_email,
-      details: JSON.stringify({ event: 'invite_resent', recipient: user_email, permissions_preserved: (profile.permissions || []).length, at: new Date().toISOString() }),
-    });
-
-    return Response.json({
-      success: true,
+    const response = await base44.functions.invoke('convidarUsuario', {
       email: user_email,
-      message: `Convite reenviado para ${user_email}. O usuário receberá um e-mail para acessar o sistema.`,
+      user_name: user_name || profile.user_name,
+      role: profile.role,
+      profile_id: profile.id,
+      app_url,
     });
-
+    return Response.json(response?.data || response);
   } catch (error) {
-    console.error('Erro:', error.message);
-    return Response.json({
-      error: 'Erro ao reenviar convite',
-      details: error.message,
-    }, { status: 500 });
+    return Response.json({ error: 'Erro ao reenviar convite', details: error.message }, { status: 500 });
   }
 });

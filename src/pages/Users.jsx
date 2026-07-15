@@ -97,13 +97,7 @@ function UserForm({ profile, onSave, onCancel }) {
         </div>
       </div>
 
-      {isNew && (
-        <div className="space-y-1">
-          <Label>Senha inicial <span className="text-gray-400 font-normal">(opcional — padrão: e-mail do usuário)</span></Label>
-          <Input value={form.initial_password} onChange={e => set("initial_password", e.target.value)} placeholder="Ex: usuario@empresa.com" />
-          <p className="text-xs text-gray-500">O usuário deverá trocar a senha no primeiro acesso.</p>
-        </div>
-      )}
+      {isNew && <p className="text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-lg p-3">O usuário receberá um link individual para criar a própria senha e ativar a conta.</p>}
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel}><X className="w-4 h-4 mr-1" /> Cancelar</Button>
@@ -163,14 +157,13 @@ export default function UsersPage() {
         }
 
         // Criar perfil
-        await base44.entities.UserProfile.create({
+        const createdProfile = await base44.entities.UserProfile.create({
           user_name: formData.user_name,
           user_email: formData.user_email,
           phone: formData.phone,
           role: formData.role,
           permissions: defaultPermissionsForRole(formData.role),
           status: "pending_password_change",
-          initial_password: formData.initial_password || formData.user_email,
           credentials_sent_at: new Date().toISOString(),
           credentials_sent_via: "manual",
           password_changed: false,
@@ -178,13 +171,17 @@ export default function UsersPage() {
 
         // Convidar no sistema Base44 (não bloqueia a criação do perfil)
         let inviteOk = true;
+        let activationUrl = "";
         try {
           const inviteRes = await base44.functions.invoke("convidarUsuario", {
             email: formData.user_email,
             user_name: formData.user_name,
             role: formData.role,
+            profile_id: createdProfile.id,
+            app_url: window.location.origin,
           });
-          if (inviteRes.data?.invite_failed) {
+          activationUrl = inviteRes.data?.activation_url || "";
+          if (!inviteRes.data?.success) {
             inviteOk = false;
             toast.warning(`Usuário criado, mas o envio do convite falhou: ${inviteRes.data?.details || ""} Use o botão "Reenviar" na lista.`);
           }
@@ -204,8 +201,8 @@ export default function UsersPage() {
               recipient_phone: formData.phone,
               message_type: "credentials",
               credential_email: formData.user_email,
-              credential_password: formData.initial_password || formData.user_email,
-              app_url: window.location.origin,
+              credential_password: "",
+              app_url: activationUrl || window.location.origin,
             });
             toast.success(`Usuário criado! Credenciais enviadas por WhatsApp.`);
           } catch {
@@ -218,7 +215,8 @@ export default function UsersPage() {
         setCredentialsModal({
           name: formData.user_name,
           email: formData.user_email,
-          password: formData.initial_password || formData.user_email,
+          password: "",
+          activationUrl: inviteOk ? activationUrl : "",
         });
       }
 
@@ -238,6 +236,7 @@ export default function UsersPage() {
         user_email: profile.user_email,
         user_name: profile.user_name,
         profile_id: profile.id,
+        app_url: window.location.origin,
       });
       if (res.data?.success) {
         if (profile.phone) {
@@ -248,17 +247,18 @@ export default function UsersPage() {
               recipient_phone: profile.phone,
               message_type: "credentials",
               credential_email: profile.user_email,
-              credential_password: profile.initial_password || "",
-              app_url: window.location.origin,
+              credential_password: "",
+              app_url: res.data.activation_url || window.location.origin,
             });
           } catch {}
         }
         setCredentialsModal({
           name: profile.user_name,
           email: profile.user_email,
-          password: profile.initial_password || "",
+          password: "",
+          activationUrl: res.data.activation_url,
         });
-        toast.success("Convite reenviado!");
+        toast.success("Convite reenviado com link de ativação da conta.");
         await loadProfiles();
       } else {
         toast.error(res.data?.error || "Erro ao reenviar convite");
@@ -399,7 +399,7 @@ export default function UsersPage() {
                           {profile.status === "active" ? "Ativo" : profile.status === "blocked" ? "Bloqueado" : profile.status === "pending_password_change" ? "Aguardando 1º acesso" : profile.status || "—"}
                         </Badge>
                         <Button size="sm" variant="outline" onClick={() => handleResendInvite(profile)} className="text-xs gap-1 text-blue-600 border-blue-200 hover:bg-blue-50">
-                          <Send className="w-3 h-3" /> Reenviar
+                          <Send className="w-3 h-3" /> Reenviar convite
                         </Button>
                         <Button size="icon" variant="ghost" onClick={() => { setEditingProfile(profile); setShowForm(true); }} title="Editar">
                           <Edit className="w-4 h-4" />

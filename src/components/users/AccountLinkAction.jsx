@@ -11,7 +11,7 @@ export default function AccountLinkAction({ profile, onLinked }) {
   const linkAccount = async () => {
     setLoading(true);
     try {
-      const response = await base44.functions.invoke("concluirVinculoConta", { profile_id: profile.id });
+      const response = await base44.functions.invoke("concluirVinculoConta", { profile_id: profile.id, app_url: window.location.origin });
       if (!response.data?.success) throw new Error(response.data?.error || "Não foi possível concluir o vínculo");
       toast.success(response.data.message);
       window.dispatchEvent(new Event("permissions-force-reload"));

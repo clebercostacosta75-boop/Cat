@@ -10,15 +10,15 @@ const APP_URL = window.location.origin;
 export default function CredentialsModal({ isOpen, onClose, credentials }) {
   if (!credentials) return null;
 
+  const activationUrl = credentials.activationUrl || APP_URL;
   const handleCopyAll = () => {
-    const pwd = credentials.password ? `🔑 *Senha inicial:* ${credentials.password}\n` : "";
-    const msg = `Olá ${credentials.name}! 👋\n\nSeu acesso ao *CAT Gestão de Cursos* foi criado.\n\n📧 *E-mail:* ${credentials.email}\n${pwd}🔗 *Link:* ${APP_URL}\n\n⚠️ No primeiro acesso, você será solicitado a trocar a senha.`;
+    const msg = `Olá ${credentials.name}!\n\nSeu acesso ao Portal CAT Cursos foi criado.\n\nE-mail: ${credentials.email}\nLink de ativação: ${activationUrl}\n\nClique no link e crie sua senha para ativar a conta.`;
     navigator.clipboard.writeText(msg);
     toast.success("Mensagem copiada! Pronta para enviar via WhatsApp.");
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(APP_URL);
+    navigator.clipboard.writeText(activationUrl);
     toast.success("Link copiado!");
   };
 
@@ -28,10 +28,10 @@ export default function CredentialsModal({ isOpen, onClose, credentials }) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-600" />
-            Usuário Criado com Sucesso!
+            Convite de ativação criado
           </DialogTitle>
           <DialogDescription>
-            Comunique os dados de acesso abaixo ao usuário
+            O e-mail contém o link para o usuário criar a senha
           </DialogDescription>
         </DialogHeader>
 
@@ -66,9 +66,9 @@ export default function CredentialsModal({ isOpen, onClose, credentials }) {
           )}
 
           <div>
-            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Link do sistema</label>
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Link de ativação</label>
             <div className="mt-1 p-3 bg-blue-50 rounded-lg border-2 border-blue-200 flex justify-between items-center">
-              <span className="text-blue-800 text-sm font-medium truncate">{APP_URL}</span>
+              <span className="text-blue-800 text-sm font-medium truncate">{activationUrl}</span>
               <Button size="sm" variant="ghost" onClick={handleCopyLink} className="text-blue-600">
                 <Copy className="w-4 h-4" />
               </Button>
@@ -77,7 +77,7 @@ export default function CredentialsModal({ isOpen, onClose, credentials }) {
 
           <Card className="bg-amber-50 border-amber-200 p-3">
             <p className="text-sm text-amber-800">
-              ⚠️ O usuário deverá <strong>trocar a senha no primeiro acesso</strong>. Oriente-o a acessar o link acima com as credenciais informadas.
+              O usuário deve abrir o link acima e <strong>criar a própria senha</strong> para ativar a conta.
             </p>
           </Card>
 

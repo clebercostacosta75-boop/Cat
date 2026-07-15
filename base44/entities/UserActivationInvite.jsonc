@@ -1,0 +1,96 @@
+{
+  "name": "UserActivationInvite",
+  "type": "object",
+  "properties": {
+    "profile_id": {
+      "type": "string",
+      "description": "UserProfile vinculado ao convite"
+    },
+    "recipient_email": {
+      "type": "string",
+      "description": "E-mail normalizado do destinat\u00e1rio"
+    },
+    "recipient_name": {
+      "type": "string"
+    },
+    "role_snapshot": {
+      "type": "string"
+    },
+    "permissions_snapshot": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "token_hash": {
+      "type": "string",
+      "description": "SHA-256 do token; o token puro nunca \u00e9 armazenado"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "used_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Sent",
+        "Used",
+        "Expired",
+        "Revoked",
+        "Failed"
+      ],
+      "default": "Pending"
+    },
+    "account_existed_at_send": {
+      "type": "boolean",
+      "default": false
+    },
+    "created_by": {
+      "type": "string"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "profile_id",
+    "recipient_email",
+    "token_hash",
+    "expires_at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
