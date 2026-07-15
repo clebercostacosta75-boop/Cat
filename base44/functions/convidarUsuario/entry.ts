@@ -60,25 +60,23 @@ Deno.serve(async (req) => {
     const subject = 'Ative seu acesso ao Portal CAT Cursos';
     let emailSent = false;
     let emailError = '';
-    if (smtpEmail && smtpPassword) {
+    const resendKey = Deno.env.get('RESEND_API_KEY');
+    if (resendKey) {
+      const resendResponse = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + resendKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: 'CAT Cursos <noreply@catcursos.com>', to: [normalize(account.email)], subject, html }),
+      });
+      if (resendResponse.ok) emailSent = true;
+      else emailError = 'Resend: ' + await resendResponse.text();
+    }
+    if (!emailSent && smtpEmail && smtpPassword) {
       try {
         const transporter = nodemailer.createTransport({ host: 'smtp.uol.com.br', port: 587, secure: false, auth: { user: smtpEmail, pass: smtpPassword } });
         await transporter.sendMail({ from: 'CAT Cursos <' + smtpEmail + '>', to: normalize(account.email), subject, html });
         emailSent = true;
       } catch (err) {
-        emailError = 'SMTP: ' + err.message;
-      }
-    }
-    if (!emailSent) {
-      const resendKey = Deno.env.get('RESEND_API_KEY');
-      if (resendKey) {
-        const resendResponse = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + resendKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ from: 'CAT Cursos <onboarding@resend.dev>', to: [normalize(account.email)], subject, html }),
-        });
-        if (resendResponse.ok) emailSent = true;
-        else emailError += ' | Resend: ' + await resendResponse.text();
+        emailError += ' | SMTP: ' + err.message;
       }
     }
     await base44.asServiceRole.entities.AuditLog.create({
