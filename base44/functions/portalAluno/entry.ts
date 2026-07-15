@@ -10,11 +10,13 @@ Deno.serve(async (req) => {
     const svc = base44.asServiceRole;
     const user = await base44.auth.me().catch(() => null);
     const { cpf } = await req.json().catch(() => ({}));
+    const accountList = user ? await svc.entities.AccessAccount.filter({ user_id: user.id }) : [];
+    const account = accountList.find((item) => item.access_type === 'aluno' && item.status === 'ativo');
     let student = null;
     let digits = '';
     let formatted = '';
-    if (user?.student_id) student = await svc.entities.Student.get(user.student_id).catch(() => null);
-    const authenticated = Boolean(student && user?.student_id === student.id);
+    if (account?.student_id) student = await svc.entities.Student.get(account.student_id).catch(() => null);
+    const authenticated = Boolean(student && account?.student_id === student.id);
     if (!student) {
       digits = String(cpf || '').replace(/\D/g, '');
       if (digits.length !== 11) return Response.json({ error: 'CPF inválido' }, { status: 400 });

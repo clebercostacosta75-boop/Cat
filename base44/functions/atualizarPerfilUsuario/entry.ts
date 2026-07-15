@@ -17,11 +17,12 @@ Deno.serve(async (req) => {
     if (!profile) return Response.json({ error: 'Perfil não encontrado' }, { status: 404 });
     const sameEmail = await base44.asServiceRole.entities.UserProfile.filter({ user_email: profile.user_email });
     if (sameEmail.length !== 1) return Response.json({ error: 'Perfil duplicado; reconcilie antes de alterar' }, { status: 409 });
-    await base44.asServiceRole.entities.UserProfile.update(profile.id, {
-      user_name: String(body.user_name || profile.user_name || '').slice(0, 150),
-      phone: String(body.phone || '').slice(0, 30),
-      role: body.role,
-    });
+    const nextName = String(body.user_name || profile.user_name || '').slice(0, 150);
+    const nextPhone = String(body.phone || '').slice(0, 30);
+    await base44.asServiceRole.entities.UserProfile.update(profile.id, { user_name: nextName, phone: nextPhone, role: body.role });
+    const accessAccounts = await base44.asServiceRole.entities.AccessAccount.filter({ user_profile_id: profile.id });
+    if (accessAccounts.length > 1) return Response.json({ error: 'Conta de acesso duplicada' }, { status: 409 });
+    if (accessAccounts[0]) await base44.asServiceRole.entities.AccessAccount.update(accessAccounts[0].id, { person_name: nextName, phone: nextPhone, profile: body.role });
     let targetUser = profile.user_id ? await base44.asServiceRole.entities.User.get(profile.user_id).catch(() => null) : null;
     if (!targetUser) {
       const users = await base44.asServiceRole.entities.User.filter({ email: profile.user_email });

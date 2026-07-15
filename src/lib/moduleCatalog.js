@@ -33,6 +33,7 @@ export const MODULE_CATALOG = [
   { module_id: "dossie_homologacao", name: "Dossiê de Homologação", route: "/DossieHomologacao", group: "Homologação", status: "active", aliases: ["DossieHomologacao"] },
   { module_id: "matriz_treinamentos", name: "Matriz de Treinamentos", route: "/MatrizTreinamentos", group: "Homologação", status: "active", aliases: ["MatrizTreinamentos"] },
   { module_id: "usuarios", name: "Usuários", route: "/Users", group: "Administração", status: "active", aliases: ["Users", "Usuarios"] },
+  { module_id: "gestao_acessos", name: "Gestão de Acessos", route: "/GestaoAcessos", group: "Administração", status: "active", aliases: ["GestaoAcessos"] },
   { module_id: "assistente_cadastros", name: "Assistente de Cadastros", route: "/AssistenteCadastros", group: "Administração", status: "active", aliases: ["AssistenteCadastros"] },
   { module_id: "log_auditoria", name: "Log de Auditoria", route: "/AuditLog", group: "Administração", status: "active", aliases: ["AuditLog"] },
   { module_id: "auditoria_completa", name: "Auditoria Completa", route: "/AuditoriaCompleta", group: "Administração", status: "active", aliases: ["AuditoriaCompleta"] },

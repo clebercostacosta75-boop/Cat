@@ -11,8 +11,10 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
     const body = await req.json().catch(() => ({}));
+    const accountList = user ? await base44.asServiceRole.entities.AccessAccount.filter({ user_id: user.id }) : [];
+    const account = accountList.find((item) => item.access_type === 'instrutor' && item.status === 'ativo');
     let instructor = null;
-    if (user?.instructor_id) instructor = await base44.asServiceRole.entities.Instructor.get(user.instructor_id).catch(() => null);
+    if (account?.instructor_id) instructor = await base44.asServiceRole.entities.Instructor.get(account.instructor_id).catch(() => null);
     if (!instructor) {
       const digits = String(body.cpf || '').replace(/\D/g, '');
       if (digits.length !== 11) return Response.json({ error: 'Identificação inválida' }, { status: 400 });
@@ -21,7 +23,7 @@ Deno.serve(async (req) => {
       instructor = candidates[0] || null;
     }
     if (!instructor) return Response.json({ error: 'Instrutor não encontrado' }, { status: 404 });
-    const authenticated = user?.role === 'admin' || user?.instructor_id === instructor.id;
+    const authenticated = user?.role === 'admin' || account?.instructor_id === instructor.id;
     if (body.action === 'save_report') {
       if (!authenticated) return Response.json({ error: 'Faça login pelo convite do instrutor para alterar a turma' }, { status: 403 });
       const classItem = await base44.asServiceRole.entities.ClassSchedule.get(body.class_id);

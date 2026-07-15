@@ -14,6 +14,9 @@ Deno.serve(async (req) => {
     if (!profile) return Response.json({ error: 'Perfil não encontrado' }, { status: 404 });
     if (profile.user_id === operator.id && body.status === 'blocked') return Response.json({ error: 'Não é permitido bloquear a própria conta' }, { status: 400 });
     await base44.asServiceRole.entities.UserProfile.update(profile.id, { status: body.status });
+    const accessAccounts = await base44.asServiceRole.entities.AccessAccount.filter({ user_profile_id: profile.id });
+    if (accessAccounts.length > 1) return Response.json({ error: 'Conta de acesso duplicada' }, { status: 409 });
+    if (accessAccounts[0]) await base44.asServiceRole.entities.AccessAccount.update(accessAccounts[0].id, { status: body.status === 'active' ? 'ativo' : 'bloqueado', last_status_changed_at: new Date().toISOString() });
     await base44.asServiceRole.entities.AuditLog.create({
       user_email: operator.email,
       user_name: operator.full_name || operator.email,

@@ -8,7 +8,9 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me().catch(() => null);
     const body = await req.json().catch(() => ({}));
     const digits = String(body.cnpj || '').replace(/\D/g, '');
-    const allowedIds = (user?.company_permissions || []).map((item) => item.company_id).filter(Boolean);
+    const accountList = user ? await base44.asServiceRole.entities.AccessAccount.filter({ user_id: user.id }) : [];
+    const account = accountList.find((item) => item.access_type === 'empresa' && item.status === 'ativo');
+    const allowedIds = account?.company_id ? [account.company_id] : [];
     let company = null;
     if (body.company_id && allowedIds.includes(body.company_id)) company = await base44.asServiceRole.entities.Company.get(body.company_id);
     if (!company && digits.length === 14) {

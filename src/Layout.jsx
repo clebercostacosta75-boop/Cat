@@ -40,6 +40,7 @@ const ALL_ITEMS = [
   { title: "Central de Comunicação", url: createPageUrl("CommunicationCenter"), icon: Mail, key: "Central de Comunicação" },
   { title: "Comunicação (Admin)", url: "/ComunicacaoAdmin", icon: Mail, key: "Comunicação" },
   { title: "Usuários", url: createPageUrl("Users"), icon: UserCog, key: "Usuários" },
+  { title: "Gestão de Acessos", url: "/GestaoAcessos", icon: Shield, key: "gestao_acessos" },
   { title: "Log de Auditoria", url: createPageUrl("AuditLog"), icon: FileText, key: "Log de Auditoria" },
   { title: "Auditoria Completa", url: "/AuditoriaCompleta", icon: FileText, key: "Auditoria Completa" },
   { title: "Log de Acesso", url: "/AccessLog", icon: FileText, key: "Log de Acesso" },

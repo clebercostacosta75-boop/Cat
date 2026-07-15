@@ -103,6 +103,7 @@ if (typeof window !== 'undefined' && base44?.auth?.logout && !base44.auth.__logo
       // logging nunca deve quebrar o logout
     }
     clearLocalAccessState();
+    cachedIp = null;
     return origLogout(...args);
   };
   base44.auth.__logoutWrapped = true;

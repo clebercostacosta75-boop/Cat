@@ -5,7 +5,7 @@ Deno.serve(async (req) => {
   let operator;
   let target;
   const at = new Date().toISOString();
-  const validIds = ['dashboard','cronograma','agenda_treinamentos','chamada_presencial','entrada_propostas','gestao_bmm','instrutores','empresas','contratadas','cursos','gestao_academica_individual','gestao_academica_empresas','gestao_contratos','dashboard_operacional','dashboard_financeiro','financeiro','prontuario_digital','documentos_alunos','certificacoes','alertas_vencimento','designer_certificados','assinaturas_digitais','auditoria_certificados','dashboard_comercial','central_comunicacao','relatorios','dashboard_admin','dashboard_master','dashboard_certificacao','dashboard_instrutor','homologacoes','dossie_homologacao','matriz_treinamentos','usuarios','assistente_cadastros','log_auditoria','auditoria_completa','log_acesso','backup_download','alertas_config','comunicacao_admin','diagnostico_acesso'];
+  const validIds = ['dashboard','cronograma','agenda_treinamentos','chamada_presencial','entrada_propostas','gestao_bmm','instrutores','empresas','contratadas','cursos','gestao_academica_individual','gestao_academica_empresas','gestao_contratos','dashboard_operacional','dashboard_financeiro','financeiro','prontuario_digital','documentos_alunos','certificacoes','alertas_vencimento','designer_certificados','assinaturas_digitais','auditoria_certificados','dashboard_comercial','central_comunicacao','relatorios','dashboard_admin','dashboard_master','dashboard_certificacao','dashboard_instrutor','homologacoes','dossie_homologacao','matriz_treinamentos','usuarios','assistente_cadastros','log_auditoria','auditoria_completa','log_acesso','backup_download','alertas_config','comunicacao_admin','diagnostico_acesso','gestao_acessos'];
   try {
     base44 = createClientFromRequest(req);
     operator = await base44.auth.me();
@@ -51,6 +51,9 @@ Deno.serve(async (req) => {
     const previous = Array.isArray(target.permissions) ? target.permissions : [];
     const next = [...new Set(permissions)];
     await base44.asServiceRole.entities.UserProfile.update(target.id, { permissions: next });
+    const accessAccounts = await base44.asServiceRole.entities.AccessAccount.filter({ user_profile_id: target.id });
+    if (accessAccounts.length > 1) return await auditRejected('duplicate_account', 'Conta de acesso duplicada', { profile_id });
+    if (accessAccounts[0]) await base44.asServiceRole.entities.AccessAccount.update(accessAccounts[0].id, { allowed_modules: next });
     if (targetUser) await base44.asServiceRole.entities.User.update(targetUser.id, {
       permissions: next,
       company_permissions: target.company_permissions || [],

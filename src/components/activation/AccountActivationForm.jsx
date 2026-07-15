@@ -16,7 +16,8 @@ export default function AccountActivationForm({ invite, busy, error, onCreate, o
     invite.account_exists ? onExisting(accepted) : onCreate({ email, newPassword: password, termsAccepted: accepted });
   };
   return <form onSubmit={submit} className="space-y-4">
-    <p className="text-sm text-gray-600">Crie sua senha para ativar seu acesso ao Portal CAT Cursos.</p>
+    <p className="text-sm text-gray-600">Olá, {invite.recipient_name}. Ative seu acesso ao Portal CAT Cursos.</p>
+    <div className="rounded-lg border bg-gray-50 p-3 text-sm text-gray-600"><p>Tipo: <strong>{invite.access_type?.replaceAll("_", " ")}</strong></p><p>Destino: <strong>{invite.portal}</strong></p>{invite.access_type === "usuario_cat" && <p>Módulos liberados: <strong>{invite.modules_count}</strong></p>}</div>
     <div><Label>Nome</Label><Input value={invite.recipient_name || ""} readOnly className="mt-1 bg-gray-50" /></div>
     <div><Label>Confirmar e-mail</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1" /></div>
     {!invite.account_exists && <><div><Label>Criar senha</Label><Input type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1" required /></div><div><Label>Confirmar senha</Label><Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="mt-1" required /></div></>}

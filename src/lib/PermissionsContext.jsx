@@ -19,57 +19,29 @@ export function PermissionsProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    setLoading(true);
-    setAccess(null);
-    setProfile(null);
-    setRole(null);
+    setLoading(true); setAccess(null); setProfile(null); setRole(null);
     try {
-      let user = null;
-      try { user = await base44.auth.me(); } catch { user = null; }
-      if (!user) {
-        setAccess(resolveAccess(null, null));
-        return;
-      }
-
+      const user = await base44.auth.me().catch(() => null);
+      if (!user) { setAccess(resolveAccess(null, null)); return; }
       const previousUserId = sessionStorage.getItem("cat_auth_user_id");
       if (previousUserId && previousUserId !== user.id) clearLocalAccessState();
       sessionStorage.setItem("cat_auth_user_id", user.id);
-
-      let foundProfile = null;
-      const byId = await base44.entities.UserProfile.filter({ user_id: user.id }, "-updated_date", 10);
-      if (byId.length > 1) {
-        foundProfile = { _access_error: "duplicate_profile" };
-      } else if (byId.length === 1) {
-        foundProfile = byId[0].user_email?.trim().toLowerCase() === user.email?.trim().toLowerCase()
-          ? byId[0]
-          : { _access_error: "profile_mismatch" };
-      } else {
-        let byEmail = await base44.entities.UserProfile.filter({ user_email: user.email.trim().toLowerCase() }, "-updated_date", 10);
-        if (byEmail.length > 1) {
-          foundProfile = { _access_error: "duplicate_profile" };
-        } else if (byEmail.length === 1 && byEmail[0].user_id && byEmail[0].user_id !== user.id) {
-          foundProfile = { _access_error: "profile_mismatch" };
-        } else if (byEmail.length === 1 && !byEmail[0].user_id) {
-          const response = await base44.functions.invoke("atualizarMeuPerfil", { action: "reconcile" });
-          if (response.data?.success) byEmail = await base44.entities.UserProfile.filter({ user_id: user.id }, "-updated_date", 10);
-          foundProfile = byEmail.length === 1 ? byEmail[0] : null;
-        } else if (byEmail.length === 0 && user.role === "admin") {
-          await base44.functions.invoke("atualizarMeuPerfil", { action: "reconcile" });
-          const created = await base44.entities.UserProfile.filter({ user_id: user.id }, "-updated_date", 10);
-          foundProfile = created.length === 1 ? created[0] : null;
-        }
+      let matches = await base44.entities.AccessAccount.filter({ user_id: user.id }, "-updated_date", 10);
+      if (!matches.length) matches = await base44.entities.AccessAccount.filter({ email: user.email.trim().toLowerCase() }, "-updated_date", 10);
+      const account = matches.length > 1 ? { _access_error: "duplicate_account" } : (matches[0] || null);
+      let legacyProfile = null;
+      if (account?.user_profile_id) legacyProfile = await base44.entities.UserProfile.get(account.user_profile_id).catch(() => null);
+      const resolved = resolveAccess(user, account);
+      if (!resolved.granted && !["account_unlinked", "no_access_account"].includes(resolved.reason)) logAccessDenied("access_denied", resolved.reasonMessage);
+      if (resolved.granted && !sessionStorage.getItem("cat_account_touched")) {
+        sessionStorage.setItem("cat_account_touched", "1");
+        base44.functions.invoke("registrarMinhaContaAcesso", {}).catch(() => sessionStorage.removeItem("cat_account_touched"));
       }
-
-      const resolved = resolveAccess(user, foundProfile);
-      if (["duplicate_profile", "profile_mismatch"].includes(resolved.reason)) logAccessDenied("access_denied", resolved.reasonMessage);
       setAccess(resolved);
-      setProfile(foundProfile);
-      setRole(foundProfile?.role || null);
-    } catch {
-      setAccess(resolveAccess(null, null));
-    } finally {
-      setLoading(false);
-    }
+      setProfile(legacyProfile ? { ...legacyProfile, role: account.profile, status: account.status === "ativo" ? "active" : "blocked", password_changed: true } : null);
+      setRole(account?.profile || null);
+    } catch { setAccess(resolveAccess(null, null)); }
+    finally { setLoading(false); }
   }, []);
 
   useEffect(() => {
@@ -79,11 +51,13 @@ export function PermissionsProvider({ children }) {
     window.addEventListener("permissions-updated", handler);
     const forceReloadHandler = () => load(true);
     window.addEventListener("permissions-force-reload", forceReloadHandler);
-    const unsubscribe = base44.entities.UserProfile.subscribe(() => load(false));
+    const unsubscribeAccount = base44.entities.AccessAccount.subscribe(() => load(false));
+    const unsubscribeProfile = base44.entities.UserProfile.subscribe(() => load(false));
     return () => {
       window.removeEventListener("permissions-updated", handler);
       window.removeEventListener("permissions-force-reload", forceReloadHandler);
-      unsubscribe();
+      unsubscribeAccount();
+      unsubscribeProfile();
     };
   }, [load, isLoadingAuth, isAuthenticated, authenticatedUser?.id]);
 
