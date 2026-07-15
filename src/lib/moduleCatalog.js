@@ -77,4 +77,65 @@ const MODULE_LOOKUP = new Map();
 MODULE_CATALOG.forEach(m => [m.module_id, m.name, m.route, ...m.aliases].forEach(k => MODULE_LOOKUP.set(k, m.module_id)));
 export const canonicalizeModule = key => typeof key === "string" ? (MODULE_LOOKUP.get(key.trim()) || null) : null;
 export const normalizePermissionIds = values => [...new Set((values || []).map(canonicalizeModule).filter(Boolean))];
+
+// Ponte entre o vocabulário de módulos (module_id, usado ao salvar permissões)
+// e as pageKeys em Título usadas por ProtectedRoute/Layout para liberar acesso.
+// Sem esse mapeamento, permissões salvas pelo painel nunca correspondem à
+// checagem de acesso e o usuário fica sem liberação mesmo com o módulo marcado.
+export const MODULE_ID_TO_PAGE_KEY = {
+  dashboard: "Dashboard",
+  cronograma: "Cronograma",
+  agenda_treinamentos: "Agenda de Treinamentos",
+  chamada_presencial: "Chamada Presencial",
+  entrada_propostas: "Entrada de Propostas",
+  gestao_bmm: "Gestão de BMM",
+  instrutores: "Instrutores",
+  empresas: "Empresas",
+  contratadas: "Contratadas",
+  cursos: "Cursos",
+  gestao_academica_individual: "Alunos Individuais (PF)",
+  gestao_contratos: "Gestão de Contratos",
+  dashboard_operacional: "Dashboard Operacional",
+  dashboard_financeiro: "Dashboard Financeiro",
+  financeiro: "Financeiro",
+  prontuario_digital: "ProntuarioDigital",
+  documentos_alunos: "GestaoDocumentosAluno",
+  certificacoes: "Certificações",
+  alertas_vencimento: "Alertas de Vencimento",
+  designer_certificados: "Designer de Certificados",
+  assinaturas_digitais: "Assinaturas Digitais",
+  auditoria_certificados: "Auditoria de Certificados",
+  dashboard_comercial: "Dashboard Comercial",
+  central_comunicacao: "Central de Comunicação",
+  relatorios: "Dashboard de Relatórios",
+  dashboard_admin: "Dashboard Admin",
+  dashboard_master: "DashboardMaster",
+  dashboard_certificacao: "DashboardCertificacao",
+  dashboard_instrutor: "DashboardInstrutor",
+  homologacoes: "Homologações",
+  dossie_homologacao: "DossieHomologacao",
+  matriz_treinamentos: "Matriz de Treinamentos",
+  usuarios: "Usuários",
+  assistente_cadastros: "Assistente de Cadastros",
+  log_auditoria: "Log de Auditoria",
+  auditoria_completa: "Auditoria Completa",
+  log_acesso: "Log de Acesso",
+  backup_download: "BackupDownload",
+  alertas_config: "AlertasConfig",
+};
+
+// Traduz o que estiver salvo em UserProfile.permissions (module_id novos,
+// pageKeys legados em Título, ou aliases) para as pageKeys reais que
+// ProtectedRoute/Layout usam para liberar acesso. Valores não reconhecidos
+// são mantidos como estão (não quebra nada que já funcionava).
+export const translatePermissionsToPageKeys = values => {
+  const out = new Set();
+  (values || []).forEach(v => {
+    if (!v) return;
+    const moduleId = canonicalizeModule(v);
+    const pageKey = moduleId && MODULE_ID_TO_PAGE_KEY[moduleId];
+    out.add(pageKey || v);
+  });
+  return [...out];
+};
 export const MODULE_GROUPS = [...new Set(MODULE_CATALOG.map(m => m.group))].map(group => ({ group, modules: MODULE_CATALOG.filter(m => m.group === group && m.status === "active") }));
