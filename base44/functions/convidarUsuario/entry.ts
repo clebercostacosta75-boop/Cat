@@ -56,16 +56,37 @@ Deno.serve(async (req) => {
 
     const smtpEmail = Deno.env.get('UOL_SMTP_EMAIL');
     const smtpPassword = Deno.env.get('UOL_SMTP_PASSWORD');
-    if (!smtpEmail || !smtpPassword) return Response.json({ error: 'Serviço de e-mail não configurado' }, { status: 500 });
-    const transporter = nodemailer.createTransport({ host: 'smtp.uol.com.br', port: 587, secure: false, auth: { user: smtpEmail, pass: smtpPassword } });
     const html = '<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#1f2937"><h2>Olá, ' + escapeHtml(account.person_name) + '.</h2><p>Seu acesso ao Portal CAT Cursos foi criado com o perfil <strong>' + escapeHtml(roleLabels[account.profile] || account.profile) + '</strong>.</p><p><strong>Tipo de acesso:</strong> ' + escapeHtml(labels[account.access_type] || account.access_type) + '</p><p>Para ativar sua conta, clique no botão abaixo e crie sua senha de acesso:</p><p style="margin:28px 0"><a href="' + activationUrl + '" style="background:#111827;color:#fff;padding:14px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Ativar minha conta</a></p><p style="font-size:12px;color:#6b7280">Este link é pessoal, válido por 72 horas e de uso único.</p><p>Após ativar sua conta, você terá acesso aos módulos liberados para seu perfil.</p><p>CAT Cursos</p></div>';
-    await transporter.sendMail({ from: 'CAT Cursos <' + smtpEmail + '>', to: normalize(account.email), subject: 'Ative seu acesso ao Portal CAT Cursos', html });
+    const subject = 'Ative seu acesso ao Portal CAT Cursos';
+    let emailSent = false;
+    let emailError = '';
+    if (smtpEmail && smtpPassword) {
+      try {
+        const transporter = nodemailer.createTransport({ host: 'smtp.uol.com.br', port: 587, secure: false, auth: { user: smtpEmail, pass: smtpPassword } });
+        await transporter.sendMail({ from: 'CAT Cursos <' + smtpEmail + '>', to: normalize(account.email), subject, html });
+        emailSent = true;
+      } catch (err) {
+        emailError = 'SMTP: ' + err.message;
+      }
+    }
+    if (!emailSent) {
+      const resendKey = Deno.env.get('RESEND_API_KEY');
+      if (resendKey) {
+        const resendResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + resendKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ from: 'CAT Cursos <onboarding@resend.dev>', to: [normalize(account.email)], subject, html }),
+        });
+        if (resendResponse.ok) emailSent = true;
+        else emailError += ' | Resend: ' + await resendResponse.text();
+      }
+    }
     await base44.asServiceRole.entities.AuditLog.create({
       user_email: operator.email, user_name: operator.full_name || operator.email, action: 'send_credentials',
       entity_type: 'AccessAccount', entity_id: account.id, entity_name: account.person_name,
-      details: JSON.stringify({ event, access_type: account.access_type, expires_at: expiresAt, modules: account.allowed_modules?.length || 0, account_existed_at_send: accountExists, at: now }),
+      details: JSON.stringify({ event, access_type: account.access_type, expires_at: expiresAt, modules: account.allowed_modules?.length || 0, account_existed_at_send: accountExists, email_sent: emailSent, email_error: emailError || undefined, at: now }),
     });
-    return Response.json({ success: true, activation_url: activationUrl, expires_at: expiresAt, message: 'Link de ativação enviado.' });
+    return Response.json({ success: true, email_sent: emailSent, email_error: emailError || undefined, activation_url: activationUrl, expires_at: expiresAt, message: emailSent ? 'Link de ativação enviado.' : 'Link gerado, mas o e-mail falhou. Envie o link manualmente.' });
   } catch (error) {
     return Response.json({ error: 'Erro ao enviar link de ativação', details: error.message }, { status: 500 });
   }
