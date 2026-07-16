@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Award, PenLine, Shield, Palette, Users, ClipboardList, LayoutDashboard } from "lucide-react";
+import { Award, PenLine, Shield, Palette, Users, ClipboardList, LayoutDashboard, Building2, User } from "lucide-react";
 
 import CertificacoesDashboard from "@/components/certificates/CertificacoesDashboard";
 import Certificates from "./Certificates";
@@ -45,6 +45,12 @@ export default function Certificacoes() {
           <TabsTrigger value="controle" className="flex items-center gap-1.5 text-xs">
             <ClipboardList className="w-3.5 h-3.5" /> Fila de Certificação
           </TabsTrigger>
+          <TabsTrigger value="controle-pj" className="flex items-center gap-1.5 text-xs">
+            <Building2 className="w-3.5 h-3.5" /> Empresas (PJ)
+          </TabsTrigger>
+          <TabsTrigger value="controle-pf" className="flex items-center gap-1.5 text-xs">
+            <User className="w-3.5 h-3.5" /> Individual (PF)
+          </TabsTrigger>
           <TabsTrigger value="assinaturas" className="flex items-center gap-1.5 text-xs">
             <PenLine className="w-3.5 h-3.5" /> Assinaturas Digitais
           </TabsTrigger>
@@ -60,6 +66,8 @@ export default function Certificacoes() {
         <TabsContent value="certificados" className="mt-4"><Certificates /></TabsContent>
         <TabsContent value="alunos" className="mt-4"><StudentListCertificacoes /></TabsContent>
         <TabsContent value="controle" className="mt-4"><CertificateControlPanel navTarget={navTarget} /></TabsContent>
+        <TabsContent value="controle-pj" className="mt-4"><CertificateControlPanel origemFixa="empresa" /></TabsContent>
+        <TabsContent value="controle-pf" className="mt-4"><CertificateControlPanel origemFixa="individual" /></TabsContent>
         <TabsContent value="assinaturas" className="mt-4"><DigitalSignatures /></TabsContent>
         <TabsContent value="auditoria" className="mt-4"><CertificateAuditPanel /></TabsContent>
         <TabsContent value="designer" className="mt-4"><CertDesigner /></TabsContent>

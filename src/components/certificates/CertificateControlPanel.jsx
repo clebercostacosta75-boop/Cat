@@ -23,7 +23,7 @@ import { executarCorrecaoOperacional } from "@/lib/correcaoOperacional";
 import GerarCertificadoWizard from "./GerarCertificadoWizard";
 import { gerarCodigoInternoControle } from "@/lib/certControl";
 import { classificarFila, verificarAptidao } from "@/lib/aptidaoCertificacao";
-import { categorizarFilaVisual, aplicarFiltrosFila } from "@/lib/filaVisual";
+import { categorizarFilaVisual, aplicarFiltrosFila, isIndividual } from "@/lib/filaVisual";
 import { registrarTentativaBloqueada } from "@/lib/validarEmissao";
 import FilaFiltros, { FILTROS_INICIAIS } from "./fila/FilaFiltros";
 import FilaAptosTab from "./fila/FilaAptosTab";
@@ -41,7 +41,7 @@ function generateCertCode() {
   return `CAT-${new Date().getFullYear()}-${code}`;
 }
 
-export default function CertificateControlPanel({ navTarget }) {
+export default function CertificateControlPanel({ navTarget, origemFixa }) {
   const [search, setSearch] = useState("");
   const [filaSub, setFilaSub] = useState("aptos");
   const [emitSub, setEmitSub] = useState("aguardando");
@@ -119,19 +119,31 @@ export default function CertificateControlPanel({ navTarget }) {
 
   const ctxMotor = { certModels, certificates, companies, solicitacoes: solicitacoesLib };
 
+  // Origem fixa (aba Empresas PJ / Individual PF) sobrepõe o filtro manual de origem
+  const filtrosEfetivos = origemFixa ? { ...filtros, origem: origemFixa } : filtros;
+
   // Classificação pelo motor central + categorização visual (SPR-2B-2, sem regra nova)
   const fila = classificarFila(enrollments, ctxMotor);
   const filaVis = categorizarFilaVisual(fila);
-  const aptosF = aplicarFiltrosFila(filaVis.aptos, filtros).sort((a, b) => {
+  const aptosF = aplicarFiltrosFila(filaVis.aptos, filtrosEfetivos).sort((a, b) => {
     const da = a.end_date ? new Date(a.end_date) : new Date(a.created_date);
     const db = b.end_date ? new Date(b.end_date) : new Date(b.created_date);
     return da - db;
   });
-  const acadF = aplicarFiltrosFila(filaVis.academicas, filtros);
-  const finF = aplicarFiltrosFila(filaVis.financeiras, filtros);
-  const bloqF = aplicarFiltrosFila(filaVis.bloqueados, filtros);
+  const acadF = aplicarFiltrosFila(filaVis.academicas, filtrosEfetivos);
+  const finF = aplicarFiltrosFila(filaVis.financeiras, filtrosEfetivos);
+  const bloqF = aplicarFiltrosFila(filaVis.bloqueados, filtrosEfetivos);
 
-  const awaitingAuth = enrollments.filter(e => e.status === "Aguardando Autorização");
+  const awaitingAuth = enrollments.filter(e =>
+    e.status === "Aguardando Autorização" &&
+    (!origemFixa || (origemFixa === "individual") === isIndividual(e))
+  );
+
+  // Certificados emitidos também respeitam a origem da aba
+  const isCertIndividual = (c) => !c.client_id || c.client_id === "individual" || c.client_name === "Individual (PF)";
+  const certificatesFiltrados = origemFixa
+    ? certificates.filter(c => (origemFixa === "individual") === isCertIndividual(c))
+    : certificates;
 
   // ── Auditoria (SPR-2B-2) ────────────────────────────────────────────────────
   const logCertAudit = async (action, cert, details) => {
@@ -506,6 +518,16 @@ export default function CertificateControlPanel({ navTarget }) {
   return (
     <div className="space-y-6">
 
+      {origemFixa && (
+        <div className={`border rounded-lg px-4 py-3 text-sm ${origemFixa === "individual" ? "bg-purple-50 border-purple-200 text-purple-800" : "bg-blue-50 border-blue-200 text-blue-800"}`}>
+          {origemFixa === "individual" ? (
+            <><strong>👤 Certificação Individual (PF)</strong> — vinculada à Gestão Acadêmica Individual. A emissão só é liberada com pagamento quitado (ou liberação manual do Gestor/Financeiro) e curso concluído com resultado Aprovado.</>
+          ) : (
+            <><strong>🏢 Certificação Empresas (PJ)</strong> — vinculada à Gestão Acadêmica Empresas. A emissão respeita o bloqueio financeiro da empresa, o contrato ativo e o resultado acadêmico Aprovado.</>
+          )}
+        </div>
+      )}
+
       {!canGenerate && (
         <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
           <Shield className="w-4 h-4 flex-shrink-0" />
@@ -569,7 +591,7 @@ export default function CertificateControlPanel({ navTarget }) {
           )}
         </div>
 
-        <FilaFiltros filtros={filtros} setFiltros={setFiltros} />
+        <FilaFiltros filtros={filtros} setFiltros={setFiltros} origemBloqueada={!!origemFixa} />
 
         {massaRelatorio && (
           <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 text-sm">
@@ -604,7 +626,7 @@ export default function CertificateControlPanel({ navTarget }) {
 
       {/* CERTIFICADOS EMITIDOS — sub-abas (SPR-2B-2) */}
       <EmitidosSubTabs
-        certificates={certificates}
+        certificates={certificatesFiltrados}
         loading={loadingCerts}
         canGenerate={canGenerate}
         search={search} setSearch={setSearch}
