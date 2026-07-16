@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import CertificatePreview from "@/components/certificates/CertificatePreview";
 import CourseSearchSelect, { extractDuration } from "@/components/certificates/CourseSearchSelect";
 import SmartModelTextDialog from "@/components/certificates/SmartModelTextDialog";
+import parseModelText from "@/components/certificates/parseModelText";
 import ModelReviewDialog from "@/components/certificates/ModelReviewDialog";
 import { COURSE_TYPES, REQUIRED_FIELDS_BY_TYPE, detectCourseType, parseValidityMonths } from "@/components/certificates/courseTypeFields";
 import { Badge } from "@/components/ui/badge";
@@ -104,6 +105,9 @@ export default function CertDesigner() {
           name: courseName,
           description: `Curso cadastrado automaticamente a partir do modelo de certificado "${courseName}".`,
           validity: modelData.validity_period_months ? `${modelData.validity_period_months} meses` : "",
+          conteudo_programatico: (modelData.programmatic_content || [])
+            .map(c => `${c.module}${c.hours ? ` – ${c.hours}` : ""}`)
+            .join("\n"),
         });
         toast.info(`✅ Curso "${courseName}" adicionado automaticamente ao catálogo.`);
       }
@@ -117,6 +121,10 @@ export default function CertDesigner() {
     mutationFn: (data) => {
       // Remove campos internos do banco antes de salvar (causavam rejeição na atualização)
       const { id, created_date, updated_date, created_by_id, created_by, ...payload } = data;
+      // Garante que o conteúdo programático salve limpo (sem módulos vazios)
+      payload.programmatic_content = (payload.programmatic_content || [])
+        .filter(c => (c.module || "").trim())
+        .map(c => ({ module: c.module.trim(), hours: (c.hours || "").trim() }));
       return selectedId
         ? base44.entities.CertificateModel.update(selectedId, payload)
         : base44.entities.CertificateModel.create(payload);
@@ -321,13 +329,20 @@ export default function CertDesigner() {
                         onSelect={(course) => {
                           const duration = extractDuration(course.name);
                           const months = parseValidityMonths(course.validity);
+                          // Preenche automaticamente o conteúdo programático a partir do curso do catálogo
+                          const raw = (course.conteudo_programatico || "").trim();
+                          const parsedContent = raw
+                            ? parseModelText(raw.includes("\n") ? `CONTEÚDO PROGRAMÁTICO:\n${raw}` : `CONTEÚDO PROGRAMÁTICO: ${raw}`).programmatic_content
+                            : [];
                           setForm(f => ({
                             ...f,
                             name: course.name,
                             course_type: detectCourseType(course.name),
                             ...(duration ? { duration } : {}),
                             ...(months ? { validity_period_months: months } : {}),
+                            ...(parsedContent.length ? { programmatic_content: parsedContent } : {}),
                           }));
+                          if (parsedContent.length) toast.success(`Conteúdo programático preenchido automaticamente (${parsedContent.length} módulos).`);
                         }}
                       />
                       <p className="text-xs text-gray-400">Busque digitando as iniciais ou o nome do curso — carga horária, validade e tipo são preenchidos automaticamente.</p>
