@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Users, UserPlus, BookOpen, DollarSign, Shield, Search, Edit, Trash2,
-  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, FileText, Copy, LayoutDashboard, Bell, PenLine, TrendingUp, Calendar, XCircle, ChevronRight, Lightbulb, Upload, Zap, BarChart3 as BarChartIcon, QrCode, Sparkles
+  CheckCircle, Clock, Lock, Unlock, AlertTriangle, Plus, MapPin, User, CreditCard, FileText, Copy, LayoutDashboard, Bell, PenLine, TrendingUp, Calendar, XCircle, ChevronRight, Lightbulb, Upload, Zap, BarChart3 as BarChartIcon
 } from "lucide-react";
 import { toast } from "sonner";
 import PagamentosAsaas from "@/components/alunos/PagamentosAsaas";
@@ -30,8 +30,6 @@ import FinanceiroOperacionalTab from "@/components/alunos/FinanceiroOperacionalT
 import { isMatriculaIndividual } from "@/lib/origemMatricula";
 import IndicadoresAtendenteTab from "@/components/vendas/IndicadoresAtendenteTab";
 import MatriculaRapidaModal from "@/components/vendas/MatriculaRapidaModal";
-import QRCodeInscricaoModal from "@/components/vendas/QRCodeInscricaoModal";
-import CadastroInteligenteDialog from "@/components/alunos/central/CadastroInteligenteDialog";
 import AcoesMatriculaModal from "@/components/alunos/AcoesMatriculaModal";
 import PagamentoMatriculaModal from "@/components/alunos/PagamentoMatriculaModal";
 import ComunicacoesMatricula from "@/components/comunicacao/ComunicacoesMatricula";
@@ -45,6 +43,9 @@ import FinanceiroStatusAlunos from "@/components/alunos/central/FinanceiroStatus
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import AcessoPortalTab from "@/components/alunos/AcessoPortalTab";
 import ContratosGeralTab from "@/components/alunos/ContratosGeralTab";
+import QRCodeInscricaoModal from "@/components/vendas/QRCodeInscricaoModal";
+import ReservasVagasPanel from "@/components/alunos/central/ReservasVagasPanel";
+import TrancarReativarModal from "@/components/alunos/central/TrancarReativarModal";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -410,7 +411,7 @@ function MatriculasCursos() {
   const [fichaEnrollment, setFichaEnrollment] = useState(null);
   const [cadastroOpen, setCadastroOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
-  const [inteligenteOpen, setInteligenteOpen] = useState(false);
+  const [trancarEnrollment, setTrancarEnrollment] = useState(null);
   const [subView, setSubView] = useState("lista");
 
   useEffect(() => {
@@ -574,7 +575,7 @@ function MatriculasCursos() {
         onClose={() => { setCadastroOpen(false); queryClient.invalidateQueries({ queryKey: ["students-pf"] }); }}
       />
 
-      {/* Matrícula Rápida (FASE 1 — Cursos à Venda) */}
+      {/* Matrícula Rápida */}
       <MatriculaRapidaModal
         open={rapidaOpen}
         onClose={() => setRapidaOpen(false)}
@@ -584,8 +585,14 @@ function MatriculasCursos() {
       {/* QR Code de Inscrição */}
       <QRCodeInscricaoModal open={qrOpen} onClose={() => setQrOpen(false)} />
 
-      {/* Cadastro Inteligente */}
-      <CadastroInteligenteDialog open={inteligenteOpen} onClose={() => setInteligenteOpen(false)} />
+      {/* Trancar / Reativar matrícula */}
+      {trancarEnrollment && (
+        <TrancarReativarModal
+          enrollment={trancarEnrollment}
+          onClose={() => setTrancarEnrollment(null)}
+          onDone={() => queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] })}
+        />
+      )}
 
       {/* Painel de contrato da matrícula selecionada */}
       {selectedEnrollmentForContract && (
@@ -635,9 +642,16 @@ function MatriculasCursos() {
         >
           📝 Pré-Cadastros
         </button>
+        <button
+          onClick={() => setSubView("reservas")}
+          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${subView === "reservas" ? "border-gray-900 text-gray-900" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+        >
+          🎟️ Reservas de Vagas
+        </button>
       </div>
 
       {subView === "precadastros" && <PreCadastrosTab />}
+      {subView === "reservas" && <ReservasVagasPanel />}
 
       {subView === "lista" && (<>
       {/* Barra de filtros + botão */}
@@ -653,15 +667,9 @@ function MatriculasCursos() {
               className="pl-10"
             />
           </div>
-          <div className="flex gap-2 flex-shrink-0 flex-wrap">
+          <div className="flex gap-2 flex-shrink-0">
             <Button variant="outline" onClick={() => setModelosOpen(true)} className="border-indigo-300 text-indigo-700 hover:bg-indigo-50">
               📝 Modelos de Mensagem
-            </Button>
-            <Button variant="outline" onClick={() => setQrOpen(true)} className="border-cyan-400 text-cyan-800 hover:bg-cyan-50">
-              <QrCode className="w-4 h-4 mr-2" /> QR Code de Inscrição
-            </Button>
-            <Button variant="outline" onClick={() => setInteligenteOpen(true)} className="border-violet-400 text-violet-800 hover:bg-violet-50">
-              <Sparkles className="w-4 h-4 mr-2" /> Cadastro Inteligente
             </Button>
             <Button variant="outline" onClick={() => setImportOpen(true)} className="border-emerald-400 text-emerald-800 hover:bg-emerald-50">
               <Upload className="w-4 h-4 mr-2" /> Importar Alunos por Planilha
@@ -669,8 +677,11 @@ function MatriculasCursos() {
             <Button variant="outline" onClick={() => setCadastroOpen(true)} className="border-gray-400">
               <UserPlus className="w-4 h-4 mr-2" /> Novo Aluno
             </Button>
+            <Button variant="outline" onClick={() => setQrOpen(true)} className="border-cyan-400 text-cyan-800 hover:bg-cyan-50">
+              📱 QR Code de Inscrição
+            </Button>
             <Button onClick={() => setRapidaOpen(true)} className="bg-amber-500 hover:bg-amber-600 text-white">
-              <Zap className="w-4 h-4 mr-2" /> Nova Inscrição Individual
+              <Zap className="w-4 h-4 mr-2" /> Matrícula Rápida
             </Button>
             <Button onClick={() => setModalOpen(true)} className="bg-gray-900 hover:bg-gray-800">
               <Plus className="w-4 h-4 mr-2" /> Nova Matrícula
@@ -844,6 +855,9 @@ function MatriculasCursos() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="text-xs">
+                          <DropdownMenuItem onClick={() => setTrancarEnrollment(e)}>
+                            {e.workflow_stage === "Suspended" ? "▶️ Reativar matrícula" : "⏸️ Trancar matrícula"}
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setAcoesEnrollment(e)}>🔁 Trocar / Transferir / Cancelar</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setSelectedEnrollmentForContract(e)}>📄 Contrato</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setPagamentoEnrollment(e)}>💳 Pagamento</DropdownMenuItem>
@@ -989,7 +1003,14 @@ const LEGACY_LABELS = {
 
 export default function GestaoAlunosIndividuais() {
   const [activeTab, setActiveTab] = useState("visaogeral");
+  const [pageUserRole, setPageUserRole] = useState(null);
   const { hasPermission, allowedKeys } = usePermissions();
+
+  useEffect(() => {
+    base44.auth.me().then(u => setPageUserRole(u?.role || "user")).catch(() => {});
+  }, []);
+  // Módulos legados: somente Admin / Gestor Master (área administrativa)
+  const isMasterAdmin = ["admin", "Administrador Master", "gestor_master"].includes(pageUserRole);
   // Verifica acesso ao módulo principal (chave nova ou legada)
   const moduleAccess =
     allowedKeys === null ||
@@ -1033,18 +1054,20 @@ export default function GestaoAlunosIndividuais() {
                 <span className="hidden sm:inline">Relatórios</span>
               </TabsTrigger>
             </TabsList>
-            <div className="flex justify-end">
-              <Select value={LEGACY_TABS.includes(activeTab) ? activeTab : ""} onValueChange={setActiveTab}>
-                <SelectTrigger className="w-72 h-8 text-xs text-gray-500 border-dashed">
-                  <SelectValue placeholder="🗂 Módulos legados (homologação/compatibilidade)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {LEGACY_TABS.map(t => (
-                    <SelectItem key={t} value={t} className="text-xs">{LEGACY_LABELS[t]}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {isMasterAdmin && (
+              <div className="flex justify-end">
+                <Select value={LEGACY_TABS.includes(activeTab) ? activeTab : ""} onValueChange={setActiveTab}>
+                  <SelectTrigger className="w-72 h-8 text-xs text-gray-500 border-dashed">
+                    <SelectValue placeholder="🗂 Módulos legados (área administrativa)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LEGACY_TABS.map(t => (
+                      <SelectItem key={t} value={t} className="text-xs">{LEGACY_LABELS[t]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <TabsContent value="visaogeral">{canAccessTab("visaogeral") ? <VisaoGeralCentral /> : <SecaoBloqueada nome="Visão Geral" />}</TabsContent>

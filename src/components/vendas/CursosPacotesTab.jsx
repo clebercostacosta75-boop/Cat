@@ -4,9 +4,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Package, BookOpen, Edit, Calendar, MapPin, Users } from "lucide-react";
+import { Plus, Package, BookOpen, Edit, Calendar, MapPin, Users, Sparkles } from "lucide-react";
 import OfertaFormModal from "./OfertaFormModal";
 import PacoteFormModal from "./PacoteFormModal";
+import CadastroInteligenteDialog from "@/components/alunos/central/CadastroInteligenteDialog";
 
 const STATUS_COLOR = {
   "Aberta": "bg-green-100 text-green-700",
@@ -37,6 +38,7 @@ export default function CursosPacotesTab() {
   const [editOferta, setEditOferta] = useState(null);
   const [pacoteModal, setPacoteModal] = useState(false);
   const [editPacote, setEditPacote] = useState(null);
+  const [inteligenteOpen, setInteligenteOpen] = useState(false);
 
   const { data: ofertas = [], isLoading: loadingOf } = useQuery({
     queryKey: ["course-offers"],
@@ -56,20 +58,24 @@ export default function CursosPacotesTab() {
     <div className="space-y-4">
       <OfertaFormModal open={ofertaModal} onClose={() => { setOfertaModal(false); setEditOferta(null); }} oferta={editOferta} onSaved={refresh} />
       <PacoteFormModal open={pacoteModal} onClose={() => { setPacoteModal(false); setEditPacote(null); }} pacote={editPacote} onSaved={refresh} />
+      <CadastroInteligenteDialog open={inteligenteOpen} onClose={() => setInteligenteOpen(false)} />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
           <button onClick={() => setSub("ofertas")} className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1.5 ${sub === "ofertas" ? "bg-white shadow-sm text-gray-900" : "text-gray-500"}`}>
-            <BookOpen className="w-4 h-4" /> Ofertas de Cursos ({ofertas.length})
+            <BookOpen className="w-4 h-4" /> Cursos e Ofertas ({ofertas.length})
           </button>
           <button onClick={() => setSub("pacotes")} className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1.5 ${sub === "pacotes" ? "bg-white shadow-sm text-gray-900" : "text-gray-500"}`}>
             <Package className="w-4 h-4" /> Pacotes ({pacotes.length})
           </button>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button onClick={() => setInteligenteOpen(true)} className="bg-violet-700 hover:bg-violet-800 text-white">
+            <Sparkles className="w-4 h-4 mr-1.5" /> Cadastro Inteligente
+          </Button>
           {sub === "ofertas" ? (
             <Button onClick={() => { setEditOferta(null); setOfertaModal(true); }} className="bg-gray-900 hover:bg-gray-800">
-              <Plus className="w-4 h-4 mr-1.5" /> Nova Oferta
+              <Plus className="w-4 h-4 mr-1.5" /> Novo Curso/Oferta
             </Button>
           ) : (
             <Button onClick={() => { setEditPacote(null); setPacoteModal(true); }} className="bg-gray-900 hover:bg-gray-800">
