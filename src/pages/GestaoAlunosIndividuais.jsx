@@ -973,9 +973,7 @@ const LEGACY_LABELS = {
 
 export default function GestaoAlunosIndividuais() {
   const [activeTab, setActiveTab] = useState("visaogeral");
-  const { hasPermission, allowedKeys, role } = usePermissions();
-  // Módulos legados visíveis apenas para Admin/Gestor Master
-  const isAdminArea = allowedKeys === null || ["admin", "gestor_master", "Administrador Master"].includes(role || "");
+  const { hasPermission, allowedKeys } = usePermissions();
   // Verifica acesso ao módulo principal (chave nova ou legada)
   const moduleAccess =
     allowedKeys === null ||
@@ -1019,20 +1017,18 @@ export default function GestaoAlunosIndividuais() {
                 <span className="hidden sm:inline">Relatórios</span>
               </TabsTrigger>
             </TabsList>
-            {isAdminArea && (
-              <div className="flex justify-end">
-                <Select value={LEGACY_TABS.includes(activeTab) ? activeTab : ""} onValueChange={setActiveTab}>
-                  <SelectTrigger className="w-72 h-8 text-xs text-gray-500 border-dashed">
-                    <SelectValue placeholder="🗂 Módulos legados (área administrativa)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LEGACY_TABS.map(t => (
-                      <SelectItem key={t} value={t} className="text-xs">{LEGACY_LABELS[t]}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            <div className="flex justify-end">
+              <Select value={LEGACY_TABS.includes(activeTab) ? activeTab : ""} onValueChange={setActiveTab}>
+                <SelectTrigger className="w-72 h-8 text-xs text-gray-500 border-dashed">
+                  <SelectValue placeholder="🗂 Módulos legados (homologação/compatibilidade)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LEGACY_TABS.map(t => (
+                    <SelectItem key={t} value={t} className="text-xs">{LEGACY_LABELS[t]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <TabsContent value="visaogeral">{canAccessTab("visaogeral") ? <VisaoGeralCentral /> : <SecaoBloqueada nome="Visão Geral" />}</TabsContent>
