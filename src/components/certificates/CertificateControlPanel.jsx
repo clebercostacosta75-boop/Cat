@@ -12,7 +12,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle2, Eye, Shield, FileSpreadsheet } from "lucide-react";
+import { CheckCircle2, Eye, Shield, FileSpreadsheet, Award } from "lucide-react";
 import { addDays } from "date-fns";
 import { toast } from "sonner";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -32,6 +32,7 @@ import FilaPendFinanceirasTab from "./fila/FilaPendFinanceirasTab";
 import FilaBloqueadosTab from "./fila/FilaBloqueadosTab";
 import EmitidosSubTabs from "./emitidos/EmitidosSubTabs";
 import ImportarAlunosPlanilha from "@/components/alunos/ImportarAlunosPlanilha";
+import EmitirCertificadoDialog from "./EmitirCertificadoDialog";
 
 const AUTHORIZED_ROLES = ["admin", "gestor_master", "Administrador Master", "Certificacao", "Certificação"];
 
@@ -61,6 +62,7 @@ export default function CertificateControlPanel({ navTarget, origemFixa }) {
   const [editSignDateValue, setEditSignDateValue] = useState("");
   const [generatingId, setGeneratingId] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [emitirOpen, setEmitirOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const { role } = usePermissions();
@@ -530,11 +532,18 @@ export default function CertificateControlPanel({ navTarget, origemFixa }) {
             )}
           </div>
           {canGenerate && (
-            <Button size="sm" variant="outline"
-              className={`text-xs whitespace-nowrap ${origemFixa === "individual" ? "border-purple-300 text-purple-700 hover:bg-purple-100" : "border-blue-300 text-blue-700 hover:bg-blue-100"}`}
-              onClick={() => setImportOpen(true)}>
-              <FileSpreadsheet className="w-3.5 h-3.5 mr-1" /> Importar Alunos por Planilha
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline"
+                className={`text-xs whitespace-nowrap ${origemFixa === "individual" ? "border-purple-300 text-purple-700 hover:bg-purple-100" : "border-blue-300 text-blue-700 hover:bg-blue-100"}`}
+                onClick={() => setEmitirOpen(true)}>
+                <Award className="w-3.5 h-3.5 mr-1" /> Emitir Certificado
+              </Button>
+              <Button size="sm" variant="outline"
+                className={`text-xs whitespace-nowrap ${origemFixa === "individual" ? "border-purple-300 text-purple-700 hover:bg-purple-100" : "border-blue-300 text-blue-700 hover:bg-blue-100"}`}
+                onClick={() => setImportOpen(true)}>
+                <FileSpreadsheet className="w-3.5 h-3.5 mr-1" /> Importar Alunos por Planilha
+              </Button>
+            </div>
           )}
         </div>
       )}
@@ -545,6 +554,19 @@ export default function CertificateControlPanel({ navTarget, origemFixa }) {
           onClose={() => setImportOpen(false)}
           origemFixa={origemFixa === "individual" ? "Comunidade" : "Empresa"}
           onImported={() => queryClient.invalidateQueries(["enrollments-control"])}
+        />
+      )}
+
+      {origemFixa && (
+        <EmitirCertificadoDialog
+          open={emitirOpen}
+          onClose={() => setEmitirOpen(false)}
+          origemFixa={origemFixa}
+          onSuccess={() => {
+            setEmitirOpen(false);
+            queryClient.invalidateQueries(["certificates-control"]);
+            queryClient.invalidateQueries(["enrollments-control"]);
+          }}
         />
       )}
 

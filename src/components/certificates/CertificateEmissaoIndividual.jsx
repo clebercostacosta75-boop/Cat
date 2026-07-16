@@ -29,12 +29,14 @@ function normStr(v) {
   return (v || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").trim();
 }
 
-export default function CertificateEmissaoIndividual({ onSuccess }) {
+export default function CertificateEmissaoIndividual({ onSuccess, origemFixa }) {
+  // origemFixa="individual": campo Cliente ocultado e fixado como Individual (PF)
+  const isPF = origemFixa === "individual";
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
-  const [clientId, setClientId] = useState("");
+  const [clientId, setClientId] = useState(isPF ? "individual" : "");
   const [modelId, setModelId] = useState("");
   const [sendWhatsApp, setSendWhatsApp] = useState(true);
 
@@ -229,7 +231,7 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
         valid_until: validUntil,
         location_and_date: form.location_and_date,
         client_id: clientId,
-        client_name: selectedCompany?.nome_fantasia || selectedCompany?.razao_social || "",
+        client_name: isPF ? "Individual (PF)" : (selectedCompany?.nome_fantasia || selectedCompany?.razao_social || ""),
         instructor_name: selectedModel?.instructor_name || "",
         technical_responsibles: selectedModel?.technical_responsibles || [],
         front_background_url: selectedModel?.front_background_url || "",
@@ -257,7 +259,7 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
         matricula_id: selectedEnrollment.id,
         codigo: code,
         curso: selectedModel?.name || "",
-        empresa: selectedCompany?.nome_fantasia || selectedCompany?.razao_social || "",
+        empresa: isPF ? "Individual (PF)" : (selectedCompany?.nome_fantasia || selectedCompany?.razao_social || ""),
         cpf: form.student_cpf,
         data_inicio: form.start_date,
         data_fim: form.end_date,
@@ -304,6 +306,13 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
     <div className="space-y-5">
 
       {/* 1. Cliente */}
+      {isPF && (
+        <div className="flex items-center gap-2 text-sm text-purple-800 bg-purple-50 border border-purple-200 rounded-lg px-4 py-3">
+          <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+          <span>Cliente fixado: <strong>Individual (PF)</strong> — certificado vinculado diretamente ao aluno.</span>
+        </div>
+      )}
+      {!isPF && (
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -359,6 +368,7 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* 2. Buscar Aluno */}
       <Card>
@@ -628,7 +638,7 @@ export default function CertificateEmissaoIndividual({ onSuccess }) {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
-              <div><span className="text-gray-500">Cliente:</span> <strong>{selectedCompany?.nome_fantasia || "—"}</strong></div>
+              <div><span className="text-gray-500">Cliente:</span> <strong>{isPF ? "Individual (PF)" : (selectedCompany?.nome_fantasia || "—")}</strong></div>
               <div><span className="text-gray-500">Modelo:</span> <strong>{selectedModel?.name || "—"}</strong></div>
               <div><span className="text-gray-500">Aluno:</span> <strong>{form.student_name || "—"}</strong></div>
               <div><span className="text-gray-500">CPF:</span> <strong>{form.student_cpf || "—"}</strong></div>
