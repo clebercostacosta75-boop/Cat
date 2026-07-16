@@ -1,7 +1,8 @@
 import React, { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Copy, Send, Loader2 } from "lucide-react";
+import { DollarSign, Copy, Send, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import OrigemBadge from "./OrigemBadge";
 import { maskCPF, isIndividual } from "@/lib/filaVisual";
@@ -15,6 +16,23 @@ const SOL_BADGE = {
 
 export default function FilaPendFinanceirasTab({ items, solicitacoes = [], onAtualizar }) {
   const [enviandoId, setEnviandoId] = useState(null);
+  const [verificando, setVerificando] = useState(false);
+  const queryClient = useQueryClient();
+
+  const verificarPagamentos = async () => {
+    setVerificando(true);
+    try {
+      const res = await base44.functions.invoke("monitorFinanceiroMatriculas", {});
+      const { verificadas = 0, atualizadas = 0 } = res.data || {};
+      queryClient.invalidateQueries(["enrollments-control"]);
+      onAtualizar?.();
+      toast.success(`Verificação concluída: ${verificadas} matrícula(s) verificada(s), ${atualizadas} atualizada(s).`);
+    } catch (err) {
+      toast.error("Erro na verificação: " + (err.response?.data?.error || err.message));
+    } finally {
+      setVerificando(false);
+    }
+  };
 
   const ultimaSol = (e) =>
     solicitacoes
@@ -71,9 +89,15 @@ export default function FilaPendFinanceirasTab({ items, solicitacoes = [], onAtu
   return (
     <div className="border rounded-lg overflow-hidden border-yellow-300">
       <div className="bg-yellow-50 border-b px-4 py-3">
-        <h2 className="font-semibold text-yellow-800 flex items-center gap-2 text-sm">
-          <DollarSign className="w-4 h-4" /> Pendências Financeiras ({items.length})
-        </h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-semibold text-yellow-800 flex items-center gap-2 text-sm">
+            <DollarSign className="w-4 h-4" /> Pendências Financeiras ({items.length})
+          </h2>
+          <Button size="sm" variant="outline" className="h-7 text-xs bg-white" disabled={verificando} onClick={verificarPagamentos}>
+            {verificando ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1" />}
+            Verificar pagamentos agora
+          </Button>
+        </div>
         <p className="text-xs text-yellow-700 mt-1">🔒 A liberação financeira é aprovada exclusivamente pelo <strong>Financeiro</strong> — aqui é possível apenas visualizar e encaminhar.</p>
       </div>
       {items.length === 0 ? (
