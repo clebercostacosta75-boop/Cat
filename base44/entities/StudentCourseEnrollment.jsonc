@@ -387,6 +387,15 @@
       "format": "date-time",
       "description": "Central de Matr\u00edcula: data/hora da \u00faltima pend\u00eancia"
     },
+    "import_batch_id": {
+      "type": "string",
+      "description": "Importa\u00e7\u00e3o por Planilha: ID do lote (ImportBatch) que criou esta matr\u00edcula (opcional, retrocompat\u00edvel)"
+    },
+    "import_archived": {
+      "type": "boolean",
+      "default": false,
+      "description": "Importa\u00e7\u00e3o por Planilha: registro arquivado em massa via lote (opcional, retrocompat\u00edvel)"
+    },
     "notes": {
       "type": "string",
       "description": "Observa\u00e7\u00f5es"

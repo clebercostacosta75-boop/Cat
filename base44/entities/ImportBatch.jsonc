@@ -1,0 +1,189 @@
+{
+  "name": "ImportBatch",
+  "type": "object",
+  "properties": {
+    "file_name": {
+      "type": "string",
+      "description": "Nome do arquivo importado"
+    },
+    "origem": {
+      "type": "string",
+      "enum": [
+        "Empresa",
+        "Comunidade"
+      ],
+      "description": "Origem das matr\u00edculas do lote"
+    },
+    "company_id": {
+      "type": "string"
+    },
+    "company_name": {
+      "type": "string"
+    },
+    "operador_email": {
+      "type": "string",
+      "description": "E-mail do operador que confirmou a importa\u00e7\u00e3o"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ativo",
+        "Arquivado",
+        "Desfeito"
+      ],
+      "default": "Ativo",
+      "description": "Situa\u00e7\u00e3o do lote"
+    },
+    "total_lidos": {
+      "type": "number",
+      "default": 0
+    },
+    "total_importados": {
+      "type": "number",
+      "default": 0,
+      "description": "Matr\u00edculas criadas"
+    },
+    "total_alunos_criados": {
+      "type": "number",
+      "default": 0
+    },
+    "total_alunos_atualizados": {
+      "type": "number",
+      "default": 0
+    },
+    "total_alertas": {
+      "type": "number",
+      "default": 0
+    },
+    "total_erros": {
+      "type": "number",
+      "default": 0
+    },
+    "total_duplicados": {
+      "type": "number",
+      "default": 0
+    },
+    "cursos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Cursos envolvidos no lote"
+    },
+    "arquivado_por": {
+      "type": "string"
+    },
+    "arquivado_em": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "desfeito_por": {
+      "type": "string"
+    },
+    "desfeito_em": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "observacao": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "file_name",
+    "origem"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "certificacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "atendimento"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "certificacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "atendimento"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "auditor"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "certificacao"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

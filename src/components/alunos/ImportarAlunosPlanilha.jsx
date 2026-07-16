@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, FileSpreadsheet, AlertTriangle, CheckCircle, XCircle, Loader2, Users, BookOpen, ArrowLeft } from "lucide-react";
+import { Upload, FileSpreadsheet, AlertTriangle, CheckCircle, XCircle, Loader2, Users, BookOpen, ArrowLeft, History, Link2 } from "lucide-react";
 import { toast } from "sonner";
+import HistoricoLotesImportacao from "@/components/alunos/HistoricoLotesImportacao";
+import ImportSheetPreviewCard from "@/components/alunos/ImportSheetPreviewCard";
 
 const ACTION_LABEL = {
   criar_aluno_e_matricula: { label: "Criar aluno + matrícula", cls: "bg-green-100 text-green-800" },
@@ -32,6 +34,10 @@ export default function ImportarAlunosPlanilha({ open, onClose, onImported, orig
   const [preview, setPreview] = useState(null);
   const [createClasses, setCreateClasses] = useState(true);
   const [result, setResult] = useState(null);
+  const [view, setView] = useState("import"); // import | history
+  const [courseOverrides, setCourseOverrides] = useState({}); // { [sheetName]: course }
+  const [modelSelections, setModelSelections] = useState({}); // { [sheetName]: modelId }
+  const [linkedModels, setLinkedModels] = useState({}); // { [sheetName]: modelName }
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-import"],
@@ -39,9 +45,28 @@ export default function ImportarAlunosPlanilha({ open, onClose, onImported, orig
     enabled: open && origem === "Empresa",
   });
 
+  const { data: allCourses = [] } = useQuery({
+    queryKey: ["courses-import"],
+    queryFn: () => base44.entities.Course.list("-name", 1000),
+    enabled: open,
+  });
+
+  const { data: certModels = [] } = useQuery({
+    queryKey: ["certmodels-import"],
+    queryFn: () => base44.entities.CertificateModel.list("-created_date", 200),
+    enabled: open,
+  });
+
+  // Curso efetivo da aba: identificado automaticamente ou selecionado manualmente
+  const effCourse = (sheet) => {
+    const ov = courseOverrides[sheet.sheet];
+    if (ov) return ov;
+    return sheet.course_id ? { id: sheet.course_id, name: sheet.course_name, certificate_model_id: sheet.certificate_model_id, certificate_model_name: sheet.certificate_model_name } : null;
+  };
+
   const selectedCompany = companies.find((c) => c.id === companyId);
 
-  const reset = () => { setStep(origemFixa === "Comunidade" ? 1 : 0); setOrigem(origemFixa || "Comunidade"); setCompanyId(""); setFileName(""); setPreview(null); setResult(null); setCreateClasses(true); };
+  const reset = () => { setStep(origemFixa === "Comunidade" ? 1 : 0); setOrigem(origemFixa || "Comunidade"); setCompanyId(""); setFileName(""); setPreview(null); setResult(null); setCreateClasses(true); setView("import"); setCourseOverrides({}); setModelSelections({}); setLinkedModels({}); };
   const handleClose = () => { reset(); onClose(); };
 
   const handleFile = async (e) => {
@@ -68,12 +93,50 @@ export default function ImportarAlunosPlanilha({ open, onClose, onImported, orig
     }
   };
 
+  const handleLinkModel = async (sheet) => {
+    const course = effCourse(sheet);
+    const modelId = modelSelections[sheet.sheet];
+    if (!course?.id || !modelId) return;
+    try {
+      const resp = await base44.functions.invoke("importarAlunosPlanilha", { action: "linkModel", course_id: course.id, model_id: modelId });
+      if (resp.data?.error) throw new Error(resp.data.error);
+      setLinkedModels((m) => ({ ...m, [sheet.sheet]: resp.data.model_name }));
+      toast.success(`Modelo "${resp.data.model_name}" vinculado ao curso.`);
+    } catch (e) {
+      toast.error("Erro ao vincular modelo: " + e.message);
+    }
+  };
+
+  // Reclassifica linhas "curso não cadastrado" quando o operador seleciona o curso manualmente
+  const effectiveAction = (r, sheet) => {
+    const course = effCourse(sheet);
+    if (r.action === "curso_inexistente" && course?.id && r.cpf_status === "valido" && !r.enrollment_exists) {
+      if (r.dup_in_sheet) return "ignorar_duplicado";
+      return r.student_exists ? (r.needs_update ? "atualizar_e_matricular" : "criar_matricula") : "criar_aluno_e_matricula";
+    }
+    return r.action;
+  };
+
+  const effectiveImportaveis = (preview?.sheets || []).reduce(
+    (acc, s) => acc + s.rows.filter((r) => IMPORTAVEIS.includes(effectiveAction(r, s))).length, 0
+  );
+
   const handleCommit = async () => {
     setLoading(true);
     try {
-      const rows = (preview?.sheets || []).flatMap((s) =>
-        s.rows.map((r) => ({ ...r, course_id: s.course_id, course_name: s.course_name, carga: s.carga, class_id: s.class_id }))
-      );
+      const rows = (preview?.sheets || []).flatMap((s) => {
+        const course = effCourse(s);
+        return s.rows.map((r) => ({
+          ...r,
+          action: effectiveAction(r, s),
+          course_id: course?.id || null,
+          course_name: course?.name || null,
+          carga: s.carga,
+          class_id: s.class_id,
+          certification_type: s.certification_type,
+          tipo_original: s.tipo_original,
+        }));
+      });
       const resp = await base44.functions.invoke("importarAlunosPlanilha", {
         action: "commit",
         rows,
@@ -95,19 +158,26 @@ export default function ImportarAlunosPlanilha({ open, onClose, onImported, orig
   };
 
   const summary = preview?.summary;
-  const cursosNaoEncontrados = (preview?.sheets || []).filter((s) => !s.course_found && s.rows.length > 0);
+  const cursosNaoEncontrados = (preview?.sheets || []).filter((s) => !effCourse(s) && s.rows.length > 0);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileSpreadsheet className="w-5 h-5 text-emerald-600" /> Importar Alunos por Planilha
+          <DialogTitle className="flex items-center justify-between gap-2 pr-6">
+            <span className="flex items-center gap-2"><FileSpreadsheet className="w-5 h-5 text-emerald-600" /> {view === "history" ? "Histórico de Lotes de Importação" : "Importar Alunos por Planilha"}</span>
+            {view === "import" && step <= 1 && (
+              <Button variant="outline" size="sm" className="text-xs font-normal" onClick={() => setView("history")}>
+                <History className="w-3.5 h-3.5 mr-1" /> Histórico de lotes
+              </Button>
+            )}
           </DialogTitle>
         </DialogHeader>
 
+        {view === "history" && <HistoricoLotesImportacao onBack={() => setView("import")} />}
+
         {/* ETAPA 0: Destino */}
-        {step === 0 && (
+        {view === "import" && step === 0 && (
           <div className="space-y-4">
             <p className="text-sm text-gray-600">Selecione o destino das matrículas. Os alunos importados entram como <strong>Aguardando Autorização</strong> — nenhum certificado é gerado automaticamente.</p>
             {!origemFixa ? (
@@ -145,7 +215,7 @@ export default function ImportarAlunosPlanilha({ open, onClose, onImported, orig
         )}
 
         {/* ETAPA 1: Upload */}
-        {step === 1 && (
+        {view === "import" && step === 1 && (
           <div className="space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
               📋 A planilha pode ter <strong>múltiplas abas</strong> (uma por curso/turma). O sistema identifica automaticamente: nome do curso, carga horária, período e colunas T_NOME / T_CPF / T_EMAIL / PERÍODO DO CURSO.
@@ -167,7 +237,7 @@ export default function ImportarAlunosPlanilha({ open, onClose, onImported, orig
         )}
 
         {/* ETAPA 2: Pré-visualização */}
-        {step === 2 && preview && (
+        {view === "import" && step === 2 && preview && (
           <div className="space-y-4">
             {/* Resumo */}
             <div className="grid grid-cols-4 gap-2 text-center">
@@ -190,51 +260,20 @@ export default function ImportarAlunosPlanilha({ open, onClose, onImported, orig
 
             {/* Abas */}
             {preview.sheets.filter((s) => s.rows.length > 0).map((sheet) => (
-              <div key={sheet.sheet} className="border rounded-lg overflow-hidden">
-                <div className={`px-3 py-2 text-xs flex flex-wrap items-center gap-x-4 gap-y-1 ${sheet.course_found ? "bg-emerald-50 border-b border-emerald-100" : "bg-orange-50 border-b border-orange-100"}`}>
-                  <span className="font-bold text-gray-800">📑 Aba: {sheet.sheet}</span>
-                  <span>Curso: <strong>{sheet.course_title}</strong> {sheet.course_found ? <Badge className="bg-emerald-100 text-emerald-800 ml-1">✓ {sheet.course_name}</Badge> : <Badge className="bg-orange-100 text-orange-700 ml-1">não cadastrado</Badge>}</span>
-                  {sheet.carga && <span>Carga: <strong>{sheet.carga}</strong></span>}
-                  <span>Turma: {sheet.class_found ? <Badge className="bg-blue-100 text-blue-700">existente</Badge> : <Badge variant="outline">será criada</Badge>}</span>
-                </div>
-                {sheet.warnings.length > 0 && (
-                  <div className="px-3 py-1.5 bg-yellow-50 border-b border-yellow-100">
-                    {sheet.warnings.map((w, i) => <p key={i} className="text-xs text-yellow-800">⚠ {w}</p>)}
-                  </div>
-                )}
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead className="bg-gray-50 text-gray-500">
-                      <tr>
-                        <th className="px-2 py-1.5 text-left">Aluno</th>
-                        <th className="px-2 py-1.5 text-left">CPF</th>
-                        <th className="px-2 py-1.5 text-left">E-mail</th>
-                        <th className="px-2 py-1.5 text-left">Período</th>
-                        <th className="px-2 py-1.5 text-left">Cadastro</th>
-                        <th className="px-2 py-1.5 text-left">Ação sugerida</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {sheet.rows.map((r, i) => (
-                        <tr key={i} className={r.action === "corrigir_erro" ? "bg-red-50" : IMPORTAVEIS.includes(r.action) ? "" : "opacity-60"}>
-                          <td className="px-2 py-1.5 font-medium">{r.name}</td>
-                          <td className="px-2 py-1.5 font-mono whitespace-nowrap">
-                            {r.cpf || "—"}{" "}
-                            {r.cpf_status === "valido" ? <CheckCircle className="w-3 h-3 text-green-600 inline" /> : <XCircle className="w-3 h-3 text-red-500 inline" />}
-                          </td>
-                          <td className="px-2 py-1.5">{r.email || <span className="text-yellow-600">⚠ ausente</span>}</td>
-                          <td className="px-2 py-1.5 whitespace-nowrap">
-                            {r.period_status === "ok" ? `${r.start_date} → ${r.end_date}` : <span className="text-yellow-600">⚠ pendente</span>}
-                            {r.period_inherited && <span className="text-gray-400 ml-1">(herdado)</span>}
-                          </td>
-                          <td className="px-2 py-1.5">{r.student_exists ? <Badge className="bg-blue-100 text-blue-700">já cadastrado</Badge> : <Badge variant="outline">novo</Badge>}</td>
-                          <td className="px-2 py-1.5"><Badge className={ACTION_LABEL[r.action]?.cls || "bg-gray-100"}>{ACTION_LABEL[r.action]?.label || r.action}</Badge></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              <ImportSheetPreviewCard
+                key={sheet.sheet}
+                sheet={sheet}
+                course={effCourse(sheet)}
+                isOverride={!!courseOverrides[sheet.sheet]}
+                allCourses={allCourses}
+                certModels={certModels}
+                linkedModelName={linkedModels[sheet.sheet]}
+                modelSelection={modelSelections[sheet.sheet] || ""}
+                onSelectModel={(v) => setModelSelections((m) => ({ ...m, [sheet.sheet]: v }))}
+                onLinkModel={() => handleLinkModel(sheet)}
+                onSelectCourse={(c) => setCourseOverrides((o) => ({ ...o, [sheet.sheet]: c }))}
+                getAction={(r) => effectiveAction(r, sheet)}
+              />
             ))}
 
             <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
@@ -248,15 +287,15 @@ export default function ImportarAlunosPlanilha({ open, onClose, onImported, orig
 
             <div className="flex justify-between gap-2 pt-2 border-t">
               <Button variant="outline" onClick={() => { setPreview(null); setStep(1); }} disabled={loading}><ArrowLeft className="w-4 h-4 mr-1" /> Enviar outro arquivo</Button>
-              <Button className="bg-emerald-700 hover:bg-emerald-800" disabled={loading || summary.importaveis === 0} onClick={handleCommit}>
-                {loading ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Importando...</> : <><CheckCircle className="w-4 h-4 mr-1" /> Confirmar importação ({summary.importaveis})</>}
+              <Button className="bg-emerald-700 hover:bg-emerald-800" disabled={loading || effectiveImportaveis === 0} onClick={handleCommit}>
+                {loading ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Importando...</> : <><CheckCircle className="w-4 h-4 mr-1" /> Confirmar importação ({effectiveImportaveis})</>}
               </Button>
             </div>
           </div>
         )}
 
         {/* ETAPA 3: Resultado */}
-        {step === 3 && result && (
+        {view === "import" && step === 3 && result && (
           <div className="space-y-4 text-center py-4">
             <CheckCircle className="w-12 h-12 text-emerald-600 mx-auto" />
             <p className="font-bold text-gray-900">Importação concluída!</p>
@@ -271,7 +310,7 @@ export default function ImportarAlunosPlanilha({ open, onClose, onImported, orig
                 {result.erros_detalhe.map((e, i) => <p key={i} className="text-xs text-red-600">• {e}</p>)}
               </div>
             )}
-            <p className="text-xs text-gray-500">A importação foi registrada no Log de Auditoria.</p>
+            <p className="text-xs text-gray-500">A importação foi registrada no Log de Auditoria.{result.batch_id ? ` Lote: ${result.batch_id} — consulte em "Histórico de lotes" para arquivar ou desfazer com segurança.` : ""}</p>
             <Button className="bg-gray-900 hover:bg-gray-800" onClick={handleClose}>Fechar</Button>
           </div>
         )}
