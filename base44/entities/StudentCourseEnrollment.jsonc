@@ -191,7 +191,7 @@
     },
     "oferta_id": {
       "type": "string",
-      "description": "FASE 1 Vendas: ID da oferta para comunidade (CourseOffer) que originou a matr\u00edcula"
+      "description": "FASE 1 Vendas: ID da oferta para comunidade (CourseOffer) que originou a matr\u00edcula (legado \u2014 mantido sincronizado com course_offer_id)"
     },
     "oferta_nome": {
       "type": "string",
@@ -298,6 +298,94 @@
     "observacao_financeira": {
       "type": "string",
       "description": "FASE 1 Vendas: observa\u00e7\u00e3o financeira da inscri\u00e7\u00e3o"
+    },
+    "workflow_stage": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "DocumentsPending",
+        "PaymentPending",
+        "ContractPending",
+        "Confirmed",
+        "InProgress",
+        "Completed",
+        "Cancelled",
+        "Transferred",
+        "Suspended",
+        "Refunded"
+      ],
+      "description": "Central de Matr\u00edcula: etapa operacional unificada do fluxo (novo \u2014 coexiste com status/status_matricula legados)"
+    },
+    "course_offer_id": {
+      "type": "string",
+      "description": "Central de Matr\u00edcula: ID da oferta (CourseOffer) \u2014 compat\u00edvel/sincronizado com oferta_id legado"
+    },
+    "seat_reservation_id": {
+      "type": "string",
+      "description": "Central de Matr\u00edcula: ID da reserva de vaga (SeatReservation) vinculada"
+    },
+    "discount_authorization_id": {
+      "type": "string",
+      "description": "Central de Matr\u00edcula: ID da autoriza\u00e7\u00e3o de desconto (DiscountAuthorization) aplicada"
+    },
+    "discount_code_snapshot": {
+      "type": "string",
+      "description": "Central de Matr\u00edcula: c\u00f3digo de desconto aplicado (snapshot imut\u00e1vel)"
+    },
+    "discount_percentage_snapshot": {
+      "type": "number",
+      "description": "Central de Matr\u00edcula: percentual de desconto aplicado (snapshot imut\u00e1vel)"
+    },
+    "discount_amount": {
+      "type": "number",
+      "description": "Central de Matr\u00edcula: valor descontado em R$ (snapshot)"
+    },
+    "final_amount": {
+      "type": "number",
+      "description": "Central de Matr\u00edcula: valor final ap\u00f3s desconto (snapshot)"
+    },
+    "contract_id": {
+      "type": "string",
+      "description": "Central de Matr\u00edcula: ID do contrato (Contract) vinculado"
+    },
+    "portal_access_account_id": {
+      "type": "string",
+      "description": "Central de Matr\u00edcula: ID da conta de acesso ao portal (AccessAccount) do aluno"
+    },
+    "cancellation_reason": {
+      "type": "string",
+      "description": "Central de Matr\u00edcula: justificativa do cancelamento"
+    },
+    "transfer_from_enrollment_id": {
+      "type": "string",
+      "description": "Central de Matr\u00edcula: ID da matr\u00edcula de origem (quando esta foi criada por transfer\u00eancia)"
+    },
+    "transfer_to_enrollment_id": {
+      "type": "string",
+      "description": "Central de Matr\u00edcula: ID da matr\u00edcula de destino (quando esta foi transferida)"
+    },
+    "transfer_reason": {
+      "type": "string",
+      "description": "Central de Matr\u00edcula: justificativa da transfer\u00eancia"
+    },
+    "suspended_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Central de Matr\u00edcula: data/hora da suspens\u00e3o"
+    },
+    "reactivated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Central de Matr\u00edcula: data/hora da reativa\u00e7\u00e3o"
+    },
+    "last_pending_reason": {
+      "type": "string",
+      "description": "Central de Matr\u00edcula: \u00faltima pend\u00eancia registrada"
+    },
+    "last_pending_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Central de Matr\u00edcula: data/hora da \u00faltima pend\u00eancia"
     },
     "notes": {
       "type": "string",

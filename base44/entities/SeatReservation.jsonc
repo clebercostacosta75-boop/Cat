@@ -1,0 +1,127 @@
+{
+  "name": "SeatReservation",
+  "type": "object",
+  "properties": {
+    "course_offer_id": {
+      "type": "string",
+      "description": "ID da oferta (CourseOffer) da vaga reservada"
+    },
+    "enrollment_id": {
+      "type": "string",
+      "description": "ID da matr\u00edcula vinculada (opcional)"
+    },
+    "pre_cadastro_id": {
+      "type": "string",
+      "description": "ID do pr\u00e9-cadastro vinculado (opcional)"
+    },
+    "student_id": {
+      "type": "string",
+      "description": "ID do aluno vinculado (opcional)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Reserved",
+        "Confirmed",
+        "Expired",
+        "Released",
+        "Cancelled"
+      ],
+      "default": "Reserved",
+      "description": "Status da reserva de vaga"
+    },
+    "reserved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da reserva"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora de expira\u00e7\u00e3o da reserva"
+    },
+    "confirmed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da confirma\u00e7\u00e3o"
+    },
+    "released_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da libera\u00e7\u00e3o/cancelamento"
+    },
+    "created_by_user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que criou a reserva"
+    },
+    "origin": {
+      "type": "string",
+      "description": "Origem da reserva (Manual, Matr\u00edcula, Pr\u00e9-cadastro, QR Code)"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "description": "Chave \u00fanica de idempot\u00eancia (evita reservas duplicadas)"
+    }
+  },
+  "required": [
+    "course_offer_id",
+    "status",
+    "reserved_at",
+    "idempotency_key"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.student_id": "{{user.student_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

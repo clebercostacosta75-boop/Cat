@@ -29,7 +29,16 @@
         "certificado_assinado",
         "acesso_liberado",
         "acesso_bloqueado",
-        "observacao"
+        "observacao",
+        "matricula_suspensa",
+        "matricula_reativada",
+        "matricula_cancelada",
+        "matricula_transferida",
+        "renegociacao",
+        "desconto_aplicado",
+        "vaga_reservada",
+        "vaga_liberada",
+        "pendencia_registrada"
       ],
       "description": "Tipo do evento"
     },

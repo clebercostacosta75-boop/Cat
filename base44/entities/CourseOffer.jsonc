@@ -37,7 +37,7 @@
     "vagas_preenchidas": {
       "type": "number",
       "default": 0,
-      "description": "Vagas j\u00e1 preenchidas"
+      "description": "Vagas j\u00e1 preenchidas (legado \u2014 mantido por compatibilidade; o c\u00e1lculo novo usa SeatReservation + matr\u00edculas)"
     },
     "data_inicio": {
       "type": "string",
@@ -76,7 +76,76 @@
         "Cancelada"
       ],
       "default": "Aberta",
-      "description": "Status da oferta"
+      "description": "Status da oferta (legado \u2014 mantido por compatibilidade)"
+    },
+    "publication_status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Review",
+        "Published",
+        "Paused",
+        "Closed",
+        "Cancelled"
+      ],
+      "default": "Draft",
+      "description": "Status de publica\u00e7\u00e3o da oferta (novo ciclo de vida)"
+    },
+    "installment_allowed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se permite parcelamento"
+    },
+    "max_installments": {
+      "type": "number",
+      "default": 1,
+      "description": "N\u00famero m\u00e1ximo de parcelas"
+    },
+    "minimum_down_payment": {
+      "type": "number",
+      "default": 0,
+      "description": "Valor m\u00ednimo de entrada"
+    },
+    "reservation_timeout_minutes": {
+      "type": "number",
+      "default": 60,
+      "description": "Minutos at\u00e9 a expira\u00e7\u00e3o autom\u00e1tica de uma reserva de vaga"
+    },
+    "cancellation_policy": {
+      "type": "string",
+      "description": "Pol\u00edtica de cancelamento da oferta"
+    },
+    "sales_description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o comercial/de venda da oferta"
+    },
+    "enrollment_instructions": {
+      "type": "string",
+      "description": "Instru\u00e7\u00f5es de matr\u00edcula para o aluno"
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da publica\u00e7\u00e3o"
+    },
+    "created_from_ai": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se a oferta foi criada a partir do Cadastro Inteligente (IA)"
+    },
+    "ai_source_text": {
+      "type": "string",
+      "description": "Texto original analisado pela IA"
+    },
+    "ai_review_status": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Revisado",
+        "Aprovado",
+        "Rejeitado"
+      ],
+      "description": "Status da revis\u00e3o humana da sugest\u00e3o da IA"
     },
     "observacoes": {
       "type": "string",

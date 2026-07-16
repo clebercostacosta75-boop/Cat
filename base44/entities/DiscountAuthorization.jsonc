@@ -1,0 +1,146 @@
+{
+  "name": "DiscountAuthorization",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "C\u00f3digo \u00fanico de autoriza\u00e7\u00e3o de desconto (ex: DESC-2026-XXXX)"
+    },
+    "percentage": {
+      "type": "number",
+      "enum": [
+        5,
+        10,
+        15,
+        20,
+        25,
+        30,
+        35,
+        40,
+        45,
+        50
+      ],
+      "description": "Percentual de desconto autorizado (valores permitidos: 5 a 50, de 5 em 5)"
+    },
+    "course_id": {
+      "type": "string",
+      "description": "ID do curso-base ao qual o desconto se aplica (opcional \u2014 vazio = qualquer curso)"
+    },
+    "course_offer_id": {
+      "type": "string",
+      "description": "ID da oferta (CourseOffer) \u00e0 qual o desconto se aplica (opcional)"
+    },
+    "valid_from": {
+      "type": "string",
+      "format": "date-time",
+      "description": "In\u00edcio da vig\u00eancia do c\u00f3digo"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Fim da vig\u00eancia do c\u00f3digo"
+    },
+    "max_uses": {
+      "type": "number",
+      "description": "Quantidade m\u00e1xima de utiliza\u00e7\u00f5es"
+    },
+    "used_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Quantidade de utiliza\u00e7\u00f5es j\u00e1 realizadas"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Active",
+        "Suspended",
+        "Expired",
+        "Exhausted",
+        "Revoked"
+      ],
+      "default": "Draft",
+      "description": "Status do c\u00f3digo de desconto"
+    },
+    "authorized_by_user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio (Financeiro/Admin/Gestor Master) que autorizou"
+    },
+    "authorized_by_email": {
+      "type": "string",
+      "description": "E-mail de quem autorizou"
+    },
+    "authorization_reason": {
+      "type": "string",
+      "description": "Justificativa da autoriza\u00e7\u00e3o do desconto"
+    },
+    "allowed_attendant_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs de atendentes autorizados a aplicar (opcional \u2014 vazio = qualquer atendente)"
+    }
+  },
+  "required": [
+    "code",
+    "percentage",
+    "valid_from",
+    "valid_until",
+    "max_uses",
+    "authorized_by_email",
+    "authorization_reason"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

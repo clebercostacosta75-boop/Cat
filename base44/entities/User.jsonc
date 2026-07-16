@@ -2,6 +2,28 @@
   "name": "User",
   "type": "object",
   "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "user",
+        "gestor_master",
+        "financeiro",
+        "coordenacao",
+        "atendimento",
+        "comercial",
+        "certificacao",
+        "instrutor",
+        "aluno",
+        "empresa",
+        "auditor",
+        "editor",
+        "cliente",
+        "personalizado"
+      ],
+      "default": "user",
+      "description": "Papel can\u00f4nico de acesso (espelhado de UserProfile.role para uso em RLS)"
+    },
     "custom_role": {
       "type": "string",
       "enum": [
