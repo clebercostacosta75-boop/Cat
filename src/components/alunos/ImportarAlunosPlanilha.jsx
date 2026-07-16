@@ -22,9 +22,10 @@ const ACTION_LABEL = {
 
 const IMPORTAVEIS = ["criar_aluno_e_matricula", "criar_matricula", "atualizar_e_matricular"];
 
-export default function ImportarAlunosPlanilha({ open, onClose, onImported }) {
-  const [step, setStep] = useState(0); // 0=destino, 1=upload, 2=preview, 3=resultado
-  const [origem, setOrigem] = useState("Comunidade");
+export default function ImportarAlunosPlanilha({ open, onClose, onImported, origemFixa }) {
+  // origemFixa ("Empresa" | "Comunidade"): trava a origem quando aberto de dentro das abas PJ/PF
+  const [step, setStep] = useState(origemFixa === "Comunidade" ? 1 : 0); // 0=destino, 1=upload, 2=preview, 3=resultado
+  const [origem, setOrigem] = useState(origemFixa || "Comunidade");
   const [companyId, setCompanyId] = useState("");
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,7 +41,7 @@ export default function ImportarAlunosPlanilha({ open, onClose, onImported }) {
 
   const selectedCompany = companies.find((c) => c.id === companyId);
 
-  const reset = () => { setStep(0); setOrigem("Comunidade"); setCompanyId(""); setFileName(""); setPreview(null); setResult(null); setCreateClasses(true); };
+  const reset = () => { setStep(origemFixa === "Comunidade" ? 1 : 0); setOrigem(origemFixa || "Comunidade"); setCompanyId(""); setFileName(""); setPreview(null); setResult(null); setCreateClasses(true); };
   const handleClose = () => { reset(); onClose(); };
 
   const handleFile = async (e) => {
@@ -109,16 +110,22 @@ export default function ImportarAlunosPlanilha({ open, onClose, onImported }) {
         {step === 0 && (
           <div className="space-y-4">
             <p className="text-sm text-gray-600">Selecione o destino das matrículas. Os alunos importados entram como <strong>Aguardando Autorização</strong> — nenhum certificado é gerado automaticamente.</p>
-            <div>
-              <Label>Origem da matrícula *</Label>
-              <div className="flex gap-2 mt-1">
-                {["Comunidade", "Empresa"].map((o) => (
-                  <Button key={o} variant={origem === o ? "default" : "outline"} className={origem === o ? "bg-gray-900" : ""} onClick={() => setOrigem(o)}>
-                    {o === "Comunidade" ? "👤 Comunidade (PF)" : "🏢 Empresa"}
-                  </Button>
-                ))}
+            {!origemFixa ? (
+              <div>
+                <Label>Origem da matrícula *</Label>
+                <div className="flex gap-2 mt-1">
+                  {["Comunidade", "Empresa"].map((o) => (
+                    <Button key={o} variant={origem === o ? "default" : "outline"} className={origem === o ? "bg-gray-900" : ""} onClick={() => setOrigem(o)}>
+                      {o === "Comunidade" ? "👤 Comunidade (PF)" : "🏢 Empresa"}
+                    </Button>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-sm text-blue-800">
+                🏢 Origem fixada: <strong>Empresa (PJ)</strong> — selecione abaixo a empresa vinculada.
+              </div>
+            )}
             {origem === "Empresa" && (
               <div>
                 <Label>Empresa *</Label>
@@ -151,9 +158,11 @@ export default function ImportarAlunosPlanilha({ open, onClose, onImported }) {
               )}
               <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFile} disabled={loading} />
             </label>
-            <div className="flex justify-start pt-2 border-t">
-              <Button variant="outline" onClick={() => setStep(0)} disabled={loading}><ArrowLeft className="w-4 h-4 mr-1" /> Voltar</Button>
-            </div>
+            {origemFixa !== "Comunidade" && (
+              <div className="flex justify-start pt-2 border-t">
+                <Button variant="outline" onClick={() => setStep(0)} disabled={loading}><ArrowLeft className="w-4 h-4 mr-1" /> Voltar</Button>
+              </div>
+            )}
           </div>
         )}
 

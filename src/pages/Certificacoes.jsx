@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Award, PenLine, Shield, Palette, Users, ClipboardList, LayoutDashboard, Building2, User } from "lucide-react";
+import { Award, PenLine, Shield, Palette, Users, LayoutDashboard, Building2, User } from "lucide-react";
 
 import CertificacoesDashboard from "@/components/certificates/CertificacoesDashboard";
 import Certificates from "./Certificates";
@@ -16,7 +16,8 @@ export default function Certificacoes() {
   const [navTarget, setNavTarget] = useState(null);
   const handleNavigate = (tab, target) => {
     if (target) setNavTarget({ ...target, ts: Date.now() });
-    setActiveTab(tab);
+    // Fila unificada: a antiga aba "controle" agora vive dentro de Empresas (PJ)
+    setActiveTab(tab === "controle" ? "controle-pj" : tab);
   };
 
   return (
@@ -42,9 +43,6 @@ export default function Certificacoes() {
           <TabsTrigger value="alunos" className="flex items-center gap-1.5 text-xs">
             <Users className="w-3.5 h-3.5" /> Cadastro de Alunos
           </TabsTrigger>
-          <TabsTrigger value="controle" className="flex items-center gap-1.5 text-xs">
-            <ClipboardList className="w-3.5 h-3.5" /> Fila de Certificação
-          </TabsTrigger>
           <TabsTrigger value="controle-pj" className="flex items-center gap-1.5 text-xs">
             <Building2 className="w-3.5 h-3.5" /> Empresas (PJ)
           </TabsTrigger>
@@ -65,9 +63,8 @@ export default function Certificacoes() {
         <TabsContent value="dashboard" className="mt-4"><CertificacoesDashboard onNavigate={handleNavigate} /></TabsContent>
         <TabsContent value="certificados" className="mt-4"><Certificates /></TabsContent>
         <TabsContent value="alunos" className="mt-4"><StudentListCertificacoes /></TabsContent>
-        <TabsContent value="controle" className="mt-4"><CertificateControlPanel navTarget={navTarget} /></TabsContent>
-        <TabsContent value="controle-pj" className="mt-4"><CertificateControlPanel origemFixa="empresa" /></TabsContent>
-        <TabsContent value="controle-pf" className="mt-4"><CertificateControlPanel origemFixa="individual" /></TabsContent>
+        <TabsContent value="controle-pj" className="mt-4"><CertificateControlPanel origemFixa="empresa" navTarget={navTarget} /></TabsContent>
+        <TabsContent value="controle-pf" className="mt-4"><CertificateControlPanel origemFixa="individual" navTarget={navTarget} /></TabsContent>
         <TabsContent value="assinaturas" className="mt-4"><DigitalSignatures /></TabsContent>
         <TabsContent value="auditoria" className="mt-4"><CertificateAuditPanel /></TabsContent>
         <TabsContent value="designer" className="mt-4"><CertDesigner /></TabsContent>

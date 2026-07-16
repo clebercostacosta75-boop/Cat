@@ -12,7 +12,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle2, Eye, Shield } from "lucide-react";
+import { CheckCircle2, Eye, Shield, FileSpreadsheet } from "lucide-react";
 import { addDays } from "date-fns";
 import { toast } from "sonner";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -31,6 +31,7 @@ import FilaPendAcademicasTab from "./fila/FilaPendAcademicasTab";
 import FilaPendFinanceirasTab from "./fila/FilaPendFinanceirasTab";
 import FilaBloqueadosTab from "./fila/FilaBloqueadosTab";
 import EmitidosSubTabs from "./emitidos/EmitidosSubTabs";
+import ImportarAlunosPlanilha from "@/components/alunos/ImportarAlunosPlanilha";
 
 const AUTHORIZED_ROLES = ["admin", "gestor_master", "Administrador Master", "Certificacao", "Certificação"];
 
@@ -59,6 +60,7 @@ export default function CertificateControlPanel({ navTarget, origemFixa }) {
   const [editSignDateTarget, setEditSignDateTarget] = useState(null);
   const [editSignDateValue, setEditSignDateValue] = useState("");
   const [generatingId, setGeneratingId] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const { role } = usePermissions();
@@ -519,13 +521,31 @@ export default function CertificateControlPanel({ navTarget, origemFixa }) {
     <div className="space-y-6">
 
       {origemFixa && (
-        <div className={`border rounded-lg px-4 py-3 text-sm ${origemFixa === "individual" ? "bg-purple-50 border-purple-200 text-purple-800" : "bg-blue-50 border-blue-200 text-blue-800"}`}>
-          {origemFixa === "individual" ? (
-            <><strong>👤 Certificação Individual (PF)</strong> — vinculada à Gestão Acadêmica Individual. A emissão só é liberada com pagamento quitado (ou liberação manual do Gestor/Financeiro) e curso concluído com resultado Aprovado.</>
-          ) : (
-            <><strong>🏢 Certificação Empresas (PJ)</strong> — vinculada à Gestão Acadêmica Empresas. A emissão respeita o bloqueio financeiro da empresa, o contrato ativo e o resultado acadêmico Aprovado.</>
+        <div className={`border rounded-lg px-4 py-3 text-sm flex flex-wrap items-center justify-between gap-3 ${origemFixa === "individual" ? "bg-purple-50 border-purple-200 text-purple-800" : "bg-blue-50 border-blue-200 text-blue-800"}`}>
+          <div className="flex-1 min-w-[260px]">
+            {origemFixa === "individual" ? (
+              <><strong>👤 Certificação Individual (PF)</strong> — vinculada à Gestão Acadêmica Individual. A emissão só é liberada com pagamento quitado (ou liberação manual do Gestor/Financeiro) e curso concluído com resultado Aprovado.</>
+            ) : (
+              <><strong>🏢 Certificação Empresas (PJ)</strong> — vinculada à Gestão Acadêmica Empresas. A emissão respeita o bloqueio financeiro da empresa, o contrato ativo e o resultado acadêmico Aprovado.</>
+            )}
+          </div>
+          {canGenerate && (
+            <Button size="sm" variant="outline"
+              className={`text-xs whitespace-nowrap ${origemFixa === "individual" ? "border-purple-300 text-purple-700 hover:bg-purple-100" : "border-blue-300 text-blue-700 hover:bg-blue-100"}`}
+              onClick={() => setImportOpen(true)}>
+              <FileSpreadsheet className="w-3.5 h-3.5 mr-1" /> Importar Alunos por Planilha
+            </Button>
           )}
         </div>
+      )}
+
+      {origemFixa && (
+        <ImportarAlunosPlanilha
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
+          origemFixa={origemFixa === "individual" ? "Comunidade" : "Empresa"}
+          onImported={() => queryClient.invalidateQueries(["enrollments-control"])}
+        />
       )}
 
       {!canGenerate && (
