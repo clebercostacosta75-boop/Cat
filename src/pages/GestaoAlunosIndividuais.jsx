@@ -24,12 +24,10 @@ import DashboardPF from "@/components/alunos/DashboardPF";
 import CadastroUnificado from "@/components/alunos/CadastroUnificado";
 import NovoCursoModal from "@/components/alunos/NovoCursoModal";
 import NovaMatriculaModal from "@/components/alunos/NovaMatriculaModal";
-import BaseConhecimentoTab from "@/components/alunos/BaseConhecimentoTab";
 import ImportarAlunosPlanilha from "@/components/alunos/ImportarAlunosPlanilha";
 import ResultadoAcademicoModal from "@/components/alunos/ResultadoAcademicoModal";
 import FinanceiroOperacionalTab from "@/components/alunos/FinanceiroOperacionalTab";
 import { isMatriculaIndividual } from "@/lib/origemMatricula";
-import CursosPacotesTab from "@/components/vendas/CursosPacotesTab";
 import IndicadoresAtendenteTab from "@/components/vendas/IndicadoresAtendenteTab";
 import MatriculaRapidaModal from "@/components/vendas/MatriculaRapidaModal";
 import AcoesMatriculaModal from "@/components/alunos/AcoesMatriculaModal";
@@ -38,6 +36,9 @@ import ComunicacoesMatricula from "@/components/comunicacao/ComunicacoesMatricul
 import ModelosMensagemModal from "@/components/comunicacao/ModelosMensagemModal";
 import PreCadastrosTab from "@/components/vendas/PreCadastrosTab";
 import RelatoriosGerenciaisTab from "@/components/relatorios/RelatoriosGerenciaisTab";
+import VisaoGeralCentral from "@/components/alunos/central/VisaoGeralCentral";
+import CursosVendaCentral from "@/components/alunos/central/CursosVendaCentral";
+import MatriculaFicha from "@/components/alunos/central/MatriculaFicha";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -226,336 +227,7 @@ function AlunoModal({ open, onClose, onSave, editingStudent }) {
   );
 }
 
-// ─── Modal de Nova Matrícula ──────────────────────────────────────────────────
-function MatriculaModal({ open, onClose, onSave, isPending }) {
-  const [form, setForm] = useState(EMPTY_ENROLLMENT);
-  const [studentSearch, setStudentSearch] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedStudentLabel, setSelectedStudentLabel] = useState("");
-  const [deepSearch, setDeepSearch] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState(null); // student to confirm
-  const searchRef = useRef(null);
-
-  const { data: allStudents = [] } = useQuery({
-    queryKey: ["students-pf"],
-    queryFn: () => base44.entities.Student.list("-created_date"),
-  });
-
-  const { data: allEnrollments = [] } = useQuery({
-    queryKey: ["all-enrollments"],
-    queryFn: () => base44.entities.StudentCourseEnrollment.list(),
-  });
-
-  const { data: courses = [], isLoading: loadingCourses } = useQuery({
-    queryKey: ["courses"],
-    queryFn: () => base44.entities.Course.list("-name", 200),
-    staleTime: 0,
-    gcTime: 0,
-  });
-
-  useEffect(() => {
-    if (open) {
-      setForm(EMPTY_ENROLLMENT);
-      setStudentSearch("");
-      setSelectedStudentLabel("");
-      setShowDropdown(false);
-      setDeepSearch(false);
-      setConfirmDialog(null);
-    }
-  }, [open]);
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (searchRef.current && !searchRef.current.contains(e.target)) setShowDropdown(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const norm = (v) => (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").trim();
-  const today = new Date().toISOString().split("T")[0];
-
-  // IDs de alunos que já têm matrícula
-  const enrolledStudentIds = new Set(allEnrollments.map(e => e.student_id));
-
-  // Alunos sem matrícula, priorizando cadastrados hoje
-  const studentsWithoutEnrollment = allStudents
-    .filter(s => !enrolledStudentIds.has(s.id))
-    .sort((a, b) => {
-      const aToday = (a.created_date || "").startsWith(today);
-      const bToday = (b.created_date || "").startsWith(today);
-      if (aToday && !bToday) return -1;
-      if (!aToday && bToday) return 1;
-      return (b.created_date || "").localeCompare(a.created_date || "");
-    });
-
-  const maskCpf = (cpf) => {
-    if (!cpf) return "";
-    const d = cpf.replace(/\D/g, "");
-    if (d.length === 11) return `${d.slice(0,3)}.${d.slice(3,6)}.***-**`;
-    return cpf;
-  };
-
-  const hasEnrollment = (studentId) => enrolledStudentIds.has(studentId);
-  const countEnrollments = (studentId) => allEnrollments.filter(e => e.student_id === studentId).length;
-
-  // Lista filtrada pelo campo de busca
-  const sourceList = deepSearch ? allStudents : studentsWithoutEnrollment;
-  const filteredStudents = studentSearch.length >= 3
-    ? sourceList
-        .filter(s => [s.full_name, s.cpf, s.email, s.whatsapp].some(f => norm(f).includes(norm(studentSearch))))
-        .sort((a, b) => (a.full_name || "").localeCompare(b.full_name || ""))
-    : deepSearch
-      ? [] // busca profunda exige digitar
-      : studentsWithoutEnrollment.slice(0, 20); // padrão: mostra até 20 sem matrícula
-
-  const doSelectStudent = (s) => {
-    setForm(f => ({ ...f, student_id: s.id, student_name: s.full_name, student_cpf: s.cpf, student_email: s.email || "", student_phone: s.whatsapp || "" }));
-    setSelectedStudentLabel(`${s.full_name} — ${maskCpf(s.cpf)}`);
-    setStudentSearch("");
-    setShowDropdown(false);
-    setConfirmDialog(null);
-  };
-
-  const handleSelectStudent = (s) => {
-    if (deepSearch && hasEnrollment(s.id)) {
-      setConfirmDialog(s);
-      setShowDropdown(false);
-    } else {
-      doSelectStudent(s);
-    }
-  };
-
-  const handleClearStudent = () => {
-    setForm(f => ({ ...f, student_id: "", student_name: "", student_cpf: "", student_email: "", student_phone: "" }));
-    setSelectedStudentLabel("");
-    setStudentSearch("");
-  };
-
-  const alreadyInCourse = !!(form.student_id && form.course_id &&
-    allEnrollments.some(e => e.student_id === form.student_id && e.course_id === form.course_id));
-
-  const handleCourseChange = (courseId) => {
-    const c = courses.find(c => c.id === courseId);
-    if (c) setForm(f => ({ ...f, course_id: c.id, course_name: c.name }));
-  };
-
-  const canSave = !!(form.student_id && form.course_id && form.start_date && form.end_date);
-
-  const showList = showDropdown || (!form.student_id && !deepSearch && studentSearch.length === 0);
-
-  return (
-    <>
-    {/* Diálogo de confirmação para aluno com matrícula anterior */}
-    {confirmDialog && (
-      <Dialog open={!!confirmDialog} onOpenChange={() => setConfirmDialog(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-yellow-500" /> Aluno com matrícula anterior</DialogTitle></DialogHeader>
-          <p className="text-sm text-gray-700 mt-1">
-            <strong>{confirmDialog.full_name}</strong> já possui {countEnrollments(confirmDialog.id)} matrícula(s) no sistema.
-            Deseja continuar com uma nova inscrição?
-          </p>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setConfirmDialog(null)}>Cancelar</Button>
-            <Button className="bg-gray-900 hover:bg-gray-800" onClick={() => doSelectStudent(confirmDialog)}>Continuar</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    )}
-
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Nova Matrícula Individual (PF)</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-
-          {/* Campo Aluno */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <Label>Aluno *</Label>
-              <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={deepSearch}
-                  onChange={e => { setDeepSearch(e.target.checked); setStudentSearch(""); setShowDropdown(false); }}
-                  className="w-3.5 h-3.5 accent-gray-800"
-                />
-                <span className="text-xs font-medium text-blue-700 flex items-center gap-1">
-                  <Search className="w-3 h-3" /> Busca Profunda
-                </span>
-              </label>
-            </div>
-
-            {form.student_id ? (
-              <div className="flex items-center gap-2 p-2.5 border border-gray-300 rounded-md bg-gray-50">
-                <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                <span className="flex-1 text-sm font-medium text-gray-800">{selectedStudentLabel}</span>
-                <button onClick={handleClearStudent} className="text-gray-400 hover:text-red-500 text-xs underline ml-1">Trocar</button>
-              </div>
-            ) : (
-              <div ref={searchRef} className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <Input
-                  className="pl-9"
-                  placeholder={deepSearch
-                    ? "Busca Profunda: digite nome, CPF, e-mail ou telefone..."
-                    : "Buscar aluno sem matrícula por nome, CPF, e-mail..."}
-                  value={studentSearch}
-                  onChange={e => { setStudentSearch(e.target.value); setShowDropdown(true); }}
-                  onFocus={() => setShowDropdown(true)}
-                  autoComplete="off"
-                />
-
-                {/* Dropdown de resultados */}
-                {showList && (
-                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                    {/* Cabeçalho do modo */}
-                    <div className={`px-3 py-1.5 text-xs font-semibold border-b ${deepSearch ? "bg-blue-50 text-blue-700" : "bg-gray-50 text-gray-500"}`}>
-                      {deepSearch
-                        ? `🔍 Busca Profunda — todos os alunos${studentSearch.length >= 3 ? "" : " (digite para buscar)"}`
-                        : `⚡ Alunos sem matrícula${studentSearch.length === 0 ? " — cadastros recentes" : ""}`}
-                    </div>
-
-                    {filteredStudents.length === 0 ? (
-                      <div className="p-3 text-sm text-gray-500 text-center">
-                        {studentSearch.length > 0 && studentSearch.length < 3
-                          ? `Digite mais ${3 - studentSearch.length} caractere(s) para buscar...`
-                          : deepSearch
-                            ? "Digite para buscar em todos os alunos"
-                            : "Nenhum aluno sem matrícula encontrado"}
-                      </div>
-                    ) : (
-                      filteredStudents.map(s => {
-                        const qty = countEnrollments(s.id);
-                        const hasAny = hasEnrollment(s.id);
-                        const isToday = (s.created_date || "").startsWith(today);
-                        return (
-                          <div
-                            key={s.id}
-                            className="flex items-start justify-between px-3 py-2.5 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
-                            onMouseDown={() => handleSelectStudent(s)}
-                          >
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-semibold text-gray-900 truncate">{s.full_name}</p>
-                                {isToday && <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium flex-shrink-0">Hoje</span>}
-                              </div>
-                              <p className="text-xs text-gray-500">CPF: {maskCpf(s.cpf)}{s.whatsapp ? ` • ${s.whatsapp}` : ""}</p>
-                              {deepSearch && (
-                                <p className={`text-xs mt-0.5 font-medium ${hasAny ? "text-orange-600" : "text-green-600"}`}>
-                                  {hasAny ? `⚠ Já possui ${qty} matrícula(s) anterior(es)` : "✓ Sem matrícula"}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {!deepSearch && !form.student_id && (
-              <p className="text-xs text-gray-400 mt-1">
-                Mostrando alunos <strong>sem matrícula</strong>. Para buscar todos, ative <strong>Busca Profunda</strong>.
-              </p>
-            )}
-          </div>
-
-          {/* Aviso: mesmo curso */}
-          {alreadyInCourse && (
-            <div className="flex items-start gap-2 p-2.5 bg-yellow-50 border border-yellow-300 rounded-md">
-              <AlertTriangle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-yellow-800">Este aluno já possui matrícula neste curso. Verifique se é uma renovação ou duplicidade.</p>
-            </div>
-          )}
-          <div>
-            <Label>Curso *</Label>
-            <Select value={form.course_id} onValueChange={handleCourseChange}>
-              <SelectTrigger>
-                <SelectValue placeholder={loadingCourses ? "Carregando cursos..." : courses.length === 0 ? "Nenhum curso cadastrado" : "Selecione o curso"} />
-              </SelectTrigger>
-              <SelectContent>
-                {courses.length === 0 && !loadingCourses && (
-                  <div className="px-3 py-2 text-sm text-gray-500">Nenhum curso encontrado. Cadastre cursos primeiro.</div>
-                )}
-                {courses.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Data Início *</Label>
-              <Input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} />
-            </div>
-            <div>
-              <Label>Data Fim *</Label>
-              <Input type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
-            </div>
-          </div>
-
-          <div className="border-t pt-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1"><CreditCard className="w-3 h-3" /> Pagamento</p>
-            <p className="text-xs text-gray-500 mb-3">O valor do curso será definido na geração do boleto/cobrança.</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Status Pagamento</Label>
-                <Select value={form.status_pagamento} onValueChange={v => setForm(f => ({ ...f, status_pagamento: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Pendente">Pendente</SelectItem>
-                    <SelectItem value="Pago">Pago</SelectItem>
-                    <SelectItem value="Parcialmente Pago">Parcialmente Pago</SelectItem>
-                    <SelectItem value="Inadimplente">Inadimplente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Forma de Pagamento</Label>
-                <Select value={form.forma_pagamento} onValueChange={v => setForm(f => ({ ...f, forma_pagamento: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="À Vista">À Vista</SelectItem>
-                    <SelectItem value="Parcelado 2x">Parcelado 2x</SelectItem>
-                    <SelectItem value="Parcelado 3x">Parcelado 3x</SelectItem>
-                    <SelectItem value="Parcelado 4x">Parcelado 4x</SelectItem>
-                    <SelectItem value="Parcelado 5x">Parcelado 5x</SelectItem>
-                    <SelectItem value="Parcelado 6x">Parcelado 6x</SelectItem>
-                    <SelectItem value="Boleto">Boleto</SelectItem>
-                    <SelectItem value="Pix">Pix</SelectItem>
-                    <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
-                    <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
-                    <SelectItem value="Transferência Bancária">Transferência Bancária</SelectItem>
-                    <SelectItem value="Dinheiro em Espécie">💵 Dinheiro em Espécie</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <Label>Observações</Label>
-            <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button
-              className="bg-gray-900 hover:bg-gray-800"
-              onClick={() => onSave(form)}
-              disabled={!canSave || isPending}
-            >
-              {isPending ? "Salvando..." : "Salvar"}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-      </Dialog>
-      </>
-      );
-      }
-
-      // ─── Aba: Cadastro de Alunos ─────────────────────────────────────────────────
+// ─── Aba: Cadastro de Alunos ─────────────────────────────────────────────────
 function AlunosCadastro() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
@@ -729,6 +401,8 @@ function MatriculasCursos() {
   const [pagamentoEnrollment, setPagamentoEnrollment] = useState(null);
   const [comunicacoesEnrollment, setComunicacoesEnrollment] = useState(null);
   const [modelosOpen, setModelosOpen] = useState(false);
+  const [fichaEnrollment, setFichaEnrollment] = useState(null);
+  const [cadastroOpen, setCadastroOpen] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
@@ -876,6 +550,21 @@ function MatriculasCursos() {
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] })}
       />
 
+      {/* Central de Matrícula: Ficha única */}
+      {fichaEnrollment && (
+        <MatriculaFicha
+          enrollment={fichaEnrollment}
+          onClose={() => setFichaEnrollment(null)}
+          onChanged={() => queryClient.invalidateQueries({ queryKey: ["enrollments-pf"] })}
+        />
+      )}
+
+      {/* Cadastro de aluno absorvido pela aba Matrículas */}
+      <CadastroUnificado
+        open={cadastroOpen}
+        onClose={() => { setCadastroOpen(false); queryClient.invalidateQueries({ queryKey: ["students-pf"] }); }}
+      />
+
       {/* Matrícula Rápida (FASE 1 — Cursos à Venda) */}
       <MatriculaRapidaModal
         open={rapidaOpen}
@@ -936,6 +625,9 @@ function MatriculasCursos() {
             </Button>
             <Button variant="outline" onClick={() => setImportOpen(true)} className="border-emerald-400 text-emerald-800 hover:bg-emerald-50">
               <Upload className="w-4 h-4 mr-2" /> Importar Alunos por Planilha
+            </Button>
+            <Button variant="outline" onClick={() => setCadastroOpen(true)} className="border-gray-400">
+              <UserPlus className="w-4 h-4 mr-2" /> Novo Aluno
             </Button>
             <Button onClick={() => setRapidaOpen(true)} className="bg-amber-500 hover:bg-amber-600 text-white">
               <Zap className="w-4 h-4 mr-2" /> Nova Inscrição Individual
@@ -1070,6 +762,15 @@ function MatriculasCursos() {
 
                     {/* Botões de ação */}
                     <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                      {/* Ficha única da matrícula */}
+                      <Button
+                        size="sm"
+                        className="text-xs h-7 bg-gray-900 hover:bg-gray-800 text-white w-full"
+                        onClick={() => setFichaEnrollment(e)}
+                      >
+                        📋 Ficha da Matrícula
+                      </Button>
+
                       {/* Ver Contrato */}
                       <Button
                         size="sm"
@@ -1564,8 +1265,21 @@ function SecaoBloqueada({ nome }) {
 }
 
 // ─── Página Principal ────────────────────────────────────────────────────────
+const LEGACY_TABS = ["dashboard", "cadastro", "acesso", "pagamentos", "gargalos", "pendencias", "contratos", "indicadores", "precadastros"];
+const LEGACY_LABELS = {
+  dashboard: "Dashboard PF (antigo)",
+  cadastro: "Cadastro de Alunos",
+  acesso: "Acesso ao Portal",
+  pagamentos: "Pagamentos Asaas",
+  gargalos: "Gargalos",
+  pendencias: "Pendências Financeiras",
+  contratos: "Contratos (lista antiga)",
+  indicadores: "Desempenho de Atendentes",
+  precadastros: "Pré-Cadastros",
+};
+
 export default function GestaoAlunosIndividuais() {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("visaogeral");
   const { hasPermission, allowedKeys } = usePermissions();
   // Verifica acesso ao módulo principal (chave nova ou legada)
   const moduleAccess =
@@ -1587,65 +1301,44 @@ export default function GestaoAlunosIndividuais() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-[repeat(14,minmax(0,1fr))] mb-6 bg-gray-100 p-1 h-auto">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-indigo-700 data-[state=active]:text-white py-3">
-              <LayoutDashboard className="w-4 h-4" />
-              <span className="hidden sm:inline">Dashboard</span>
-            </TabsTrigger>
-            <TabsTrigger value="cadastro" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
-              <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">Cadastro</span>
-            </TabsTrigger>
-            <TabsTrigger value="matriculas" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
-              <BookOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">Matrículas</span>
-            </TabsTrigger>
-            <TabsTrigger value="financeiro" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
-              <DollarSign className="w-4 h-4" />
-              <span className="hidden sm:inline">Financeiro</span>
-            </TabsTrigger>
-            <TabsTrigger value="acesso" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
-              <Shield className="w-4 h-4" />
-              <span className="hidden sm:inline">Acesso ao Portal</span>
-            </TabsTrigger>
-            <TabsTrigger value="pagamentos" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
-              <CreditCard className="w-4 h-4" />
-              <span className="hidden sm:inline">Pagamentos Asaas</span>
-            </TabsTrigger>
-            <TabsTrigger value="gargalos" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
-              <AlertTriangle className="w-4 h-4" />
-              <span className="hidden sm:inline">Gargalos</span>
-            </TabsTrigger>
-            <TabsTrigger value="pendencias" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
-              <Bell className="w-4 h-4" />
-              <span className="hidden sm:inline">Pendências</span>
-            </TabsTrigger>
-            <TabsTrigger value="conhecimento" className="flex items-center gap-2 data-[state=active]:bg-purple-700 data-[state=active]:text-white py-3">
-              <Lightbulb className="w-4 h-4" />
-              <span className="hidden sm:inline">Base Conhec.</span>
-            </TabsTrigger>
-            <TabsTrigger value="contratos" className="flex items-center gap-2 data-[state=active]:bg-blue-700 data-[state=active]:text-white py-3">
-              <PenLine className="w-4 h-4" />
-              <span className="hidden sm:inline">Contratos</span>
-            </TabsTrigger>
-            <TabsTrigger value="vendas" className="flex items-center gap-2 data-[state=active]:bg-emerald-700 data-[state=active]:text-white py-3">
-              <TrendingUp className="w-4 h-4" />
-              <span className="hidden sm:inline">Cursos à Venda</span>
-            </TabsTrigger>
-            <TabsTrigger value="indicadores" className="flex items-center gap-2 data-[state=active]:bg-amber-600 data-[state=active]:text-white py-3">
-              <BarChartIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">Desempenho</span>
-            </TabsTrigger>
-            <TabsTrigger value="precadastros" className="flex items-center gap-2 data-[state=active]:bg-cyan-700 data-[state=active]:text-white py-3">
-              <UserPlus className="w-4 h-4" />
-              <span className="hidden sm:inline">Pré-Cadastros</span>
-            </TabsTrigger>
-            <TabsTrigger value="relatorios" className="flex items-center gap-2 data-[state=active]:bg-teal-700 data-[state=active]:text-white py-3">
-              <BarChartIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">Relatórios</span>
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex flex-col gap-2 mb-6">
+            <TabsList className="grid w-full grid-cols-5 bg-gray-100 p-1 h-auto">
+              <TabsTrigger value="visaogeral" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
+                <LayoutDashboard className="w-4 h-4" />
+                <span className="hidden sm:inline">Visão Geral</span>
+              </TabsTrigger>
+              <TabsTrigger value="matriculas" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
+                <BookOpen className="w-4 h-4" />
+                <span className="hidden sm:inline">Matrículas</span>
+              </TabsTrigger>
+              <TabsTrigger value="vendas" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
+                <TrendingUp className="w-4 h-4" />
+                <span className="hidden sm:inline">Cursos à Venda</span>
+              </TabsTrigger>
+              <TabsTrigger value="financeiro" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
+                <DollarSign className="w-4 h-4" />
+                <span className="hidden sm:inline">Financeiro Operacional</span>
+              </TabsTrigger>
+              <TabsTrigger value="relatorios" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white py-3">
+                <BarChartIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Relatórios</span>
+              </TabsTrigger>
+            </TabsList>
+            <div className="flex justify-end">
+              <Select value={LEGACY_TABS.includes(activeTab) ? activeTab : ""} onValueChange={setActiveTab}>
+                <SelectTrigger className="w-72 h-8 text-xs text-gray-500 border-dashed">
+                  <SelectValue placeholder="🗂 Módulos legados (homologação/compatibilidade)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LEGACY_TABS.map(t => (
+                    <SelectItem key={t} value={t} className="text-xs">{LEGACY_LABELS[t]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
+          <TabsContent value="visaogeral">{canAccessTab("visaogeral") ? <VisaoGeralCentral /> : <SecaoBloqueada nome="Visão Geral" />}</TabsContent>
           <TabsContent value="dashboard">{canAccessTab("dashboard") ? <DashboardPF /> : <SecaoBloqueada nome="Dashboard" />}</TabsContent>
           <TabsContent value="cadastro">{canAccessTab("cadastro") ? <AlunosCadastro /> : <SecaoBloqueada nome="Cadastro" />}</TabsContent>
           <TabsContent value="matriculas">{canAccessTab("matriculas") ? <MatriculasCursos /> : <SecaoBloqueada nome="Matrículas" />}</TabsContent>
@@ -1654,9 +1347,8 @@ export default function GestaoAlunosIndividuais() {
           <TabsContent value="pagamentos">{canAccessTab("pagamentos") ? <PagamentosAsaas /> : <SecaoBloqueada nome="Pagamentos Asaas" />}</TabsContent>
           <TabsContent value="gargalos">{canAccessTab("gargalos") ? <GargalosDashboard /> : <SecaoBloqueada nome="Gargalos" />}</TabsContent>
           <TabsContent value="pendencias">{canAccessTab("pendencias") ? <PainelPendenciasFinanceiras /> : <SecaoBloqueada nome="Pendências" />}</TabsContent>
-          <TabsContent value="conhecimento">{canAccessTab("conhecimento") ? <BaseConhecimentoTab /> : <SecaoBloqueada nome="Base de Conhecimento" />}</TabsContent>
           <TabsContent value="contratos">{canAccessTab("contratos") ? <ContratosGeral /> : <SecaoBloqueada nome="Contratos" />}</TabsContent>
-          <TabsContent value="vendas">{canAccessTab("vendas") ? <CursosPacotesTab /> : <SecaoBloqueada nome="Cursos à Venda" />}</TabsContent>
+          <TabsContent value="vendas">{canAccessTab("vendas") ? <CursosVendaCentral /> : <SecaoBloqueada nome="Cursos à Venda" />}</TabsContent>
           <TabsContent value="indicadores">{canAccessTab("indicadores") ? <IndicadoresAtendenteTab /> : <SecaoBloqueada nome="Indicadores" />}</TabsContent>
           <TabsContent value="precadastros">{canAccessTab("precadastros") ? <PreCadastrosTab /> : <SecaoBloqueada nome="Pré-Cadastros" />}</TabsContent>
           <TabsContent value="relatorios">{canAccessTab("relatorios") ? <RelatoriosGerenciaisTab onNavigate={setActiveTab} /> : <SecaoBloqueada nome="Relatórios Gerenciais" />}</TabsContent>

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { User, MapPin, Shield, BookOpen, CheckCircle, ChevronRight, ChevronLeft, Loader2, Plus, Printer, Send, Mail, FileText, Receipt, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
+import { buscarAlunosPorCpf } from "@/lib/centralMatricula";
 
 const PIX_CNPJ = "07238084000145";
 const PIX_BENEFICIARIO = "V.S. NUNES CURSOS E TREINAMENTO LTDA";
@@ -43,6 +44,7 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
   const [successData, setSuccessData] = useState(null); // { student, enrollment, contractNumber, authCode, receiptHtml, receiptNumber }
   const [sendingWhatsApp, setSendingWhatsApp] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [cpfCheck, setCpfCheck] = useState(null); // { status: novo|existente|duplicidade, alunos }
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
   const setEnr = (field, value) => setEnrollment(f => ({ ...f, [field]: value }));
@@ -59,11 +61,25 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
       setForm(EMPTY_STUDENT);
       setEnrollment({ course_id: "", course_name: "", start_date: "", end_date: "", forma_pagamento: "", unit_value: "", status_pagamento: "Pendente", data_vencimento_pagamento: "", num_parcelas: 1 });
       setSuccessData(null);
+      setCpfCheck(null);
     }
   }, [open]);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 1 && (!form.full_name || !form.cpf)) { toast.error("Nome e CPF são obrigatórios"); return; }
+    if (step === 1) {
+      // Pesquisar antes de criar (CPF normalizado apenas para consulta e validação)
+      const check = await buscarAlunosPorCpf(form.cpf);
+      setCpfCheck(check);
+      if (check.status === "invalido") { toast.error("CPF inválido — informe os 11 dígitos."); return; }
+      if (check.status === "duplicidade") {
+        toast.error("Este CPF possui mais de um cadastro — duplicidade para análise. Criação bloqueada.");
+        return;
+      }
+      if (check.status === "existente") {
+        toast.info(`Aluno já cadastrado (${check.alunos[0].full_name}). O cadastro existente será reutilizado.`);
+      }
+    }
     if (step < 4) setStep(s => s + 1);
   };
 
@@ -77,8 +93,16 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
     if (!enrollment.course_id || !enrollment.start_date) { toast.error("Selecione o curso e a data de início"); return; }
     setSaving(true);
     try {
-      // 1. Salvar aluno
-      const student = await base44.entities.Student.create(form);
+      // 1. Pesquisar antes de criar: reutilizar aluno existente; bloquear duplicidade (nunca consolidar automaticamente)
+      const check = await buscarAlunosPorCpf(form.cpf);
+      if (check.status === "duplicidade") {
+        toast.error("Este CPF possui mais de um cadastro — duplicidade para análise. Criação bloqueada.");
+        setSaving(false);
+        return;
+      }
+      const student = check.status === "existente"
+        ? check.alunos[0]
+        : await base44.entities.Student.create(form);
 
       // 2. Criar matrícula
       // PIX manual NUNCA marca como Pago automaticamente
@@ -502,6 +526,16 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
               <div><Label>E-mail</Label><Input value={form.email} onChange={e => set("email", e.target.value)} /></div>
               <div><Label>WhatsApp</Label><Input value={form.whatsapp} onChange={e => set("whatsapp", e.target.value)} placeholder="(91) 99999-9999" /></div>
               <div className="sm:col-span-2"><Label>Observações</Label><Input value={form.notes} onChange={e => set("notes", e.target.value)} /></div>
+              {cpfCheck?.status === "existente" && (
+                <div className="sm:col-span-2 p-2.5 bg-blue-50 border border-blue-200 rounded-md text-xs text-blue-800">
+                  ℹ️ CPF já cadastrado para <strong>{cpfCheck.alunos[0].full_name}</strong>. O cadastro existente será <strong>reutilizado</strong> — nenhum aluno duplicado será criado.
+                </div>
+              )}
+              {cpfCheck?.status === "duplicidade" && (
+                <div className="sm:col-span-2 p-2.5 bg-red-50 border border-red-300 rounded-md text-xs text-red-800">
+                  🚫 <strong>Duplicidade para análise:</strong> este CPF possui {cpfCheck.alunos.length} cadastros ({cpfCheck.alunos.map(a => a.full_name).join(", ")}). A criação está bloqueada — resolva a duplicidade na Visão Geral antes de matricular.
+                </div>
+              )}
             </div>
           </div>
         )}
