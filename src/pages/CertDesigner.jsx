@@ -114,10 +114,13 @@ export default function CertDesigner() {
   };
 
   const saveMutation = useMutation({
-    mutationFn: (data) =>
-      selectedId
-        ? base44.entities.CertificateModel.update(selectedId, data)
-        : base44.entities.CertificateModel.create(data),
+    mutationFn: (data) => {
+      // Remove campos internos do banco antes de salvar (causavam rejeição na atualização)
+      const { id, created_date, updated_date, created_by_id, created_by, ...payload } = data;
+      return selectedId
+        ? base44.entities.CertificateModel.update(selectedId, payload)
+        : base44.entities.CertificateModel.create(payload);
+    },
     onSuccess: async (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ["certificateModels"] });
       toast.success("Modelo salvo com sucesso!");
@@ -134,7 +137,7 @@ export default function CertDesigner() {
         setForm(DEFAULT_MODEL);
       }
     },
-    onError: () => toast.error("Erro ao salvar modelo."),
+    onError: (err) => toast.error("Erro ao salvar modelo: " + (err?.response?.data?.detail || err?.message || "tente novamente.")),
   });
 
   const deleteMutation = useMutation({
