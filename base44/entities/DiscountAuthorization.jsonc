@@ -96,12 +96,17 @@
       "$or": [
         {
           "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
             "role": "admin"
           }
         },
         {
           "user_condition": {
-            "role": "gestor_master"
+            "role": "financeiro"
           }
         }
       ]
@@ -109,7 +114,9 @@
     "read": {
       "$or": [
         {
-          "created_by_id": "{{user.id}}"
+          "user_condition": {
+            "role": "gestor_master"
+          }
         },
         {
           "user_condition": {
@@ -118,7 +125,22 @@
         },
         {
           "user_condition": {
-            "role": "gestor_master"
+            "role": "financeiro"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "atendimento"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "auditor"
           }
         }
       ]
@@ -127,12 +149,17 @@
       "$or": [
         {
           "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
             "role": "admin"
           }
         },
         {
           "user_condition": {
-            "role": "gestor_master"
+            "role": "financeiro"
           }
         }
       ]
