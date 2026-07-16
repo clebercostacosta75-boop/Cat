@@ -4,11 +4,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Package, BookOpen, Edit, Zap, Calendar, MapPin, Users, QrCode } from "lucide-react";
+import { Plus, Package, BookOpen, Edit, Calendar, MapPin, Users } from "lucide-react";
 import OfertaFormModal from "./OfertaFormModal";
 import PacoteFormModal from "./PacoteFormModal";
-import MatriculaRapidaModal from "./MatriculaRapidaModal";
-import QRCodeInscricaoModal from "./QRCodeInscricaoModal";
 
 const STATUS_COLOR = {
   "Aberta": "bg-green-100 text-green-700",
@@ -39,8 +37,6 @@ export default function CursosPacotesTab() {
   const [editOferta, setEditOferta] = useState(null);
   const [pacoteModal, setPacoteModal] = useState(false);
   const [editPacote, setEditPacote] = useState(null);
-  const [rapidaOpen, setRapidaOpen] = useState(false);
-  const [qrOpen, setQrOpen] = useState(false);
 
   const { data: ofertas = [], isLoading: loadingOf } = useQuery({
     queryKey: ["course-offers"],
@@ -60,8 +56,6 @@ export default function CursosPacotesTab() {
     <div className="space-y-4">
       <OfertaFormModal open={ofertaModal} onClose={() => { setOfertaModal(false); setEditOferta(null); }} oferta={editOferta} onSaved={refresh} />
       <PacoteFormModal open={pacoteModal} onClose={() => { setPacoteModal(false); setEditPacote(null); }} pacote={editPacote} onSaved={refresh} />
-      <MatriculaRapidaModal open={rapidaOpen} onClose={() => setRapidaOpen(false)} onSuccess={refresh} />
-      <QRCodeInscricaoModal open={qrOpen} onClose={() => setQrOpen(false)} />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
@@ -73,12 +67,6 @@ export default function CursosPacotesTab() {
           </button>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setQrOpen(true)} variant="outline" className="border-cyan-400 text-cyan-800 hover:bg-cyan-50">
-            <QrCode className="w-4 h-4 mr-1.5" /> QR Code de Inscrição
-          </Button>
-          <Button onClick={() => setRapidaOpen(true)} className="bg-amber-500 hover:bg-amber-600 text-white">
-            <Zap className="w-4 h-4 mr-1.5" /> Matrícula Rápida
-          </Button>
           {sub === "ofertas" ? (
             <Button onClick={() => { setEditOferta(null); setOfertaModal(true); }} className="bg-gray-900 hover:bg-gray-800">
               <Plus className="w-4 h-4 mr-1.5" /> Nova Oferta
