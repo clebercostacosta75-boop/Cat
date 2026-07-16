@@ -67,5 +67,83 @@
     "student_id",
     "event_type",
     "title"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "atendimento"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "financeiro"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.student_id": "{{user.student_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "atendimento"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "financeiro"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "auditor"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }

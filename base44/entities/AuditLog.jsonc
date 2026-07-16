@@ -61,5 +61,70 @@
   "required": [
     "user_email",
     "action"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "atendimento"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "financeiro"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "auditor"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "auditor"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }
