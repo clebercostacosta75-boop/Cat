@@ -11,7 +11,7 @@ import { QrCode, Copy, Download, User } from "lucide-react";
 import { toast } from "sonner";
 import { logVenda } from "@/lib/auditVendas";
 
-export default function QRCodeInscricaoModal({ open, onClose }) {
+export default function QRCodeInscricaoModal({ open, onClose, presetOferta }) {
   const [tipo, setTipo] = useState("geral"); // geral | oferta | pacote
   const [ofertaId, setOfertaId] = useState("");
   const [pacoteId, setPacoteId] = useState("");
@@ -26,7 +26,9 @@ export default function QRCodeInscricaoModal({ open, onClose }) {
 
   useEffect(() => {
     if (open) {
-      setTipo("geral"); setOfertaId(""); setPacoteId(""); setGerado(false); setComAtendente(false);
+      setTipo(presetOferta ? "oferta" : "geral");
+      setOfertaId(presetOferta?.id || "");
+      setPacoteId(""); setGerado(false); setComAtendente(false);
       base44.auth.me().then(u => { setAtendenteNome(u?.full_name || u?.email || ""); setAtendenteId(u?.id || ""); }).catch(() => {});
     }
   }, [open]);

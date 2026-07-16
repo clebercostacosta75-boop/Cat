@@ -7,6 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { derivarEtapa, WORKFLOW_STAGES, WORKFLOW_STAGE_COLORS } from "@/lib/centralMatricula";
 import ContratoAssinaturaTab from "@/components/contratos/ContratoAssinaturaTab";
 import FichaAcoes from "@/components/alunos/central/FichaAcoes";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
+import TrancarMatriculaModal from "@/components/alunos/central/TrancarMatriculaModal";
+import ReativarMatriculaModal from "@/components/alunos/central/ReativarMatriculaModal";
+import TransferirMatriculaModal from "@/components/alunos/central/TransferirMatriculaModal";
+import CancelarMatriculaModal from "@/components/alunos/central/CancelarMatriculaModal";
 
 const safe = (fn) => async () => { try { return (await fn()) || []; } catch { return []; } };
 const money = (v) => v || v === 0 ? `R$ ${Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—";
@@ -22,6 +29,7 @@ function Info({ label, value }) {
 
 export default function MatriculaFicha({ enrollment: initial, onClose, onChanged }) {
   const [tab, setTab] = useState("resumo");
+  const [acaoModal, setAcaoModal] = useState(null); // trancar | reativar | transferir | cancelar
 
   // Recarrega a matrícula para refletir alterações feitas na própria ficha
   const { data: enrollList = [], refetch } = useQuery({
@@ -77,15 +85,52 @@ export default function MatriculaFicha({ enrollment: initial, onClose, onChanged
 
   const desconto = enrollment.discount_percentage_snapshot || null;
 
+  const recarregar = () => { refetch(); onChanged && onChanged(); };
+  const encerrada = ["Cancelled", "Transferred"].includes(etapa);
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-3 flex-wrap">
+          <DialogTitle className="flex items-center gap-3 flex-wrap pr-8">
             📋 Ficha da Matrícula — {enrollment.student_name}
             <Badge className={WORKFLOW_STAGE_COLORS[etapa]}>{WORKFLOW_STAGES[etapa]}</Badge>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" className="ml-auto text-xs h-8">
+                  Ações da matrícula <ChevronDown className="w-3.5 h-3.5 ml-1.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {!encerrada && etapa !== "Suspended" && (
+                  <DropdownMenuItem onClick={() => setAcaoModal("trancar")}>⏸️ Trancar matrícula</DropdownMenuItem>
+                )}
+                {etapa === "Suspended" && (
+                  <DropdownMenuItem onClick={() => setAcaoModal("reativar")}>▶️ Reativar matrícula</DropdownMenuItem>
+                )}
+                {!encerrada && (
+                  <DropdownMenuItem onClick={() => setAcaoModal("transferir")}>↪️ Transferir para outro aluno</DropdownMenuItem>
+                )}
+                {!encerrada && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-red-600 focus:text-red-700" onClick={() => setAcaoModal("cancelar")}>
+                      ❌ Cancelar matrícula
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {encerrada && (
+                  <DropdownMenuItem disabled>Matrícula {WORKFLOW_STAGES[etapa].toLowerCase()} — sem ações</DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </DialogTitle>
         </DialogHeader>
+
+        {acaoModal === "trancar" && <TrancarMatriculaModal enrollment={enrollment} onClose={() => setAcaoModal(null)} onDone={recarregar} />}
+        {acaoModal === "reativar" && <ReativarMatriculaModal enrollment={enrollment} onClose={() => setAcaoModal(null)} onDone={recarregar} />}
+        {acaoModal === "transferir" && <TransferirMatriculaModal enrollment={enrollment} onClose={() => setAcaoModal(null)} onDone={recarregar} />}
+        {acaoModal === "cancelar" && <CancelarMatriculaModal enrollment={enrollment} onClose={() => setAcaoModal(null)} onDone={recarregar} />}
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="flex flex-wrap h-auto gap-1 mb-3">
