@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { History, Loader2 } from "lucide-react";
 import PagamentoCobrancaAcoes from "./PagamentoCobrancaAcoes";
 import PagamentoConfirmacaoManual from "./PagamentoConfirmacaoManual";
+import PagamentosHomologacao from "./PagamentosHomologacao";
 
 const STATUS_STYLE = {
   "Pago": "bg-green-100 text-green-800", "Recebido": "bg-green-100 text-green-800",
@@ -91,6 +92,7 @@ export default function PagamentoMatriculaModal({ enrollment, onClose }) {
               <>
                 <PagamentoCobrancaAcoes lancamento={lanc} enrollment={enrollment} onRefresh={refresh} />
                 {!isCortesia && <PagamentoConfirmacaoManual lancamento={lanc} enrollment={enrollment} onRefresh={refresh} />}
+                {!isCortesia && <PagamentosHomologacao enrollment={enrollment} lancamento={lanc} onRefresh={refresh} />}
                 <p className="text-[11px] text-gray-500 italic">Recibo de quitação disponível somente após confirmação do pagamento.</p>
               </>
             )}

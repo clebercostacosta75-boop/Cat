@@ -1,0 +1,208 @@
+{
+  "name": "PagamentoConciliacao",
+  "type": "object",
+  "properties": {
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Pix",
+        "Cart\u00e3o"
+      ],
+      "description": "Meio de pagamento registrado fora do Asaas"
+    },
+    "enrollment_id": {
+      "type": "string",
+      "description": "ID da matr\u00edcula individual (StudentCourseEnrollment)"
+    },
+    "lancamento_id": {
+      "type": "string",
+      "description": "ID do lan\u00e7amento financeiro vinculado"
+    },
+    "student_id": {
+      "type": "string"
+    },
+    "student_name": {
+      "type": "string"
+    },
+    "course_name": {
+      "type": "string"
+    },
+    "valor": {
+      "type": "number",
+      "description": "Valor do pagamento"
+    },
+    "data_hora": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do pagamento informado"
+    },
+    "modalidade_cartao": {
+      "type": "string",
+      "enum": [
+        "Cr\u00e9dito",
+        "D\u00e9bito"
+      ],
+      "description": "Cart\u00e3o: modalidade"
+    },
+    "adquirente": {
+      "type": "string",
+      "description": "Cart\u00e3o: adquirente/maquininha (ex: Stone, Cielo, PagSeguro)"
+    },
+    "bandeira": {
+      "type": "string",
+      "description": "Cart\u00e3o: bandeira (ex: Visa, Mastercard, Elo)"
+    },
+    "parcelas": {
+      "type": "number",
+      "default": 1,
+      "description": "Cart\u00e3o: quantidade de parcelas"
+    },
+    "nsu": {
+      "type": "string",
+      "description": "Cart\u00e3o: NSU do comprovante (\u00fanico \u2014 bloqueio de duplicidade)"
+    },
+    "codigo_autorizacao": {
+      "type": "string",
+      "description": "Cart\u00e3o: c\u00f3digo de autoriza\u00e7\u00e3o"
+    },
+    "ultimos_digitos": {
+      "type": "string",
+      "description": "Cart\u00e3o: \u00faltimos 4 d\u00edgitos (nunca armazenar n\u00famero completo ou CVV)"
+    },
+    "pix_chave_snapshot": {
+      "type": "string",
+      "description": "Pix: chave usada no momento do pagamento (snapshot)"
+    },
+    "pix_favorecido_snapshot": {
+      "type": "string",
+      "description": "Pix: favorecido no momento do pagamento (snapshot)"
+    },
+    "comprovante_url": {
+      "type": "string",
+      "description": "URL do comprovante/foto (evid\u00eancia \u2014 n\u00e3o confirma pagamento)"
+    },
+    "observacao": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Aguardando valida\u00e7\u00e3o financeira",
+        "Confirmado",
+        "Rejeitado"
+      ],
+      "default": "Aguardando valida\u00e7\u00e3o financeira",
+      "description": "Status da concilia\u00e7\u00e3o \u2014 somente o Financeiro confirma ou rejeita"
+    },
+    "registrado_por": {
+      "type": "string",
+      "description": "E-mail de quem registrou o pagamento"
+    },
+    "validado_por": {
+      "type": "string",
+      "description": "E-mail do respons\u00e1vel do Financeiro que validou"
+    },
+    "validado_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da valida\u00e7\u00e3o"
+    },
+    "motivo_rejeicao": {
+      "type": "string",
+      "description": "Motivo da rejei\u00e7\u00e3o, se houver"
+    }
+  },
+  "required": [
+    "tipo",
+    "valor"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "financeiro"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "atendimento"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "financeiro"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "atendimento"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "auditor"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "financeiro"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

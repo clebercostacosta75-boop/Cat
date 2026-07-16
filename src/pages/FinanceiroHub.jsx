@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, TrendingUp, TrendingDown, BarChart3, Building2, Settings, CreditCard, Unlock } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, BarChart3, Building2, Settings, CreditCard, Unlock, QrCode } from "lucide-react";
+import CentralConciliacao from "@/components/financeiro/conciliacao/CentralConciliacao";
+import PixConfigPanel from "@/components/financeiro/PixConfigPanel";
 import LiberacoesCertificacaoTab from "@/components/financeiro/LiberacoesCertificacaoTab";
 import DashboardFinanceiroExecutivo from "@/components/financeiro/DashboardFinanceiroExecutivo";
 import ContasReceberTab from "@/components/financeiro/ContasReceberTab";
@@ -39,6 +41,12 @@ export default function FinanceiroHub() {
           <TabsTrigger value="liberacoes" className="flex items-center gap-1.5">
             <Unlock className="w-4 h-4" /> Liberações p/ Certificação
           </TabsTrigger>
+          <TabsTrigger value="conciliacao" className="flex items-center gap-1.5">
+            <CreditCard className="w-4 h-4" /> Central de Conciliação
+          </TabsTrigger>
+          <TabsTrigger value="pix" className="flex items-center gap-1.5">
+            <QrCode className="w-4 h-4" /> Pix
+          </TabsTrigger>
           <TabsTrigger value="config" className="flex items-center gap-1.5">
             <Settings className="w-4 h-4" /> Configurações
           </TabsTrigger>
@@ -50,6 +58,8 @@ export default function FinanceiroHub() {
         <TabsContent value="fluxo"><FluxoCaixaTab /></TabsContent>
         <TabsContent value="bancos"><ContasBancariasTab /></TabsContent>
         <TabsContent value="liberacoes"><LiberacoesCertificacaoTab /></TabsContent>
+        <TabsContent value="conciliacao"><CentralConciliacao /></TabsContent>
+        <TabsContent value="pix"><PixConfigPanel /></TabsContent>
         <TabsContent value="config"><ConfiguracoesFinanceiras /></TabsContent>
       </Tabs>
     </div>
