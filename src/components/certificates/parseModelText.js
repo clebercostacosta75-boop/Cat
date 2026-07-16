@@ -14,23 +14,31 @@ export default function parseModelText(text) {
     if (m) {
       const key = normalize(m[1]);
       const val = m[2].trim();
-      section = null;
-      if (key === "curso") out.name = val;
-      else if (key.startsWith("carga hor")) {
-        const h = val.match(/(\d{1,3})/);
-        out.duration = h ? `${h[1]}h` : val;
-      } else if (key === "modalidade") out.modality = val;
-      else if (key === "validade" || key === "periodicidade") {
-        const v = val.match(/(\d{1,3})/);
-        if (v && (key === "validade" || out.validity_period_months == null)) {
-          out.validity_period_months = +v[1];
+      // Só é tratado como campo se a chave for reconhecida — linhas com ":" dentro do
+      // conteúdo programático (ex: "Módulo 1: Introdução - 2h") continuam na seção atual.
+      const isKnownKey =
+        key === "curso" || key.startsWith("carga hor") || key === "modalidade" ||
+        key === "validade" || key === "periodicidade" ||
+        key.startsWith("conteudo program") || key.startsWith("responsav");
+      if (isKnownKey) {
+        section = null;
+        if (key === "curso") out.name = val;
+        else if (key.startsWith("carga hor")) {
+          const h = val.match(/(\d{1,3})/);
+          out.duration = h ? `${h[1]}h` : val;
+        } else if (key === "modalidade") out.modality = val;
+        else if (key === "validade" || key === "periodicidade") {
+          const v = val.match(/(\d{1,3})/);
+          if (v && (key === "validade" || out.validity_period_months == null)) {
+            out.validity_period_months = +v[1];
+          }
+        } else if (key.startsWith("conteudo program")) section = "conteudo";
+        else if (key.startsWith("responsav")) {
+          section = "resp";
+          if (val) out.technical_responsibles.push({ name: val, title: "", registration: "" });
         }
-      } else if (key.startsWith("conteudo program")) section = "conteudo";
-      else if (key.startsWith("responsav")) {
-        section = "resp";
-        if (val) out.technical_responsibles.push({ name: val, title: "", registration: "" });
+        continue;
       }
-      continue;
     }
 
     if (section === "conteudo") {
