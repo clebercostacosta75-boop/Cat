@@ -23,9 +23,13 @@ export default function parseModelText(text) {
     const norm = normalize(line).replace(/:\s*$/, "");
 
     // Cabeçalhos de seção — com ou sem dois-pontos, com variações
-    // (CONTEÚDO PROGRAMÁTICO, CONTEUDO, PROGRAMA DO CURSO, MÓDULOS...)
-    if (/^(conteudo(\s+programatico)?(\s+do\s+curso)?|programa(\s+do\s+curso)?|modulos)$/.test(norm)) {
+    // (CONTEÚDO PROGRAMÁTICO, CONTEÚDO TEÓRICO – 4H, CONTEÚDO PRÁTICO, PROGRAMA, MÓDULOS...)
+    if (/^(conteudo|programa|modulos?)\b/.test(norm) && !line.includes(":")) {
       section = "conteudo";
+      // Cabeçalho com complemento (ex: "CONTEÚDO TEÓRICO – 4H") também entra como módulo
+      if (!/^(conteudo(\s+programatico)?(\s+do\s+curso)?|programa(\s+do\s+curso)?|modulos?)$/.test(norm)) {
+        out.programmatic_content.push(extractHours(line));
+      }
       continue;
     }
     if (/^responsav\w*(\s+tecnic\w*)?$/.test(norm)) {
