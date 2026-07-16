@@ -35,6 +35,14 @@
       "type": "string",
       "description": "Conte\u00fado program\u00e1tico (texto livre)"
     },
+    "certificate_model_id": {
+      "type": "string",
+      "description": "ID do modelo de certificado (CertificateModel / Designer de Modelos) vinculado oficialmente a este curso"
+    },
+    "certificate_model_name": {
+      "type": "string",
+      "description": "Nome do modelo de certificado vinculado (desnormalizado)"
+    },
     "status": {
       "type": "string",
       "enum": [

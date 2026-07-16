@@ -13,11 +13,23 @@ const norm = (v) =>
     .replace(/[^\w\s]/g, "")
     .trim();
 
-/** Localiza o modelo de certificado do curso (por ID quando existir, senão por nome). */
-export function encontrarModelo(enrollment, certModels = []) {
+/**
+ * Localiza o modelo de certificado do curso (Designer de Modelos).
+ * Ordem de resolução: 1) modelo fixado na matrícula; 2) modelo vinculado ao curso
+ * no catálogo (Course.certificate_model_id); 3) correspondência exata por nome.
+ */
+export function encontrarModelo(enrollment, certModels = [], courses = []) {
   if (enrollment.certificate_model_id) {
     const byId = certModels.find((m) => m.id === enrollment.certificate_model_id);
     if (byId) return byId;
+  }
+  const course =
+    courses.find((c) => c.id === enrollment.course_id) ||
+    courses.find((c) => norm(c.name) === norm(enrollment.course_name)) ||
+    null;
+  if (course?.certificate_model_id) {
+    const byCourse = certModels.find((m) => m.id === course.certificate_model_id);
+    if (byCourse) return byCourse;
   }
   return certModels.find((m) => norm(m.name) === norm(enrollment.course_name)) || null;
 }
@@ -80,7 +92,7 @@ export function gateFinanceiro(enrollment, company = null) {
  * Retorna { grupo, apto, bloqueios, alertas, modelo, financeiro }.
  * grupo: "aguardando" | "pendencia" | "bloqueado" | "emitido"
  */
-export function verificarAptidao(enrollment, { certModels = [], certificates = [], companies = [], solicitacoes = [] } = {}) {
+export function verificarAptidao(enrollment, { certModels = [], certificates = [], companies = [], solicitacoes = [], courses = [] } = {}) {
   const alertas = [];
   const r = enrollment.resultado_academico;
   // Legado: matrículas antigas sem resultado que já estavam "Autorizado" continuam válidas (com alerta)
@@ -136,8 +148,11 @@ export function verificarAptidao(enrollment, { certModels = [], certificates = [
   if (!enrollment.start_date || !enrollment.end_date)
     pendencias.push("Certificado bloqueado: período de realização do curso não informado na matrícula");
 
-  const modelo = encontrarModelo(enrollment, certModels);
-  if (!modelo) pendencias.push("Curso sem modelo de certificado vinculado");
+  const modelo = encontrarModelo(enrollment, certModels, courses);
+  if (!modelo)
+    pendencias.push(
+      `Ainda não existe modelo de certificado para o curso "${enrollment.course_name || "—"}" no Designer de Modelos`
+    );
 
   const certExistente = certificates.find(
     (c) => c.enrollment_id === enrollment.id && c.status !== "revoked"

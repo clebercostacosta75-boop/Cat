@@ -7,13 +7,14 @@ import { base44 } from "@/api/base44Client";
 import { verificarAptidao } from "@/lib/aptidaoCertificacao";
 
 export async function carregarContextoAptidao() {
-  const [certModels, certificates, companies, solicitacoes] = await Promise.all([
+  const [certModels, certificates, companies, solicitacoes, courses] = await Promise.all([
     base44.entities.CertificateModel.list("-created_date", 200),
     base44.entities.Certificate.list("-created_date", 300),
     base44.entities.Company.list("-created_date", 300),
     base44.entities.SolicitacaoLiberacaoFinanceira.list("-created_date", 300),
+    base44.entities.Course.list("name", 1000),
   ]);
-  return { certModels, certificates, companies, solicitacoes };
+  return { certModels, certificates, companies, solicitacoes, courses };
 }
 
 export async function validarEmissaoBlindada(enrollment, ctx, origemTela) {

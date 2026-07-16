@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, BookOpen, Search, Edit2, Trash2, Award } from "lucide-react";
 import { toast } from "sonner";
 
@@ -23,6 +24,12 @@ export default function CoursesPage() {
     },
     staleTime: 0,
     gcTime: 0,
+  });
+
+  // Modelos do Designer de Certificados (vínculo curso → modelo)
+  const { data: certModels = [] } = useQuery({
+    queryKey: ['certificateModels'],
+    queryFn: () => base44.entities.CertificateModel.list("-created_date", 200),
   });
 
   const createMutation = useMutation({
@@ -72,6 +79,7 @@ export default function CoursesPage() {
     name: "",
     description: "",
     validity: "",
+    certificate_model_id: "",
     schedules: {
       morning: { start: "", end: "" },
       afternoon: { start: "", end: "" },
@@ -81,10 +89,12 @@ export default function CoursesPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const model = certModels.find(m => m.id === formData.certificate_model_id);
+    const data = { ...formData, certificate_model_name: model?.name || "" };
     if (editingCourse) {
-      updateMutation.mutate({ id: editingCourse.id, data: formData });
+      updateMutation.mutate({ id: editingCourse.id, data });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(data);
     }
   };
 
@@ -94,6 +104,7 @@ export default function CoursesPage() {
       name: course.name || "",
       description: course.description || "",
       validity: course.validity || "",
+      certificate_model_id: course.certificate_model_id || "",
       schedules: course.schedules || {
         morning: { start: "", end: "" },
         afternoon: { start: "", end: "" },
@@ -108,6 +119,7 @@ export default function CoursesPage() {
       name: "",
       description: "",
       validity: "",
+      certificate_model_id: "",
       schedules: {
         morning: { start: "", end: "" },
         afternoon: { start: "", end: "" },
@@ -226,6 +238,27 @@ export default function CoursesPage() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label>Modelo de Certificado (Designer de Modelos)</Label>
+                    <Select
+                      value={formData.certificate_model_id || "none"}
+                      onValueChange={(v) => setFormData({ ...formData, certificate_model_id: v === "none" ? "" : v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="📜 Vincular modelo de certificado..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— Sem modelo vinculado —</SelectItem>
+                        {certModels.map(m => (
+                          <SelectItem key={m.id} value={m.id}>📜 {m.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500">
+                      Modelo usado automaticamente na certificação (PF e Empresas). Sem vínculo, o sistema tenta localizar pelo nome do curso.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="description">Descrição</Label>
                     <Textarea
                       id="description"
@@ -326,6 +359,13 @@ export default function CoursesPage() {
                     Validade: {course.validity}
                   </p>
                 )}
+
+                <p className={`text-xs flex items-center gap-1.5 border-t pt-2 ${course.certificate_model_id ? "text-emerald-700" : "text-amber-600"}`}>
+                  <Award className="w-3.5 h-3.5 flex-shrink-0" />
+                  {course.certificate_model_id
+                    ? <>Modelo: <strong>{course.certificate_model_name || "vinculado"}</strong></>
+                    : "Sem modelo de certificado vinculado"}
+                </p>
 
                 <div className="grid grid-cols-2 gap-2 pt-2 border-t">
                   <Button

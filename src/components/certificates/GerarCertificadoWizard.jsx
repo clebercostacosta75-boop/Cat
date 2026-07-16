@@ -3,7 +3,7 @@
  * Modal de 3 passos para geração manual de certificado por usuário autorizado.
  * NUNCA gera certificado automaticamente.
  */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ import {
   User, BookOpen, Building2, Calendar, Clock, AlertTriangle
 } from "lucide-react";
 import CertificatePreview from "./CertificatePreview";
+import { encontrarModelo } from "@/lib/aptidaoCertificacao";
 
 function generateCertCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -37,6 +38,20 @@ export default function GerarCertificadoWizard({ enrollment, onConfirm, onCancel
     queryKey: ["cert-models-wizard"],
     queryFn: () => base44.entities.CertificateModel.list(),
   });
+
+  const { data: courses = [] } = useQuery({
+    queryKey: ["courses-wizard"],
+    queryFn: () => base44.entities.Course.list("name", 1000),
+  });
+
+  // Integração Designer de Modelos: resolve automaticamente o modelo vinculado ao curso
+  const modeloDoCurso = enrollment ? encontrarModelo(enrollment, certModels, courses) : null;
+  const modeloAusente = certModels.length > 0 && !modeloDoCurso;
+
+  useEffect(() => {
+    if (!selectedModelId && modeloDoCurso) setSelectedModelId(modeloDoCurso.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modeloDoCurso?.id]);
 
   const selectedModel = certModels.find(m => m.id === selectedModelId) || null;
 
@@ -172,6 +187,23 @@ export default function GerarCertificadoWizard({ enrollment, onConfirm, onCancel
         {step === 1 && (
           <div className="space-y-4">
             <p className="text-sm text-gray-600">Escolha o modelo de certificado a ser usado. Os dados do aluno preencherão automaticamente o modelo selecionado.</p>
+
+            {modeloDoCurso && selectedModelId === modeloDoCurso.id && (
+              <div className="flex items-start gap-2 bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-sm text-emerald-800">
+                <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <span>Modelo <strong>"{modeloDoCurso.name}"</strong> localizado automaticamente no Designer de Modelos para o curso <strong>{enrollment?.course_name}</strong>.</span>
+              </div>
+            )}
+
+            {modeloAusente && (
+              <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
+                <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <span>
+                  <strong>Ainda não existe modelo de certificado</strong> vinculado ao curso <strong>"{enrollment?.course_name}"</strong> no Designer de Modelos.
+                  Crie o modelo no Designer ou vincule-o ao curso no catálogo — ou selecione manualmente um modelo abaixo.
+                </span>
+              </div>
+            )}
 
             {certModels.length === 0 && (
               <div className="text-center py-8 text-gray-400 border rounded-lg">

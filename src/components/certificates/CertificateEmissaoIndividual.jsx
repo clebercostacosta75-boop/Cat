@@ -14,6 +14,7 @@ import { Award, Building2, FileText, User, Loader2, Search, AlertTriangle, Check
 import { format, addMonths } from "date-fns";
 import { gerarCodigoInternoControle } from "@/lib/certControl";
 import { carregarContextoAptidao, validarEmissaoBlindada } from "@/lib/validarEmissao";
+import { encontrarModelo } from "@/lib/aptidaoCertificacao";
 
 // CNPJ da empresa CAT que deve ser pré-selecionada
 const CAT_CNPJ = "07.238.084/0001-45";
@@ -73,6 +74,15 @@ export default function CertificateEmissaoIndividual({ onSuccess, origemFixa }) 
     queryKey: ["certificateModels"],
     queryFn: () => base44.entities.CertificateModel.list("-created_date", 100),
   });
+
+  // Carrega catálogo de cursos (vínculo oficial curso → modelo do Designer)
+  const { data: courses = [] } = useQuery({
+    queryKey: ["courses-cert-emissao"],
+    queryFn: () => base44.entities.Course.list("name", 1000),
+  });
+
+  // Alerta de modelo ausente para a matrícula selecionada
+  const [modeloAusente, setModeloAusente] = useState(false);
 
   // Carrega alunos individuais (PF) — lazy: só quando há busca
   const [studentsEnabled, setStudentsEnabled] = useState(false);
@@ -169,15 +179,21 @@ export default function CertificateEmissaoIndividual({ onSuccess, origemFixa }) 
     handleField("start_date", enrollment.start_date || form.start_date);
     handleField("end_date", enrollment.end_date || form.end_date);
 
-    // Tentar encontrar o modelo de certificado pelo nome do curso
-    if (enrollment.course_name) {
-      const courseName = normStr(enrollment.course_name);
-      const matchModel = models.find(m => normStr(m.name).includes(courseName) || courseName.includes(normStr(m.name)));
-      if (matchModel) setModelId(matchModel.id);
+    // Busca o modelo de certificado no Designer de Modelos (vínculo curso → modelo)
+    const matchModel = encontrarModelo(enrollment, models, courses);
+    if (matchModel) {
+      setModelId(matchModel.id);
+      setModeloAusente(false);
+      toast.success(`Modelo "${matchModel.name}" localizado no Designer de Modelos para este curso.`);
+    } else {
+      setModelId("");
+      setModeloAusente(true);
+      toast.error(`Ainda não existe modelo de certificado para o curso "${enrollment.course_name || "—"}" no Designer de Modelos.`);
     }
   };
 
   const clearStudent = () => {
+    setModeloAusente(false);
     setSelectedStudent(null);
     setSelectedEnrollment(null);
     setStudentEnrollments([]);
@@ -470,7 +486,17 @@ export default function CertificateEmissaoIndividual({ onSuccess, origemFixa }) 
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <Select value={modelId} onValueChange={setModelId}>
+          {modeloAusente && selectedEnrollment && (
+            <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-800">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>
+                <strong>Modelo não encontrado:</strong> ainda não existe modelo de certificado para o curso
+                {" "}<strong>"{selectedEnrollment.course_name}"</strong> no Designer de Modelos.
+                Crie o modelo no Designer ou vincule-o ao curso no catálogo antes de emitir.
+              </span>
+            </div>
+          )}
+          <Select value={modelId} onValueChange={v => { setModelId(v); setModeloAusente(false); }}>
             <SelectTrigger>
               <SelectValue placeholder="📜 Selecione o modelo..." />
             </SelectTrigger>
