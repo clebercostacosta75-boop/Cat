@@ -16,7 +16,9 @@ Deno.serve(async (req) => {
 
     const apiKey = Deno.env.get('ASAAS_API_KEY');
     if (!apiKey) return Response.json({ error: 'ASAAS_API_KEY não configurada — pendente de configuração.' }, { status: 500 });
-    const baseUrl = Deno.env.get('ASAAS_BASE_URL') || 'https://api.asaas.com/v3';
+    // HOMOLOGAÇÃO: sem ASAAS_BASE_URL configurada, usa o sandbox — nenhuma cobrança real é executada.
+    // Para produção (após aprovação), configure ASAAS_BASE_URL = https://api.asaas.com/v3
+    const baseUrl = Deno.env.get('ASAAS_BASE_URL') || 'https://api-sandbox.asaas.com/v3';
     const headers = { 'access_token': apiKey, 'Content-Type': 'application/json' };
 
     const enrollment = await base44.asServiceRole.entities.StudentCourseEnrollment.get(enrollment_id);
