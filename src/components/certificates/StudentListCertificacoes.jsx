@@ -23,6 +23,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import StudentForm from "@/components/students/StudentForm";
 import StudentBulkImport from "@/components/students/StudentBulkImport";
 import VerificarAptidaoDialog from "./VerificarAptidaoDialog";
+import CertificadoAcoesAluno from "./CertificadoAcoesAluno";
 
 const AUTHORIZED_ROLES = ["admin", "gestor_master", "Administrador Master", "Certificacao", "Certificação"];
 
@@ -197,6 +198,7 @@ export default function StudentListCertificacoes() {
   const [editNomeStudent, setEditNomeStudent] = useState(null);
   const [alterarDocStudent, setAlterarDocStudent] = useState(null);
   const [aptidaoStudent, setAptidaoStudent] = useState(null);
+  const [certAcoesStudent, setCertAcoesStudent] = useState(null);
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ["students"],
@@ -342,6 +344,11 @@ export default function StudentListCertificacoes() {
                           onClick={() => handleVerificarAptidao(s)}>
                           <Award className="w-3 h-3" /> Verificar Aptidão
                         </Button>
+                        {/* Visualizar certificado + encaminhar assinatura por e-mail */}
+                        <Button size="sm" className="h-8 px-3 text-xs bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-md font-medium"
+                          onClick={() => setCertAcoesStudent(s)}>
+                          Ver Certificado
+                        </Button>
                         {/* Ações de edição */}
                         <Button size="sm" className="h-8 px-3 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-md font-medium"
                           onClick={() => setEditNomeStudent(s)}>
@@ -401,6 +408,11 @@ export default function StudentListCertificacoes() {
       )}
       {alterarDocStudent && (
         <AlterarDocumentoModal student={alterarDocStudent} onClose={() => setAlterarDocStudent(null)} onSaved={invalidate} />
+      )}
+
+      {/* Certificados do aluno: visualizar + encaminhar assinatura por e-mail */}
+      {certAcoesStudent && (
+        <CertificadoAcoesAluno student={certAcoesStudent} onClose={() => setCertAcoesStudent(null)} />
       )}
 
       {/* SPR-2B-1: diálogo de verificação de aptidão (motor central) — não emite certificado */}
