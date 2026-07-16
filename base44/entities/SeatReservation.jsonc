@@ -74,12 +74,22 @@
       "$or": [
         {
           "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
             "role": "admin"
           }
         },
         {
           "user_condition": {
-            "role": "gestor_master"
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "atendimento"
           }
         }
       ]
@@ -87,10 +97,12 @@
     "read": {
       "$or": [
         {
-          "created_by_id": "{{user.id}}"
+          "data.student_id": "{{user.student_id}}"
         },
         {
-          "data.student_id": "{{user.student_id}}"
+          "user_condition": {
+            "role": "gestor_master"
+          }
         },
         {
           "user_condition": {
@@ -99,7 +111,17 @@
         },
         {
           "user_condition": {
-            "role": "gestor_master"
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "atendimento"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "auditor"
           }
         }
       ]
@@ -108,12 +130,22 @@
       "$or": [
         {
           "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
             "role": "admin"
           }
         },
         {
           "user_condition": {
-            "role": "gestor_master"
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "atendimento"
           }
         }
       ]
