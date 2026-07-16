@@ -2,6 +2,16 @@
 const normalize = (s) =>
   (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
+// Remove marcadores de lista/numeração do início da linha
+const stripBullet = (s) => s.replace(/^[-•*–—]\s*/, "").replace(/^\d{1,2}[.)]\s*/, "").trim();
+
+// Extrai horas do final do item: "- 2h", "– 2 horas", "(4h)", "4h"
+const extractHours = (item) => {
+  const h = item.match(/(?:[–—-]\s*|\(\s*)?(\d{1,3})\s*h(?:s|oras)?\s*\)?\s*[.;]?\s*$/i);
+  if (!h) return { module: item.trim(), hours: "" };
+  return { module: item.slice(0, item.length - h[0].length).trim(), hours: `${h[1]}h` };
+};
+
 export default function parseModelText(text) {
   const out = { programmatic_content: [], technical_responsibles: [] };
   let section = null;
@@ -10,19 +20,31 @@ export default function parseModelText(text) {
     const line = raw.trim();
     if (!line) continue;
 
+    const norm = normalize(line).replace(/:\s*$/, "");
+
+    // Cabeçalhos de seção — com ou sem dois-pontos, com variações
+    // (CONTEÚDO PROGRAMÁTICO, CONTEUDO, PROGRAMA DO CURSO, MÓDULOS...)
+    if (/^(conteudo(\s+programatico)?(\s+do\s+curso)?|programa(\s+do\s+curso)?|modulos)$/.test(norm)) {
+      section = "conteudo";
+      continue;
+    }
+    if (/^responsav\w*(\s+tecnic\w*)?$/.test(norm)) {
+      section = "resp";
+      continue;
+    }
+
+    // Campos chave: valor
     const m = line.match(/^([^:]{2,40}):\s*(.*)$/);
     if (m) {
       const key = normalize(m[1]);
       const val = m[2].trim();
-      // Só é tratado como campo se a chave for reconhecida — linhas com ":" dentro do
-      // conteúdo programático (ex: "Módulo 1: Introdução - 2h") continuam na seção atual.
       const isKnownKey =
-        key === "curso" || key.startsWith("carga hor") || key === "modalidade" ||
-        key === "validade" || key === "periodicidade" ||
-        key.startsWith("conteudo program") || key.startsWith("responsav");
+        key === "curso" || key === "treinamento" || key.startsWith("carga hor") ||
+        key === "modalidade" || key === "validade" || key === "periodicidade" ||
+        key.startsWith("conteudo") || key.startsWith("programa") || key.startsWith("responsav");
       if (isKnownKey) {
         section = null;
-        if (key === "curso") out.name = val;
+        if (key === "curso" || key === "treinamento") out.name = val;
         else if (key.startsWith("carga hor")) {
           const h = val.match(/(\d{1,3})/);
           out.duration = h ? `${h[1]}h` : val;
@@ -32,8 +54,13 @@ export default function parseModelText(text) {
           if (v && (key === "validade" || out.validity_period_months == null)) {
             out.validity_period_months = +v[1];
           }
-        } else if (key.startsWith("conteudo program")) section = "conteudo";
-        else if (key.startsWith("responsav")) {
+        } else if (key.startsWith("conteudo") || key.startsWith("programa")) {
+          section = "conteudo";
+          // Itens na mesma linha do título, separados por ";"
+          for (const part of val.split(";").map(p => p.trim()).filter(Boolean)) {
+            out.programmatic_content.push(extractHours(stripBullet(part)));
+          }
+        } else if (key.startsWith("responsav")) {
           section = "resp";
           if (val) out.technical_responsibles.push({ name: val, title: "", registration: "" });
         }
@@ -41,15 +68,12 @@ export default function parseModelText(text) {
       }
     }
 
+    // Linhas dentro das seções
     if (section === "conteudo") {
-      const item = line.replace(/^[-•*]\s*/, "");
-      const h = item.match(/[–—-]\s*(\d{1,3})\s*h(?:oras)?\s*$/i);
-      out.programmatic_content.push({
-        module: h ? item.slice(0, item.length - h[0].length).trim() : item,
-        hours: h ? `${h[1]}h` : "",
-      });
+      const item = stripBullet(line);
+      if (item) out.programmatic_content.push(extractHours(item));
     } else if (section === "resp") {
-      out.technical_responsibles.push({ name: line.replace(/^[-•*]\s*/, ""), title: "", registration: "" });
+      out.technical_responsibles.push({ name: stripBullet(line), title: "", registration: "" });
     }
   }
   return out;
