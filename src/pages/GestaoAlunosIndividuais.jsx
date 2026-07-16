@@ -39,6 +39,10 @@ import RelatoriosGerenciaisTab from "@/components/relatorios/RelatoriosGerenciai
 import VisaoGeralCentral from "@/components/alunos/central/VisaoGeralCentral";
 import CursosVendaCentral from "@/components/alunos/central/CursosVendaCentral";
 import MatriculaFicha from "@/components/alunos/central/MatriculaFicha";
+import FinanceiroStatusAlunos from "@/components/alunos/central/FinanceiroStatusAlunos";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import AcessoPortalTab from "@/components/alunos/AcessoPortalTab";
+import ContratosGeralTab from "@/components/alunos/ContratosGeralTab";
 
 const EMPTY_STUDENT = {
   full_name: "", social_name: "", cpf: "", rg: "", rg_orgao_emissor: "", ra: "",
@@ -403,6 +407,7 @@ function MatriculasCursos() {
   const [modelosOpen, setModelosOpen] = useState(false);
   const [fichaEnrollment, setFichaEnrollment] = useState(null);
   const [cadastroOpen, setCadastroOpen] = useState(false);
+  const [subView, setSubView] = useState("lista");
 
   useEffect(() => {
     base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
@@ -606,6 +611,25 @@ function MatriculasCursos() {
         </Card>
       )}
 
+      {/* Sub-áreas: Matrículas | Pré-Cadastros */}
+      <div className="flex gap-1 border-b border-gray-200">
+        <button
+          onClick={() => setSubView("lista")}
+          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${subView === "lista" ? "border-gray-900 text-gray-900" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+        >
+          📋 Matrículas
+        </button>
+        <button
+          onClick={() => setSubView("precadastros")}
+          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${subView === "precadastros" ? "border-gray-900 text-gray-900" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+        >
+          📝 Pré-Cadastros
+        </button>
+      </div>
+
+      {subView === "precadastros" && <PreCadastrosTab />}
+
+      {subView === "lista" && (<>
       {/* Barra de filtros + botão */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
@@ -760,9 +784,8 @@ function MatriculasCursos() {
                       </div>
                     </div>
 
-                    {/* Botões de ação */}
-                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                      {/* Ficha única da matrícula */}
+                    {/* Botões de ação — concentrados na Ficha */}
+                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0 w-44">
                       <Button
                         size="sm"
                         className="text-xs h-7 bg-gray-900 hover:bg-gray-800 text-white w-full"
@@ -771,90 +794,6 @@ function MatriculasCursos() {
                         📋 Ficha da Matrícula
                       </Button>
 
-                      {/* Ver Contrato */}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs h-7 border-blue-300 text-blue-700 hover:bg-blue-50 w-full"
-                        onClick={() => setSelectedEnrollmentForContract(selectedEnrollmentForContract?.id === e.id ? null : e)}
-                      >
-                        <PenLine className="w-3 h-3 mr-1" />
-                        {selectedEnrollmentForContract?.id === e.id ? "Fechar" : "📄 Contrato"}
-                      </Button>
-
-                      {/* Ver Financeiro */}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs h-7 border-green-300 text-green-700 hover:bg-green-50 w-full"
-                        onClick={() => setFinanceiroEnrollment(financeiroEnrollment?.id === e.id ? null : e)}
-                      >
-                        <DollarSign className="w-3 h-3 mr-1" />
-                        {financeiroEnrollment?.id === e.id ? "Fechar" : "💰 Financeiro"}
-                      </Button>
-
-                      {/* Novo Curso */}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs h-7 border-purple-300 text-purple-700 hover:bg-purple-50 w-full"
-                        onClick={() => setNovoCursoEnrollment(e)}
-                      >
-                        <Plus className="w-3 h-3 mr-1" /> ➕ Novo Curso
-                      </Button>
-
-                      {/* Confirmar PIX manual */}
-                      {e.forma_pagamento === "Pix" && e.status_pagamento !== "Pago" && isMaster && (
-                        <Button
-                          size="sm"
-                          className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs h-7 w-full"
-                          onClick={() => setConfirmandoPix(e)}
-                        >
-                          <CheckCircle className="w-3 h-3 mr-1" /> ✅ Confirmar PIX
-                        </Button>
-                      )}
-
-                      {/* Resultado Acadêmico (SPR-A) */}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs h-7 border-indigo-300 text-indigo-700 hover:bg-indigo-50 w-full"
-                        onClick={() => setResultadoEnrollment(e)}
-                      >
-                        🎓 Resultado
-                      </Button>
-
-                      {/* FASE 6: Comunicações */}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs h-7 border-indigo-300 text-indigo-700 hover:bg-indigo-50 w-full"
-                        onClick={() => setComunicacoesEnrollment(e)}
-                      >
-                        💬 Comunicações
-                      </Button>
-
-                      {/* FASE 5: Pagamento */}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs h-7 border-emerald-300 text-emerald-700 hover:bg-emerald-50 w-full"
-                        onClick={() => setPagamentoEnrollment(e)}
-                      >
-                        💳 Pagamento
-                      </Button>
-
-                      {/* FASE 4: Ações controladas */}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs h-7 border-gray-300 text-gray-700 hover:bg-gray-100 w-full"
-                        onClick={() => setAcoesEnrollment(e)}
-                      >
-                        🔁 Ações
-                      </Button>
-
-                      {/* Autorizar — exige Resultado Acadêmico Aprovado */}
                       {e.status === "Aguardando Autorização" && (
                         <Button
                           size="sm"
@@ -868,17 +807,44 @@ function MatriculasCursos() {
                             updateStatusMutation.mutate({ id: e.id, status: "Autorizado" });
                           }}
                         >
-                          <CheckCircle className="w-3 h-3 mr-1" /> ✅ Autorizar
+                          <CheckCircle className="w-3 h-3 mr-1" /> Autorizar
                         </Button>
                       )}
 
-                      {/* Excluir */}
-                      {isMaster && (
-                        <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700 h-7 w-full"
-                          onClick={() => { if (window.confirm(`Excluir a matrícula de "${e.student_name}" em "${e.course_name}"?`)) deleteEnrollmentMutation.mutate(e.id); }}>
-                          <Trash2 className="w-3 h-3 mr-1" /> 🗑️ Excluir
+                      {e.forma_pagamento === "Pix" && e.status_pagamento !== "Pago" && isMaster && (
+                        <Button
+                          size="sm"
+                          className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs h-7 w-full"
+                          onClick={() => setConfirmandoPix(e)}
+                        >
+                          <CheckCircle className="w-3 h-3 mr-1" /> Confirmar PIX
                         </Button>
                       )}
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="outline" className="text-xs h-7 w-full text-gray-600">
+                            ⋯ Mais ações
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="text-xs">
+                          <DropdownMenuItem onClick={() => setAcoesEnrollment(e)}>🔁 Trocar / Transferir / Cancelar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setSelectedEnrollmentForContract(e)}>📄 Contrato</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setPagamentoEnrollment(e)}>💳 Pagamento</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setFinanceiroEnrollment(e)}>💰 Recibos</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setResultadoEnrollment(e)}>🎓 Resultado Acadêmico</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setComunicacoesEnrollment(e)}>💬 Comunicações</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setNovoCursoEnrollment(e)}>➕ Novo Curso</DropdownMenuItem>
+                          {isMaster && (
+                            <DropdownMenuItem
+                              className="text-red-600 focus:text-red-700"
+                              onClick={() => { if (window.confirm(`Excluir a matrícula de "${e.student_name}" em "${e.course_name}"?`)) deleteEnrollmentMutation.mutate(e.id); }}
+                            >
+                              🗑️ Excluir
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </div>
@@ -887,6 +853,7 @@ function MatriculasCursos() {
           )}
         </CardContent>
       </Card>
+      </>)}
     </div>
   );
 }
@@ -978,281 +945,6 @@ function ModalConfirmarPagamento({ enrollment, onClose, onConfirmed }) {
   );
 }
 
-// ─── Aba: Acesso ao Portal ───────────────────────────────────────────────────
-function AcessoPortal() {
-  const queryClient = useQueryClient();
-  const [userRole, setUserRole] = useState(null);
-  const [search, setSearch] = useState("");
-  const [showDeletePerms, setShowDeletePerms] = useState(false);
-
-  useEffect(() => {
-    base44.auth.me().then(u => setUserRole(u?.role || "user")).catch(() => {});
-  }, []);
-
-  const { data: students = [], isLoading } = useQuery({
-    queryKey: ["students-pf"],
-    queryFn: () => base44.entities.Student.list("-created_date"),
-    initialData: [],
-  });
-
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }) => base44.entities.Student.update(id, { status }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["students-pf"] }); toast.success("Acesso atualizado!"); },
-  });
-
-  const isMaster = userRole === "admin" || userRole === "Administrador Master" || userRole === "gestor_master";
-
-  const { data: allProfiles = [], isLoading: loadingProfiles } = useQuery({
-    queryKey: ["all-user-profiles-portal"],
-    queryFn: () => base44.entities.UserProfile.list(),
-    enabled: isMaster,
-  });
-
-  const updateProfileMutation = useMutation({
-    mutationFn: ({ id, permissions }) => base44.entities.UserProfile.update(id, { permissions }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["all-user-profiles-portal"] }); toast.success("Permissão atualizada!"); },
-  });
-
-  const toggleDeletePermission = (profile) => {
-    const perms = profile.permissions || [];
-    const newPerms = perms.includes("delete_students")
-      ? perms.filter(p => p !== "delete_students")
-      : [...perms, "delete_students"];
-    updateProfileMutation.mutate({ id: profile.id, permissions: newPerms });
-  };
-
-  const norm = (v) => (v || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").trim();
-  const searchNorm = norm(search);
-  const filtered = !searchNorm ? students : students.filter(s =>
-    [s.full_name, s.social_name, s.cpf, s.email, s.whatsapp].some(f => norm(f).includes(searchNorm))
-  );
-
-  return (
-    <div className="space-y-4">
-      {!isMaster && (
-        <div className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
-          <p className="text-sm text-yellow-800">
-            <strong>Atenção:</strong> Liberação ou bloqueio de acesso ao portal requer autorização do Gestor Master.
-          </p>
-        </div>
-      )}
-      {isMaster && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center gap-3">
-              <Shield className="w-5 h-5 text-blue-600 flex-shrink-0" />
-              <p className="text-sm text-blue-800">
-                <strong>Gestor Master:</strong> Você tem permissão para liberar/bloquear acesso e gerenciar permissões de exclusão.
-              </p>
-            </div>
-            <Button size="sm" variant="outline" className="border-red-300 text-red-700 hover:bg-red-50 flex-shrink-0"
-              onClick={() => setShowDeletePerms(!showDeletePerms)}>
-              <Trash2 className="w-3 h-3 mr-1" />{showDeletePerms ? "Fechar" : "Permissões de Exclusão"}
-            </Button>
-          </div>
-
-          {showDeletePerms && (
-            <Card className="border border-red-200">
-              <CardHeader className="pb-2 bg-red-50 border-b border-red-100">
-                <CardTitle className="text-sm font-bold text-red-800 flex items-center gap-2">
-                  <Trash2 className="w-4 h-4" /> Gerenciar Permissão de Exclusão de Alunos
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                {loadingProfiles ? (
-                  <div className="text-center py-6 text-gray-400 text-sm">Carregando usuários...</div>
-                ) : allProfiles.length === 0 ? (
-                  <div className="text-center py-6 text-gray-400 text-sm">Nenhum perfil encontrado.</div>
-                ) : (
-                  <div className="divide-y">
-                    {allProfiles.map(profile => {
-                      const hasDeletePerm = (profile.permissions || []).includes("delete_students");
-                      const isAdminRole = ["admin", "Administrador Master", "gestor_master"].includes(profile.role);
-                      return (
-                        <div key={profile.id} className="flex items-center justify-between p-3 hover:bg-gray-50">
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900">{profile.user_name}</p>
-                            <p className="text-xs text-gray-500">{profile.user_email} — {profile.role}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {isAdminRole ? (
-                              <Badge className="bg-blue-100 text-blue-700 text-xs">Acesso total (Master)</Badge>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className={hasDeletePerm ? "border-red-300 text-red-700 hover:bg-red-50" : "border-gray-300 text-gray-600 hover:bg-gray-50"}
-                                onClick={() => toggleDeletePermission(profile)}
-                                disabled={updateProfileMutation.isPending}
-                              >
-                                <Trash2 className="w-3 h-3 mr-1" />
-                                {hasDeletePerm ? "Revogar" : "Conceder"}
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
-
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <Input placeholder="Buscar aluno..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
-      </div>
-
-      <Card className="border border-gray-200">
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="text-center py-12 text-gray-500">Carregando...</div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <Shield className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>Nenhum aluno encontrado</p>
-            </div>
-          ) : (
-            <div className="divide-y">
-              {filtered.map(student => {
-                const ativo = student.status === "Ativo";
-                return (
-                  <div key={student.id} className="flex items-center justify-between p-4 hover:bg-gray-50">
-                    <div>
-                      <p className="font-semibold text-gray-900">{student.full_name}</p>
-                      <p className="text-sm text-gray-500">CPF: {student.cpf}</p>
-                      {student.email && <p className="text-xs text-gray-400">{student.email}</p>}
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge className={ativo ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-                        {ativo ? (<><Unlock className="w-3 h-3 mr-1 inline" /> Acesso Liberado</>) : (<><Lock className="w-3 h-3 mr-1 inline" /> Acesso Bloqueado</>)}
-                      </Badge>
-                      {isMaster && (
-                        <Button
-                          size="sm" variant="outline"
-                          onClick={() => updateStatusMutation.mutate({ id: student.id, status: ativo ? "Inativo" : "Ativo" })}
-                          className={ativo ? "border-red-300 text-red-600 hover:bg-red-50" : "border-green-300 text-green-600 hover:bg-green-50"}
-                        >
-                          {ativo ? <><Lock className="w-3 h-3 mr-1" /> Bloquear</> : <><Unlock className="w-3 h-3 mr-1" /> Liberar</>}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// ─── Aba: Contratos Geral ────────────────────────────────────────────────────
-function ContratosGeral() {
-  const [selectedEnrollment, setSelectedEnrollment] = useState(null);
-
-  const { data: enrollments = [], isLoading } = useQuery({
-    queryKey: ["enrollments-pf"],
-    queryFn: async () => {
-      const all = await base44.entities.StudentCourseEnrollment.list("-created_date", 500);
-      return (all || []).filter(isMatriculaIndividual);
-    },
-    staleTime: 0,
-    gcTime: 0,
-  });
-
-  const { data: contracts = [] } = useQuery({
-    queryKey: ["all-contracts-pf"],
-    queryFn: () => base44.entities.Contract.list("-created_date", 200),
-    initialData: [],
-  });
-
-  const contractByEnrollment = {};
-  contracts.forEach(c => { if (c.enrollment_id) contractByEnrollment[c.enrollment_id] = c; });
-
-  const STATUS_COLOR = {
-    Gerado_Automaticamente: "bg-blue-100 text-blue-700",
-    Gerado_Manualmente: "bg-indigo-100 text-indigo-700",
-    Enviado_Assinatura: "bg-yellow-100 text-yellow-800",
-    Assinado_Todas_Partes: "bg-emerald-100 text-emerald-800",
-    PDF_Gerado: "bg-green-100 text-green-700",
-    Cancelado: "bg-red-100 text-red-700",
-    Rascunho: "bg-gray-100 text-gray-600",
-  };
-
-  if (isLoading) return <div className="text-center py-12 text-gray-400">Carregando...</div>;
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <PenLine className="w-5 h-5 text-blue-600 flex-shrink-0" />
-        <div>
-          <p className="text-sm font-semibold text-blue-900">Contratos Digitais — Alunos Individuais PF</p>
-          <p className="text-xs text-blue-700 mt-0.5">Clique em uma matrícula para ver ou gerenciar o contrato vinculado.</p>
-        </div>
-      </div>
-
-      <Card className="border border-gray-200">
-        <CardContent className="p-0">
-          {enrollments.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>Nenhuma matrícula individual encontrada</p>
-            </div>
-          ) : (
-            <div className="divide-y">
-              {enrollments.map(e => {
-                const contract = contractByEnrollment[e.id];
-                const isSelected = selectedEnrollment?.id === e.id;
-                return (
-                  <div key={e.id}>
-                    <div
-                      className={`flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors ${isSelected ? "bg-blue-50" : ""}`}
-                      onClick={() => setSelectedEnrollment(isSelected ? null : e)}
-                    >
-                      <div>
-                        <p className="font-semibold text-gray-900">{e.student_name}</p>
-                        <p className="text-sm text-gray-500">{e.course_name}</p>
-                        <p className="text-xs text-gray-400">{e.start_date} → {e.end_date}</p>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        {contract ? (
-                          <>
-                            <Badge className={STATUS_COLOR[contract.status] || "bg-gray-100 text-gray-700"}>
-                              {contract.status?.replace(/_/g, " ")}
-                            </Badge>
-                            <span className="text-xs text-gray-400">{contract.contract_number}</span>
-                          </>
-                        ) : (
-                          <Badge className="bg-red-100 text-red-600">Sem contrato</Badge>
-                        )}
-                      </div>
-                    </div>
-                    {isSelected && (
-                      <div className="p-4 bg-gray-50 border-t border-blue-100">
-                        <ContratoAssinaturaTab
-                          enrollmentId={e.id}
-                          studentId={e.student_id}
-                          enrollmentData={e}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
 // ─── Bloqueio de Seção ────────────────────────────────────────────────────────
 function SecaoBloqueada({ nome }) {
   return (
@@ -1265,7 +957,7 @@ function SecaoBloqueada({ nome }) {
 }
 
 // ─── Página Principal ────────────────────────────────────────────────────────
-const LEGACY_TABS = ["dashboard", "cadastro", "acesso", "pagamentos", "gargalos", "pendencias", "contratos", "indicadores", "precadastros"];
+const LEGACY_TABS = ["dashboard", "cadastro", "acesso", "pagamentos", "gargalos", "pendencias", "contratos", "indicadores", "precadastros", "financeiro_antigo"];
 const LEGACY_LABELS = {
   dashboard: "Dashboard PF (antigo)",
   cadastro: "Cadastro de Alunos",
@@ -1276,6 +968,7 @@ const LEGACY_LABELS = {
   contratos: "Contratos (lista antiga)",
   indicadores: "Desempenho de Atendentes",
   precadastros: "Pré-Cadastros",
+  financeiro_antigo: "Financeiro completo (antigo)",
 };
 
 export default function GestaoAlunosIndividuais() {
@@ -1342,12 +1035,13 @@ export default function GestaoAlunosIndividuais() {
           <TabsContent value="dashboard">{canAccessTab("dashboard") ? <DashboardPF /> : <SecaoBloqueada nome="Dashboard" />}</TabsContent>
           <TabsContent value="cadastro">{canAccessTab("cadastro") ? <AlunosCadastro /> : <SecaoBloqueada nome="Cadastro" />}</TabsContent>
           <TabsContent value="matriculas">{canAccessTab("matriculas") ? <MatriculasCursos /> : <SecaoBloqueada nome="Matrículas" />}</TabsContent>
-          <TabsContent value="financeiro">{canAccessTab("financeiro") ? <FinanceiroOperacionalTab /> : <SecaoBloqueada nome="Financeiro" />}</TabsContent>
-          <TabsContent value="acesso">{canAccessTab("acesso") ? <AcessoPortal /> : <SecaoBloqueada nome="Controle de Acesso" />}</TabsContent>
+          <TabsContent value="financeiro">{canAccessTab("financeiro") ? <FinanceiroStatusAlunos /> : <SecaoBloqueada nome="Financeiro" />}</TabsContent>
+          <TabsContent value="financeiro_antigo">{canAccessTab("financeiro_antigo") ? <FinanceiroOperacionalTab /> : <SecaoBloqueada nome="Financeiro" />}</TabsContent>
+          <TabsContent value="acesso">{canAccessTab("acesso") ? <AcessoPortalTab /> : <SecaoBloqueada nome="Controle de Acesso" />}</TabsContent>
           <TabsContent value="pagamentos">{canAccessTab("pagamentos") ? <PagamentosAsaas /> : <SecaoBloqueada nome="Pagamentos Asaas" />}</TabsContent>
           <TabsContent value="gargalos">{canAccessTab("gargalos") ? <GargalosDashboard /> : <SecaoBloqueada nome="Gargalos" />}</TabsContent>
           <TabsContent value="pendencias">{canAccessTab("pendencias") ? <PainelPendenciasFinanceiras /> : <SecaoBloqueada nome="Pendências" />}</TabsContent>
-          <TabsContent value="contratos">{canAccessTab("contratos") ? <ContratosGeral /> : <SecaoBloqueada nome="Contratos" />}</TabsContent>
+          <TabsContent value="contratos">{canAccessTab("contratos") ? <ContratosGeralTab /> : <SecaoBloqueada nome="Contratos" />}</TabsContent>
           <TabsContent value="vendas">{canAccessTab("vendas") ? <CursosVendaCentral /> : <SecaoBloqueada nome="Cursos à Venda" />}</TabsContent>
           <TabsContent value="indicadores">{canAccessTab("indicadores") ? <IndicadoresAtendenteTab /> : <SecaoBloqueada nome="Indicadores" />}</TabsContent>
           <TabsContent value="precadastros">{canAccessTab("precadastros") ? <PreCadastrosTab /> : <SecaoBloqueada nome="Pré-Cadastros" />}</TabsContent>

@@ -45,6 +45,10 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
   const [sendingWhatsApp, setSendingWhatsApp] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [cpfCheck, setCpfCheck] = useState(null); // { status: novo|existente|duplicidade, alunos }
+  const [oferta, setOferta] = useState(null); // CourseOffer selecionada (opcional)
+  const [descontoCode, setDescontoCode] = useState("");
+  const [desconto, setDesconto] = useState(null); // { discount_authorization_id, code, percentage }
+  const [validandoDesconto, setValidandoDesconto] = useState(false);
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
   const setEnr = (field, value) => setEnrollment(f => ({ ...f, [field]: value }));
@@ -55,6 +59,13 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
     staleTime: 0, gcTime: 0,
   });
 
+  const { data: ofertas = [] } = useQuery({
+    queryKey: ["course-offers"],
+    queryFn: () => base44.entities.CourseOffer.list("-created_date", 200),
+    enabled: open,
+  });
+  const ofertasDisponiveis = ofertas.filter(o => !["Encerrada", "Cancelada", "Esgotada"].includes(o.status));
+
   useEffect(() => {
     if (open) {
       setStep(1);
@@ -62,6 +73,9 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
       setEnrollment({ course_id: "", course_name: "", start_date: "", end_date: "", forma_pagamento: "", unit_value: "", status_pagamento: "Pendente", data_vencimento_pagamento: "", num_parcelas: 1 });
       setSuccessData(null);
       setCpfCheck(null);
+      setOferta(null);
+      setDescontoCode("");
+      setDesconto(null);
     }
   }, [open]);
 
@@ -88,6 +102,35 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
   // PIX manual NUNCA é automático. Apenas "À Vista" em dinheiro gera recibo automático.
   const isAVistaAutomatico = enrollment.forma_pagamento === "À Vista" || enrollment.forma_pagamento === "Dinheiro em Espécie";
   const isAVista = isAVistaAutomatico; // manter compatibilidade
+
+  // Desconto autorizado (snapshot — nunca altera o preço da oferta)
+  const valorBase = parseFloat(enrollment.unit_value) || 0;
+  const descontoValor = desconto ? Math.round(valorBase * desconto.percentage) / 100 : 0;
+  const valorFinal = Math.max(valorBase - descontoValor, 0);
+
+  const handleValidarDesconto = async () => {
+    if (!descontoCode.trim()) return;
+    setValidandoDesconto(true);
+    try {
+      const res = await base44.functions.invoke("validarCodigoDesconto", {
+        action: "validar",
+        code: descontoCode.trim(),
+        course_id: enrollment.course_id || undefined,
+        course_offer_id: oferta?.id || undefined,
+      });
+      if (res.data?.valid) {
+        setDesconto(res.data);
+        toast.success(`Desconto de ${res.data.percentage}% validado!`);
+      } else {
+        setDesconto(null);
+        toast.error(res.data?.reason || "Código inválido");
+      }
+    } catch (e) {
+      setDesconto(null);
+      toast.error("Erro ao validar código: " + (e.message || ""));
+    }
+    setValidandoDesconto(false);
+  };
 
   const handleSave = async () => {
     if (!enrollment.course_id || !enrollment.start_date) { toast.error("Selecione o curso e a data de início"); return; }
@@ -125,8 +168,31 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
         status_pagamento: statusPagamentoInicial,
         data_vencimento_pagamento: enrollment.data_vencimento_pagamento,
         notes: isPix ? "Aguardando confirmação manual do pagamento PIX." : "",
+        workflow_stage: statusPagamentoInicial === "Pago" ? "Confirmed" : "PaymentPending",
+        ...(oferta ? { oferta_id: oferta.id, oferta_nome: oferta.nome_comercial, course_offer_id: oferta.id } : {}),
+        ...(desconto ? {
+          discount_authorization_id: desconto.discount_authorization_id,
+          discount_code_snapshot: desconto.code,
+          discount_percentage_snapshot: desconto.percentage,
+          discount_amount: descontoValor,
+          final_amount: valorFinal,
+          valor_original: valorBase,
+        } : {}),
       };
       const newEnrollment = await base44.entities.StudentCourseEnrollment.create(enrollmentData);
+
+      // Registrar uso do código de desconto (snapshot já gravado na matrícula)
+      if (desconto) {
+        try {
+          await base44.functions.invoke("validarCodigoDesconto", {
+            action: "aplicar",
+            code: desconto.code,
+            course_id: enrollment.course_id || undefined,
+            course_offer_id: oferta?.id || undefined,
+            enrollment_id: newEnrollment.id,
+          });
+        } catch (e) { console.warn("Desconto:", e); }
+      }
 
       // 3. Gerar contrato automaticamente
       try {
@@ -145,7 +211,7 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
           const res = await base44.functions.invoke("gerarRecibo", {
             enrollment_id: newEnrollment.id,
             student_id: student.id,
-            amount: parseFloat(enrollment.unit_value),
+            amount: desconto ? valorFinal : parseFloat(enrollment.unit_value),
             payment_method: enrollment.forma_pagamento,
             payment_date: enrollment.start_date || new Date().toISOString().split("T")[0],
             description: `Pagamento à vista — ${enrollment.course_name}`,
@@ -576,6 +642,41 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
           <div className="space-y-3">
             <p className="text-sm font-semibold text-gray-700 pb-1 border-b">Matrícula e Pagamento</p>
             <div>
+              <Label>Oferta de Curso <span className="text-gray-400 font-normal">(opcional)</span></Label>
+              <Select
+                value={oferta?.id || ""}
+                onValueChange={v => {
+                  if (v === "nenhuma") { setOferta(null); return; }
+                  const o = ofertasDisponiveis.find(x => x.id === v);
+                  setOferta(o || null);
+                  if (o) {
+                    setEnrollment(f => ({
+                      ...f,
+                      course_id: o.course_id, course_name: o.course_name,
+                      start_date: o.data_inicio || f.start_date,
+                      end_date: o.data_termino || f.end_date,
+                      unit_value: o.valor != null ? String(o.valor) : f.unit_value,
+                    }));
+                  }
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Matricular por oferta publicada..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="nenhuma">Sem oferta — escolher curso-base</SelectItem>
+                  {ofertasDisponiveis.map(o => {
+                    const vagasDisp = Math.max((o.vagas_total || 0) - (o.vagas_preenchidas || 0), 0);
+                    return <SelectItem key={o.id} value={o.id}>{o.nome_comercial} — {vagasDisp} vaga(s)</SelectItem>;
+                  })}
+                </SelectContent>
+              </Select>
+              {oferta && (
+                <p className="text-xs text-gray-500 mt-1">
+                  🎟️ Vagas disponíveis: <strong>{Math.max((oferta.vagas_total || 0) - (oferta.vagas_preenchidas || 0), 0)}</strong> de {oferta.vagas_total || 0}
+                  {oferta.valor != null && <> · Valor da oferta: <strong>R$ {Number(oferta.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong></>}
+                </p>
+              )}
+            </div>
+            <div>
               <Label>Curso *</Label>
               <Select value={enrollment.course_id} onValueChange={v => { const c = courses.find(c => c.id === v); setEnrollment(f => ({ ...f, course_id: v, course_name: c?.name || "" })); }}>
                 <SelectTrigger><SelectValue placeholder="Selecione o curso" /></SelectTrigger>
@@ -617,6 +718,21 @@ export default function CadastroUnificado({ open, onClose, onSaved }) {
             <div>
               <Label>Data de Vencimento do Pagamento</Label>
               <Input type="date" value={enrollment.data_vencimento_pagamento} onChange={e => setEnr("data_vencimento_pagamento", e.target.value)} />
+            </div>
+            <div>
+              <Label>Código de Desconto <span className="text-gray-400 font-normal">(opcional — autorizado pelo Financeiro)</span></Label>
+              <div className="flex gap-2 mt-1">
+                <Input value={descontoCode} onChange={e => { setDescontoCode(e.target.value); setDesconto(null); }} placeholder="Ex: DESC-2026-XXXX" />
+                <Button type="button" variant="outline" onClick={handleValidarDesconto} disabled={validandoDesconto || !descontoCode.trim()}>
+                  {validandoDesconto ? "Validando..." : "Validar"}
+                </Button>
+              </div>
+              {desconto && (
+                <div className="mt-2 p-2 bg-emerald-50 border border-emerald-200 rounded-md text-xs text-emerald-800">
+                  ✅ Código <strong>{desconto.code}</strong> — {desconto.percentage}% de desconto.
+                  {valorBase > 0 && <> Valor final: <strong>R$ {valorFinal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong> (− R$ {descontoValor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })})</>}
+                </div>
+              )}
             </div>
             {isParcelado && (
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
