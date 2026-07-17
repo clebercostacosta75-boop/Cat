@@ -34,6 +34,7 @@
     "evento": {
       "type": "string",
       "enum": [
+        "45dias",
         "30dias",
         "15dias",
         "5dias",

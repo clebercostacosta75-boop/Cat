@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { logAction } from "@/components/audit/AuditLogger";
 import { exportCertificatePDF } from "@/components/certificates/CertificateExporter";
+import AlertasVencimentoEmpresas from "@/components/certificates/AlertasVencimentoEmpresas";
 
 // ─── Aba 1: Alertas por Certificado (valid_until) ───────────────────────────
 
@@ -633,10 +634,20 @@ export default function CertificateAlerts() {
           >
             🔄 Por Turma / Reciclagem
           </button>
+          <button
+            onClick={() => setActiveTab("empresas")}
+            className={`px-5 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === "empresas"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            🏢 Empresas (PJ) — Marcos 45/30/15/5
+          </button>
         </div>
 
         {/* Conteúdo da aba */}
-        {activeTab === "certificados" ? <AbaCertificados /> : <AbaReciclagens />}
+        {activeTab === "certificados" ? <AbaCertificados /> : activeTab === "reciclagens" ? <AbaReciclagens /> : <AlertasVencimentoEmpresas />}
       </div>
     </div>
   );
