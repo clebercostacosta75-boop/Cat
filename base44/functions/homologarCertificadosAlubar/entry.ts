@@ -101,8 +101,9 @@ Deno.serve(async (req) => {
       const g = porAba[aba];
       g.total++;
 
-      const cfg = MAPA_ABAS[aba] ?? undefined;
-      if (cfg === undefined) { g.pendentes++; totais.pendentes_modelo++; g.motivo_pendencia = "Aba não mapeada — sem modelo oficial"; continue; }
+      const abaMapeada = Object.prototype.hasOwnProperty.call(MAPA_ABAS, aba);
+      const cfg = abaMapeada ? MAPA_ABAS[aba] : undefined;
+      if (!abaMapeada) { g.pendentes++; totais.pendentes_modelo++; g.motivo_pendencia = "Aba não mapeada — sem modelo oficial"; continue; }
       if (cfg === null) { g.pendentes++; totais.pendentes_modelo++; g.motivo_pendencia = "Sem modelo oficial inequívoco (regra do lote)"; continue; }
       if (cfg.condicional && !condicionalConfirmado[aba]) {
         g.pendentes++; totais.pendentes_modelo++;
