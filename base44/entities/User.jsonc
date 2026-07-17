@@ -87,6 +87,13 @@
       },
       "description": "Espelho t\u00e9cnico de UserProfile.company_permissions para RLS"
     },
+    "company_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista simples de IDs de empresas autorizadas (espelho de company_permissions.company_id para uso em RLS $in)"
+    },
     "colaborador_sst_ids": {
       "type": "array",
       "items": {

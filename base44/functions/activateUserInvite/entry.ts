@@ -48,6 +48,7 @@ Deno.serve(async (req) => {
       role: ['admin', 'gestor_master'].includes(account.profile) ? 'admin' : (account.profile || 'user'),
       permissions: account.access_type === 'usuario_cat' ? (account.allowed_modules || []) : [],
       company_permissions: account.company_id ? [{ company_id: account.company_id, permissions: ['view'] }] : [],
+      company_ids: account.company_id ? [account.company_id] : [],
       student_id: account.student_id || null, cpf: account.cpf || null, instructor_id: account.instructor_id || null,
     });
     await base44.asServiceRole.entities.AuditLog.create({
