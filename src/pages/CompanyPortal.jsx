@@ -192,11 +192,14 @@ export default function CompanyPortal() {
       handleSearch(cnpjParam);
       return;
     }
-    base44.auth.me().then((user) => {
-      const companyId = user?.company_permissions?.[0]?.company_id;
-      if (!companyId) return;
+    base44.auth.isAuthenticated().then((logged) => {
+      if (!logged) return;
       setLoading(true);
-      base44.functions.invoke("portalEmpresa", { company_id: companyId }).then((response) => applyPortalResult(response.data)).finally(() => setLoading(false));
+      // Backend resolve automaticamente a empresa vinculada ao acesso do usuário (AccessAccount / permissões)
+      base44.functions.invoke("portalEmpresa", {})
+        .then((response) => { if (response.data?.company) applyPortalResult(response.data); })
+        .catch(() => {})
+        .finally(() => setLoading(false));
     }).catch(() => {});
   }, []);
 

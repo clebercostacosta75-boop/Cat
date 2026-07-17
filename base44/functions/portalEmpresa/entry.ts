@@ -11,8 +11,11 @@ Deno.serve(async (req) => {
     const accountList = user ? await base44.asServiceRole.entities.AccessAccount.filter({ user_id: user.id }) : [];
     const account = accountList.find((item) => item.access_type === 'empresa' && item.status === 'ativo');
     const allowedIds = account?.company_id ? [account.company_id] : [];
+    for (const cp of (user?.company_permissions || [])) if (cp.company_id && !allowedIds.includes(cp.company_id)) allowedIds.push(cp.company_id);
     let company = null;
     if (body.company_id && allowedIds.includes(body.company_id)) company = await base44.asServiceRole.entities.Company.get(body.company_id);
+    // Auto-resolução: usuário empresa logado sem CNPJ informado — carrega a própria empresa vinculada
+    if (!company && !digits && allowedIds[0]) company = await base44.asServiceRole.entities.Company.get(allowedIds[0]).catch(() => null);
     if (!company && digits.length === 14) {
       const formatted = digits.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
       const candidates = [...await base44.asServiceRole.entities.Company.filter({ cnpj: digits }), ...await base44.asServiceRole.entities.Company.filter({ cnpj: formatted })];
