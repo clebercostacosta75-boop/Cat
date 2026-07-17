@@ -58,6 +58,7 @@ Deno.serve(async (req) => {
       role: ['admin', 'gestor_master'].includes(target.role) ? 'admin' : (target.role || 'user'),
       permissions: next,
       company_permissions: target.company_permissions || [],
+      company_ids: (target.company_permissions || []).map((c) => c.company_id).filter(Boolean),
       student_id: target.student_id || null,
       cpf: target.cpf || null,
       instructor_id: target.instructor_id || null,
