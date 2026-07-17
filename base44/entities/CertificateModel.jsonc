@@ -410,6 +410,11 @@
           "user_condition": {
             "role": "certificacao"
           }
+        },
+        {
+          "user_condition": {
+            "role": "personalizado"
+          }
         }
       ]
     },
@@ -461,6 +466,16 @@
           }
         },
         {
+          "user_condition": {
+            "role": "personalizado"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "cliente"
+          }
+        },
+        {
           "created_by_id": "{{user.id}}"
         }
       ]
@@ -485,6 +500,11 @@
         {
           "user_condition": {
             "role": "certificacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "personalizado"
           }
         }
       ]
