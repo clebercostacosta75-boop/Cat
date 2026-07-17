@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     const status = profile.password_changed ? 'active' : profile.status;
     await base44.asServiceRole.entities.UserProfile.update(profile.id, { user_id: user.id, user_email: email, status });
     await base44.asServiceRole.entities.User.update(user.id, {
-      role: ['admin', 'gestor_master'].includes(profile.role) ? 'admin' : 'user',
+      role: ['admin', 'gestor_master'].includes(profile.role) ? 'admin' : (profile.role || 'user'),
       permissions,
       company_permissions: profile.company_permissions || [],
       student_id: profile.student_id || null,

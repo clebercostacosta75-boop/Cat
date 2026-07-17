@@ -55,6 +55,7 @@ Deno.serve(async (req) => {
     if (accessAccounts.length > 1) return await auditRejected('duplicate_account', 'Conta de acesso duplicada', { profile_id });
     if (accessAccounts[0]) await base44.asServiceRole.entities.AccessAccount.update(accessAccounts[0].id, { allowed_modules: next });
     if (targetUser) await base44.asServiceRole.entities.User.update(targetUser.id, {
+      role: ['admin', 'gestor_master'].includes(target.role) ? 'admin' : (target.role || 'user'),
       permissions: next,
       company_permissions: target.company_permissions || [],
       student_id: target.student_id || null,

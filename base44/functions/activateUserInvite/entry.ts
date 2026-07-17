@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.UserProfile.update(account.user_profile_id, profileUpdate);
     }
     await base44.asServiceRole.entities.User.update(user.id, {
-      role: ['admin', 'gestor_master'].includes(account.profile) ? 'admin' : 'user',
+      role: ['admin', 'gestor_master'].includes(account.profile) ? 'admin' : (account.profile || 'user'),
       permissions: account.access_type === 'usuario_cat' ? (account.allowed_modules || []) : [],
       company_permissions: account.company_id ? [{ company_id: account.company_id, permissions: ['view'] }] : [],
       student_id: account.student_id || null, cpf: account.cpf || null, instructor_id: account.instructor_id || null,
