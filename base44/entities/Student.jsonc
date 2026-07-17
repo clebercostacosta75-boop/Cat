@@ -151,6 +151,26 @@
           "user_condition": {
             "role": "gestor_master"
           }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "certificacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "atendimento"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "personalizado"
+          }
         }
       ]
     },
@@ -170,8 +190,43 @@
           }
         },
         {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "certificacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "atendimento"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "financeiro"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "auditor"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "personalizado"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "cliente"
+          }
+        },
+        {
           "data.company_id": {
-            "$in": "{{user.company_permissions.company_id}}"
+            "$in": "{{user.data.company_ids}}"
           }
         }
       ]
@@ -192,8 +247,28 @@
           }
         },
         {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "certificacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "atendimento"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "personalizado"
+          }
+        },
+        {
           "data.company_id": {
-            "$in": "{{user.company_permissions.company_id}}"
+            "$in": "{{user.data.company_ids}}"
           }
         }
       ]
