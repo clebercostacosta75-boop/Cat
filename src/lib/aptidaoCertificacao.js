@@ -4,6 +4,8 @@
  * pode gerar certificado, e para montar a Fila de Certificação.
  */
 
+import { buscarModeloEquivalente } from "@/lib/modeloEquivalencia";
+
 const norm = (v) =>
   (v || "")
     .toString()
@@ -31,7 +33,11 @@ export function encontrarModelo(enrollment, certModels = [], courses = []) {
     const byCourse = certModels.find((m) => m.id === course.certificate_model_id);
     if (byCourse) return byCourse;
   }
-  return certModels.find((m) => norm(m.name) === norm(enrollment.course_name)) || null;
+  const exato = certModels.find((m) => norm(m.name) === norm(enrollment.course_name));
+  if (exato) return exato;
+  // Equivalência de tipo (ATUALIZAÇÃO ≡ PERIÓDICO) — vincula somente se houver exatamente 1 compatível
+  const eq = buscarModeloEquivalente(enrollment.course_name, enrollment.course_duration, certModels);
+  return eq.modelo || null;
 }
 
 /**

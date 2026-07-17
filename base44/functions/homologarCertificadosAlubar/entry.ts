@@ -35,6 +35,61 @@ function addMonths(dateStr, months) {
   d.setUTCMonth(d.getUTCMonth() + months);
   return d.toISOString().slice(0, 10);
 }
+// ===== Equivalência de tipo: ATUALIZAÇÃO (planilha) ≡ PERIÓDICO (modelo). Exige mesma NR,
+// mesma função/público/equipamento, mesma carga e modelo completo. Vincula só com exatamente 1 compatível.
+const ABREV = { esp: "espacos", conf: "confinados", plat: "plataforma" };
+const STOPWORDS = new Set(["de","da","do","das","dos","e","em","na","no","nas","nos","para","com","tipo","curso","treinamento","seguranca","saude","trabalho","trabalhos","operacao","operador","operadores","entrada"]);
+const ROLE_SUPERVISOR = new Set(["supervisor","supervisores"]);
+const ROLE_TRABALHADOR = new Set(["vigia","trabalhador","trabalhadores","autorizado"]);
+function normTxt(v) {
+  return String(v || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[–—-]/g, " ").replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+function analisar(nome) {
+  const texto = normTxt(nome).replace(/^(treinamento|curso)\s+(de|do|da)\s+/, "");
+  const nrMatch = texto.match(/nr\s*(\d+)/);
+  const nr = nrMatch ? parseInt(nrMatch[1], 10) : null;
+  let tipo = null, temSupervisor = false;
+  const assunto = new Set();
+  for (let tok of texto.replace(/nr\s*\d+/g, "").split(" ")) {
+    if (!tok || /^\d+h?$/.test(tok)) continue;
+    tok = ABREV[tok] || tok;
+    if (/^(atualiza|period)/.test(tok)) { tipo = "atualizacao"; continue; }
+    if (/^(forma|inicial)/.test(tok)) { tipo = "formacao"; continue; }
+    if (/^recicl/.test(tok)) { tipo = "reciclagem"; continue; }
+    if (ROLE_SUPERVISOR.has(tok)) { temSupervisor = true; continue; }
+    if (ROLE_TRABALHADOR.has(tok)) continue;
+    if (STOPWORDS.has(tok)) continue;
+    assunto.add(tok);
+  }
+  return { nr, tipo, temSupervisor, assunto };
+}
+function parseCargaNum(v) { const m = String(v || "").match(/(\d+)/); return m ? parseInt(m[1], 10) : null; }
+function modeloCompleto(m) {
+  return !!(m && m.name && m.validity_period_months && (m.programmatic_content || []).length > 0 &&
+    (m.technical_responsibles || []).length > 0 && m.front_background_url);
+}
+function buscarModeloEquivalente(nomeAba, cargaHoraria, models) {
+  const q = analisar(nomeAba);
+  const carga = parseCargaNum(cargaHoraria);
+  if (!q.tipo || q.assunto.size === 0) return { modelo: null, motivo: "Nome sem tipo/assunto identificável" };
+  const candidatos = models.filter((m) => {
+    if (!modeloCompleto(m)) return false;
+    const t = analisar(m.name);
+    if (q.nr !== null && t.nr !== q.nr) return false;
+    if (q.nr === null && t.nr !== null) return false;
+    if (t.tipo !== q.tipo) return false;
+    if (t.temSupervisor !== q.temSupervisor) return false;
+    if (carga !== null && parseCargaNum(m.duration) !== carga) return false;
+    for (const tok of q.assunto) if (!t.assunto.has(tok)) return false;
+    return true;
+  });
+  if (candidatos.length === 1) return { modelo: candidatos[0], tipo: q.tipo === "atualizacao" ? "Atualização" : "Formação", motivo: null };
+  return { modelo: null, motivo: candidatos.length === 0
+    ? "Pendente de modelo/Confirmação: nenhum modelo oficial compatível (NR + função/público + carga + tipo)"
+    : `Pendente de modelo/Confirmação: ${candidatos.length} modelos compatíveis — ambiguidade` };
+}
+
 function dataExtensoPtBr(d) {
   const meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
   return `${d.getUTCDate()} de ${meses[d.getUTCMonth()]} de ${d.getUTCFullYear()}`;
@@ -68,13 +123,10 @@ Deno.serve(async (req) => {
     const all = await svc.entities.StudentCourseEnrollment.filter({ company_id: COMPANY_ID }, "-created_date", 500);
     const lote = all.filter(e => (e.notes || "").includes(PLANILHA));
 
-    // 2) Carrega modelos oficiais do mapa
+    // 2) Carrega todos os modelos oficiais do Designer (mapa fixo + busca por equivalência)
+    const todosModelos = await svc.entities.CertificateModel.list("-created_date", 300);
     const modelos = {};
-    for (const cfg of Object.values(MAPA_ABAS)) {
-      if (!cfg || modelos[cfg.modelId]) continue;
-      const m = (await svc.entities.CertificateModel.filter({ id: cfg.modelId }))[0] || null;
-      modelos[cfg.modelId] = m;
-    }
+    for (const m of todosModelos) modelos[m.id] = m;
 
     // 3) Verificação condicional NR-11 Formação: só é inequívoco se a configuração existente
     //    (catálogo de cursos vinculado ao modelo) confirmar; caso contrário, grupo pendente.
@@ -102,13 +154,20 @@ Deno.serve(async (req) => {
       g.total++;
 
       const abaMapeada = Object.prototype.hasOwnProperty.call(MAPA_ABAS, aba);
-      const cfg = abaMapeada ? MAPA_ABAS[aba] : undefined;
-      if (!abaMapeada) { g.pendentes++; totais.pendentes_modelo++; g.motivo_pendencia = "Aba não mapeada — sem modelo oficial"; continue; }
-      if (cfg === null) { g.pendentes++; totais.pendentes_modelo++; g.motivo_pendencia = "Sem modelo oficial inequívoco (regra do lote)"; continue; }
-      if (cfg.condicional && !condicionalConfirmado[aba]) {
-        g.pendentes++; totais.pendentes_modelo++;
-        g.motivo_pendencia = "Modelo não confirmado como Formação pela configuração existente (nenhum curso do catálogo vincula o modelo)";
-        continue;
+      let cfg = abaMapeada ? MAPA_ABAS[aba] : null;
+      if (cfg?.condicional && !condicionalConfirmado[aba]) cfg = null;
+      if (!cfg) {
+        // Equivalência ATUALIZAÇÃO ≡ PERIÓDICO: busca dinâmica com regras estritas (exatamente 1 compatível)
+        const eq = buscarModeloEquivalente(aba, e.course_duration, todosModelos);
+        if (eq.modelo) {
+          cfg = { modelId: eq.modelo.id, tipo: eq.tipo, carga: e.course_duration };
+        } else {
+          g.pendentes++; totais.pendentes_modelo++;
+          g.motivo_pendencia = abaMapeada && MAPA_ABAS[aba]?.condicional
+            ? "Pendente de modelo/Confirmação: modelo de Formação não confirmado pela configuração existente"
+            : eq.motivo;
+          continue;
+        }
       }
 
       const model = modelos[cfg.modelId];
