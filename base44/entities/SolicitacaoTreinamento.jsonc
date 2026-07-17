@@ -93,6 +93,47 @@
     "data_notificacao": {
       "type": "string",
       "format": "date"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "Portal da Empresa (opcional, retrocompat\u00edvel): ID da Company vinculada \u2014 compat\u00edvel com empresa_mestre_id"
+    },
+    "course_id": {
+      "type": "string",
+      "description": "Portal da Empresa (opcional): ID do curso relacionado"
+    },
+    "course_name": {
+      "type": "string",
+      "description": "Portal da Empresa (opcional): nome do curso relacionado"
+    },
+    "student_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Portal da Empresa (opcional): IDs dos alunos envolvidos"
+    },
+    "student_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Portal da Empresa (opcional): nomes dos alunos envolvidos"
+    },
+    "certificate_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Portal da Empresa (opcional): IDs dos certificados que originaram a solicita\u00e7\u00e3o"
+    },
+    "motivo_renovacao": {
+      "type": "string",
+      "description": "Portal da Empresa (opcional): motivo da renova\u00e7\u00e3o/reciclagem informado pela empresa"
+    },
+    "prazo_alerta_origem": {
+      "type": "string",
+      "description": "Portal da Empresa (opcional): situa\u00e7\u00e3o/prazo de alerta que originou a solicita\u00e7\u00e3o (ex: Vence em 30 dias)"
     }
   },
   "required": [

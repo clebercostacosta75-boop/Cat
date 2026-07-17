@@ -12,6 +12,7 @@ import {
 import { format, parseISO, isBefore, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CertificateDownloader from "@/components/certificates/CertificateDownloader";
+import CentralConformidade from "@/components/empresa/portalconformidade/CentralConformidade";
 
 const STATUS_CONFIG = {
   signed: { label: "Assinado", className: "bg-green-100 text-green-700 border-green-200", icon: CheckCircle2 },
@@ -166,7 +167,7 @@ export default function CompanyPortal() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [activeTab, setActiveTab] = useState("certificados");
+  const [activeTab, setActiveTab] = useState("conformidade");
   const [students, setStudents] = useState([]);
   const [activeModules, setActiveModules] = useState([]);
   const [complianceData, setComplianceData] = useState(null);
@@ -338,8 +339,17 @@ export default function CompanyPortal() {
             )}
 
             {/* Tabs de Módulos */}
-            <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-4">
-              {activeModules.map(mod => (
+            <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-4 flex-wrap">
+              <button
+                onClick={() => setActiveTab("conformidade")}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-colors ${
+                  activeTab === "conformidade" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <Shield className="w-3.5 h-3.5" /> Conformidade
+              </button>
+              {/* Módulo legado "certificados" oculto no menu (conteúdo coberto por Alunos e Certificações); código preservado */}
+              {activeModules.filter(mod => mod.module_key !== "certificados").map(mod => (
                 <button
                   key={mod.module_key}
                   onClick={() => setActiveTab(mod.module_key)}
@@ -357,6 +367,11 @@ export default function CompanyPortal() {
                 </button>
               ))}
             </div>
+
+            {/* Tab: Central de Conformidade */}
+            {activeTab === "conformidade" && (
+              <CentralConformidade companyId={company.id} />
+            )}
 
             {/* Tab: Certificados */}
             {activeTab === "certificados" && (
@@ -547,7 +562,7 @@ export default function CompanyPortal() {
             )}
 
             {/* Tab: módulo não reconhecido */}
-            {!["certificados","colaboradores","documentos","compliance_360","financeiro"].includes(activeTab) && (
+            {!["conformidade","certificados","colaboradores","documentos","compliance_360","financeiro"].includes(activeTab) && (
               <div className="bg-white rounded-xl border shadow-sm p-8 text-center text-gray-400">
                 <LayoutDashboard className="w-10 h-10 mx-auto mb-2 opacity-30" />
                 <p className="text-sm">Conteúdo deste módulo será carregado em breve.</p>
