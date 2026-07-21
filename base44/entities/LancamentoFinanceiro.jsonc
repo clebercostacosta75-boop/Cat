@@ -276,6 +276,31 @@
           "user_condition": {
             "role": "financeiro"
           }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "certificacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "atendimento"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "comercial"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "personalizado"
+          }
         }
       ]
     },
@@ -303,12 +328,32 @@
         },
         {
           "user_condition": {
+            "role": "certificacao"
+          }
+        },
+        {
+          "user_condition": {
             "role": "atendimento"
           }
         },
         {
           "user_condition": {
+            "role": "comercial"
+          }
+        },
+        {
+          "user_condition": {
             "role": "auditor"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "personalizado"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "cliente"
           }
         }
       ]
@@ -328,6 +373,31 @@
         {
           "user_condition": {
             "role": "financeiro"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "certificacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "atendimento"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "comercial"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "personalizado"
           }
         }
       ]
