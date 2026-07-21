@@ -1,0 +1,73 @@
+{
+  "name": "Lesson",
+  "type": "object",
+  "properties": {
+    "course_id": {
+      "type": "string",
+      "description": "ID do curso (referência à entidade Course)"
+    },
+    "course_name": {
+      "type": "string",
+      "description": "Nome do curso (desnormalizado)"
+    },
+    "module_id": {
+      "type": "string",
+      "description": "ID do módulo (referência à entidade CourseModule)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Título da aula"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descrição/resumo da aula"
+    },
+    "video_provider": {
+      "type": "string",
+      "enum": [
+        "youtube",
+        "vimeo",
+        "upload",
+        "outro"
+      ],
+      "default": "youtube",
+      "description": "Provedor do vídeo da aula"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "URL do vídeo da aula (link de embed ou arquivo enviado)"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "Duração da aula em minutos"
+    },
+    "material_url": {
+      "type": "string",
+      "description": "URL de material de apoio anexo (PDF, apostila etc.)"
+    },
+    "order": {
+      "type": "number",
+      "default": 1,
+      "description": "Ordem de exibição da aula dentro do módulo/curso"
+    },
+    "obrigatoria": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se a aula é obrigatória para conclusão do curso"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ativo",
+        "Inativo"
+      ],
+      "default": "Ativo",
+      "description": "Status da aula"
+    }
+  },
+  "required": [
+    "course_id",
+    "title",
+    "video_url"
+  ]
+}

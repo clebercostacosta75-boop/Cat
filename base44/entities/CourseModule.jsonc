@@ -1,0 +1,40 @@
+{
+  "name": "CourseModule",
+  "type": "object",
+  "properties": {
+    "course_id": {
+      "type": "string",
+      "description": "ID do curso (referência à entidade Course)"
+    },
+    "course_name": {
+      "type": "string",
+      "description": "Nome do curso (desnormalizado)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Nome do módulo (ex: Módulo 1 - Introdução)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descrição do módulo"
+    },
+    "order": {
+      "type": "number",
+      "default": 1,
+      "description": "Ordem de exibição do módulo dentro do curso"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ativo",
+        "Inativo"
+      ],
+      "default": "Ativo",
+      "description": "Status do módulo"
+    }
+  },
+  "required": [
+    "course_id",
+    "name"
+  ]
+}

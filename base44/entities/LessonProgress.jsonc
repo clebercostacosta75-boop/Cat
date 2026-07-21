@@ -1,0 +1,166 @@
+{
+  "name": "LessonProgress",
+  "type": "object",
+  "properties": {
+    "student_id": {
+      "type": "string",
+      "description": "ID do aluno (referência à entidade Student)"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "Nome do aluno (desnormalizado)"
+    },
+    "enrollment_id": {
+      "type": "string",
+      "description": "ID da matrícula (StudentCourseEnrollment) relacionada"
+    },
+    "course_id": {
+      "type": "string",
+      "description": "ID do curso"
+    },
+    "lesson_id": {
+      "type": "string",
+      "description": "ID da aula (Lesson)"
+    },
+    "lesson_title": {
+      "type": "string",
+      "description": "Título da aula (desnormalizado)"
+    },
+    "watched_seconds": {
+      "type": "number",
+      "default": 0,
+      "description": "Tempo assistido em segundos (maior marca atingida)"
+    },
+    "video_duration_seconds": {
+      "type": "number",
+      "description": "Duração total do vídeo em segundos, para cálculo de percentual"
+    },
+    "progress_percent": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentual assistido da aula (0 a 100)"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se a aula foi concluída (assistida integralmente)"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora de conclusão da aula"
+    },
+    "first_accessed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do primeiro acesso à aula"
+    },
+    "last_accessed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do último acesso à aula"
+    }
+  },
+  "required": [
+    "student_id",
+    "lesson_id"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.student_id": "{{user.student_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "instrutor"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.student_id": "{{user.student_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "instrutor"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "certificacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "auditor"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "personalizado"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.student_id": "{{user.student_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

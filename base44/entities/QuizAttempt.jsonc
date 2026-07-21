@@ -1,0 +1,170 @@
+{
+  "name": "QuizAttempt",
+  "type": "object",
+  "properties": {
+    "quiz_id": {
+      "type": "string",
+      "description": "ID da prova (referência à entidade Quiz)"
+    },
+    "quiz_title": {
+      "type": "string",
+      "description": "Título da prova (desnormalizado)"
+    },
+    "course_id": {
+      "type": "string",
+      "description": "ID do curso"
+    },
+    "student_id": {
+      "type": "string",
+      "description": "ID do aluno (referência à entidade Student)"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "Nome do aluno (desnormalizado)"
+    },
+    "enrollment_id": {
+      "type": "string",
+      "description": "ID da matrícula (StudentCourseEnrollment) relacionada"
+    },
+    "attempt_number": {
+      "type": "number",
+      "default": 1,
+      "description": "Número sequencial da tentativa para este aluno/prova"
+    },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "question_id": {
+            "type": "string"
+          },
+          "selected_option": {
+            "type": "number"
+          },
+          "correct": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Respostas dadas pelo aluno, com correção"
+    },
+    "score": {
+      "type": "number",
+      "description": "Nota final obtida (percentual, 0 a 100)"
+    },
+    "passed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o aluno foi aprovado nesta tentativa"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora de início da tentativa"
+    },
+    "finished_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora de finalização da tentativa"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "Tempo total gasto na tentativa, em segundos"
+    }
+  },
+  "required": [
+    "quiz_id",
+    "student_id"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.student_id": "{{user.student_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.student_id": "{{user.student_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "instrutor"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "certificacao"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "auditor"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "personalizado"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "gestor_master"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coordenacao"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "name": "Quiz",
+  "type": "object",
+  "properties": {
+    "course_id": {
+      "type": "string",
+      "description": "ID do curso (referência à entidade Course)"
+    },
+    "course_name": {
+      "type": "string",
+      "description": "Nome do curso (desnormalizado)"
+    },
+    "module_id": {
+      "type": "string",
+      "description": "ID do módulo relacionado (opcional, prova por módulo)"
+    },
+    "lesson_id": {
+      "type": "string",
+      "description": "ID da aula relacionada (opcional, prova por aula)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Título da prova (ex: Avaliação Final - NR 10)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Instruções/descrição da prova"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Prova Final",
+        "Avaliação de Módulo",
+        "Simulado"
+      ],
+      "default": "Prova Final",
+      "description": "Tipo da prova"
+    },
+    "passing_score": {
+      "type": "number",
+      "default": 70,
+      "description": "Nota mínima de aprovação (percentual, 0 a 100)"
+    },
+    "time_limit_minutes": {
+      "type": "number",
+      "description": "Tempo limite para realização da prova em minutos (vazio = sem limite)"
+    },
+    "max_attempts": {
+      "type": "number",
+      "default": 3,
+      "description": "Número máximo de tentativas permitidas"
+    },
+    "shuffle_questions": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se as questões devem ser embaralhadas a cada tentativa"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Rascunho",
+        "Publicada",
+        "Inativa"
+      ],
+      "default": "Rascunho",
+      "description": "Status da prova"
+    }
+  },
+  "required": [
+    "course_id",
+    "title"
+  ]
+}

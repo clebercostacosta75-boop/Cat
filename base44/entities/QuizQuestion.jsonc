@@ -1,0 +1,54 @@
+{
+  "name": "QuizQuestion",
+  "type": "object",
+  "properties": {
+    "quiz_id": {
+      "type": "string",
+      "description": "ID da prova (referência à entidade Quiz)"
+    },
+    "statement": {
+      "type": "string",
+      "description": "Enunciado da questão"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "multipla_escolha",
+        "verdadeiro_falso"
+      ],
+      "default": "multipla_escolha",
+      "description": "Tipo da questão"
+    },
+    "options": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Alternativas de resposta (para múltipla escolha)"
+    },
+    "correct_option": {
+      "type": "number",
+      "description": "Índice (0-based) da alternativa correta em 'options'"
+    },
+    "explanation": {
+      "type": "string",
+      "description": "Explicação/justificativa da resposta correta, exibida após a correção"
+    },
+    "points": {
+      "type": "number",
+      "default": 1,
+      "description": "Pontuação/peso da questão"
+    },
+    "order": {
+      "type": "number",
+      "default": 1,
+      "description": "Ordem de exibição da questão na prova"
+    }
+  },
+  "required": [
+    "quiz_id",
+    "statement",
+    "options",
+    "correct_option"
+  ]
+}
