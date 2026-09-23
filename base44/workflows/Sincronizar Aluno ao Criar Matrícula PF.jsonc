@@ -1,0 +1,37 @@
+{
+  "name": "Sincronizar Aluno ao Criar Matr\u00edcula PF",
+  "description": "Ao criar uma nova matr\u00edcula Individual (PF), garante que o aluno existe na entidade Student e corrige o student_id se necess\u00e1rio.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "StudentCourseEnrollment"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "sincronizar_aluno_ao_criar_matr_cula_pf",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sincronizarAlunoCadastro",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "sincronizarAlunoCadastro"
+  }
+}
